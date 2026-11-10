@@ -49,7 +49,7 @@
             justify-content: space-between;
             padding: 0 12px;
             flex-shrink: 0;
-            gap: 12px;
+            gap: 10px;
         }
 
         .brand-section {
@@ -58,6 +58,7 @@
             gap: 10px;
             font-weight: 700;
             letter-spacing: 0.5px;
+            cursor: pointer;
         }
         .brand-badge {
             background: linear-gradient(135deg, #059669, #0284c7);
@@ -79,10 +80,13 @@
             color: var(--text-muted);
             font-size: 12px;
             flex: 1;
-            max-width: 650px;
+            max-width: 600px;
             overflow: hidden;
             white-space: nowrap;
+            cursor: text;
+            transition: border-color 0.15s;
         }
+        .breadcrumb-bar:hover { border-color: #0284c7; background: #243447; }
         .breadcrumb-bar span { cursor: pointer; }
         .breadcrumb-bar span:hover { color: var(--accent-blue); text-decoration: underline; }
         .breadcrumb-bar .sep { color: var(--text-dim); }
@@ -94,7 +98,7 @@
             color: white;
             padding: 4px 8px;
             font-size: 12px;
-            width: 180px;
+            width: 170px;
         }
         .search-input:focus { outline: 1px solid var(--accent-blue); }
 
@@ -285,7 +289,9 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            transition: width 0.2s ease;
         }
+        .pane-preview.hidden { display: none; }
         .preview-header {
             padding: 10px 14px;
             border-bottom: 1px solid var(--border-color);
@@ -372,12 +378,12 @@
         .footer-left { display: flex; gap: 14px; align-items: center; }
         .footer-right { display: flex; gap: 12px; }
 
-        /* Modal */
+        /* Modals & Overlays */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(3px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -427,30 +433,112 @@
             justify-content: flex-end;
             gap: 8px;
         }
+
+        /* Palette / Barre d'Adresse Rapide (Ctrl + K) */
+        .address-palette {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 640px;
+            max-width: 92%;
+            background: #111827;
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 15px rgba(2, 132, 199, 0.4);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .address-palette.open { display: flex; animation: fadeInScale 0.12s ease-out; }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: translate(-50%, -10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .palette-input-wrap {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 10px;
+            border-bottom: 1px solid #1e293b;
+            background: #0b1120;
+        }
+        .palette-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .palette-results {
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+        .palette-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-left: 3px solid transparent;
+            font-size: 12px;
+        }
+        html[dir="rtl"] .palette-item { border-left: none; border-right: 3px solid transparent; }
+        .palette-item:hover, .palette-item.active {
+            background: #1e293b;
+            color: #38bdf8;
+            border-left-color: #38bdf8;
+        }
+        html[dir="rtl"] .palette-item:hover, html[dir="rtl"] .palette-item.active {
+            border-left-color: transparent;
+            border-right-color: #38bdf8;
+        }
+        .palette-item .item-path { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+        html[dir="rtl"] .palette-item .item-path { margin-left: 0; margin-right: auto; }
+        .palette-footer {
+            padding: 6px 14px;
+            background: #090d16;
+            border-top: 1px solid #1e293b;
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
 
     <!-- Top Header Bar -->
     <header>
-        <div class="brand-section">
+        <div class="brand-section" onclick="loadRoot()">
             <span class="brand-badge">HOMOLOG.DZ</span>
             <span id="txt-app-title">Cockpit ANPP & GED BPF</span>
         </div>
 
-        <div class="breadcrumb-bar" id="breadcrumb">
-            <span onclick="loadRoot()">📁 GED</span>
+        <!-- Breadcrumb / Barre d'adresse cliquable (Alt+D / Ctrl+K) -->
+        <div class="breadcrumb-bar" id="breadcrumb" onclick="openAddressBar()" title="Cliquer ou presser Ctrl+K pour ouvrir la barre d'adresse">
+            <span style="opacity:0.6; font-size:11px;">📁</span>
+            <span id="bc-root">GED</span>
             <span class="sep">&gt;</span>
-            <span onclick="loadNode('01_Affaires_Reglementaires')">01_Affaires_Reglementaires</span>
+            <span id="bc-sec">01_Affaires_Reglementaires</span>
             <span class="sep">&gt;</span>
-            <span onclick="loadNode('CTD_Paracetamol')">CTD_Paracétamol_500mg</span>
+            <span id="bc-prod">CTD_Paracétamol_500mg</span>
             <span class="sep">&gt;</span>
-            <span style="color:white; font-weight:600;">Module 3 Qualité (CMC)</span>
+            <span id="bc-mod" style="color:white; font-weight:600;">Module 3 Qualité (CMC)</span>
+            <span style="margin-left:auto; font-size:10px; background:#334155; padding:1px 5px; border-radius:3px; color:#94a3b8;">Ctrl+K</span>
         </div>
 
-        <input type="text" class="search-input" id="search-box" placeholder="🔍 Filtrer (Ctrl+K)..." onkeyup="filterTable()">
+        <input type="text" class="search-input" id="search-box" placeholder="🔍 Filtrer liste (Ctrl+F)..." onkeyup="filterTable()">
 
         <div class="header-actions">
+            <button class="btn-pill" onclick="openAddressBar()" title="Ouvrir la barre d'adresse ou recherche globale (Ctrl+K)">
+                📁 <span id="txt-goto-btn">Aller à...</span> <kbd style="font-size:10px; opacity:0.6;">Ctrl+K</kbd>
+            </button>
             <button class="btn-pill btn-urgent" onclick="openAlertsModal()">
                 🚨 <span id="txt-urgent-alerts">2 Échéances (J &lt; 30j)</span>
             </button>
@@ -483,6 +571,9 @@
                 <button class="btn-pill" onclick="openUploadModal()">➕ Nouveau Document</button>
                 <button class="btn-pill" onclick="simulateExportZip()">📦 Exporter Dossier CTD (ZIP)</button>
                 <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                <button class="btn-pill" onclick="togglePreviewPane()" title="Afficher/Masquer le volet d'aperçu (Alt+P)">
+                    👁️ <span id="txt-toggle-preview">Volet Aperçu (Alt+P)</span>
+                </button>
                 <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                     Complétude : <strong>12/14 pièces (85%)</strong>
                 </div>
@@ -512,7 +603,7 @@
         <div class="pane-preview" id="pane-preview">
             <div class="preview-header">
                 <span id="preview-title">Aperçu du Document</span>
-                <span style="font-size:11px; color:var(--text-dim);">Alt+P pour masquer</span>
+                <span style="font-size:11px; color:var(--text-dim); cursor:pointer;" onclick="togglePreviewPane()">✕ Alt+P</span>
             </div>
             <div class="preview-body" id="preview-body">
                 <!-- Rempli lors du clic sur une ligne -->
@@ -536,6 +627,27 @@
             <span>Heure UTC : <span id="clock-utc">12:00:00</span></span>
         </div>
     </footer>
+
+    <!-- Palette / Barre d'Adresse Rapide (Ctrl + K / Ctrl + L / Alt + D) -->
+    <div class="modal-overlay" id="overlay-address-palette" onclick="if(event.target === this) closeAddressBar()">
+        <div class="address-palette open" id="palette-box">
+            <div class="palette-input-wrap">
+                <span style="font-size:16px;">📁</span>
+                <input type="text" class="palette-input" id="address-input" 
+                       placeholder="Taper un chemin ou rechercher (ex: Paracétamol, Module 1, BPF, Seringue)..."
+                       oninput="filterAddressItems()"
+                       onkeydown="handleAddressKeyDown(event)">
+                <span style="font-size:10px; background:#1e293b; padding:2px 6px; border-radius:3px; color:#94a3b8;">Échap</span>
+            </div>
+            <div class="palette-results" id="palette-results">
+                <!-- Rempli dynamiquement -->
+            </div>
+            <div class="palette-footer">
+                <span>↑↓ Naviguer | ↵ Entrée pour ouvrir</span>
+                <span>Raccourcis : Ctrl+K ou Ctrl+L ou Alt+D</span>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Signature Électronique Directeur Technique (21 CFR Part 11) -->
     <div class="modal-overlay" id="modal-sign">
@@ -595,7 +707,23 @@
 
     <!-- Script applicatif -->
     <script>
-        // Données d'exemple riches pour le prototype
+        // Cibles de navigation pour la barre d'adresse (Ctrl+K)
+        const addressLocations = [
+            { icon: "💊", title: "Paracétamol 500mg Comprimé — Module 3 : Qualité CMC", path: "📁 GED > 01_Affaires_Reglementaires > CTD_Paracetamol > Module 3", target: "ctd-para-3" },
+            { icon: "💊", title: "Paracétamol 500mg Comprimé — Module 1 : Administratif Algérie", path: "📁 GED > 01_Affaires_Reglementaires > CTD_Paracetamol > Module 1", target: "ctd-para-1" },
+            { icon: "💊", title: "Paracétamol 500mg Comprimé — Module 2 : Résumés CTD", path: "📁 GED > 01_Affaires_Reglementaires > CTD_Paracetamol > Module 2", target: "ctd-para-2" },
+            { icon: "💊", title: "Paracétamol 500mg Comprimé — Module 4 : Non-Clinique", path: "📁 GED > 01_Affaires_Reglementaires > CTD_Paracetamol > Module 4", target: "ctd-para-4" },
+            { icon: "💊", title: "Paracétamol 500mg Comprimé — Module 5 : Clinique & BE", path: "📁 GED > 01_Affaires_Reglementaires > CTD_Paracetamol > Module 5", target: "ctd-para-5" },
+            { icon: "💉", title: "Seringue 3 pièces stérile 5ml — Dossier Technique (Arrêté 10 mai 2021)", path: "📁 Dossiers_ANPP > DM_Classe_IIa > Seringue_3p_5ml", target: "dm-seringue" },
+            { icon: "🩹", title: "Cathéter IV avec ailette — Régularisation Décret 20-324", path: "📁 Dossiers_ANPP > Regularisation_DM > Catheter_IV", target: "dm-catheter" },
+            { icon: "📁", title: "GED BPF : 01. Affaires Réglementaires & Agréments MIPH", path: "📁 GED_Pharmaceutique > 01_Affaires_Reglementaires", target: "ged-01" },
+            { icon: "📁", title: "GED BPF : 02. Assurance Qualité & BPF (Certificats, Audits)", path: "📁 GED_Pharmaceutique > 02_Assurance_Qualite_BPF", target: "ged-02" },
+            { icon: "📁", title: "GED BPF : 03. Développement & Production (DMF, Méthodes)", path: "📁 GED_Pharmaceutique > 03_Developpement_Production", target: "ged-03" },
+            { icon: "📁", title: "GED BPF : 04. Vigilance & Post-Market (PV, Matériovigilance)", path: "📁 GED_Pharmaceutique > 04_Vigilance_Post_Market", target: "ged-04" },
+            { icon: "📁", title: "GED BPF : 05. Contrats & Tiers (Accords Qualité QTA)", path: "📁 GED_Pharmaceutique > 05_Contrats_Tiers", target: "ged-05" }
+        ];
+
+        // Documents d'exemple riches
         const mockDocuments = [
             {
                 id: 1,
@@ -671,6 +799,129 @@
 
         let selectedDocId = 1;
         let isArabic = false;
+        let paletteSelectedIndex = 0;
+
+        // Gestionnaire universel des raccourcis clavier
+        window.addEventListener('keydown', function(e) {
+            // Ctrl + K ou Ctrl + L ou Alt + D : Ouvrir la Barre d'Adresse / Palette
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.key === 'l' || e.key === 'L')) {
+                e.preventDefault();
+                openAddressBar();
+                return;
+            }
+            if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+                e.preventDefault();
+                openAddressBar();
+                return;
+            }
+
+            // Alt + P : Basculer le Volet de Prévisualisation (Preview Pane)
+            if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+                e.preventDefault();
+                togglePreviewPane();
+                return;
+            }
+
+            // Ctrl + F : Focus sur le filtre de tableau
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+                e.preventDefault();
+                const sb = document.getElementById('search-box');
+                if (sb) { sb.focus(); sb.select(); }
+                return;
+            }
+
+            // Échap : Fermer la palette ou les modales
+            if (e.key === 'Escape') {
+                closeAddressBar();
+                closeModal('modal-sign');
+                closeModal('modal-upload');
+            }
+        });
+
+        function openAddressBar() {
+            const overlay = document.getElementById("overlay-address-palette");
+            overlay.classList.add("open");
+            const input = document.getElementById("address-input");
+            input.value = "";
+            filterAddressItems();
+            setTimeout(() => {
+                input.focus();
+            }, 50);
+        }
+
+        function closeAddressBar() {
+            const overlay = document.getElementById("overlay-address-palette");
+            overlay.classList.remove("open");
+        }
+
+        function filterAddressItems() {
+            const query = document.getElementById("address-input").value.toLowerCase();
+            const resultsBox = document.getElementById("palette-results");
+            resultsBox.innerHTML = "";
+
+            const filtered = addressLocations.filter(loc => 
+                loc.title.toLowerCase().includes(query) || loc.path.toLowerCase().includes(query)
+            );
+
+            paletteSelectedIndex = 0;
+
+            if (filtered.length === 0) {
+                resultsBox.innerHTML = `<div style="padding:15px; text-align:center; color:var(--text-dim);">Aucun dossier ou document correspondant.</div>`;
+                return;
+            }
+
+            filtered.forEach((loc, idx) => {
+                const item = document.createElement("div");
+                item.className = "palette-item" + (idx === 0 ? " active" : "");
+                item.id = `palette-item-${idx}`;
+                item.onclick = () => selectAddressLocation(loc);
+                item.innerHTML = `
+                    <span style="font-size:16px;">${loc.icon}</span>
+                    <span style="font-weight:600;">${loc.title}</span>
+                    <span class="item-path">${loc.path}</span>
+                `;
+                resultsBox.appendChild(item);
+            });
+        }
+
+        function handleAddressKeyDown(e) {
+            const items = document.querySelectorAll(".palette-item");
+            if (items.length === 0) return;
+
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                items[paletteSelectedIndex].classList.remove("active");
+                paletteSelectedIndex = (paletteSelectedIndex + 1) % items.length;
+                items[paletteSelectedIndex].classList.add("active");
+                items[paletteSelectedIndex].scrollIntoView({ block: "nearest" });
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                items[paletteSelectedIndex].classList.remove("active");
+                paletteSelectedIndex = (paletteSelectedIndex - 1 + items.length) % items.length;
+                items[paletteSelectedIndex].classList.add("active");
+                items[paletteSelectedIndex].scrollIntoView({ block: "nearest" });
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                items[paletteSelectedIndex].click();
+            }
+        }
+
+        function selectAddressLocation(loc) {
+            closeAddressBar();
+            // Met à jour le fil d'Ariane
+            document.getElementById("bc-root").innerText = "GED";
+            document.getElementById("bc-sec").innerText = "Affaires Réglementaires";
+            document.getElementById("bc-prod").innerText = loc.title.split("—")[0].trim();
+            document.getElementById("bc-mod").innerText = loc.title.includes("—") ? loc.title.split("—")[1].trim() : loc.title;
+
+            // Alerte discrète
+            renderTable();
+        }
+
+        function togglePreviewPane() {
+            const pane = document.getElementById("pane-preview");
+            pane.classList.toggle("hidden");
+        }
 
         function renderTree() {
             const container = document.getElementById("tree-root");
@@ -801,6 +1052,7 @@
                 document.getElementById("txt-app-title").innerText = "لوحة القيادة ANPP وإدارة الوثائق الصيدلانية";
                 document.getElementById("txt-urgent-alerts").innerText = "🚨 2 مواعيد حرجة (أقل من 30 يوماً)";
                 document.getElementById("user-badge").innerText = "د. أمين ك. (صيدلي مدير تقني)";
+                document.getElementById("txt-goto-btn").innerText = "انتقال إلى...";
             } else {
                 html.setAttribute("dir", "ltr");
                 html.setAttribute("lang", "fr");
@@ -808,6 +1060,7 @@
                 document.getElementById("txt-app-title").innerText = "Cockpit ANPP & GED BPF";
                 document.getElementById("txt-urgent-alerts").innerText = "🚨 2 Échéances (J < 30j)";
                 document.getElementById("user-badge").innerText = "Dr. Amine K. (Pharmacien DT)";
+                document.getElementById("txt-goto-btn").innerText = "Aller à...";
             }
         }
 
@@ -852,6 +1105,10 @@
 
         function simulateExportZip() {
             alert("📦 Génération de l'archive officielle ANPP...\n\nStructure CTD Modules 1 à 5 prête pour dépôt physique à l'agence (48 pièces validées, 184 Mo).");
+        }
+
+        function loadRoot() {
+            selectAddressLocation(addressLocations[0]);
         }
 
         // Horloge UTC
