@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bufio"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // DeploymentMode represents whether the platform runs On-Premise or in Cloud SaaS mode
@@ -39,6 +41,8 @@ type Config struct {
 
 // Load reads configuration from environment variables with safe enterprise defaults
 func Load() *Config {
+	loadDotEnv(".env")
+
 	mode := DeploymentMode(getEnv("DEPLOYMENT_MODE", string(ModeOnPremise)))
 	if mode != ModeSaaS {
 		mode = ModeOnPremise
@@ -54,7 +58,7 @@ func Load() *Config {
 	return &Config{
 		DeploymentMode:       mode,
 		Port:                 port,
-		DatabaseURL:          getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5434/homolog?sslmode=disable"),
+		DatabaseURL:          getEnv("DATABASE_URL", "postgres://homolog:homolog_secret_2026@localhost:5434/homolog?sslmode=disable"),
 		StoragePath:          getEnv("STORAGE_PATH", "./data/storage"),
 		StorageType:          getEnv("STORAGE_TYPE", "local"),
 		JWTSecret:            getEnv("JWT_SECRET", "homolog-default-secret-change-in-production-dz-pharma-2026"),
@@ -69,7 +73,7 @@ func Load() *Config {
 		SMTPFrom:     getEnv("SMTP_FROM", "notifications@homolog.dz"),
 
 		OnPremOrgSlug: getEnv("ONPREM_ORG_SLUG", "laboratoire-principal"),
-		OnPremOrgName: getEnv("ONPREM_ORG_NAME", "Laboratoire Pharmaceutique"),
+		OnPremOrgName: getEnv("ONPREM_ORG_NAME", "Laboratoire Pharmaceutique National"),
 	}
 }
 
@@ -78,4 +82,29 @@ func getEnv(key, fallback string) string {
 		return val
 	}
 	return fallback
+}
+
+func loadDotEnv(filepath string) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			k := strings.TrimSpace(parts[0])
+			v := strings.TrimSpace(parts[1])
+			v = strings.Trim(v, `"'`)
+			if os.Getenv(k) == "" {
+				os.Setenv(k, v)
+			}
+		}
+	}
 }
