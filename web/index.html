@@ -49,7 +49,9 @@
             justify-content: space-between;
             padding: 0 12px;
             flex-shrink: 0;
-            gap: 10px;
+            gap: 12px;
+            position: relative;
+            z-index: 50;
         }
 
         .brand-section {
@@ -69,6 +71,13 @@
             font-weight: 800;
         }
 
+        /* Container de la Barre d'Adresse In-Place (façon Windows Explorer) */
+        .address-bar-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 650px;
+        }
+
         .breadcrumb-bar {
             display: flex;
             align-items: center;
@@ -79,17 +88,76 @@
             gap: 6px;
             color: var(--text-muted);
             font-size: 12px;
-            flex: 1;
-            max-width: 600px;
             overflow: hidden;
             white-space: nowrap;
             cursor: text;
-            transition: border-color 0.15s;
+            height: 30px;
+            transition: all 0.15s;
         }
         .breadcrumb-bar:hover { border-color: #0284c7; background: #243447; }
-        .breadcrumb-bar span { cursor: pointer; }
-        .breadcrumb-bar span:hover { color: var(--accent-blue); text-decoration: underline; }
         .breadcrumb-bar .sep { color: var(--text-dim); }
+
+        .address-input-box {
+            display: none;
+            align-items: center;
+            background: #0b1120;
+            border: 1.5px solid #0284c7;
+            border-radius: 4px;
+            padding: 0 8px;
+            height: 30px;
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+        }
+        .address-input-box.active { display: flex; }
+        .address-input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            font-size: 12px;
+            font-family: monospace;
+            height: 100%;
+        }
+
+        /* Menu Déroulant d'Autocomplétion (attaché sous la barre comme Windows Explorer) */
+        .address-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 2px;
+            background: #111827;
+            border: 1px solid #0284c7;
+            border-radius: 6px;
+            max-height: 360px;
+            overflow-y: auto;
+            z-index: 99999;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 15px rgba(2, 132, 199, 0.3);
+            display: none;
+        }
+        .address-dropdown.open { display: block; }
+        .addr-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-left: 3px solid transparent;
+            font-size: 12px;
+        }
+        html[dir="rtl"] .addr-item { border-left: none; border-right: 3px solid transparent; }
+        .addr-item:hover, .addr-item.selected {
+            background: #1e293b;
+            color: #38bdf8;
+            border-left-color: #38bdf8;
+        }
+        html[dir="rtl"] .addr-item:hover, html[dir="rtl"] .addr-item.selected {
+            border-left-color: transparent;
+            border-right-color: #38bdf8;
+        }
+        .addr-item .item-path { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+        html[dir="rtl"] .addr-item .item-path { margin-left: 0; margin-right: auto; }
 
         .search-input {
             background: #0f172a;
@@ -99,6 +167,7 @@
             padding: 4px 8px;
             font-size: 12px;
             width: 170px;
+            height: 30px;
         }
         .search-input:focus { outline: 1px solid var(--accent-blue); }
 
@@ -119,6 +188,7 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            height: 30px;
             transition: all 0.15s;
         }
         .btn-pill:hover { background: #334155; }
@@ -289,7 +359,7 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            transition: width 0.2s ease;
+            transition: all 0.2s ease;
         }
         .pane-preview.hidden { display: none; }
         .preview-header {
@@ -382,12 +452,12 @@
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(3px);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            z-index: 1000;
         }
         .modal-overlay.open { display: flex; }
         .modal {
@@ -398,6 +468,7 @@
             max-width: 95%;
             box-shadow: 0 10px 25px rgba(0,0,0,0.6);
             overflow: hidden;
+            z-index: 1001;
         }
         .modal-header {
             padding: 12px 16px;
@@ -433,110 +504,52 @@
             justify-content: flex-end;
             gap: 8px;
         }
-
-        /* Palette / Barre d'Adresse Rapide (Ctrl + K) */
-        .address-palette {
-            position: fixed;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 640px;
-            max-width: 92%;
-            background: #111827;
-            border: 1px solid #0284c7;
-            border-radius: 8px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 15px rgba(2, 132, 199, 0.4);
-            z-index: 200;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .address-palette.open { display: flex; animation: fadeInScale 0.12s ease-out; }
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: translate(-50%, -10px); }
-            to { opacity: 1; transform: translate(-50%, 0); }
-        }
-        .palette-input-wrap {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            gap: 10px;
-            border-bottom: 1px solid #1e293b;
-            background: #0b1120;
-        }
-        .palette-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: white;
-            font-size: 14px;
-            font-family: inherit;
-        }
-        .palette-results {
-            max-height: 380px;
-            overflow-y: auto;
-            padding: 6px 0;
-        }
-        .palette-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 16px;
-            gap: 10px;
-            cursor: pointer;
-            color: var(--text-muted);
-            border-left: 3px solid transparent;
-            font-size: 12px;
-        }
-        html[dir="rtl"] .palette-item { border-left: none; border-right: 3px solid transparent; }
-        .palette-item:hover, .palette-item.active {
-            background: #1e293b;
-            color: #38bdf8;
-            border-left-color: #38bdf8;
-        }
-        html[dir="rtl"] .palette-item:hover, html[dir="rtl"] .palette-item.active {
-            border-left-color: transparent;
-            border-right-color: #38bdf8;
-        }
-        .palette-item .item-path { color: var(--text-dim); font-size: 11px; margin-left: auto; }
-        html[dir="rtl"] .palette-item .item-path { margin-left: 0; margin-right: auto; }
-        .palette-footer {
-            padding: 6px 14px;
-            background: #090d16;
-            border-top: 1px solid #1e293b;
-            font-size: 11px;
-            color: var(--text-dim);
-            display: flex;
-            justify-content: space-between;
-        }
     </style>
 </head>
 <body>
 
     <!-- Top Header Bar -->
     <header>
-        <div class="brand-section" onclick="loadRoot()">
+        <div class="brand-section" onclick="resetToRoot()">
             <span class="brand-badge">HOMOLOG.DZ</span>
             <span id="txt-app-title">Cockpit ANPP & GED BPF</span>
         </div>
 
-        <!-- Breadcrumb / Barre d'adresse cliquable (Alt+D / Ctrl+K) -->
-        <div class="breadcrumb-bar" id="breadcrumb" onclick="openAddressBar()" title="Cliquer ou presser Ctrl+K pour ouvrir la barre d'adresse">
-            <span style="opacity:0.6; font-size:11px;">📁</span>
-            <span id="bc-root">GED</span>
-            <span class="sep">&gt;</span>
-            <span id="bc-sec">01_Affaires_Reglementaires</span>
-            <span class="sep">&gt;</span>
-            <span id="bc-prod">CTD_Paracétamol_500mg</span>
-            <span class="sep">&gt;</span>
-            <span id="bc-mod" style="color:white; font-weight:600;">Module 3 Qualité (CMC)</span>
-            <span style="margin-left:auto; font-size:10px; background:#334155; padding:1px 5px; border-radius:3px; color:#94a3b8;">Ctrl+K</span>
+        <!-- Wrapper Barre d'Adresse In-Place (façon Windows Explorer) -->
+        <div class="address-bar-wrapper">
+            <!-- Mode 1 : Fil d'Ariane cliquable -->
+            <div class="breadcrumb-bar" id="breadcrumb-display" onclick="openAddressBar()" title="Cliquer ou presser Ctrl+K pour ouvrir la barre d'adresse">
+                <span style="opacity:0.6; font-size:12px;">📁</span>
+                <span id="bc-root">GED</span>
+                <span class="sep">&gt;</span>
+                <span id="bc-sec">01_Affaires_Reglementaires</span>
+                <span class="sep">&gt;</span>
+                <span id="bc-prod">CTD_Paracétamol_500mg</span>
+                <span class="sep">&gt;</span>
+                <span id="bc-mod" style="color:white; font-weight:600;">Module 3 Qualité (CMC)</span>
+                <span style="margin-left:auto; font-size:10px; background:#334155; padding:2px 6px; border-radius:3px; color:#cbd5e1; font-weight:600;">Ctrl+K</span>
+            </div>
+
+            <!-- Mode 2 : Champ de saisie actif dans l'en-tête -->
+            <div class="address-input-box" id="address-input-box">
+                <span style="margin-right:6px; opacity:0.8;">📁</span>
+                <input type="text" id="address-input" 
+                       placeholder="Taper un chemin ou mot-clé (ex: Paracétamol, Module 1, BPF, Seringue)..."
+                       oninput="filterAddressItems()"
+                       onkeydown="handleAddressKeyDown(event)">
+                <button onclick="closeAddressBar()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:0 4px;" title="Fermer (Échap)">✕</button>
+            </div>
+
+            <!-- Menu Déroulant d'autocomplétion attaché sous la barre -->
+            <div class="address-dropdown" id="address-dropdown">
+                <!-- Rempli dynamiquement -->
+            </div>
         </div>
 
         <input type="text" class="search-input" id="search-box" placeholder="🔍 Filtrer liste (Ctrl+F)..." onkeyup="filterTable()">
 
         <div class="header-actions">
-            <button class="btn-pill" onclick="openAddressBar()" title="Ouvrir la barre d'adresse ou recherche globale (Ctrl+K)">
+            <button class="btn-pill" onclick="openAddressBar()" title="Ouvrir la barre d'adresse ou navigation rapide (Ctrl+K)">
                 📁 <span id="txt-goto-btn">Aller à...</span> <kbd style="font-size:10px; opacity:0.6;">Ctrl+K</kbd>
             </button>
             <button class="btn-pill btn-urgent" onclick="openAlertsModal()">
@@ -628,29 +641,8 @@
         </div>
     </footer>
 
-    <!-- Palette / Barre d'Adresse Rapide (Ctrl + K / Ctrl + L / Alt + D) -->
-    <div class="modal-overlay" id="overlay-address-palette" onclick="if(event.target === this) closeAddressBar()">
-        <div class="address-palette open" id="palette-box">
-            <div class="palette-input-wrap">
-                <span style="font-size:16px;">📁</span>
-                <input type="text" class="palette-input" id="address-input" 
-                       placeholder="Taper un chemin ou rechercher (ex: Paracétamol, Module 1, BPF, Seringue)..."
-                       oninput="filterAddressItems()"
-                       onkeydown="handleAddressKeyDown(event)">
-                <span style="font-size:10px; background:#1e293b; padding:2px 6px; border-radius:3px; color:#94a3b8;">Échap</span>
-            </div>
-            <div class="palette-results" id="palette-results">
-                <!-- Rempli dynamiquement -->
-            </div>
-            <div class="palette-footer">
-                <span>↑↓ Naviguer | ↵ Entrée pour ouvrir</span>
-                <span>Raccourcis : Ctrl+K ou Ctrl+L ou Alt+D</span>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Signature Électronique Directeur Technique (21 CFR Part 11) -->
-    <div class="modal-overlay" id="modal-sign">
+    <div class="modal-overlay" id="modal-sign" onclick="if(event.target === this) closeModal('modal-sign')">
         <div class="modal">
             <div class="modal-header">
                 <span>✍️ Signature Électronique BPF / ANPP</span>
@@ -682,7 +674,7 @@
     </div>
 
     <!-- Modal Upload avec reprise par chunks -->
-    <div class="modal-overlay" id="modal-upload">
+    <div class="modal-overlay" id="modal-upload" onclick="if(event.target === this) closeModal('modal-upload')">
         <div class="modal">
             <div class="modal-header">
                 <span>📤 Téléversement de Pièce (Résiliant par Chunks)</span>
@@ -801,9 +793,9 @@
         let isArabic = false;
         let paletteSelectedIndex = 0;
 
-        // Gestionnaire universel des raccourcis clavier
+        // Gestionnaire universel des raccourcis clavier (aucun conflit navigateur)
         window.addEventListener('keydown', function(e) {
-            // Ctrl + K ou Ctrl + L ou Alt + D : Ouvrir la Barre d'Adresse / Palette
+            // Ctrl + K ou Ctrl + L ou Alt + D : Ouvrir la Barre d'Adresse In-Place
             if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.key === 'l' || e.key === 'L')) {
                 e.preventDefault();
                 openAddressBar();
@@ -825,12 +817,13 @@
             // Ctrl + F : Focus sur le filtre de tableau
             if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
                 e.preventDefault();
+                closeAddressBar();
                 const sb = document.getElementById('search-box');
                 if (sb) { sb.focus(); sb.select(); }
                 return;
             }
 
-            // Échap : Fermer la palette ou les modales
+            // Échap : Fermer la barre d'adresse et toutes les modales
             if (e.key === 'Escape') {
                 closeAddressBar();
                 closeModal('modal-sign');
@@ -838,26 +831,44 @@
             }
         });
 
+        // Ouvre la barre d'adresse directement dans l'en-tête (façon Windows Explorer)
         function openAddressBar() {
-            const overlay = document.getElementById("overlay-address-palette");
-            overlay.classList.add("open");
+            // Fermer impérativement toute autre modale ouverte
+            closeModal('modal-upload');
+            closeModal('modal-sign');
+
+            const display = document.getElementById("breadcrumb-display");
+            const editBox = document.getElementById("address-input-box");
+            const dropdown = document.getElementById("address-dropdown");
             const input = document.getElementById("address-input");
-            input.value = "";
+
+            display.style.display = "none";
+            editBox.classList.add("active");
+            dropdown.classList.add("open");
+
+            input.value = "GED\\01_Affaires_Reglementaires\\CTD_Paracetamol\\Module_3_Qualite";
             filterAddressItems();
+
             setTimeout(() => {
                 input.focus();
-            }, 50);
+                input.select();
+            }, 30);
         }
 
         function closeAddressBar() {
-            const overlay = document.getElementById("overlay-address-palette");
-            overlay.classList.remove("open");
+            const display = document.getElementById("breadcrumb-display");
+            const editBox = document.getElementById("address-input-box");
+            const dropdown = document.getElementById("address-dropdown");
+
+            display.style.display = "flex";
+            editBox.classList.remove("active");
+            dropdown.classList.remove("open");
         }
 
         function filterAddressItems() {
             const query = document.getElementById("address-input").value.toLowerCase();
-            const resultsBox = document.getElementById("palette-results");
-            resultsBox.innerHTML = "";
+            const dropdown = document.getElementById("address-dropdown");
+            dropdown.innerHTML = "";
 
             const filtered = addressLocations.filter(loc => 
                 loc.title.toLowerCase().includes(query) || loc.path.toLowerCase().includes(query)
@@ -866,55 +877,60 @@
             paletteSelectedIndex = 0;
 
             if (filtered.length === 0) {
-                resultsBox.innerHTML = `<div style="padding:15px; text-align:center; color:var(--text-dim);">Aucun dossier ou document correspondant.</div>`;
+                dropdown.innerHTML = `<div style="padding:12px; text-align:center; color:var(--text-dim); font-size:11px;">Aucun dossier ou chemin correspondant.</div>`;
                 return;
             }
 
             filtered.forEach((loc, idx) => {
                 const item = document.createElement("div");
-                item.className = "palette-item" + (idx === 0 ? " active" : "");
-                item.id = `palette-item-${idx}`;
-                item.onclick = () => selectAddressLocation(loc);
+                item.className = "addr-item" + (idx === 0 ? " selected" : "");
+                item.id = `addr-item-${idx}`;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    selectAddressLocation(loc);
+                };
                 item.innerHTML = `
-                    <span style="font-size:16px;">${loc.icon}</span>
+                    <span style="font-size:15px;">${loc.icon}</span>
                     <span style="font-weight:600;">${loc.title}</span>
                     <span class="item-path">${loc.path}</span>
                 `;
-                resultsBox.appendChild(item);
+                dropdown.appendChild(item);
             });
         }
 
         function handleAddressKeyDown(e) {
-            const items = document.querySelectorAll(".palette-item");
-            if (items.length === 0) return;
+            const items = document.querySelectorAll(".addr-item");
+            if (items.length === 0) {
+                if (e.key === "Escape") closeAddressBar();
+                return;
+            }
 
             if (e.key === "ArrowDown") {
                 e.preventDefault();
-                items[paletteSelectedIndex].classList.remove("active");
+                items[paletteSelectedIndex].classList.remove("selected");
                 paletteSelectedIndex = (paletteSelectedIndex + 1) % items.length;
-                items[paletteSelectedIndex].classList.add("active");
+                items[paletteSelectedIndex].classList.add("selected");
                 items[paletteSelectedIndex].scrollIntoView({ block: "nearest" });
             } else if (e.key === "ArrowUp") {
                 e.preventDefault();
-                items[paletteSelectedIndex].classList.remove("active");
+                items[paletteSelectedIndex].classList.remove("selected");
                 paletteSelectedIndex = (paletteSelectedIndex - 1 + items.length) % items.length;
-                items[paletteSelectedIndex].classList.add("active");
+                items[paletteSelectedIndex].classList.add("selected");
                 items[paletteSelectedIndex].scrollIntoView({ block: "nearest" });
             } else if (e.key === "Enter") {
                 e.preventDefault();
                 items[paletteSelectedIndex].click();
+            } else if (e.key === "Escape") {
+                closeAddressBar();
             }
         }
 
         function selectAddressLocation(loc) {
             closeAddressBar();
-            // Met à jour le fil d'Ariane
             document.getElementById("bc-root").innerText = "GED";
             document.getElementById("bc-sec").innerText = "Affaires Réglementaires";
             document.getElementById("bc-prod").innerText = loc.title.split("—")[0].trim();
             document.getElementById("bc-mod").innerText = loc.title.includes("—") ? loc.title.split("—")[1].trim() : loc.title;
-
-            // Alerte discrète
             renderTable();
         }
 
@@ -1065,6 +1081,8 @@
         }
 
         function openSignModal(docName) {
+            closeAddressBar();
+            closeModal('modal-upload');
             document.getElementById("sign-doc-name").value = docName;
             document.getElementById("modal-sign").classList.add("open");
         }
@@ -1092,24 +1110,38 @@
         }
 
         function openUploadModal() {
+            closeAddressBar();
+            closeModal('modal-sign');
             document.getElementById("modal-upload").classList.add("open");
         }
 
         function openAlertsModal() {
+            closeAddressBar();
             alert("🚨 ÉCHÉANCES RÉGLEMENTAIRES CRITIQUES (J < 30j) :\n\n1. Renouvellement Décision d'Enregistrement - Paracétamol 500mg : Expire dans 18 jours (ANPP Référence DZ-2019-0412).\n2. Demande de compléments ANPP - Seringue 3 pièces : Réponse obligatoire avant le 28/11/2026.");
         }
 
         function openAuditModal() {
+            closeAddressBar();
             alert("🛡️ JOURNAL D'AUDIT IMMUABLE (Extrait en direct) :\n\n[10/11/2026 11:42:01 UTC] AUTH_LOGIN - dr.amine@labo.dz (DT) depuis 192.168.1.45 (2FA validé)\n[10/11/2026 11:48:15 UTC] DOC_VIEW - 3.2.S.1_Nomenclature.pdf (SHA: e3b0c442...)\n[10/11/2026 12:01:30 UTC] SYS_BACKUP - Archive universelle chiffrée homolog_20261110.homolog créée avec succès.\n\nContrôle BPF : Intégrité cryptographique garantie, table append-only.");
         }
 
         function simulateExportZip() {
+            closeAddressBar();
             alert("📦 Génération de l'archive officielle ANPP...\n\nStructure CTD Modules 1 à 5 prête pour dépôt physique à l'agence (48 pièces validées, 184 Mo).");
         }
 
-        function loadRoot() {
+        function resetToRoot() {
+            closeAddressBar();
             selectAddressLocation(addressLocations[0]);
         }
+
+        // Clic extérieur pour refermer la barre d'adresse
+        document.addEventListener('click', function(e) {
+            const wrapper = document.querySelector('.address-bar-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                closeAddressBar();
+            }
+        });
 
         // Horloge UTC
         setInterval(() => {
