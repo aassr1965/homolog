@@ -513,38 +513,66 @@
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(3px);
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 100000;
         }
         .modal-overlay.open { display: flex; }
         .modal {
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            width: 480px;
+            width: 520px;
             max-width: 95%;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 45px rgba(0,0,0,0.45);
             overflow: hidden;
-            z-index: 1001;
+            z-index: 100001;
             color: var(--text-main);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: modalFadeIn 0.15s ease-out;
         }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-lg { width: 780px; }
+        .modal-xl { width: 980px; }
         .modal-header {
             padding: 12px 16px;
             background: var(--bg-header);
             border-bottom: 1px solid var(--border-color);
             font-weight: 700;
             display: flex;
+            align-items: center;
             justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .modal-header .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            line-height: 1;
+        }
+        .modal-header .close-btn:hover {
+            background: var(--bg-row-hover);
+            color: var(--text-main);
         }
         .modal-body {
             padding: 16px;
             display: flex;
             flex-direction: column;
             gap: 12px;
+            overflow-y: auto;
+            flex: 1;
         }
         .legal-notice {
             background: rgba(16, 185, 129, 0.1);
@@ -553,6 +581,7 @@
             font-size: 11px;
             color: #065f46;
             line-height: 1.4;
+            border-radius: 4px;
         }
         html[data-theme="dark"] .legal-notice { color: #d1fae5; }
         html[dir="rtl"] .legal-notice {
@@ -565,7 +594,33 @@
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: flex-end;
+            align-items: center;
             gap: 8px;
+            flex-shrink: 0;
+        }
+        .alert-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-red);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        html[dir="rtl"] .alert-card {
+            border-left: 1px solid var(--border-color);
+            border-right: 4px solid var(--accent-red);
+        }
+        .alert-card.warning {
+            border-left-color: var(--accent-amber);
+        }
+        html[dir="rtl"] .alert-card.warning {
+            border-right-color: var(--accent-amber);
+        }
+        .audit-row:hover {
+            background: var(--bg-row-hover);
         }
     </style>
 </head>
@@ -714,7 +769,7 @@
         <div class="modal">
             <div class="modal-header">
                 <span>✍️ Signature Électronique BPF / ANPP</span>
-                <span style="cursor:pointer;" onclick="closeModal('modal-sign')">✕</span>
+                <button class="close-btn" onclick="closeModal('modal-sign')">✕</button>
             </div>
             <div class="modal-body">
                 <div class="legal-notice" id="sign-legal-text">
@@ -746,7 +801,7 @@
         <div class="modal">
             <div class="modal-header">
                 <span>📤 Téléversement de Pièce (Résiliant par Chunks)</span>
-                <span style="cursor:pointer;" onclick="closeModal('modal-upload')">✕</span>
+                <button class="close-btn" onclick="closeModal('modal-upload')">✕</button>
             </div>
             <div class="modal-body">
                 <div style="border:2px dashed var(--accent-blue); padding:25px; text-align:center; border-radius:6px; background:rgba(2,132,199,0.05); cursor:pointer;">
@@ -755,12 +810,200 @@
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Motif obligatoire de révision BPF :</label>
-                    <input type="text" placeholder="Ex: Mise à jour selon remarques de la commission ANPP" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px;">
+                    <input type="text" id="upload-reason" placeholder="Ex: Mise à jour selon remarques de la commission ANPP" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px;">
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-pill" onclick="closeModal('modal-upload')">Fermer</button>
-                <button class="btn-pill" style="background:#0284c7; color:white;" onclick="alert('Simulation upload terminée avec succès (SHA-256 calculé).'); closeModal('modal-upload');">Téléverser</button>
+                <button class="btn-pill" style="background:#0284c7; color:white; border:none;" onclick="finishUploadSimulation()">Téléverser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Échéances Critiques ANPP -->
+    <div class="modal-overlay" id="modal-alerts" onclick="if(event.target === this) closeModal('modal-alerts')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">🚨</span>
+                    <span>Échéances Réglementaires Critiques &amp; Vigilance ANPP</span>
+                    <span style="font-size:10px; background:rgba(239,68,68,0.2); color:#ef4444; padding:2px 8px; border-radius:10px; font-weight:700;">J &lt; 30 JOURS</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-alerts')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; padding:10px; font-size:11px; color:var(--text-main); line-height:1.4; border-radius:4px;">
+                    ⚠️ <strong>Avertissement Réglementaire (Décret exécutif 20-324 / ANPP) :</strong><br>
+                    Le défaut de réponse ou de dépôt de renouvellement dans les délais légaux impartis entraîne le rejet de plein droit du dossier ou la caducité automatique de la Décision d'Enregistrement (AMM).
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <!-- Alerte 1 : Paracétamol AMM -->
+                    <div class="alert-card">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:14px;">💊</span>
+                                <strong style="font-size:13px; color:var(--text-main);">Renouvellement Décision d'Enregistrement (AMM) — Paracétamol 500mg</strong>
+                                <span style="background:rgba(239,68,68,0.2); color:#ef4444; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;">Expire dans 18 jours</span>
+                            </div>
+                            <div style="color:var(--text-muted); font-size:11px;">
+                                Référence ANPP : <code style="color:var(--accent-blue);">DZ-2019-0412</code> • Date limite de dépôt : <strong>28/11/2026</strong> • Type : Renouvellement quinquennal
+                            </div>
+                            <div style="color:var(--text-dim); font-size:11px;">
+                                Action requise : Valider les pièces administratives du Module 1 (Statut de commercialisation, BPF fabricant actif).
+                            </div>
+                        </div>
+                        <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 12px; white-space:nowrap;" onclick="goToLocation('ctd-para-1'); closeModal('modal-alerts');">
+                            Accéder au Module 1 ➔
+                        </button>
+                    </div>
+
+                    <!-- Alerte 2 : Seringue 3 pièces DM -->
+                    <div class="alert-card warning">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:14px;">💉</span>
+                                <strong style="font-size:13px; color:var(--text-main);">Demande de Compléments ANPP — Seringue 3 pièces stérile 5ml</strong>
+                                <span style="background:rgba(245,158,11,0.2); color:#f59e0b; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;">Expire dans 17 jours</span>
+                            </div>
+                            <div style="color:var(--text-muted); font-size:11px;">
+                                Courrier officiel : <code style="color:var(--accent-amber);">N° 842/DEDM/ANPP/2026</code> • Date butoir : <strong>27/11/2026</strong> • Statut : En cours d'instruction
+                            </div>
+                            <div style="color:var(--text-dim); font-size:11px;">
+                                Action requise : Transmettre le rapport d'évaluation biologique ISO 10993-5 (Essais de cytotoxicité in vitro).
+                            </div>
+                        </div>
+                        <button class="btn-pill" style="background:var(--accent-amber); color:white; border:none; padding:6px 12px; white-space:nowrap;" onclick="goToLocation('dm-seringue'); closeModal('modal-alerts');">
+                            Ouvrir le dossier DM ➔
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-pill" onclick="closeModal('modal-alerts')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Journal d'Audit Trail Immuable (ALCOA+ / 21 CFR Part 11) -->
+    <div class="modal-overlay" id="modal-audit" onclick="if(event.target === this) closeModal('modal-audit')">
+        <div class="modal modal-xl">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">🛡️</span>
+                    <span>Piste d'Audit Trail Immuable (ALCOA+ / 21 CFR Part 11)</span>
+                    <span style="font-size:10px; background:rgba(16,185,129,0.2); color:#10b981; padding:2px 8px; border-radius:10px; font-weight:700;">APPEND-ONLY (TRIGGER SQL)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-audit')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="legal-notice">
+                    🔒 <strong>Intégrité Cryptographique Chaînée :</strong> Chaque action sensible est enregistrée avec horodatage UTC à la seconde exacte et empreinte SHA-256. La table PostgreSQL est protégée par un trigger SQL interdisant tout UPDATE et DELETE.
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                    <input type="text" id="audit-filter-input" placeholder="🔍 Filtrer par événement, utilisateur ou document..." 
+                           onkeyup="filterAuditTable()" 
+                           style="flex:1; padding:5px 10px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    <div style="font-size:11px; color:var(--text-dim);" id="audit-count-badge">6 événements scellés</div>
+                </div>
+
+                <div style="max-height:340px; overflow-y:auto; border:1px solid var(--border-color); border-radius:4px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;">
+                        <thead style="background:var(--bg-th); position:sticky; top:0; z-index:2; border-bottom:1px solid var(--border-color);">
+                            <tr>
+                                <th style="padding:6px 10px; color:var(--text-dim);">Horodatage UTC</th>
+                                <th style="padding:6px 10px; color:var(--text-dim);">Événement BPF</th>
+                                <th style="padding:6px 10px; color:var(--text-dim);">Utilisateur &amp; Rôle</th>
+                                <th style="padding:6px 10px; color:var(--text-dim);">Cible / Entité</th>
+                                <th style="padding:6px 10px; color:var(--text-dim);">Empreinte SHA-256</th>
+                                <th style="padding:6px 10px; color:var(--text-dim);">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-table-body">
+                            <!-- Rendu dynamique par JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-pill" onclick="exportAuditTrailCSV()">📥 Exporter l'Audit Trail (.CSV)</button>
+                <button class="btn-pill" onclick="closeModal('modal-audit')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Export Archive Souveraine ANPP -->
+    <div class="modal-overlay" id="modal-export" onclick="if(event.target === this) closeModal('modal-export')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">📦</span>
+                    <span>Export Dossier Officiel ANPP &amp; Réversibilité</span>
+                    <span style="font-size:10px; background:rgba(2,132,199,0.2); color:#0284c7; padding:2px 8px; border-radius:10px; font-weight:700;">CTD e-READY</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-export')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
+                        <h4 style="font-size:12px; margin-bottom:8px; color:var(--text-main);">📋 Synthèse du Dossier CTD</h4>
+                        <div style="font-size:11px; display:flex; flex-direction:column; gap:6px;">
+                            <div>Produit : <strong>Paracétamol 500mg Comprimé</strong></div>
+                            <div>Code Produit : <code style="color:var(--accent-blue);">PROD-MED-001</code></div>
+                            <div>Structure : <strong>Modules CTD 1 à 5 (Spécifique Algérie)</strong></div>
+                            <div>Pièces incluses : <strong style="color:var(--accent-emerald);">48 / 48 pièces validées (100%)</strong></div>
+                            <div>Directeur Technique : <strong>Dr. Amine K. (Signé &amp; Scellé)</strong></div>
+                        </div>
+                    </div>
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
+                        <h4 style="font-size:12px; margin-bottom:8px; color:var(--text-main);">🔐 Données Techniques de l'Archive</h4>
+                        <div style="font-size:11px; display:flex; flex-direction:column; gap:6px;">
+                            <div>Format : <strong>Archive universelle chiffrée (.homolog)</strong></div>
+                            <div>Taille totale : <strong>184.2 Mo (Dédupliquée CAS)</strong></div>
+                            <div>Norme de dépôt : <strong>Recommandation ANPP Bouchaoui</strong></div>
+                            <div>Empreinte globale SHA-256 :</div>
+                            <code style="font-size:10px; word-break:break-all; color:var(--text-dim); background:var(--bg-panel); padding:4px; border-radius:3px;">5fa98c32bb4e0192e47856cd891b002138947ef3a92...</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
+                    <h4 style="font-size:12px; margin-bottom:8px; color:var(--text-main);">✅ Contrôles de Conformité Pré-Dépôt</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size:11px;">
+                        <div style="color:var(--accent-emerald);">✓ Module 1 Administratif Algérie complet</div>
+                        <div style="color:var(--accent-emerald);">✓ Module 2 Résumés &amp; Synthèses validés</div>
+                        <div style="color:var(--accent-emerald);">✓ Module 3 Qualité CMC (DMF, Spécifications)</div>
+                        <div style="color:var(--accent-emerald);">✓ Modules 4 &amp; 5 Non-Clinique / Clinique</div>
+                        <div style="color:var(--accent-emerald);">✓ Bordereau de dépôt avec QR Code prêt</div>
+                        <div style="color:var(--accent-emerald);">✓ Audit Trail scellé rattaché à l'archive</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-pill" onclick="closeModal('modal-export')">Fermer</button>
+                <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="triggerArchiveDownload()">
+                    ⬇️ Télécharger l'Archive Officielle (.zip / .homolog)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Notification & Confirmation Universelle (Remplace alert()) -->
+    <div class="modal-overlay" id="modal-notify" onclick="if(event.target === this) closeModal('modal-notify')">
+        <div class="modal">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="notify-icon" style="font-size:16px;">ℹ️</span>
+                    <span id="notify-title">Notification Homolog</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-notify')">✕</button>
+            </div>
+            <div class="modal-body" id="notify-body" style="font-size:12px; line-height:1.5;">
+                <!-- Contenu dynamique -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-pill" id="notify-btn-ok" style="background:var(--accent-blue); color:white; border:none;" onclick="closeModal('modal-notify')">Compris</button>
             </div>
         </div>
     </div>
@@ -917,15 +1160,13 @@
             // Échap : Fermer la barre d'adresse et toutes les modales
             if (e.key === 'Escape') {
                 closeAddressBar();
-                closeModal('modal-sign');
-                closeModal('modal-upload');
+                closeAllModals();
             }
         });
 
         // Ouvre la barre d'adresse directement dans l'en-tête (façon Windows Explorer)
         function openAddressBar() {
-            closeModal('modal-upload');
-            closeModal('modal-sign');
+            closeAllModals();
 
             const display = document.getElementById("breadcrumb-display");
             const editBox = document.getElementById("address-input-box");
@@ -1171,58 +1412,229 @@
             applyTheme(currentTheme); // Met à jour le texte du bouton de thème dans la bonne langue
         }
 
-        function openSignModal(docName) {
-            closeAddressBar();
-            closeModal('modal-upload');
-            document.getElementById("sign-doc-name").value = docName;
-            document.getElementById("modal-sign").classList.add("open");
+        // Piste d'audit trail ALCOA+ en mémoire
+        const mockAuditTrail = [
+            { ts: "10/11/2026 15:42:01", code: "AUTH_LOGIN", label: "Connexion 2FA", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Session 192.168.1.45 (TOTP vérifié)", sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "VALIDÉ" },
+            { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
+            { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
+            { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
+            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle homolog_20261110.homolog", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
+            { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
+        ];
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
         }
 
         function closeModal(id) {
-            document.getElementById(id).classList.remove("open");
+            const el = document.getElementById(id);
+            if (el) el.classList.remove("open");
+        }
+
+        function showNotifyModal(title, contentHtml, icon = "ℹ️", btnText = "Compris") {
+            closeAllModals();
+            document.getElementById("notify-title").innerText = title;
+            document.getElementById("notify-icon").innerText = icon;
+            document.getElementById("notify-body").innerHTML = contentHtml;
+            document.getElementById("notify-btn-ok").innerText = btnText;
+            document.getElementById("modal-notify").classList.add("open");
+        }
+
+        function openSignModal(docName) {
+            closeAddressBar();
+            closeAllModals();
+            document.getElementById("sign-doc-name").value = docName;
+            document.getElementById("sign-auth-code").value = "";
+            document.getElementById("modal-sign").classList.add("open");
         }
 
         function executeSignature() {
-            const code = document.getElementById("sign-auth-code").value;
+            const code = document.getElementById("sign-auth-code").value.trim();
             if (!code) {
-                alert("Erreur de conformité 21 CFR Part 11 : Le mot de passe ou code 2FA est obligatoire pour apposer votre signature légale.");
+                showNotifyModal(
+                    "Erreur de Conformité 21 CFR Part 11",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-red); font-weight:700;">
+                            ⚠️ Re-authentification obligatoire pour signature légale
+                        </div>
+                        <div style="font-size:12px; color:var(--text-main);">
+                            Conformément aux exigences <strong>21 CFR Part 11</strong> et à l'<strong>Annexe 11 des BPF</strong>, une signature électronique ne peut être apposée sans ressaisie obligatoire du mot de passe ou d'un code 2FA TOTP à 6 chiffres.
+                        </div>
+                    </div>`,
+                    "⚠️",
+                    "Corriger"
+                );
                 return;
             }
-            alert("✓ Signature électronique enregistrée avec succès !\n- Horodatage UTC : " + new Date().toISOString() + "\n- Signataire : Dr. Amine K. (Directeur Technique)\n- Empreinte scellée dans l'Audit Trail immuable.");
+
             const doc = mockDocuments.find(d => d.id === selectedDocId);
+            const nowIso = new Date().toISOString();
             if (doc) {
                 doc.status = "status-ok";
                 doc.statusLabel = "VALIDÉ BPF";
                 doc.version = "v1.0";
                 doc.validDT = "Dr. Amine K. (À l'instant)";
             }
+
+            // Ajout à l'audit trail
+            mockAuditTrail.unshift({
+                ts: new Date().toLocaleDateString('fr-FR') + " " + new Date().toLocaleTimeString('fr-FR'),
+                code: "DOC_SIGN_DT",
+                label: "Signature Électronique",
+                user: "Dr. Amine K.",
+                role: "Pharmacien DT",
+                target: (doc ? doc.name : "Document") + " (Visa DT)",
+                sha: doc ? doc.sha : "a8f102bc4501a1d9e487102b3391cd04",
+                status: "SCELLÉ 21 CFR"
+            });
+
             closeModal("modal-sign");
             renderTable();
+
+            showNotifyModal(
+                "Signature Électronique Certifiée (21 CFR Part 11)",
+                `<div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px; color:var(--accent-emerald); font-weight:700;">
+                        <span style="font-size:18px;">✓</span>
+                        <span>Document visé et scellé avec succès</span>
+                    </div>
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; padding:10px; font-size:11px; display:flex; flex-direction:column; gap:4px;">
+                        <div><strong>Signataire :</strong> Dr. Amine K. (Directeur Technique)</div>
+                        <div><strong>Fonction réglementaire :</strong> Pharmacien DT agréé MIPH</div>
+                        <div><strong>Horodatage UTC :</strong> <code>${nowIso}</code></div>
+                        <div><strong>Empreinte SHA-256 :</strong> <code style="word-break:break-all;">${doc ? doc.sha : 'e3b0c442...'}</code></div>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-dim);">
+                        L'événement a été scellé dans l'<strong>Audit Trail immuable</strong> (table append-only protégée par trigger PostgreSQL).
+                    </div>
+                </div>`,
+                "✍️",
+                "Fermer"
+            );
         }
 
         function openUploadModal() {
             closeAddressBar();
-            closeModal('modal-sign');
+            closeAllModals();
             document.getElementById("modal-upload").classList.add("open");
+        }
+
+        function finishUploadSimulation() {
+            closeModal('modal-upload');
+            showNotifyModal(
+                "Téléversement Terminé & Intégrité Vérifiée",
+                `<div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="color:var(--accent-emerald); font-weight:700;">
+                        ✓ Fichier réceptionné dans le stockage CAS sécurisé
+                    </div>
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; padding:10px; font-size:11px; display:flex; flex-direction:column; gap:4px;">
+                        <div><strong>Mode :</strong> Chunked Upload résilient (Morceaux de 5 Mo)</div>
+                        <div><strong>Déduplication CAS :</strong> Hash SHA-256 calculé à la volée</div>
+                        <div><strong>Version créée :</strong> <span style="font-weight:600;">v1.1 (En revue Qualité)</span></div>
+                        <div><strong>Statut BPF :</strong> En attente de validation par le DT</div>
+                    </div>
+                </div>`,
+                "📤",
+                "Fermer"
+            );
         }
 
         function openAlertsModal() {
             closeAddressBar();
-            alert("🚨 ÉCHÉANCES RÉGLEMENTAIRES CRITIQUES (J < 30j) :\n\n1. Renouvellement Décision d'Enregistrement - Paracétamol 500mg : Expire dans 18 jours (ANPP Référence DZ-2019-0412).\n2. Demande de compléments ANPP - Seringue 3 pièces : Réponse obligatoire avant le 28/11/2026.");
+            closeAllModals();
+            document.getElementById("modal-alerts").classList.add("open");
         }
 
         function openAuditModal() {
             closeAddressBar();
-            alert("🛡️ JOURNAL D'AUDIT IMMUABLE (Extrait en direct) :\n\n[10/11/2026 11:42:01 UTC] AUTH_LOGIN - dr.amine@labo.dz (DT) depuis 192.168.1.45 (2FA validé)\n[10/11/2026 11:48:15 UTC] DOC_VIEW - 3.2.S.1_Nomenclature.pdf (SHA: e3b0c442...)\n[10/11/2026 12:01:30 UTC] SYS_BACKUP - Archive universelle chiffrée homolog_20261110.homolog créée avec succès.\n\nContrôle BPF : Intégrité cryptographique garantie, table append-only.");
+            closeAllModals();
+            renderAuditTable();
+            document.getElementById("modal-audit").classList.add("open");
+        }
+
+        function renderAuditTable(list = mockAuditTrail) {
+            const tbody = document.getElementById("audit-table-body");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            list.forEach(item => {
+                const tr = document.createElement("tr");
+                tr.className = "audit-row";
+                tr.innerHTML = `
+                    <td style="padding:6px 10px; font-family:monospace; color:var(--text-muted);">${item.ts}</td>
+                    <td style="padding:6px 10px;"><span style="background:var(--badge-bg); color:var(--accent-blue); padding:1px 6px; border-radius:3px; font-weight:600; font-size:10px;">${item.code}</span> <small style="color:var(--text-dim);">${item.label}</small></td>
+                    <td style="padding:6px 10px; font-weight:600;">${item.user} <span style="color:var(--text-dim); font-weight:normal;">(${item.role})</span></td>
+                    <td style="padding:6px 10px; color:var(--text-main);">${item.target}</td>
+                    <td style="padding:6px 10px; font-family:monospace; font-size:10px; color:var(--text-dim);" title="${item.sha}">${item.sha.substring(0, 16)}...</td>
+                    <td style="padding:6px 10px;"><span style="color:var(--accent-emerald); font-weight:700; font-size:10px;">${item.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            const badge = document.getElementById("audit-count-badge");
+            if (badge) badge.innerText = `${list.length} événement(s) scellé(s)`;
+        }
+
+        function filterAuditTable() {
+            const q = document.getElementById("audit-filter-input").value.toLowerCase();
+            const filtered = mockAuditTrail.filter(a => 
+                a.code.toLowerCase().includes(q) ||
+                a.label.toLowerCase().includes(q) ||
+                a.user.toLowerCase().includes(q) ||
+                a.role.toLowerCase().includes(q) ||
+                a.target.toLowerCase().includes(q) ||
+                a.sha.toLowerCase().includes(q)
+            );
+            renderAuditTable(filtered);
+        }
+
+        function exportAuditTrailCSV() {
+            showNotifyModal(
+                "Export CSV Certifié (Audit Trail)",
+                `<div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="color:var(--accent-emerald); font-weight:700;">
+                        ✓ Fichier CSV certifié généré avec succès
+                    </div>
+                    <div style="font-size:11px; color:var(--text-main);">
+                        Le fichier <code>audit_trail_${new Date().toISOString().slice(0,10)}.csv</code> contient l'historique complet infalsifiable avec horodatage UTC et hash chaîné.
+                    </div>
+                </div>`,
+                "📥",
+                "Fermer"
+            );
         }
 
         function simulateExportZip() {
             closeAddressBar();
-            alert("📦 Génération de l'archive officielle ANPP...\n\nStructure CTD Modules 1 à 5 prête pour dépôt physique à l'agence (48 pièces validées, 184 Mo).");
+            closeAllModals();
+            document.getElementById("modal-export").classList.add("open");
+        }
+
+        function triggerArchiveDownload() {
+            closeModal("modal-export");
+            showNotifyModal(
+                "Archive Souveraine Générée",
+                `<div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="color:var(--accent-blue); font-weight:700;">
+                        📦 Archive officielle prête pour téléchargement
+                    </div>
+                    <div style="font-size:11px; color:var(--text-main);">
+                        Le package <code>CTD_Paracetamol_500mg_ANPP_2026.zip</code> (184.2 Mo) a été assemblé avec son index XML, son bordereau de dépôt officiel et l'empreinte de contrôle SHA-256.
+                    </div>
+                </div>`,
+                "⬇️",
+                "Terminer"
+            );
+        }
+
+        function goToLocation(targetKey) {
+            const loc = addressLocations.find(l => l.target === targetKey);
+            if (loc) {
+                selectAddressLocation(loc);
+            }
         }
 
         function resetToRoot() {
             closeAddressBar();
+            closeAllModals();
             selectAddressLocation(addressLocations[0]);
         }
 
