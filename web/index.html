@@ -1840,12 +1840,13 @@
 
             // Appel direct à l'API REST backend (persistance PostgreSQL)
             try {
+                const isTOTP = /^\d{6}$/.test(code);
                 const res = await fetch('/api/v1/auth/reauth-sign', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        password: code,
-                        totp_code: (code.length === 6 && /^\d+$/.test(code)) ? code : "",
+                        password: isTOTP ? "" : code,
+                        totp_code: isTOTP ? code : "",
                         document_name: doc ? doc.name : "Document",
                         document_sha256: doc ? doc.sha : "e3b0c442...",
                         reason: reason,
