@@ -1,16 +1,21 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr" dir="ltr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HOMOLOG.DZ — Cockpit Réglementaire ANPP & GED Pharmaceutique</title>
     <style>
-        :root {
+        /* Variables Thème Sombre (Par défaut) */
+        :root, html[data-theme="dark"] {
             --bg-app: #0f172a;
+            --bg-header: #090d16;
+            --bg-tree: #0b1120;
             --bg-panel: #1e293b;
             --bg-surface: #0f172a;
             --bg-row-hover: #334155;
             --bg-row-selected: #1e3a5f;
+            --bg-th: #111827;
+            --bg-input: #0b1120;
             --border-color: #334155;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -20,8 +25,60 @@
             --accent-amber: #f59e0b;
             --accent-red: #ef4444;
             --accent-purple: #a855f7;
+            --badge-bg: #334155;
+            --dropdown-bg: #111827;
+            --pdf-bg: #f8fafc;
+            --pdf-text: #0f172a;
+            --pdf-border: #cbd5e1;
+            --meta-bg: #1e293b;
+            --tag-ok-bg: rgba(16, 185, 129, 0.15);
+            --tag-ok-text: #34d399;
+            --tag-ok-border: rgba(16, 185, 129, 0.3);
+            --tag-rev-bg: rgba(245, 158, 11, 0.15);
+            --tag-rev-text: #fbbf24;
+            --tag-rev-border: rgba(245, 158, 11, 0.3);
+            --tag-req-bg: rgba(239, 68, 68, 0.15);
+            --tag-req-text: #f87171;
+            --tag-req-border: rgba(239, 68, 68, 0.3);
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             --font-ar: "Cairo", "Segoe UI", Tahoma, sans-serif;
+        }
+
+        /* Variables Thème Clair (Windows 11 Enterprise Pro) */
+        html[data-theme="light"] {
+            --bg-app: #f1f5f9;
+            --bg-header: #ffffff;
+            --bg-tree: #f8fafc;
+            --bg-panel: #ffffff;
+            --bg-surface: #ffffff;
+            --bg-row-hover: #f1f5f9;
+            --bg-row-selected: #e0f2fe;
+            --bg-th: #f1f5f9;
+            --bg-input: #ffffff;
+            --border-color: #cbd5e1;
+            --text-main: #0f172a;
+            --text-muted: #334155;
+            --text-dim: #64748b;
+            --accent-emerald: #059669;
+            --accent-blue: #0284c7;
+            --accent-amber: #d97706;
+            --accent-red: #dc2626;
+            --accent-purple: #7c3aed;
+            --badge-bg: #e2e8f0;
+            --dropdown-bg: #ffffff;
+            --pdf-bg: #ffffff;
+            --pdf-text: #0f172a;
+            --pdf-border: #cbd5e1;
+            --meta-bg: #f8fafc;
+            --tag-ok-bg: #dcfce7;
+            --tag-ok-text: #15803d;
+            --tag-ok-border: #86efac;
+            --tag-rev-bg: #fef3c7;
+            --tag-rev-text: #b45309;
+            --tag-rev-border: #fde68a;
+            --tag-req-bg: #fee2e2;
+            --tag-req-text: #b91c1c;
+            --tag-req-border: #fca5a5;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,6 +92,7 @@
             overflow: hidden;
             font-size: 13px;
             user-select: none;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
         html[dir="rtl"] { font-family: var(--font-ar); }
@@ -42,7 +100,7 @@
         /* Top Bar */
         header {
             height: 44px;
-            background: #090d16;
+            background: var(--bg-header);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -75,13 +133,13 @@
         .address-bar-wrapper {
             position: relative;
             flex: 1;
-            max-width: 650px;
+            max-width: 620px;
         }
 
         .breadcrumb-bar {
             display: flex;
             align-items: center;
-            background: #1e293b;
+            background: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 4px 10px;
@@ -94,14 +152,14 @@
             height: 30px;
             transition: all 0.15s;
         }
-        .breadcrumb-bar:hover { border-color: #0284c7; background: #243447; }
+        .breadcrumb-bar:hover { border-color: var(--accent-blue); background: var(--bg-row-hover); }
         .breadcrumb-bar .sep { color: var(--text-dim); }
 
         .address-input-box {
             display: none;
             align-items: center;
-            background: #0b1120;
-            border: 1.5px solid #0284c7;
+            background: var(--bg-input);
+            border: 1.5px solid var(--accent-blue);
             border-radius: 4px;
             padding: 0 8px;
             height: 30px;
@@ -113,7 +171,7 @@
             background: transparent;
             border: none;
             outline: none;
-            color: white;
+            color: var(--text-main);
             font-size: 12px;
             font-family: monospace;
             height: 100%;
@@ -126,13 +184,13 @@
             left: 0;
             right: 0;
             margin-top: 2px;
-            background: #111827;
-            border: 1px solid #0284c7;
+            background: var(--dropdown-bg);
+            border: 1px solid var(--accent-blue);
             border-radius: 6px;
             max-height: 360px;
             overflow-y: auto;
             z-index: 99999;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 15px rgba(2, 132, 199, 0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 15px rgba(2, 132, 199, 0.2);
             display: none;
         }
         .address-dropdown.open { display: block; }
@@ -148,25 +206,25 @@
         }
         html[dir="rtl"] .addr-item { border-left: none; border-right: 3px solid transparent; }
         .addr-item:hover, .addr-item.selected {
-            background: #1e293b;
-            color: #38bdf8;
-            border-left-color: #38bdf8;
+            background: var(--bg-row-selected);
+            color: var(--accent-blue);
+            border-left-color: var(--accent-blue);
         }
         html[dir="rtl"] .addr-item:hover, html[dir="rtl"] .addr-item.selected {
             border-left-color: transparent;
-            border-right-color: #38bdf8;
+            border-right-color: var(--accent-blue);
         }
         .addr-item .item-path { color: var(--text-dim); font-size: 11px; margin-left: auto; }
         html[dir="rtl"] .addr-item .item-path { margin-left: 0; margin-right: auto; }
 
         .search-input {
-            background: #0f172a;
+            background: var(--bg-surface);
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            color: white;
+            color: var(--text-main);
             padding: 4px 8px;
             font-size: 12px;
-            width: 170px;
+            width: 160px;
             height: 30px;
         }
         .search-input:focus { outline: 1px solid var(--accent-blue); }
@@ -178,7 +236,7 @@
         }
 
         .btn-pill {
-            background: #1e293b;
+            background: var(--bg-panel);
             border: 1px solid var(--border-color);
             color: var(--text-main);
             padding: 4px 10px;
@@ -191,12 +249,14 @@
             height: 30px;
             transition: all 0.15s;
         }
-        .btn-pill:hover { background: #334155; }
+        .btn-pill:hover { background: var(--bg-row-hover); }
         .btn-urgent {
             background: rgba(239, 68, 68, 0.15);
             border-color: rgba(239, 68, 68, 0.4);
-            color: #fca5a5;
+            color: #ef4444;
+            font-weight: 600;
         }
+        html[data-theme="dark"] .btn-urgent { color: #fca5a5; }
         .btn-urgent:hover { background: rgba(239, 68, 68, 0.25); }
 
         /* Main Workspace 3 Panes */
@@ -209,7 +269,7 @@
         /* Pane 1 : Left Tree Navigation */
         .pane-tree {
             width: 280px;
-            background: #0b1120;
+            background: var(--bg-tree);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
@@ -229,7 +289,7 @@
         .tab-btn {
             flex: 1;
             padding: 4px 6px;
-            background: #1e293b;
+            background: var(--bg-panel);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
             border-radius: 4px;
@@ -239,9 +299,9 @@
             text-align: center;
         }
         .tab-btn.active {
-            background: #0284c7;
+            background: var(--accent-blue);
             color: white;
-            border-color: #0284c7;
+            border-color: var(--accent-blue);
         }
 
         .tree-content {
@@ -258,8 +318,8 @@
             color: var(--text-muted);
             font-size: 12px;
         }
-        .tree-node:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-        .tree-node.selected { background: #1e3a5f; color: #38bdf8; font-weight: 600; }
+        .tree-node:hover { background: var(--bg-row-hover); color: var(--text-main); }
+        .tree-node.selected { background: var(--bg-row-selected); color: var(--accent-blue); font-weight: 600; }
         .tree-node .chevron { font-size: 9px; width: 12px; color: var(--text-dim); }
         .tree-sub { padding-left: 18px; display: none; }
         .tree-sub.open { display: block; }
@@ -270,20 +330,20 @@
             font-size: 10px;
             padding: 1px 5px;
             border-radius: 10px;
-            background: #334155;
-            color: #cbd5e1;
+            background: var(--badge-bg);
+            color: var(--text-muted);
         }
         html[dir="rtl"] .count-badge { margin-left: 0; margin-right: auto; }
-        .count-badge.ok { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .count-badge.warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-        .count-badge.req { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .count-badge.ok { background: var(--tag-ok-bg); color: var(--tag-ok-text); }
+        .count-badge.warn { background: var(--tag-rev-bg); color: var(--tag-rev-text); }
+        .count-badge.req { background: var(--tag-req-bg); color: var(--tag-req-text); }
 
         /* Pane 2 : Center Details View Table */
         .pane-center {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: #0f172a;
+            background: var(--bg-panel);
             overflow: hidden;
             border-right: 1px solid var(--border-color);
         }
@@ -294,7 +354,7 @@
 
         .toolbar {
             height: 38px;
-            background: #1e293b;
+            background: var(--bg-header);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -305,6 +365,7 @@
         .table-container {
             flex: 1;
             overflow: auto;
+            background: var(--bg-panel);
         }
 
         table {
@@ -316,7 +377,7 @@
         html[dir="rtl"] table { text-align: right; }
 
         th {
-            background: #111827;
+            background: var(--bg-th);
             color: var(--text-muted);
             font-weight: 600;
             padding: 8px 10px;
@@ -330,12 +391,13 @@
         }
         td {
             padding: 6px 10px;
-            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            border-bottom: 1px solid var(--border-color);
             white-space: nowrap;
             height: 32px;
+            color: var(--text-main);
         }
         tr:hover td { background: var(--bg-row-hover); cursor: pointer; }
-        tr.selected td { background: var(--bg-row-selected); color: white; }
+        tr.selected td { background: var(--bg-row-selected); font-weight: 500; }
 
         .status-tag {
             display: inline-flex;
@@ -347,15 +409,14 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .status-ok { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .status-rev { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .status-req { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .status-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+        .status-ok { background: var(--tag-ok-bg); color: var(--tag-ok-text); border: 1px solid var(--tag-ok-border); }
+        .status-rev { background: var(--tag-rev-bg); color: var(--tag-rev-text); border: 1px solid var(--tag-rev-border); }
+        .status-req { background: var(--tag-req-bg); color: var(--tag-req-text); border: 1px solid var(--tag-req-border); }
 
         /* Pane 3 : Right Preview Pane */
         .pane-preview {
             width: 380px;
-            background: #0b1120;
+            background: var(--bg-tree);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
@@ -369,7 +430,7 @@
             align-items: center;
             justify-content: space-between;
             font-weight: 600;
-            background: #111827;
+            background: var(--bg-header);
         }
         .preview-body {
             flex: 1;
@@ -381,19 +442,19 @@
         }
 
         .pdf-sim-page {
-            background: #f8fafc;
-            color: #0f172a;
+            background: var(--pdf-bg);
+            color: var(--pdf-text);
             border-radius: 4px;
             padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             font-size: 11px;
             line-height: 1.5;
             min-height: 240px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--pdf-border);
         }
         .pdf-sim-header {
             text-align: center;
-            border-bottom: 2px solid #0284c7;
+            border-bottom: 2px solid var(--accent-blue);
             padding-bottom: 8px;
             margin-bottom: 12px;
             font-weight: 700;
@@ -402,7 +463,7 @@
         }
 
         .meta-box {
-            background: #1e293b;
+            background: var(--meta-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 10px;
@@ -435,7 +496,7 @@
         /* Status Bar Footer */
         footer {
             height: 26px;
-            background: #090d16;
+            background: var(--bg-header);
             border-top: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -452,7 +513,7 @@
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(3px);
             display: none;
             align-items: center;
@@ -461,18 +522,19 @@
         }
         .modal-overlay.open { display: flex; }
         .modal {
-            background: #1e293b;
+            background: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             width: 480px;
             max-width: 95%;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             overflow: hidden;
             z-index: 1001;
+            color: var(--text-main);
         }
         .modal-header {
             padding: 12px 16px;
-            background: #111827;
+            background: var(--bg-header);
             border-bottom: 1px solid var(--border-color);
             font-weight: 700;
             display: flex;
@@ -489,16 +551,17 @@
             border-left: 3px solid #10b981;
             padding: 10px;
             font-size: 11px;
-            color: #d1fae5;
+            color: #065f46;
             line-height: 1.4;
         }
+        html[data-theme="dark"] .legal-notice { color: #d1fae5; }
         html[dir="rtl"] .legal-notice {
             border-left: none;
             border-right: 3px solid #10b981;
         }
         .modal-footer {
             padding: 12px 16px;
-            background: #111827;
+            background: var(--bg-header);
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: flex-end;
@@ -526,8 +589,8 @@
                 <span class="sep">&gt;</span>
                 <span id="bc-prod">CTD_Paracétamol_500mg</span>
                 <span class="sep">&gt;</span>
-                <span id="bc-mod" style="color:white; font-weight:600;">Module 3 Qualité (CMC)</span>
-                <span style="margin-left:auto; font-size:10px; background:#334155; padding:2px 6px; border-radius:3px; color:#cbd5e1; font-weight:600;">Ctrl+K</span>
+                <span id="bc-mod" style="font-weight:600;">Module 3 Qualité (CMC)</span>
+                <span style="margin-left:auto; font-size:10px; background:var(--badge-bg); padding:2px 6px; border-radius:3px; color:var(--text-muted); font-weight:600;">Ctrl+K</span>
             </div>
 
             <!-- Mode 2 : Champ de saisie actif dans l'en-tête -->
@@ -537,7 +600,7 @@
                        placeholder="Taper un chemin ou mot-clé (ex: Paracétamol, Module 1, BPF, Seringue)..."
                        oninput="filterAddressItems()"
                        onkeydown="handleAddressKeyDown(event)">
-                <button onclick="closeAddressBar()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:0 4px;" title="Fermer (Échap)">✕</button>
+                <button onclick="closeAddressBar()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:0 4px;" title="Fermer (Échap)">✕</button>
             </div>
 
             <!-- Menu Déroulant d'autocomplétion attaché sous la barre -->
@@ -549,6 +612,11 @@
         <input type="text" class="search-input" id="search-box" placeholder="🔍 Filtrer liste (Ctrl+F)..." onkeyup="filterTable()">
 
         <div class="header-actions">
+            <!-- Switch Thème Clair / Sombre -->
+            <button class="btn-pill" id="theme-btn" onclick="toggleTheme()" title="Basculer entre Mode Sombre et Mode Clair">
+                <span id="theme-icon">☀️</span> <span id="theme-text">Clair</span>
+            </button>
+
             <button class="btn-pill" onclick="openAddressBar()" title="Ouvrir la barre d'adresse ou navigation rapide (Ctrl+K)">
                 📁 <span id="txt-goto-btn">Aller à...</span> <kbd style="font-size:10px; opacity:0.6;">Ctrl+K</kbd>
             </button>
@@ -558,7 +626,7 @@
             <button class="btn-pill" onclick="toggleLanguage()">
                 <strong id="lang-btn-label">🇩🇿 العربية (RTL)</strong>
             </button>
-            <button class="btn-pill" style="border-color:#0284c7; color:#38bdf8;">
+            <button class="btn-pill" style="border-color:#0284c7; color:#0284c7;">
                 👤 <span id="user-badge">Dr. Amine K. (Pharmacien DT)</span>
             </button>
         </div>
@@ -630,7 +698,7 @@
             <span>Prêt</span>
             <span id="status-counts">14 éléments dans le module (12 validés, 2 requis)</span>
             <span>|</span>
-            <span style="color:#38bdf8;">Mode : On-Premise 100% Hors-Ligne</span>
+            <span style="color:var(--accent-blue);">Mode : On-Premise 100% Hors-Ligne</span>
         </div>
         <div class="footer-right">
             <span>Base : PostgreSQL 16+ (pgx)</span>
@@ -655,15 +723,15 @@
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Document :</label>
-                    <input type="text" id="sign-doc-name" readonly style="width:100%; padding:6px; background:#0f172a; border:1px solid #334155; color:#38bdf8; border-radius:4px;">
+                    <input type="text" id="sign-doc-name" readonly style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px;">
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Motif d'approbation :</label>
-                    <input type="text" id="sign-reason" value="Approbation finale avant soumission à la commission d'enregistrement ANPP" style="width:100%; padding:6px; background:#0f172a; border:1px solid #334155; color:white; border-radius:4px;">
+                    <input type="text" id="sign-reason" value="Approbation finale avant soumission à la commission d'enregistrement ANPP" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px;">
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Mot de passe ou Code 2FA TOTP (Re-authentification requise) :</label>
-                    <input type="password" id="sign-auth-code" placeholder="Saisir votre mot de passe ou code 6 chiffres" style="width:100%; padding:6px; background:#0f172a; border:1px solid #0284c7; color:white; border-radius:4px;">
+                    <input type="password" id="sign-auth-code" placeholder="Saisir votre mot de passe ou code 6 chiffres" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--accent-blue); color:var(--text-main); border-radius:4px;">
                 </div>
             </div>
             <div class="modal-footer">
@@ -681,13 +749,13 @@
                 <span style="cursor:pointer;" onclick="closeModal('modal-upload')">✕</span>
             </div>
             <div class="modal-body">
-                <div style="border:2px dashed #0284c7; padding:25px; text-align:center; border-radius:6px; background:rgba(2,132,199,0.05); cursor:pointer;">
+                <div style="border:2px dashed var(--accent-blue); padding:25px; text-align:center; border-radius:6px; background:rgba(2,132,199,0.05); cursor:pointer;">
                     📁 Glissez-déposez votre fichier PDF ou Word ici<br>
                     <small style="color:var(--text-dim);">(Upload par morceaux de 5 Mo avec reprise automatique en cas de micro-coupure)</small>
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Motif obligatoire de révision BPF :</label>
-                    <input type="text" placeholder="Ex: Mise à jour selon remarques de la commission ANPP" style="width:100%; padding:6px; background:#0f172a; border:1px solid #334155; color:white; border-radius:4px;">
+                    <input type="text" placeholder="Ex: Mise à jour selon remarques de la commission ANPP" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px;">
                 </div>
             </div>
             <div class="modal-footer">
@@ -792,8 +860,31 @@
         let selectedDocId = 1;
         let isArabic = false;
         let paletteSelectedIndex = 0;
+        let currentTheme = localStorage.getItem("homolog-theme") || "dark";
 
-        // Gestionnaire universel des raccourcis clavier (aucun conflit navigateur)
+        // Application initiale du thème
+        applyTheme(currentTheme);
+
+        function toggleTheme() {
+            currentTheme = (currentTheme === "dark") ? "light" : "dark";
+            localStorage.setItem("homolog-theme", currentTheme);
+            applyTheme(currentTheme);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            const icon = document.getElementById("theme-icon");
+            const text = document.getElementById("theme-text");
+            if (theme === "light") {
+                icon.innerText = "🌙";
+                text.innerText = isArabic ? "ليلي" : "Sombre";
+            } else {
+                icon.innerText = "☀️";
+                text.innerText = isArabic ? "نهاري" : "Clair";
+            }
+        }
+
+        // Gestionnaire universel des raccourcis clavier
         window.addEventListener('keydown', function(e) {
             // Ctrl + K ou Ctrl + L ou Alt + D : Ouvrir la Barre d'Adresse In-Place
             if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.key === 'l' || e.key === 'L')) {
@@ -833,7 +924,6 @@
 
         // Ouvre la barre d'adresse directement dans l'en-tête (façon Windows Explorer)
         function openAddressBar() {
-            // Fermer impérativement toute autre modale ouverte
             closeModal('modal-upload');
             closeModal('modal-sign');
 
@@ -991,10 +1081,10 @@
                 tr.onclick = () => selectDocument(doc.id);
                 tr.innerHTML = `
                     <td><span class="status-tag ${doc.status}">${doc.statusLabel}</span></td>
-                    <td style="font-weight:600; color:#f8fafc;">${doc.name}</td>
+                    <td style="font-weight:600; color:var(--text-main);">${doc.name}</td>
                     <td style="color:var(--text-muted); font-family:monospace;">${doc.code}</td>
                     <td style="font-weight:600;">${doc.version}</td>
-                    <td style="color:${doc.expiry !== '-' ? '#fbbf24' : 'var(--text-dim)'};">${doc.expiry}</td>
+                    <td style="color:${doc.expiry !== '-' ? 'var(--accent-amber)' : 'var(--text-dim)'};">${doc.expiry}</td>
                     <td>${doc.validDT}</td>
                     <td style="font-family:monospace; color:var(--text-dim); font-size:10px;">${doc.sha.substring(0, 16)}...</td>
                 `;
@@ -1021,7 +1111,7 @@
                     <div style="font-size:11px; margin-bottom:12px;">
                         ${doc.previewContent}
                     </div>
-                    <div style="margin-top:20px; padding-top:8px; border-top:1px dashed #94a3b8; font-size:10px; color:#475569;">
+                    <div style="margin-top:20px; padding-top:8px; border-top:1px dashed var(--border-color); font-size:10px; color:var(--text-dim);">
                         Document certifié conforme pour l'Agence Nationale des Produits Pharmaceutiques (ANPP).<br>
                         Empreinte cryptographique : <code>${doc.sha.substring(0, 24)}...</code>
                     </div>
@@ -1041,7 +1131,7 @@
                         ✍️ Signer et Approuver en qualité de DT (BPF)
                     </button>
                 ` : `
-                    <div style="text-align:center; padding:8px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:4px; color:#34d399; font-size:11px; font-weight:600;">
+                    <div style="text-align:center; padding:8px; background:var(--tag-ok-bg); border:1px solid var(--tag-ok-border); border-radius:4px; color:var(--tag-ok-text); font-size:11px; font-weight:600;">
                         ✓ Document visé et scellé par le Directeur Technique
                     </div>
                 `}
@@ -1078,6 +1168,7 @@
                 document.getElementById("user-badge").innerText = "Dr. Amine K. (Pharmacien DT)";
                 document.getElementById("txt-goto-btn").innerText = "Aller à...";
             }
+            applyTheme(currentTheme); // Met à jour le texte du bouton de thème dans la bonne langue
         }
 
         function openSignModal(docName) {
