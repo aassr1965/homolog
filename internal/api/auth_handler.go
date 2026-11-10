@@ -291,32 +291,83 @@ func (h *AuthHandler) ReauthSign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Password == "" && req.TOTPCode == "" {
+	cleanPassword := strings.TrimSpace(req.Password)
+	cleanTOTP := strings.TrimSpace(req.TOTPCode)
+
+	if cleanPassword == "" && cleanTOTP == "" {
 		writeJSONError(w, http.StatusBadRequest, "La re-saisie du mot de passe ou du code 2FA est obligatoire (Conformité 21 CFR Part 11)")
 		return
 	}
 
-	// Récupérer le hash du mot de passe de l'utilisateur
-	var pwdHash string
-	var totpSecret *string
-	err := h.pool.QueryRow(r.Context(), "SELECT password_hash, totp_secret FROM users WHERE id = $1", user.UserID).Scan(&pwdHash, &totpSecret)
+	// Récupérer le hash du mot de passe de l'utilisateur et ses paramètres 2FA
+	var (
+		pwdHash       string
+		totpSecret    *string
+		recoveryCodes []string
+	)
+	err := h.pool.QueryRow(r.Context(), "SELECT password_hash, totp_secret, recovery_codes FROM users WHERE id = $1", user.UserID).Scan(&pwdHash, &totpSecret, &recoveryCodes)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur base de données")
 		return
 	}
 
-	// Validation du mot de passe
-	if req.Password != "" {
-		valid, err := auth.VerifyPassword(req.Password, pwdHash)
+	var authenticated bool
+
+	// 1. Validation du mot de passe si fourni
+	if cleanPassword != "" {
+		valid, err := auth.VerifyPassword(cleanPassword, pwdHash)
 		if err != nil || !valid {
+			_ = h.logAuthEvent(r.Context(), user.OrganizationID, &user.UserID, user.Email, user.Role, audit.ActionAuthLoginFailed, getClientIP(r), r.UserAgent(), map[string]any{
+				"reason":        "mot de passe incorrect pour signature électronique",
+				"document_name": req.DocumentName,
+			})
 			writeJSONError(w, http.StatusUnauthorized, "Mot de passe incorrect pour signature électronique")
 			return
 		}
-	} else if req.TOTPCode != "" && totpSecret != nil {
-		if !auth.ValidateTOTPCode(req.TOTPCode, *totpSecret) {
-			writeJSONError(w, http.StatusUnauthorized, "Code 2FA invalide pour signature électronique")
-			return
+		authenticated = true
+	}
+
+	// 2. Validation du second facteur 2FA si fourni
+	if cleanTOTP != "" {
+		if totpSecret == nil || *totpSecret == "" {
+			if !authenticated {
+				_ = h.logAuthEvent(r.Context(), user.OrganizationID, &user.UserID, user.Email, user.Role, audit.ActionAuthLoginFailed, getClientIP(r), r.UserAgent(), map[string]any{
+					"reason":        "tentative validation 2FA sur compte sans 2FA actif pour signature",
+					"document_name": req.DocumentName,
+				})
+				writeJSONError(w, http.StatusUnauthorized, "Le second facteur 2FA n'est pas activé sur ce compte : la saisie du mot de passe est obligatoire")
+				return
+			}
+		} else {
+			validTOTP := auth.ValidateTOTPCode(cleanTOTP, *totpSecret)
+			if !validTOTP {
+				// Tentative par code de secours
+				validBackup, remainingBackup := auth.ValidateAndConsumeBackupCode(cleanTOTP, recoveryCodes)
+				if !validBackup {
+					_ = h.logAuthEvent(r.Context(), user.OrganizationID, &user.UserID, user.Email, user.Role, audit.ActionAuthLoginFailed, getClientIP(r), r.UserAgent(), map[string]any{
+						"reason":        "code 2FA invalide pour signature électronique",
+						"document_name": req.DocumentName,
+					})
+					writeJSONError(w, http.StatusUnauthorized, "Code 2FA invalide pour signature électronique")
+					return
+				}
+				// Mise à jour des codes de secours restants
+				_, _ = h.pool.Exec(r.Context(), "UPDATE users SET recovery_codes = $1 WHERE id = $2", remainingBackup, user.UserID)
+				authenticated = true
+			} else {
+				authenticated = true
+			}
 		}
+	}
+
+	// 3. Contrôle de sécurité final (BPF / 21 CFR Part 11)
+	if !authenticated {
+		_ = h.logAuthEvent(r.Context(), user.OrganizationID, &user.UserID, user.Email, user.Role, audit.ActionAuthLoginFailed, getClientIP(r), r.UserAgent(), map[string]any{
+			"reason":        "aucun identifiant valide fourni pour signature électronique",
+			"document_name": req.DocumentName,
+		})
+		writeJSONError(w, http.StatusUnauthorized, "Identifiants invalides ou insuffisants pour signature légale 21 CFR Part 11")
+		return
 	}
 
 	now := time.Now().UTC()
