@@ -48,14 +48,14 @@ gantt
 - [x] Mettre en place le `StorageProvider` (Driver CAS local sur disque chiffré avec hachage SHA-256 et déduplication)
 
 ### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11)
-- [ ] Implémenter le hachage sécurisé des mots de passe avec **Argon2id** et politique de complexité (min. 12 car.)
-- [ ] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** avec table de sessions PostgreSQL pour révocation instantanée
-- [ ] Développer le second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés)
-- [ ] Mettre en place le verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 essais = 15 min de blocage)
-- [ ] Implémenter la matrice des 8 rôles stricts (Admin Sys, Admin Labo, Affaires Réglementaires, DT, Qualité/Prod, Consultant, Lecteur, Auditeur)
-- [ ] Créer le flux de **re-authentification pour signature électronique légale** (mot de passe/2FA + déclaration de rôle BPF)
-- [ ] Créer la table `audit_logs` strictement *append-only* (triggers SQL PostgreSQL interdisant UPDATE et DELETE)
-- [ ] Logger automatiquement toutes les actions sensibles (connexion, échec, consultation, téléchargement, approbation, signature, modification de rôle)
+- [x] Implémenter le hachage sécurisé des mots de passe avec **Argon2id** et politique de complexité (min. 12 car.)
+- [x] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** avec table de sessions PostgreSQL pour révocation instantanée
+- [x] Développer le second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés)
+- [x] Mettre en place le verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 essais = 15 min de blocage)
+- [x] Implémenter la matrice des 8 rôles stricts (Admin Sys, Admin Labo, Affaires Réglementaires, DT, Qualité/Prod, Consultant, Lecteur, Auditeur)
+- [x] Créer le flux de **re-authentification pour signature électronique légale** (mot de passe/2FA + déclaration de rôle BPF)
+- [x] Créer la table `audit_logs` strictement *append-only* (triggers SQL PostgreSQL interdisant UPDATE et DELETE)
+- [x] Logger automatiquement toutes les actions sensibles (connexion, échec, consultation, téléchargement, approbation, signature, modification de rôle)
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Bilingue FR/AR)
 - [ ] Modèle et API **Établissement** (Raison sociale, agrément MIPH, Directeur Technique, sites de fabrication)
