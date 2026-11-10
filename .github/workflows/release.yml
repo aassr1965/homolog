@@ -1,0 +1,61 @@
+name: CD — Publication Release Officielle
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: "Création de la Release & Packaging BPF"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Récupération du code source"
+        uses: actions/checkout@v4
+
+      - name: "Configuration de l'environnement Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: "Création du dossier de distribution"
+        run: mkdir -p dist
+
+      - name: "Compilation Binaire Linux AMD64"
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-s -w -X 'main.Version=${{ github.ref_name }}' -X 'main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
+            -o dist/homolog-linux-amd64 ./cmd/server
+
+      - name: "Compilation Binaire Windows AMD64"
+        run: |
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build \
+            -ldflags="-s -w -X 'main.Version=${{ github.ref_name }}' -X 'main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
+            -o dist/homolog-windows-amd64.exe ./cmd/server
+
+      - name: "Compilation Binaire Linux ARM64"
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
+            -ldflags="-s -w -X 'main.Version=${{ github.ref_name }}' -X 'main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
+            -o dist/homolog-linux-arm64 ./cmd/server
+
+      - name: "Génération des sommes de contrôle SHA-256"
+        working-directory: dist
+        run: |
+          sha256sum homolog-* > SHA256SUMS.txt
+
+      - name: "Création de la Release GitHub officielle"
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/homolog-linux-amd64
+            dist/homolog-windows-amd64.exe
+            dist/homolog-linux-arm64
+            dist/SHA256SUMS.txt
+          generate_release_notes: true
+          draft: false
+          prerelease: false

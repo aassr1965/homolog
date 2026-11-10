@@ -24,25 +24,25 @@ var (
 
 // SessionUser représente le contexte d'authentification injecté dans chaque requête
 type SessionUser struct {
-	SessionID            uuid.UUID
-	UserID               uuid.UUID
-	OrganizationID       uuid.UUID
-	Email                string
-	FirstName            string
-	LastName             string
-	Role                 string
-	TOTPEnabled          bool
-	FailedLoginAttempts  int
-	LockedUntil          *time.Time
-	OrganizationSlug     string
-	OrganizationName     string
+	SessionID           uuid.UUID
+	UserID              uuid.UUID
+	OrganizationID      uuid.UUID
+	Email               string
+	FirstName           string
+	LastName            string
+	Role                string
+	TOTPEnabled         bool
+	FailedLoginAttempts int
+	LockedUntil         *time.Time
+	OrganizationSlug    string
+	OrganizationName    string
 }
 
 // SessionManager gère le cycle de vie des sessions en base PostgreSQL
 type SessionManager struct {
-	pool               *pgxpool.Pool
-	sessionExpiry      time.Duration
-	idleTimeout        time.Duration
+	pool          *pgxpool.Pool
+	sessionExpiry time.Duration
+	idleTimeout   time.Duration
 }
 
 // NewSessionManager instancie le gestionnaire de sessions

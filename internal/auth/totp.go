@@ -22,10 +22,10 @@ var (
 
 // TOTPSetupData contient les informations requises pour l'enrôlement 2FA hors-ligne
 type TOTPSetupData struct {
-	Secret            string   `json:"secret"`             // Clé secrète Base32 (pour saisie manuelle)
-	AuthURL           string   `json:"auth_url"`           // URL standard otpauth://
-	BackupCodes       []string `json:"backup_codes"`       // 10 codes de secours en clair (affichés une seule fois)
-	HashedBackupCodes []string `json:"-"`                  // Empreintes SHA-256 à persister en base de données
+	Secret            string   `json:"secret"`       // Clé secrète Base32 (pour saisie manuelle)
+	AuthURL           string   `json:"auth_url"`     // URL standard otpauth://
+	BackupCodes       []string `json:"backup_codes"` // 10 codes de secours en clair (affichés une seule fois)
+	HashedBackupCodes []string `json:"-"`            // Empreintes SHA-256 à persister en base de données
 }
 
 // GenerateTOTPSetup génère un secret RFC 6238 et 10 codes de secours 100% hors-ligne
