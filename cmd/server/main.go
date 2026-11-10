@@ -14,6 +14,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
+	"homolog/internal/api"
+	"homolog/internal/audit"
+	"homolog/internal/auth"
 	"homolog/internal/config"
 	"homolog/internal/database"
 	"homolog/internal/storage"
@@ -43,12 +46,25 @@ func main() {
 	defer cancel()
 
 	var db *database.DB
+	var sessionManager *auth.SessionManager
+	var auditService *audit.Service
+	var authHandler *api.AuthHandler
+
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Printf("[AVERTISSEMENT] Connexion PostgreSQL non disponible au démarrage : %v", err)
 		log.Println("[INFO] Le serveur démarre en attente de la base de données (Setup / Diagnostics).")
 	} else {
 		defer db.Close()
+
+		// Initialisation des données de démarrage (Labo principal + comptes DT/Admin)
+		if err := api.SeedInitialData(ctx, db.Pool, cfg.OnPremOrgSlug, cfg.OnPremOrgName); err != nil {
+			log.Printf("[AVERTISSEMENT] Erreur lors de l'initialisation des comptes : %v", err)
+		}
+
+		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
+		auditService = audit.NewService(db.Pool)
+		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -108,6 +124,20 @@ func main() {
 		}`, cfg.DeploymentMode, cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(resp))
 	})
+
+	// Routes API Authentification, 2FA, Signature DT et Audit Trail
+	if authHandler != nil {
+		r.Post("/api/v1/auth/login", authHandler.Login)
+		r.Post("/api/v1/auth/logout", authHandler.Logout)
+
+		// Routes protégées par session HttpOnly
+		r.Group(func(protected chi.Router) {
+			protected.Use(api.AuthMiddleware(sessionManager))
+			protected.Get("/api/v1/auth/me", authHandler.Me)
+			protected.Post("/api/v1/auth/reauth-sign", authHandler.ReauthSign)
+			protected.Get("/api/v1/audit/logs", authHandler.GetAuditLogs)
+		})
+	}
 
 	// 4. Lancement du serveur HTTP avec arrêt gracieux
 	serverAddr := fmt.Sprintf(":%d", cfg.Port)
