@@ -10,22 +10,22 @@ import (
 type UserRole string
 
 const (
-	RoleSuperAdminEditeur       UserRole = "super_admin_editeur"
-	RoleAdminSystemeLocal       UserRole = "admin_systeme_local"
-	RoleAdminLaboratoire        UserRole = "admin_laboratoire"
-	RoleResponsableAffairesReg  UserRole = "responsable_affaires_reglementaires"
-	RoleDirecteurTechnique      UserRole = "directeur_technique"
-	RoleContributeurTechnique   UserRole = "contributeur_technique"
-	RoleConsultantExterne       UserRole = "consultant_externe"
-	RoleLecteur                 UserRole = "lecteur"
-	RoleAuditeur                UserRole = "auditeur"
+	RoleSuperAdminEditeur      UserRole = "super_admin_editeur"
+	RoleAdminSystemeLocal      UserRole = "admin_systeme_local"
+	RoleAdminLaboratoire       UserRole = "admin_laboratoire"
+	RoleResponsableAffairesReg UserRole = "responsable_affaires_reglementaires"
+	RoleDirecteurTechnique     UserRole = "directeur_technique"
+	RoleContributeurTechnique  UserRole = "contributeur_technique"
+	RoleConsultantExterne      UserRole = "consultant_externe"
+	RoleLecteur                UserRole = "lecteur"
+	RoleAuditeur               UserRole = "auditeur"
 )
 
 // ProductType differentiates medicines and medical devices
 type ProductType string
 
 const (
-	ProductTypeMedicament       ProductType = "medicament"
+	ProductTypeMedicament        ProductType = "medicament"
 	ProductTypeDispositifMedical ProductType = "dispositif_medical"
 )
 
@@ -63,12 +63,12 @@ const (
 type GEDDocumentStatus string
 
 const (
-	GEDStatusBrouillon      GEDDocumentStatus = "brouillon"
-	GEDStatusEnRevue        GEDDocumentStatus = "en_revue"
+	GEDStatusBrouillon       GEDDocumentStatus = "brouillon"
+	GEDStatusEnRevue         GEDDocumentStatus = "en_revue"
 	GEDStatusEnApprobationDT GEDDocumentStatus = "en_approbation_dt"
-	GEDStatusEnVigueur      GEDDocumentStatus = "en_vigueur"
-	GEDStatusObsolete       GEDDocumentStatus = "obsolete"
-	GEDStatusArchive        GEDDocumentStatus = "archive"
+	GEDStatusEnVigueur       GEDDocumentStatus = "en_vigueur"
+	GEDStatusObsolete        GEDDocumentStatus = "obsolete"
+	GEDStatusArchive         GEDDocumentStatus = "archive"
 )
 
 // Organization represents a pharmaceutical laboratory (Tenant)
@@ -90,23 +90,23 @@ type Organization struct {
 
 // User represents an individual identified user (nominative)
 type User struct {
-	ID                   uuid.UUID  `json:"id"`
-	OrganizationID       uuid.UUID  `json:"organization_id"`
-	Email                string     `json:"email"`
-	PasswordHash         string     `json:"-"`
-	FirstName            string     `json:"first_name"`
-	LastName             string     `json:"last_name"`
-	Role                 UserRole   `json:"role"`
-	TOTPSecret           string     `json:"-"`
-	TOTPEnabled          bool       `json:"totp_enabled"`
-	RecoveryCodes        []string   `json:"-"`
-	FailedLoginAttempts  int        `json:"failed_login_attempts"`
-	LockedUntil          *time.Time `json:"locked_until,omitempty"`
-	ContractExpiresAt    *time.Time `json:"contract_expires_at,omitempty"`
-	IsActive             bool       `json:"is_active"`
-	LastLoginAt          *time.Time `json:"last_login_at,omitempty"`
-	CreatedAt            time.Time  `json:"created_at"`
-	UpdatedAt            time.Time  `json:"updated_at"`
+	ID                  uuid.UUID  `json:"id"`
+	OrganizationID      uuid.UUID  `json:"organization_id"`
+	Email               string     `json:"email"`
+	PasswordHash        string     `json:"-"`
+	FirstName           string     `json:"first_name"`
+	LastName            string     `json:"last_name"`
+	Role                UserRole   `json:"role"`
+	TOTPSecret          string     `json:"-"`
+	TOTPEnabled         bool       `json:"totp_enabled"`
+	RecoveryCodes       []string   `json:"-"`
+	FailedLoginAttempts int        `json:"failed_login_attempts"`
+	LockedUntil         *time.Time `json:"locked_until,omitempty"`
+	ContractExpiresAt   *time.Time `json:"contract_expires_at,omitempty"`
+	IsActive            bool       `json:"is_active"`
+	LastLoginAt         *time.Time `json:"last_login_at,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
 }
 
 // Session represents a server-side tracked session cookie
@@ -123,23 +123,23 @@ type Session struct {
 
 // Product represents a Medicine or Medical Device
 type Product struct {
-	ID                     uuid.UUID   `json:"id"`
-	OrganizationID         uuid.UUID   `json:"organization_id"`
-	ProductType            ProductType `json:"product_type"`
-	BrandNameFR            string      `json:"brand_name_fr"`
-	BrandNameAR            string      `json:"brand_name_ar"`
-	DCI                    string      `json:"dci,omitempty"`
-	Dosage                 string      `json:"dosage,omitempty"`
-	PharmaceuticalForm     string      `json:"pharmaceutical_form,omitempty"`
-	AdministrationRoute    string      `json:"administration_route,omitempty"`
-	DMClass                string      `json:"dm_class,omitempty"` // "I", "IIa", "IIb", "III", "DMDIV"
-	IsSterile              bool        `json:"is_sterile"`
-	DMClassificationRule   string      `json:"dm_classification_rule,omitempty"`
-	ManufacturerName       string      `json:"manufacturer_name"`
-	MarketingStatus        string      `json:"marketing_status"`
-	IsHorsNomenclature     bool        `json:"is_hors_nomenclature"`
-	CreatedAt              time.Time   `json:"created_at"`
-	UpdatedAt              time.Time   `json:"updated_at"`
+	ID                   uuid.UUID   `json:"id"`
+	OrganizationID       uuid.UUID   `json:"organization_id"`
+	ProductType          ProductType `json:"product_type"`
+	BrandNameFR          string      `json:"brand_name_fr"`
+	BrandNameAR          string      `json:"brand_name_ar"`
+	DCI                  string      `json:"dci,omitempty"`
+	Dosage               string      `json:"dosage,omitempty"`
+	PharmaceuticalForm   string      `json:"pharmaceutical_form,omitempty"`
+	AdministrationRoute  string      `json:"administration_route,omitempty"`
+	DMClass              string      `json:"dm_class,omitempty"` // "I", "IIa", "IIb", "III", "DMDIV"
+	IsSterile            bool        `json:"is_sterile"`
+	DMClassificationRule string      `json:"dm_classification_rule,omitempty"`
+	ManufacturerName     string      `json:"manufacturer_name"`
+	MarketingStatus      string      `json:"marketing_status"`
+	IsHorsNomenclature   bool        `json:"is_hors_nomenclature"`
+	CreatedAt            time.Time   `json:"created_at"`
+	UpdatedAt            time.Time   `json:"updated_at"`
 }
 
 // GEDDocument represents an entry in the pharmaceutical EDMS
@@ -179,18 +179,18 @@ type GEDVersion struct {
 
 // ChecklistItem represents a single required or conditional document slot in an ANPP dossier
 type ChecklistItem struct {
-	SlotID              string     `json:"slot_id"`              // e.g. "CTD_3.2.P.5"
-	TitleFR             string     `json:"title_fr"`
-	TitleAR             string     `json:"title_ar"`
-	ModuleNumber        string     `json:"module_number"`        // "Module 1", "Module 3"
-	IsMandatory         bool       `json:"is_mandatory"`
-	ConditionRule       string     `json:"condition_rule,omitempty"`
-	Status              string     `json:"status"`               // "manquant", "en_revue", "valide"
-	AttachedDocID       *uuid.UUID `json:"attached_doc_id,omitempty"`
-	AttachedVersionID   *uuid.UUID `json:"attached_version_id,omitempty"`
-	AttachedFilename    string     `json:"attached_filename,omitempty"`
-	AttachedSHA256      string     `json:"attached_sha256,omitempty"`
-	IsValidatedByDT     bool       `json:"is_validated_by_dt"`
+	SlotID            string     `json:"slot_id"` // e.g. "CTD_3.2.P.5"
+	TitleFR           string     `json:"title_fr"`
+	TitleAR           string     `json:"title_ar"`
+	ModuleNumber      string     `json:"module_number"` // "Module 1", "Module 3"
+	IsMandatory       bool       `json:"is_mandatory"`
+	ConditionRule     string     `json:"condition_rule,omitempty"`
+	Status            string     `json:"status"` // "manquant", "en_revue", "valide"
+	AttachedDocID     *uuid.UUID `json:"attached_doc_id,omitempty"`
+	AttachedVersionID *uuid.UUID `json:"attached_version_id,omitempty"`
+	AttachedFilename  string     `json:"attached_filename,omitempty"`
+	AttachedSHA256    string     `json:"attached_sha256,omitempty"`
+	IsValidatedByDT   bool       `json:"is_validated_by_dt"`
 }
 
 // Dossier represents an official submission dossier for ANPP
