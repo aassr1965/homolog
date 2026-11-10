@@ -1,0 +1,23 @@
+# Binaires compilés
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Fichiers de données et de stockage local
+data/
+*.tmp
+*.log
+
+# Variables d'environnement locales
+.env
+.env.local
+
+# Fichiers système et éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

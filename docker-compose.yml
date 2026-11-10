@@ -1,0 +1,45 @@
+services:
+  homolog_db:
+    image: postgres:16-alpine
+    container_name: homolog_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: homolog
+      POSTGRES_USER: homolog
+      POSTGRES_PASSWORD: homolog_secret_2026
+    ports:
+      - "5434:5432"
+    volumes:
+      - homolog_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homolog -d homolog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  homolog_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: homolog_server
+    restart: always
+    depends_on:
+      homolog_db:
+        condition: service_healthy
+    environment:
+      - DEPLOYMENT_MODE=on-premise
+      - PORT=8090
+      - DATABASE_URL=postgres://homolog:homolog_secret_2026@homolog_db:5432/homolog?sslmode=disable
+      - STORAGE_PATH=/var/lib/homolog/data/storage
+      - JWT_SECRET=homolog-enterprise-security-token-algeria-2026-production
+      - IDLE_TIMEOUT_MINUTES=15
+      - ONPREM_ORG_SLUG=laboratoire-principal
+      - ONPREM_ORG_NAME=Laboratoire Pharmaceutique National
+    ports:
+      - "8090:8090"
+    volumes:
+      - homolog_storage:/var/lib/homolog/data/storage
+
+volumes:
+  homolog_pgdata:
+  homolog_storage:
