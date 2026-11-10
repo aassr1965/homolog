@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOMOLOG.DZ — Cockpit Réglementaire ANPP & GED Pharmaceutique</title>
+    <style>
+        :root {
+            --bg-app: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-surface: #0f172a;
+            --bg-row-hover: #334155;
+            --bg-row-selected: #1e3a5f;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --accent-emerald: #10b981;
+            --accent-blue: #38bdf8;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-ar: "Cairo", "Segoe UI", Tahoma, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        html[dir="rtl"] { font-family: var(--font-ar); }
+
+        /* Top Bar */
+        header {
+            height: 44px;
+            background: #090d16;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            flex-shrink: 0;
+            gap: 12px;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .brand-badge {
+            background: linear-gradient(135deg, #059669, #0284c7);
+            color: white;
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 10px;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 12px;
+            flex: 1;
+            max-width: 650px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .breadcrumb-bar span { cursor: pointer; }
+        .breadcrumb-bar span:hover { color: var(--accent-blue); text-decoration: underline; }
+        .breadcrumb-bar .sep { color: var(--text-dim); }
+
+        .search-input {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            width: 180px;
+        }
+        .search-input:focus { outline: 1px solid var(--accent-blue); }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-pill {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s;
+        }
+        .btn-pill:hover { background: #334155; }
+        .btn-urgent {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+        .btn-urgent:hover { background: rgba(239, 68, 68, 0.25); }
+
+        /* Main Workspace 3 Panes */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Pane 1 : Left Tree Navigation */
+        .pane-tree {
+            width: 280px;
+            background: #0b1120;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        html[dir="rtl"] .pane-tree {
+            border-right: none;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .tree-header {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 4px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 4px 6px;
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .tab-btn.active {
+            background: #0284c7;
+            color: white;
+            border-color: #0284c7;
+        }
+
+        .tree-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+        .tree-node {
+            display: flex;
+            align-items: center;
+            padding: 5px 12px;
+            cursor: pointer;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        .tree-node:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        .tree-node.selected { background: #1e3a5f; color: #38bdf8; font-weight: 600; }
+        .tree-node .chevron { font-size: 9px; width: 12px; color: var(--text-dim); }
+        .tree-sub { padding-left: 18px; display: none; }
+        .tree-sub.open { display: block; }
+        html[dir="rtl"] .tree-sub { padding-left: 0; padding-right: 18px; }
+
+        .count-badge {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 10px;
+            background: #334155;
+            color: #cbd5e1;
+        }
+        html[dir="rtl"] .count-badge { margin-left: 0; margin-right: auto; }
+        .count-badge.ok { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .count-badge.warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .count-badge.req { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        /* Pane 2 : Center Details View Table */
+        .pane-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0f172a;
+            overflow: hidden;
+            border-right: 1px solid var(--border-color);
+        }
+        html[dir="rtl"] .pane-center {
+            border-right: none;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .toolbar {
+            height: 38px;
+            background: #1e293b;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 6px;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 12px;
+        }
+        html[dir="rtl"] table { text-align: right; }
+
+        th {
+            background: #111827;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            white-space: nowrap;
+            height: 32px;
+        }
+        tr:hover td { background: var(--bg-row-hover); cursor: pointer; }
+        tr.selected td { background: var(--bg-row-selected); color: white; }
+
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-ok { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-rev { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-req { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+
+        /* Pane 3 : Right Preview Pane */
+        .pane-preview {
+            width: 380px;
+            background: #0b1120;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .preview-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            background: #111827;
+        }
+        .preview-body {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pdf-sim-page {
+            background: #f8fafc;
+            color: #0f172a;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            font-size: 11px;
+            line-height: 1.5;
+            min-height: 240px;
+            border: 1px solid #cbd5e1;
+        }
+        .pdf-sim-header {
+            text-align: center;
+            border-bottom: 2px solid #0284c7;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 11px;
+            color: #0369a1;
+        }
+
+        .meta-box {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .meta-row { display: flex; justify-content: space-between; }
+        .meta-label { color: var(--text-dim); }
+        .meta-val { color: var(--text-main); font-weight: 500; font-family: monospace; }
+
+        .btn-sign-dt {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4);
+            transition: all 0.2s;
+        }
+        .btn-sign-dt:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        /* Status Bar Footer */
+        footer {
+            height: 26px;
+            background: #090d16;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .footer-left { display: flex; gap: 14px; align-items: center; }
+        .footer-right { display: flex; gap: 12px; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 480px;
+            max-width: 95%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 12px 16px;
+            background: #111827;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+        }
+        .modal-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .legal-notice {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid #10b981;
+            padding: 10px;
+            font-size: 11px;
+            color: #d1fae5;
+            line-height: 1.4;
+        }
+        html[dir="rtl"] .legal-notice {
+            border-left: none;
+            border-right: 3px solid #10b981;
+        }
+        .modal-footer {
+            padding: 12px 16px;
+            background: #111827;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Header Bar -->
+    <header>
+        <div class="brand-section">
+            <span class="brand-badge">HOMOLOG.DZ</span>
+            <span id="txt-app-title">Cockpit ANPP & GED BPF</span>
+        </div>
+
+        <div class="breadcrumb-bar" id="breadcrumb">
+            <span onclick="loadRoot()">📁 GED</span>
+            <span class="sep">&gt;</span>
+            <span onclick="loadNode('01_Affaires_Reglementaires')">01_Affaires_Reglementaires</span>
+            <span class="sep">&gt;</span>
+            <span onclick="loadNode('CTD_Paracetamol')">CTD_Paracétamol_500mg</span>
+            <span class="sep">&gt;</span>
+            <span style="color:white; font-weight:600;">Module 3 Qualité (CMC)</span>
+        </div>
+
+        <input type="text" class="search-input" id="search-box" placeholder="🔍 Filtrer (Ctrl+K)..." onkeyup="filterTable()">
+
+        <div class="header-actions">
+            <button class="btn-pill btn-urgent" onclick="openAlertsModal()">
+                🚨 <span id="txt-urgent-alerts">2 Échéances (J &lt; 30j)</span>
+            </button>
+            <button class="btn-pill" onclick="toggleLanguage()">
+                <strong id="lang-btn-label">🇩🇿 العربية (RTL)</strong>
+            </button>
+            <button class="btn-pill" style="border-color:#0284c7; color:#38bdf8;">
+                👤 <span id="user-badge">Dr. Amine K. (Pharmacien DT)</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Workspace (3 Panes Windows Explorer style) -->
+    <div class="workspace">
+        
+        <!-- Pane 1 : Left Tree Navigation -->
+        <div class="pane-tree">
+            <div class="tree-header">
+                <button class="tab-btn active" id="tab-anpp" onclick="switchTreeTab('anpp')">📋 Dossiers ANPP</button>
+                <button class="tab-btn" id="tab-ged" onclick="switchTreeTab('ged')">📁 GED BPF</button>
+            </div>
+            <div class="tree-content" id="tree-root">
+                <!-- Rendu dynamique par JS -->
+            </div>
+        </div>
+
+        <!-- Pane 2 : Center Details View Table -->
+        <div class="pane-center">
+            <div class="toolbar">
+                <button class="btn-pill" onclick="openUploadModal()">➕ Nouveau Document</button>
+                <button class="btn-pill" onclick="simulateExportZip()">📦 Exporter Dossier CTD (ZIP)</button>
+                <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                    Complétude : <strong>12/14 pièces (85%)</strong>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="doc-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Statut</th>
+                            <th>Nom de la pièce</th>
+                            <th>Code Référence</th>
+                            <th style="width: 70px;">Version</th>
+                            <th>Échéance</th>
+                            <th>Validation DT</th>
+                            <th>Empreinte SHA-256</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doc-tbody">
+                        <!-- Rempli dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pane 3 : Right Preview Pane (Windows Preview Pane) -->
+        <div class="pane-preview" id="pane-preview">
+            <div class="preview-header">
+                <span id="preview-title">Aperçu du Document</span>
+                <span style="font-size:11px; color:var(--text-dim);">Alt+P pour masquer</span>
+            </div>
+            <div class="preview-body" id="preview-body">
+                <!-- Rempli lors du clic sur une ligne -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar Footer -->
+    <footer>
+        <div class="footer-left">
+            <span>Prêt</span>
+            <span id="status-counts">14 éléments dans le module (12 validés, 2 requis)</span>
+            <span>|</span>
+            <span style="color:#38bdf8;">Mode : On-Premise 100% Hors-Ligne</span>
+        </div>
+        <div class="footer-right">
+            <span>Base : PostgreSQL 16+ (pgx)</span>
+            <span>|</span>
+            <span>Stockage CAS : 18.4 Go / 50 Go</span>
+            <span>|</span>
+            <span>Heure UTC : <span id="clock-utc">12:00:00</span></span>
+        </div>
+    </footer>
+
+    <!-- Modal Signature Électronique Directeur Technique (21 CFR Part 11) -->
+    <div class="modal-overlay" id="modal-sign">
+        <div class="modal">
+            <div class="modal-header">
+                <span>✍️ Signature Électronique BPF / ANPP</span>
+                <span style="cursor:pointer;" onclick="closeModal('modal-sign')">✕</span>
+            </div>
+            <div class="modal-body">
+                <div class="legal-notice" id="sign-legal-text">
+                    <strong>Déclaration légale de responsabilité :</strong><br>
+                    « Je soussigné, Dr. Amine K., en ma qualité de Pharmacien Directeur Technique agréé par le MIPH, certifie sur l'honneur avoir personnellement vérifié la complétude, la conformité réglementaire et l'exactitude scientifique de cette pièce pour le dossier ANPP. »
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Document :</label>
+                    <input type="text" id="sign-doc-name" readonly style="width:100%; padding:6px; background:#0f172a; border:1px solid #334155; color:#38bdf8; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Motif d'approbation :</label>
+                    <input type="text" id="sign-reason" value="Approbation finale avant soumission à la commission d'enregistrement ANPP" style="width:100%; padding:6px; background:#0f172a; border:1px solid #334155; color:white; border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Mot de passe ou Code 2FA TOTP (Re-authentification requise) :</label>
+                    <input type="password" id="sign-auth-code" placeholder="Saisir votre mot de passe ou code 6 chiffres" style="width:100%; padding:6px; background:#0f172a; border:1px solid #0284c7; color:white; border-radius:4px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-pill" onclick="closeModal('modal-sign')">Annuler</button>
+                <button class="btn-sign-dt" onclick="executeSignature()">✍️ Approuver et Sceller (SHA-256)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Upload avec reprise par chunks -->
+    <div class="modal-overlay" id="modal-upload">
+        <div class="modal">
+            <div class="modal-header">
+                <span>📤 Téléversement de Pièce (Résiliant par Chunks)</span>
+                <span style="cursor:pointer;" onclick="closeModal('modal-upload')">✕</span>
+            </div>
+            <div class="modal-body">
+                <div style="border:2px dashed #0284c7; padding:25px; text-align:center; border-radius:6px; background:rgba(2,132,199,0.05); cursor:pointer;">
+                    📁 Glissez-déposez votre fichier PDF ou Word ici<br>
+                    <small style="color:var(--text-dim);">(Upload par morceaux de 5 Mo avec reprise automatique en cas de micro-coupure)</small>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Motif obligatoire de révision BPF :</label>
+                    <input type="text" placeholder="Ex: Mise à jour selon remarques de la commission ANPP" style="width:100%; padding:6px; background:#0f172a; border:1px solid #334155; color:white; border-radius:4px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-pill" onclick="closeModal('modal-upload')">Fermer</button>
+                <button class="btn-pill" style="background:#0284c7; color:white;" onclick="alert('Simulation upload terminée avec succès (SHA-256 calculé).'); closeModal('modal-upload');">Téléverser</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script applicatif -->
+    <script>
+        // Données d'exemple riches pour le prototype
+        const mockDocuments = [
+            {
+                id: 1,
+                name: "3.2.S.1_Nomenclature_et_Structure.pdf",
+                code: "CTD-MOD3-S1",
+                version: "v1.0",
+                expiry: "31/12/2028",
+                status: "status-ok",
+                statusLabel: "VALIDÉ BPF",
+                validDT: "Dr. Amine K. (10/11/2026)",
+                sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                size: "2.4 Mo",
+                previewTitle: "MODULE 3.2.S.1 : NOMENCLATURE",
+                previewContent: "Substance Active : PARACÉTAMOL (DCI)<br>Formule brute : C8H9NO2<br>Masse molaire : 151.16 g/mol<br>Fabricant d'API : Phalgaphar Site de Blida<br>Conforme Ph. Eur. 11ème édition."
+            },
+            {
+                id: 2,
+                name: "3.2.S.2_Procede_Fabrication_et_Controles.pdf",
+                code: "CTD-MOD3-S2",
+                version: "v1.0",
+                expiry: "15/09/2027",
+                status: "status-ok",
+                statusLabel: "VALIDÉ BPF",
+                validDT: "Dr. Amine K. (08/11/2026)",
+                sha: "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+                size: "8.1 Mo",
+                previewTitle: "MODULE 3.2.S.2 : SYNTHÈSE ET CONTRÔLES",
+                previewContent: "Schéma de synthèse 4 étapes.<br>Paramètres critiques de contrôle en cours de fabrication (IPC).<br>Contrôle des solvants résiduels par CPG conforme ICH Q3C."
+            },
+            {
+                id: 3,
+                name: "3.2.P.1_Description_et_Composition_Comprime.pdf",
+                code: "CTD-MOD3-P1",
+                version: "v0.2",
+                expiry: "-",
+                status: "status-rev",
+                statusLabel: "EN REVUE DT",
+                validDT: "En attente signature",
+                sha: "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+                size: "1.9 Mo",
+                previewTitle: "MODULE 3.2.P.1 : FORMULE DU PRODUIT FINI",
+                previewContent: "Dosage unitaire : 500 mg Paracétamol.<br>Excipients : Amidon de maïs, Povidone K30, Stéarate de magnésium, Talc purifié.<br>Comprimé sécable blanc, arête biseautée."
+            },
+            {
+                id: 4,
+                name: "3.2.P.5_Specifications_Controle_Produit_Fini.pdf",
+                code: "CTD-MOD3-P5",
+                version: "-",
+                expiry: "-",
+                status: "status-req",
+                statusLabel: "MANQUANT REQUIS",
+                validDT: "Non déposé",
+                sha: "----------------------------------------------------------------",
+                size: "0 Mo",
+                previewTitle: "PIÈCE MANQUANTE OBLIGATOIRE",
+                previewContent: "⚠️ Ce document est requis par l'arrêté MIPH de décembre 2020 pour l'enregistrement ANPP.<br><br>Veuillez téléverser les spécifications de libération et de péremption du produit fini."
+            },
+            {
+                id: 5,
+                name: "Certificat_BPF_Site_Fabrication_MIPH.pdf",
+                code: "QUAL-BPF-2026",
+                version: "v2.0",
+                expiry: "20/06/2027",
+                status: "status-ok",
+                statusLabel: "VALIDÉ BPF",
+                validDT: "Dr. Amine K. (01/10/2026)",
+                sha: "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
+                size: "4.7 Mo",
+                previewTitle: "RÉPUBLIQUE ALGÉRIENNE - MINISTÈRE DE L'INDUSTRIE PHARMACEUTIQUE",
+                previewContent: "CERTIFICAT DE BONNES PRATIQUES DE FABRICATION (BPF)<br>N° Ag/MIPH/2024/0982<br>Formes sèches (Comprimés, Gélules). Conforme Décret Exécutif 22-247."
+            }
+        ];
+
+        let selectedDocId = 1;
+        let isArabic = false;
+
+        function renderTree() {
+            const container = document.getElementById("tree-root");
+            container.innerHTML = `
+                <div class="tree-node selected" onclick="toggleSub('sub-ctd-para')">
+                    <span class="chevron">▼</span>
+                    <span>💊 Paracétamol 500mg (Enreg.)</span>
+                    <span class="count-badge warn">85%</span>
+                </div>
+                <div class="tree-sub open" id="sub-ctd-para">
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 1 : Administratif Algérie</span><span class="count-badge ok">6/6</span></div>
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 2 : Résumés CTD</span><span class="count-badge ok">4/4</span></div>
+                    <div class="tree-node selected" style="padding-left:24px;"><span>📁 Module 3 : Qualité CMC</span><span class="count-badge warn">12/14</span></div>
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 4 : Non-Clinique</span><span class="count-badge ok">3/3</span></div>
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 5 : Clinique & BE</span><span class="count-badge ok">5/5</span></div>
+                </div>
+
+                <div class="tree-node" onclick="toggleSub('sub-dm-ser')">
+                    <span class="chevron">▶</span>
+                    <span>💉 Seringue 3p 5ml (DM Classe IIa)</span>
+                    <span class="count-badge ok">100%</span>
+                </div>
+                <div class="tree-sub" id="sub-dm-ser">
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 01. Dossier Administratif & Agrément</span><span class="count-badge ok">4/4</span></div>
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 02. Dossier Technique (Arrêté 10 Mai)</span><span class="count-badge ok">8/8</span></div>
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 03. Certificats Stérilisation & ISO</span><span class="count-badge ok">3/3</span></div>
+                </div>
+
+                <div class="tree-node" onclick="toggleSub('sub-dm-reg')">
+                    <span class="chevron">▶</span>
+                    <span>🩹 Cathéter IV (Régularisation DM)</span>
+                    <span class="count-badge req">40%</span>
+                </div>
+                <div class="tree-sub" id="sub-dm-reg">
+                    <div class="tree-node" style="padding-left:24px;"><span>📁 Inventaire DM Décret 20-324</span><span class="count-badge req">2/5</span></div>
+                </div>
+            `;
+        }
+
+        function toggleSub(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle("open");
+        }
+
+        function renderTable(docs = mockDocuments) {
+            const tbody = document.getElementById("doc-tbody");
+            tbody.innerHTML = "";
+            docs.forEach(doc => {
+                const tr = document.createElement("tr");
+                if (doc.id === selectedDocId) tr.classList.add("selected");
+                tr.onclick = () => selectDocument(doc.id);
+                tr.innerHTML = `
+                    <td><span class="status-tag ${doc.status}">${doc.statusLabel}</span></td>
+                    <td style="font-weight:600; color:#f8fafc;">${doc.name}</td>
+                    <td style="color:var(--text-muted); font-family:monospace;">${doc.code}</td>
+                    <td style="font-weight:600;">${doc.version}</td>
+                    <td style="color:${doc.expiry !== '-' ? '#fbbf24' : 'var(--text-dim)'};">${doc.expiry}</td>
+                    <td>${doc.validDT}</td>
+                    <td style="font-family:monospace; color:var(--text-dim); font-size:10px;">${doc.sha.substring(0, 16)}...</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            renderPreview();
+        }
+
+        function selectDocument(id) {
+            selectedDocId = id;
+            renderTable();
+        }
+
+        function renderPreview() {
+            const doc = mockDocuments.find(d => d.id === selectedDocId) || mockDocuments[0];
+            const preview = document.getElementById("preview-body");
+            const isNeedSign = doc.status === "status-rev";
+
+            preview.innerHTML = `
+                <div class="pdf-sim-page">
+                    <div class="pdf-sim-header">
+                        ${doc.previewTitle}
+                    </div>
+                    <div style="font-size:11px; margin-bottom:12px;">
+                        ${doc.previewContent}
+                    </div>
+                    <div style="margin-top:20px; padding-top:8px; border-top:1px dashed #94a3b8; font-size:10px; color:#475569;">
+                        Document certifié conforme pour l'Agence Nationale des Produits Pharmaceutiques (ANPP).<br>
+                        Empreinte cryptographique : <code>${doc.sha.substring(0, 24)}...</code>
+                    </div>
+                </div>
+
+                <div class="meta-box">
+                    <div class="meta-row"><span class="meta-label">Nom du fichier :</span><span class="meta-val" style="word-break:break-all;">${doc.name}</span></div>
+                    <div class="meta-row"><span class="meta-label">Version actuelle :</span><span class="meta-val">${doc.version}</span></div>
+                    <div class="meta-row"><span class="meta-label">Taille :</span><span class="meta-val">${doc.size}</span></div>
+                    <div class="meta-row"><span class="meta-label">Validité légale :</span><span class="meta-val">${doc.expiry}</span></div>
+                    <div class="meta-row"><span class="meta-label">Statut BPF :</span><span class="meta-val">${doc.statusLabel}</span></div>
+                    <div class="meta-row"><span class="meta-label">SHA-256 complet :</span><span class="meta-val" style="font-size:9px; word-break:break-all;">${doc.sha}</span></div>
+                </div>
+
+                ${isNeedSign ? `
+                    <button class="btn-sign-dt" onclick="openSignModal('${doc.name}')">
+                        ✍️ Signer et Approuver en qualité de DT (BPF)
+                    </button>
+                ` : `
+                    <div style="text-align:center; padding:8px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:4px; color:#34d399; font-size:11px; font-weight:600;">
+                        ✓ Document visé et scellé par le Directeur Technique
+                    </div>
+                `}
+            `;
+        }
+
+        function filterTable() {
+            const query = document.getElementById("search-box").value.toLowerCase();
+            const filtered = mockDocuments.filter(d => 
+                d.name.toLowerCase().includes(query) || 
+                d.code.toLowerCase().includes(query) ||
+                d.statusLabel.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
+        function toggleLanguage() {
+            isArabic = !isArabic;
+            const html = document.documentElement;
+            if (isArabic) {
+                html.setAttribute("dir", "rtl");
+                html.setAttribute("lang", "ar");
+                document.getElementById("lang-btn-label").innerText = "🇫🇷 Français (LTR)";
+                document.getElementById("txt-app-title").innerText = "لوحة القيادة ANPP وإدارة الوثائق الصيدلانية";
+                document.getElementById("txt-urgent-alerts").innerText = "🚨 2 مواعيد حرجة (أقل من 30 يوماً)";
+                document.getElementById("user-badge").innerText = "د. أمين ك. (صيدلي مدير تقني)";
+            } else {
+                html.setAttribute("dir", "ltr");
+                html.setAttribute("lang", "fr");
+                document.getElementById("lang-btn-label").innerText = "🇩🇿 العربية (RTL)";
+                document.getElementById("txt-app-title").innerText = "Cockpit ANPP & GED BPF";
+                document.getElementById("txt-urgent-alerts").innerText = "🚨 2 Échéances (J < 30j)";
+                document.getElementById("user-badge").innerText = "Dr. Amine K. (Pharmacien DT)";
+            }
+        }
+
+        function openSignModal(docName) {
+            document.getElementById("sign-doc-name").value = docName;
+            document.getElementById("modal-sign").classList.add("open");
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove("open");
+        }
+
+        function executeSignature() {
+            const code = document.getElementById("sign-auth-code").value;
+            if (!code) {
+                alert("Erreur de conformité 21 CFR Part 11 : Le mot de passe ou code 2FA est obligatoire pour apposer votre signature légale.");
+                return;
+            }
+            alert("✓ Signature électronique enregistrée avec succès !\n- Horodatage UTC : " + new Date().toISOString() + "\n- Signataire : Dr. Amine K. (Directeur Technique)\n- Empreinte scellée dans l'Audit Trail immuable.");
+            const doc = mockDocuments.find(d => d.id === selectedDocId);
+            if (doc) {
+                doc.status = "status-ok";
+                doc.statusLabel = "VALIDÉ BPF";
+                doc.version = "v1.0";
+                doc.validDT = "Dr. Amine K. (À l'instant)";
+            }
+            closeModal("modal-sign");
+            renderTable();
+        }
+
+        function openUploadModal() {
+            document.getElementById("modal-upload").classList.add("open");
+        }
+
+        function openAlertsModal() {
+            alert("🚨 ÉCHÉANCES RÉGLEMENTAIRES CRITIQUES (J < 30j) :\n\n1. Renouvellement Décision d'Enregistrement - Paracétamol 500mg : Expire dans 18 jours (ANPP Référence DZ-2019-0412).\n2. Demande de compléments ANPP - Seringue 3 pièces : Réponse obligatoire avant le 28/11/2026.");
+        }
+
+        function openAuditModal() {
+            alert("🛡️ JOURNAL D'AUDIT IMMUABLE (Extrait en direct) :\n\n[10/11/2026 11:42:01 UTC] AUTH_LOGIN - dr.amine@labo.dz (DT) depuis 192.168.1.45 (2FA validé)\n[10/11/2026 11:48:15 UTC] DOC_VIEW - 3.2.S.1_Nomenclature.pdf (SHA: e3b0c442...)\n[10/11/2026 12:01:30 UTC] SYS_BACKUP - Archive universelle chiffrée homolog_20261110.homolog créée avec succès.\n\nContrôle BPF : Intégrité cryptographique garantie, table append-only.");
+        }
+
+        function simulateExportZip() {
+            alert("📦 Génération de l'archive officielle ANPP...\n\nStructure CTD Modules 1 à 5 prête pour dépôt physique à l'agence (48 pièces validées, 184 Mo).");
+        }
+
+        // Horloge UTC
+        setInterval(() => {
+            document.getElementById("clock-utc").innerText = new Date().toUTCString().split(" ")[4];
+        }, 1000);
+
+        // Initialisation
+        renderTree();
+        renderTable();
+    </script>
+</body>
+</html>
