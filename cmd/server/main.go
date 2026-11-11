@@ -19,6 +19,7 @@ import (
 	"homolog/internal/auth"
 	"homolog/internal/config"
 	"homolog/internal/database"
+	"homolog/internal/repository"
 	"homolog/internal/storage"
 	"homolog/web"
 )
@@ -49,6 +50,7 @@ func main() {
 	var sessionManager *auth.SessionManager
 	var auditService *audit.Service
 	var authHandler *api.AuthHandler
+	var pharmaHandler *api.PharmaHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -65,6 +67,9 @@ func main() {
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService)
+
+		pharmaRepo := repository.NewPharmaRepository(db.Pool)
+		pharmaHandler = api.NewPharmaHandler(pharmaRepo, auditService)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -136,6 +141,30 @@ func main() {
 			protected.Get("/api/v1/auth/me", authHandler.Me)
 			protected.Post("/api/v1/auth/reauth-sign", authHandler.ReauthSign)
 			protected.Get("/api/v1/audit/logs", authHandler.GetAuditLogs)
+
+			// Référentiel Établissements, Sites & Produits (Jalon 1.3 - Guide ANPP 2025)
+			if pharmaHandler != nil {
+				// Établissements
+				protected.Get("/api/v1/establishments", pharmaHandler.ListEstablishments)
+				protected.Post("/api/v1/establishments", pharmaHandler.CreateEstablishment)
+				protected.Get("/api/v1/establishments/{id}", pharmaHandler.GetEstablishment)
+				protected.Put("/api/v1/establishments/{id}", pharmaHandler.UpdateEstablishment)
+
+				// Sites intervenants (1.H.8)
+				protected.Get("/api/v1/manufacturing-sites", pharmaHandler.ListManufacturingSites)
+				protected.Post("/api/v1/manufacturing-sites", pharmaHandler.CreateManufacturingSite)
+				protected.Get("/api/v1/manufacturing-sites/{id}", pharmaHandler.GetManufacturingSite)
+
+				// Médicaments (Princeps, Générique importé, Générique local)
+				protected.Get("/api/v1/medicines", pharmaHandler.ListMedicines)
+				protected.Post("/api/v1/medicines", pharmaHandler.CreateMedicine)
+				protected.Get("/api/v1/medicines/{id}", pharmaHandler.GetMedicine)
+
+				// Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)
+				protected.Get("/api/v1/medical-devices", pharmaHandler.ListMedicalDevices)
+				protected.Post("/api/v1/medical-devices", pharmaHandler.CreateMedicalDevice)
+				protected.Get("/api/v1/medical-devices/{id}", pharmaHandler.GetMedicalDevice)
+			}
 		})
 	}
 
