@@ -111,6 +111,12 @@ func (h *PharmaHandler) ListEstablishments(w http.ResponseWriter, r *http.Reques
 
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	list, total, err := h.repo.ListEstablishments(r.Context(), user.OrganizationID, limit, offset)
 	if err != nil {
@@ -233,6 +239,12 @@ func (h *PharmaHandler) ListManufacturingSites(w http.ResponseWriter, r *http.Re
 	roleFilter := strings.TrimSpace(r.URL.Query().Get("role"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	list, total, err := h.repo.ListManufacturingSites(r.Context(), user.OrganizationID, roleFilter, limit, offset)
 	if err != nil {
@@ -367,6 +379,12 @@ func (h *PharmaHandler) ListMedicines(w http.ResponseWriter, r *http.Request) {
 	search := strings.TrimSpace(r.URL.Query().Get("search"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	list, total, err := h.repo.ListMedicines(r.Context(), user.OrganizationID, origin, search, limit, offset)
 	if err != nil {
@@ -466,6 +484,12 @@ func (h *PharmaHandler) ListMedicalDevices(w http.ResponseWriter, r *http.Reques
 	search := strings.TrimSpace(r.URL.Query().Get("search"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	list, total, err := h.repo.ListMedicalDevices(r.Context(), user.OrganizationID, classFilter, search, limit, offset)
 	if err != nil {

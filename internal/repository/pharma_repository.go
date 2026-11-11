@@ -105,6 +105,9 @@ func (r *PharmaRepository) ListEstablishments(ctx context.Context, orgID uuid.UU
 	if limit <= 0 {
 		limit = 50
 	}
+	if offset < 0 {
+		offset = 0
+	}
 	var total int
 	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM establishments WHERE organization_id = $1`, orgID).Scan(&total)
 	if err != nil {
@@ -256,6 +259,9 @@ func (r *PharmaRepository) GetManufacturingSiteByID(ctx context.Context, orgID, 
 func (r *PharmaRepository) ListManufacturingSites(ctx context.Context, orgID uuid.UUID, roleFilter string, limit, offset int) ([]domain.ManufacturingSite, int, error) {
 	if limit <= 0 {
 		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
 	}
 
 	var countQuery strings.Builder
@@ -515,6 +521,9 @@ func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, o
 	if limit <= 0 {
 		limit = 50
 	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	var countQuery strings.Builder
 	var listQuery strings.Builder
@@ -715,6 +724,9 @@ func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id u
 func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UUID, classFilter, search string, limit, offset int) ([]domain.MedicalDevice, int, error) {
 	if limit <= 0 {
 		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
 	}
 
 	var countQuery strings.Builder

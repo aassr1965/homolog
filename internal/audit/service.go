@@ -130,6 +130,9 @@ func (s *Service) List(ctx context.Context, orgID uuid.UUID, limit, offset int) 
 	if limit <= 0 || limit > 500 {
 		limit = 50
 	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	var total int64
 	err := s.pool.QueryRow(ctx, "SELECT COUNT(*) FROM audit_logs WHERE organization_id = $1", orgID).Scan(&total)
