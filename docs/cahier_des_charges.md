@@ -27,6 +27,7 @@ Deux textes fondamentaux publiés par l'ANPP structurent l'ensemble du cycle de 
 - **Intégrer un Coffre-Fort GED Pharmaceutique (Standard BPF / ALCOA+)** garantissant l'intégrité, la gestion des versions (mineures/majeures), les circuits d'approbation et la signature électronique légale du Directeur Technique.
 - **Intégrer un Moteur Intelligent de Variations (LD-DEPP07/V01)** : détecter l'impact d'une modification documentaire, qualifier le type de modification (Mmin, Mmod, Mmaj) parmi les 34 rubriques réglementaires, vérifier les conditions, exécuter le reclassement dynamique et générer automatiquement le dossier complet de modification (avec tableau comparatif *État actuel vs Proposé* et attestation de non-modification des autres sections).
 - **Anticiper les échéances critiques et péremptions** : renouvellements quinquennaux à J-180/J-90, réponses aux compléments ANPP avec compte à rebours légal, expiration des certificats BPF, CEP et licences d'exploitation.
+- **Automatiser et sécuriser l'articulation avec les télé-procédures ANPP (Module ANPP Submission Assistant)** : génération automatique des bordereaux officiels (BV1/BV2, récépissés, formulaires d'homologation DM), export du Submission Package prêt pour le portail E-TASJIL (`etasjil.anpp.dz`), calendrier intelligent d'ouverture des créneaux de RDV (`rdvpp.anpp.dz` / `rdvdm.anpp.dz`), et architecture API-Ready pour future télétransmission directe.
 - **Garantir la souveraineté numérique et la flexibilité hybride** : déployable en mode On-Premise 100 % hors-ligne (en intranet sécurisé de laboratoire) ou en mode Cloud SaaS souverain multi-tenant avec réversibilité absolue via l'archive chiffrée `.homolog`.
 - **Offrir une ergonomie "Pharma Explorer" haute densité** : navigation 3 volets inspirée de Windows Explorer Pro, affichage compact (32px par ligne), volet de prévisualisation PDF instantané et bilinguisme intégral FR/AR avec support RTL natif.
 
@@ -437,6 +438,82 @@ Les documents de référence du laboratoire sont organisés en cinq branches ma�
 
 ---
 
-## 9. Conclusion et Validation
+## 9. Module ANPP Submission Assistant & E-Services Gateway (Télé-Procédures ANPP)
+
+### 9.1 Cartographie des E-Services Officiels de l'ANPP
+L'ANPP met à disposition des opérateurs pharmaceutiques un ensemble de portails numériques spécialisés avec lesquels la plateforme **Homolog** s'articule :
+1. **E-TASJIL (`https://etasjil.anpp.dz`) :** Portail officiel de gestion dématérialisée des procédures d'enregistrement des produits pharmaceutiques.
+2. **RDV PP (`https://rdvpp.anpp.dz`) :** Plateforme de prise de rendez-vous en ligne obligatoire pour le dépôt physique et l'accueil des dossiers de produits pharmaceutiques (créneau d'ouverture hebdomadaire : du mercredi 10h00 au jeudi 10h00).
+3. **RDV DM (`https://rdvdm.anpp.dz`) :** Plateforme de prise de rendez-vous en ligne obligatoire pour le dépôt des dossiers d'homologation des dispositifs médicaux (créneau d'ouverture : du mardi 10h00 au jeudi 10h00 ; jours de réception : dimanche, lundi, mercredi).
+4. **État Déclaratif (`https://etatdeclaratif.anpp.dz`) :** Extranet réglementaire dédié aux déclarations périodiques d'approvisionnement et d'état des stocks.
+5. **RCP (`https://rcp.anpp.dz`) :** Registre public de consultation des Résumés des Caractéristiques du Produit approuvés.
+
+### 9.2 Cycle de Soumission Hybride et Positionnement d'Homolog
+La réglementation pharmaceutique algérienne impose un **cycle de soumission hybride** (télé-procédure en amont + dépôt physique des classeurs et échantillons sur convocation). **Homolog** automatise l'intégralité de la chaîne préparatoire et assiste le Pharmacien Directeur Technique sans rupture d'intégrité :
+
+```mermaid
+flowchart TD
+    A["1. Composition & GED BPF dans Homolog<br/>(Modules CTD 1-5 ou Dossier DM)"] --> B["2. Contrôle de Complétude & Validation 21 CFR Part 11<br/>(Signature électronique solennelle PDT)"]
+    B --> C["3. Génération du 'Submission Package' ANPP<br/>(Bordereaux BV1/BV2, Formulaires officiels, Index eCTD)"]
+    C --> D["4. Télé-saisie assistée sur E-TASJIL<br/>(Fiche synthétique d'injection champ par champ)"]
+    C --> E["5. Veille & Réservation Créneau RDV PP / DM<br/>(Alertes automatiques Mardi/Mercredi 09h50)"]
+    D & E --> F["6. Dépôt Physique Conforme au Siège / Annexes ANPP<br/>(Dossier imprimé, BV visés, quittances bancaires, échantillons)"]
+    F --> G["7. Suivi d'Instruction & Compléments dans Homolog<br/>(Compte à rebours légal J-30 / J-90)"]
+```
+
+### 9.3 Spécifications Fonctionnelles de l'Assistant de Soumission
+
+#### 9.3.1 Génération Automatisée des Bordereaux et Formulaires Officiels ANPP
+La plateforme génère directement, sans ressaisie manuelle, les documents réglementaires au format exact exigé par l'ANPP (Word `.docx`, Excel `.xlsx` et PDF scellé) :
+- **Bordereau de Versement BV1 :** Dépôt d'un dossier d'enregistrement initial (NI/NF) ou d'homologation DM initiale avec calcul automatique des montants de redevance en DZD ou devises.
+- **Bordereau de Versement BV2 :** Dépôt des demandes de modifications (Mmin, Mmod, Mmaj) et renouvellements quinquennaux (RI/RF).
+- **Formulaire officiel de demande d'homologation DM :** Formulaire standardisé conforme au décret exécutif n° 20-324 et à l'arrêté du 10 mai 2021.
+- **Récépissé officiel de dépôt :** Pré-rempli avec les métadonnées de l'établissement demandeur, du fabricant, du produit et du Pharmacien Directeur Technique.
+- **Attestation formelle de non-modification des autres sections :** Générée selon le canevas officiel de la ligne directrice LD-DEPP07/V01.
+
+#### 9.3.2 Générateur de Paquet de Télé-Soumission pour E-TASJIL (Export 1-Clic)
+- **Arborescence eCTD / DM normalisée :** Export d'une archive structurée et validée respectant la nomenclature officielle des fichiers ANPP (Module 1 à 5).
+- **Fiche récapitulative de saisie E-TASJIL :** Synthèse pré-formatée alignée champ par champ avec les masques de saisie d'E-TASJIL (DCI, dosage, forme galénique, code ATC, sites de synthèse SA, façonnage PF, conditionnement, contrôles), permettant un copier-coller instantané ou une injection assistée sans risque d'erreur humaine.
+- **Index PDF d'intégrité :** Table des matières interactive avec liens hypertextes et empreintes cryptographiques SHA-256 de chaque document.
+
+#### 9.3.3 Veille Calendaire & Assistant de Prise de RDV (RDV PP / RDV DM)
+- **Moteur d'alertes calendaires proactives :**
+  - Notification automatique au Responsable Réglementaire et au PDT chaque mardi matin à 09h50 pour les créneaux Dispositifs Médicaux (`rdvdm.anpp.dz`).
+  - Notification chaque mercredi matin à 09h50 pour les créneaux Produits Pharmaceutiques (`rdvpp.anpp.dz`).
+- **Assistant de saisie rapide (Fast-Fill Sécurisé) :** Préparation des données requises par le formulaire de rendez-vous (Raison sociale, n° d'agrément MIPH, nom du PDT, dénomination produit, objet de la demande, annexe choisie : Alger, Oran ou Constantine) pour réserver le créneau dès l'ouverture du guichet hebdomadaire.
+
+#### 9.3.4 Contrôle de Complétude Pré-Dépôt Bloquant
+L'assistant applique un audit automatisé bloquant avant d'autoriser l'export du Submission Package :
+1. **Complétude documentaire :** 100 % des pièces obligatoires de la procédure (NI, RI, MI, NF, RF, MF ou DM) doivent être déposées et validées.
+2. **Validité des titres réglementaires :** Vérification automatique des dates de péremption des agréments MIPH, certificats BPF/GMP, lettres d'accès CEP et licences.
+3. **Signature solennelle du Pharmacien Directeur Technique :** Présence obligatoire de la signature électronique nominative avec horodatage UTC et scellement SHA-256 (21 CFR Part 11).
+
+### 9.4 Architecture Technique du Connecteur (API-Ready)
+Dans le backend Go de **Homolog**, le module d'interopérabilité est modélisé par des interfaces découplées au sein du package `internal/anpp` :
+```go
+// SubmissionPackage représente le paquet complet prêt pour le dépôt ANPP.
+type SubmissionPackage struct {
+    DossierID         string
+    ProcedureCode     string // NI, RI, MI, NF, RF, MF, DM
+    BordereauType     string // BV1, BV2
+    GeneratedDocs     map[string][]byte // Formulaires Word/Excel/PDF pré-remplis
+    ManifestSHA256    string
+    PDTSignatureProof string
+}
+
+// Service d'exportation et d'assistance réglementaire ANPP.
+type ANPPService interface {
+    ValidatePreSubmission(ctx context.Context, dossierID string) (*ComplianceReport, error)
+    GenerateSubmissionPackage(ctx context.Context, dossierID string) (*SubmissionPackage, error)
+    GenerateFastFillData(ctx context.Context, dossierID string) (*RDVFastFillData, error)
+    // Connecteur M2M : actif dès publication des spécifications techniques de télétransmission par l'ANPP
+    SubmitDirectM2M(ctx context.Context, pkg *SubmissionPackage, creds *ANPPCredentials) (*SubmissionReceipt, error)
+}
+```
+Cette architecture garantit que l'application est immédiatement opérationnelle en mode hybride aujourd'hui, et prête à être branchée sur une API B2B officielle de l'ANPP dès que celle-ci sera disponible.
+
+---
+
+## 10. Conclusion et Validation
 
 Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme **Homolog**. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.

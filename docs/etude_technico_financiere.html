@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Étude Technico-Financière - Homolog</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 15mm 20mm 15mm;
+            @bottom-right {
+                content: counter(page);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: 9pt;
+                color: #64748b;
+            }
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            line-height: 1.55;
+            font-size: 10pt;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Page de garde */
+        .cover-page {
+            page-break-after: always;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 20px 20px 20px;
+            background: linear-gradient(145deg, #091e36 0%, #0f2b48 50%, #084364 100%);
+            color: #ffffff;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::after {
+            content: "";
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(13, 148, 136, 0.25) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background-color: rgba(13, 148, 136, 0.3);
+            border: 1px solid #14b8a6;
+            color: #5eead4;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 8.5pt;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+        }
+
+        .cover-title {
+            font-size: 28pt;
+            font-weight: 800;
+            line-height: 1.15;
+            margin: 0 0 15px 0;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 13.5pt;
+            font-weight: 400;
+            color: #94a3b8;
+            line-height: 1.4;
+            margin: 0 0 35px 0;
+            max-width: 600px;
+        }
+
+        .cover-divider {
+            width: 80px;
+            height: 4px;
+            background: #0d9488;
+            border-radius: 2px;
+            margin-bottom: 30px;
+        }
+
+        .cover-highlights {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .cover-card {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 14px;
+            border-radius: 8px;
+        }
+
+        .cover-card-label {
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .cover-card-value {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 8.5pt;
+            color: #94a3b8;
+        }
+
+        .cover-footer strong {
+            color: #ffffff;
+        }
+
+        /* Structure générale & Typo */
+        h1 {
+            color: #0f2942;
+            font-size: 16pt;
+            font-weight: 700;
+            border-bottom: 2px solid #0d9488;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            page-break-after: avoid;
+            display: flex;
+            align-items: center;
+        }
+
+        h2 {
+            color: #1e3a5f;
+            font-size: 12pt;
+            font-weight: 600;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            color: #334155;
+            font-size: 10.5pt;
+            font-weight: 600;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin: 0 0 10px 0;
+            text-align: justify;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px 0 20px 0;
+            page-break-inside: avoid;
+        }
+
+        .kpi-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-top: 3px solid #0d9488;
+            border-radius: 6px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+
+        .kpi-card.blue { border-top-color: #0284c7; }
+        .kpi-card.emerald { border-top-color: #10b981; }
+        .kpi-card.amber { border-top-color: #f59e0b; }
+        .kpi-card.purple { border-top-color: #8b5cf6; }
+
+        .kpi-label {
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .kpi-value {
+            font-size: 13pt;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+
+        .kpi-sub {
+            font-size: 7.5pt;
+            color: #059669;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        /* Alertes et boîtes de synthèse */
+        .callout {
+            background-color: #f0fdf4;
+            border-left: 4px solid #16a34a;
+            padding: 10px 14px;
+            margin: 12px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+
+        .callout.info {
+            background-color: #f0f9ff;
+            border-left-color: #0284c7;
+        }
+
+        .callout.warning {
+            background-color: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+            font-size: 9.5pt;
+        }
+
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            margin: 12px 0 16px 0;
+            page-break-inside: avoid;
+        }
+
+        th {
+            background-color: #0f2942;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 7px 9px;
+            text-align: left;
+            border: 1px solid #1e3a5f;
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        td {
+            padding: 6px 9px;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: 700; }
+        .highlight-row { background-color: #e0f2fe !important; font-weight: 700; color: #0369a1; }
+        .total-row { background-color: #f1f5f9 !important; font-weight: 700; border-top: 2px solid #0f2942; }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 7.5pt;
+            font-weight: 600;
+        }
+        .badge-green { background-color: #dcfce7; color: #15803d; }
+        .badge-blue { background-color: #e0f2fe; color: #0369a1; }
+        .badge-amber { background-color: #fef3c7; color: #b45309; }
+
+        /* SVG Charts container */
+        .chart-box {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .chart-title {
+            font-size: 9pt;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Saut de page propre */
+        .page-break {
+            page-break-after: always;
+        }
+
+        .header-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-bottom: 15px;
+            font-size: 7.5pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        ul {
+            margin: 0 0 10px 0;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== PAGE DE GARDE ==================== -->
+    <div class="cover-page">
+        <div>
+            <div class="cover-badge">Dossier d'Évaluation Stratégique & Financière</div>
+            <div class="cover-title">HOMOLOG</div>
+            <div class="cover-subtitle">
+                Système Décisionnel & Collaboratif de Gestion Réglementaire ANPP et GED Pharmaceutique en Algérie
+            </div>
+            <div class="cover-divider"></div>
+            
+            <p style="color: #cbd5e1; font-size: 10pt; max-width: 580px; margin-bottom: 30px;">
+                Étude technico-financière, modélisation de rentabilité sur 5 ans (2027-2031), structuration des investissements et analyse du retour sur investissement dans le cadre de la transition CTD 2025 et de la nomenclature des variations ANPP 2026.
+            </p>
+
+            <div class="cover-highlights">
+                <div class="cover-card">
+                    <div class="cover-card-label">Valeur Actuelle Nette (12%)</div>
+                    <div class="cover-card-value">128,4 M DZD</div>
+                </div>
+                <div class="cover-card">
+                    <div class="cover-card-label">Taux Rentabilité Interne</div>
+                    <div class="cover-card-value">114 %</div>
+                </div>
+                <div class="cover-card">
+                    <div class="cover-card-label">Délai Récupération (Payback)</div>
+                    <div class="cover-card-value">16 Mois</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>
+                <div><strong>Portée :</strong> Industrie Pharmaceutique & Dispositifs Médicaux</div>
+                <div><strong>Conformité :</strong> Guide CTD ANPP (2025) & LD-DEPP07/V01 (2026) | BPF / ALCOA+</div>
+            </div>
+            <div style="text-align: right;">
+                <div><strong>Document :</strong> Version 1.0 Confidentielle</div>
+                <div><strong>Date :</strong> Novembre 2026</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 1 ==================== -->
+    <div class="header-strip">
+        <span>HOMOLOG • Étude Technico-Financière Professionnelle</span>
+        <span>Section 1 : Synthèse Exécutive</span>
+    </div>
+
+    <h1>1. Synthèse Exécutive (Executive Summary)</h1>
+
+    <p>
+        L'industrie pharmaceutique algérienne, évaluée à près de <strong>4,2 milliards USD</strong>, constitue le deuxième pôle de production d'Afrique. Sous l'impulsion des politiques gouvernementales de substitution aux importations, le taux de couverture par la fabrication locale dépasse désormais 70 % en volume. Cet essor industriel sans précédent s'accompagne d'une profonde transformation du cadre réglementaire pilotée par l'<strong>Agence Nationale des Produits Pharmaceutiques (ANPP)</strong> :
+    </p>
+
+    <ul>
+        <li><strong>Généralisation du Dossier Technique Commun (CTD) :</strong> Obligatoire depuis le Guide officiel de juillet 2025 pour toute demande d'Enregistrement Initial (NI, NF) ou de Renouvellement quinquennal (RI, RF).</li>
+        <li><strong>Réglementation stricte des Modifications (LD-DEPP07/V01 d'avril 2026) :</strong> Remplacement définitif des terminologies européennes par la nomenclature algérienne à 3 classes (<strong>Mmin, Mmod, Mmaj</strong>) et obligation de reclassement automatique dès non-respect d'une condition.</li>
+        <li><strong>Régularisation urgente des Dispositifs Médicaux :</strong> Application stricte du Décret exécutif 20-324 et de l'Arrêté du 10 mai 2021 imposant l'homologation formelle de tous les DM et DMDIV.</li>
+    </ul>
+
+    <div class="kpi-grid">
+        <div class="kpi-card emerald">
+            <div class="kpi-label">CA Cumulé 5 Ans</div>
+            <div class="kpi-value">374,8 M DZD</div>
+            <div class="kpi-sub">~2,58 Millions €</div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-label">EBITDA Cumulé</div>
+            <div class="kpi-value">249,1 M DZD</div>
+            <div class="kpi-sub">Marge moy. 66,5%</div>
+        </div>
+        <div class="kpi-card amber">
+            <div class="kpi-label">Point Mort (Break-Even)</div>
+            <div class="kpi-value">Mois 14</div>
+            <div class="kpi-sub">6 Clients Business</div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-label">Marge Nette (Régime)</div>
+            <div class="kpi-value">68,9 %</div>
+            <div class="kpi-sub">En Année 5 (2031)</div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <div class="callout-title">Le Pain-Point Majeur : Le Coût Critique du Retard Réglementaire</div>
+        Dans l'industrie pharmaceutique, la mise sur le marché d'une référence générique ou le déblocage d'une ligne de fabrication (variation de site ou d'API) génère un chiffre d'affaires quotidien considérable. Un retard de 4 mois causé par un dossier CTD incomplet ou un mauvais classement de variation représente un manque à gagner moyen de <strong>40 à 120 millions de DZD</strong> pour le laboratoire, en plus du risque de pénalités contractuelles auprès de la Pharmacie Centrale des Hôpitaux (PCH). Homolog supprime ce risque par sa validation de complétude bloquante.
+    </div>
+
+    <!-- ==================== SECTION 2 ==================== -->
+    <div class="header-strip">
+        <span>HOMOLOG • Étude Technico-Financière Professionnelle</span>
+        <span>Section 2 : Ingénierie & Architecture</span>
+    </div>
+
+    <h1>2. Étude Technique & Ingénierie Système</h1>
+
+    <h3>2.1 Choix Technologiques & Efficience Industrielle</h3>
+    <p>
+        La viabilité financière d'un progiciel vertical repose sur la frugalité et la robustesse de son socle d'ingénierie. Homolog a fait le choix délibéré d'une architecture native <strong>Golang + PostgreSQL 16</strong> sans runtime lourd :
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Composant</th>
+                <th style="width: 35%;">Choix d'Ingénierie</th>
+                <th style="width: 40%;">Impact Économique & Avantage Compétitif</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Backend Applicatif</strong></td>
+                <td>Golang 1.26+ (Binaire unique compilé <code>homolog.exe</code>)</td>
+                <td>Zéro dépendance serveur, consommation RAM minime (<250 Mo), déploiement instantané en 1 clic.</td>
+            </tr>
+            <tr>
+                <td><strong>Stockage GED</strong></td>
+                <td>Driver CAS (Content-Addressed Storage) SHA-256 dédupliqué</td>
+                <td>Division par 2,5 du volume disque requis (60% des pièces BPF étant partagées). Économie substantielle d'infrastructure.</td>
+            </tr>
+            <tr>
+                <td><strong>Base de Données</strong></td>
+                <td>PostgreSQL 16 avec schémas JSONB & FTS Arabe/Français</td>
+                <td>Flexibilité totale pour adapter les checklists sans refonte de schéma ; recherche plein texte bilingue native sans surcoût.</td>
+            </tr>
+            <tr>
+                <td><strong>Frontend Embarqué</strong></td>
+                <td>TypeScript, Tailwind CSS, embed Go natif</td>
+                <td>Zéro serveur Node.js en exploitation de production, aucun appel vers des CDN publics externes (Souveraineté 100%).</td>
+            </tr>
+            <tr>
+                <td><strong>Conformité 21 CFR 11</strong></td>
+                <td>Table <code>audit_logs</code> append-only (triggers SQL bloquants)</td>
+                <td>Inaltérabilité prouvable devant les auditeurs et inspecteurs de l'ANPP / BPF.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>2.2 Architecture Logique de la Solution</h3>
+    <div class="chart-box">
+        <div class="chart-title">Architecture Logique & Flux de Sécurité BPF / 21 CFR Part 11</div>
+        <svg viewBox="0 0 760 160" width="100%" height="150" xmlns="http://www.w3.org/2000/svg">
+            <!-- Box 1 UI -->
+            <rect x="10" y="20" width="150" height="120" rx="8" fill="#f8fafc" stroke="#0284c7" stroke-width="2"/>
+            <text x="85" y="45" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">UI Pharma Explorer</text>
+            <text x="85" y="65" font-size="8.5" fill="#475569" text-anchor="middle">Vue Haute Densité 32px</text>
+            <text x="85" y="80" font-size="8.5" fill="#475569" text-anchor="middle">Visionneuse PDF.js</text>
+            <text x="85" y="95" font-size="8.5" fill="#475569" text-anchor="middle">Bilingue FR/AR (RTL)</text>
+            <rect x="25" y="110" width="120" height="18" rx="4" fill="#e0f2fe"/>
+            <text x="85" y="123" font-size="8" font-weight="bold" fill="#0284c7" text-anchor="middle">Zéro Node.js Serveur</text>
+
+            <!-- Arrow 1 -->
+            <line x1="160" y1="80" x2="200" y2="80" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Box 2 Core Engine -->
+            <rect x="200" y="20" width="220" height="120" rx="8" fill="#f8fafc" stroke="#0f2942" stroke-width="2"/>
+            <text x="310" y="45" font-size="11" font-weight="bold" fill="#0f2942" text-anchor="middle">Core Engine Homolog (Go)</text>
+            <text x="310" y="65" font-size="8.5" fill="#475569" text-anchor="middle">• Moteur CTD ANPP (NI, NF, RI, RF, MI, MF)</text>
+            <text x="310" y="80" font-size="8.5" fill="#475569" text-anchor="middle">• 34 Rubriques Variations & Reclassement</text>
+            <text x="310" y="95" font-size="8.5" fill="#475569" text-anchor="middle">• Signature 2FA TOTP Hors-Ligne PDT</text>
+            <text x="310" y="110" font-size="8.5" fill="#475569" text-anchor="middle">• Chunked Upload résilient (5 Mo)</text>
+
+            <!-- Arrow 2 -->
+            <line x1="420" y1="80" x2="460" y2="80" stroke="#0f2942" stroke-width="2"/>
+
+            <!-- Box 3 Storage & Data -->
+            <rect x="460" y="20" width="140" height="120" rx="8" fill="#f8fafc" stroke="#0d9488" stroke-width="2"/>
+            <text x="530" y="45" font-size="11" font-weight="bold" fill="#0f766e" text-anchor="middle">PostgreSQL 16</text>
+            <text x="530" y="68" font-size="8.5" fill="#475569" text-anchor="middle">Modèles JSONB</text>
+            <text x="530" y="85" font-size="8.5" fill="#475569" text-anchor="middle">Audit Append-Only</text>
+            <text x="530" y="102" font-size="8.5" fill="#475569" text-anchor="middle">FTS Bilingue FR/AR</text>
+            <text x="530" y="119" font-size="8.5" fill="#0f766e" font-weight="bold" text-anchor="middle">Ségrégation Schémas</text>
+
+            <!-- Arrow 3 -->
+            <line x1="600" y1="80" x2="630" y2="80" stroke="#0d9488" stroke-width="2"/>
+
+            <!-- Box 4 Storage CAS -->
+            <rect x="630" y="20" width="120" height="120" rx="8" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+            <text x="690" y="45" font-size="10.5" font-weight="bold" fill="#334155" text-anchor="middle">Coffre CAS</text>
+            <text x="690" y="68" font-size="8" fill="#475569" text-anchor="middle">Hachage SHA-256</text>
+            <text x="690" y="85" font-size="8" fill="#475569" text-anchor="middle">Déduplication</text>
+            <text x="690" y="102" font-size="8" fill="#475569" text-anchor="middle">AES-GCM Disque</text>
+            <text x="690" y="119" font-size="8" font-weight="bold" fill="#059669" text-anchor="middle">Archive .homolog</text>
+        </svg>
+    </div>
+
+    <!-- ==================== SECTION 3 ==================== -->
+    <div class="page-break"></div>
+    <div class="header-strip">
+        <span>HOMOLOG • Étude Technico-Financière Professionnelle</span>
+        <span>Section 3 : Marché & Concurrence</span>
+    </div>
+
+    <h1>3. Étude de Marché & Positionnement Stratégique</h1>
+
+    <h3>3.1 Dimensionnement du Marché Cible en Algérie</h3>
+    <p>
+        Le marché national est constitué d'entités professionnelles formellement agréées par le Ministère de l'Industrie Pharmaceutique :
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Segment d'Acteurs</th>
+                <th class="text-center">Effectif National</th>
+                <th>Besoins Réglementaires Prépondérants</th>
+                <th class="text-center">Potentiel Homolog</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Fabricants Pharmaceutiques Locaux</strong></td>
+                <td class="text-center">220</td>
+                <td>Procédures locales (NF, RF, MF), validation lots 3.2.P.3.5, stabilités IVb, reclassement variations.</td>
+                <td class="text-center"><span class="badge badge-green">Cible Prioritaire (Tier 2/3)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Fabricants & Importateurs DM / DMDIV</strong></td>
+                <td class="text-center">280</td>
+                <td>Régularisation décret 20-324, conformité arrêté 10 mai 2021, fichiers techniques DM.</td>
+                <td class="text-center"><span class="badge badge-blue">Forte Urgence (Tier 1/2)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Importateurs / Distributeurs Médicaments</strong></td>
+                <td class="text-center">110</td>
+                <td>Procédures import (NI, RI, MI), benchmark international des prix, suivi FOB & CPP OMS.</td>
+                <td class="text-center"><span class="badge badge-blue">Souscription Rapide</span></td>
+            </tr>
+            <tr>
+                <td><strong>Sociétés de Conseil Réglementaire / CRO</strong></td>
+                <td class="text-center">40</td>
+                <td>Multi-tenants, espaces cloisonnés consultants, accélération du montage de dossiers clients.</td>
+                <td class="text-center"><span class="badge badge-amber">Prescripteurs Clés</span></td>
+            </tr>
+            <tr class="total-row">
+                <td><strong>Total Marché Adressable (Algérie)</strong></td>
+                <td class="text-center"><strong>650 acteurs</strong></td>
+                <td colspan="2"><strong>Pénétration projetée à 5 ans : 13 % (85 clients souscripteurs)</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>3.2 Positionnement Face aux Solutions Internationales</h3>
+    <p>
+        Les progiciels internationaux de RIM (Veeva Systems, MasterControl, Ennov) présentent deux handicaps majeurs sur le marché algérien :
+    </p>
+    <ul>
+        <li><strong>Incompatibilité Réglementaire :</strong> Leurs structures rigides imposent les normes de la FDA américaine ou de l'EMA européenne. Aucune ne gère nativement le Module 1 algérien (attestations PCSU, engagement de non-commercialisation 1.P.8, modèle bilingue FR/AR).</li>
+        <li><strong>Barrière des Devises et Coût Démesuré :</strong> Une licence Veeva RIM démarre à 80 000 USD / an en devises convertibles, avec des frais d'intégration dépassant 60 000 USD. Les règles de la Banque d'Algérie sur les transferts de services rendent ces progiciels inaccessibles pour 90 % des industriels.</li>
+    </ul>
+
+    <!-- ==================== SECTION 4 ==================== -->
+    <div class="header-strip">
+        <span>HOMOLOG • Étude Technico-Financière Professionnelle</span>
+        <span>Section 4 : Modèle Économique</span>
+    </div>
+
+    <h1>4. Modèle Économique & Offre Commerciale</h1>
+
+    <h3>4.1 Structure Tarifaire Annuelle Récurrente (ARR)</h3>
+    <p>
+        Homolog adopte un modèle de souscription annuelle récurrente (en dinars algériens hors taxes), complété par des prestations d'intégration :
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Niveau d'Offre</th>
+                <th>Cible Privilégiée</th>
+                <th class="text-right">Abonnement Annuel (DZD)</th>
+                <th class="text-right">Équivalent EUR</th>
+                <th>Périmètre Inclus</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Tier 1 : Essential</strong></td>
+                <td>PME, Façonneurs, Fabricants DM</td>
+                <td class="text-right font-bold">1 200 000 DZD</td>
+                <td class="text-right">~8 200 €</td>
+                <td>Jusqu'à 10 dossiers actifs, 5 utilisateurs, checklists CTD/DM standard, support par ticket.</td>
+            </tr>
+            <tr>
+                <td><strong>Tier 2 : Business</strong></td>
+                <td>Laboratoires Nationaux Moyens</td>
+                <td class="text-right font-bold">3 600 000 DZD</td>
+                <td class="text-right">~24 800 €</td>
+                <td>50 dossiers actifs, 20 utilisateurs, moteur de variations complet, module réclamations/compléments ANPP.</td>
+            </tr>
+            <tr>
+                <td><strong>Tier 3 : Enterprise</strong></td>
+                <td>Grands Groupes / Saidal / Multinationales</td>
+                <td class="text-right font-bold">8 500 000 DZD</td>
+                <td class="text-right">~58 600 €</td>
+                <td>Dossiers et utilisateurs illimités, déploiement On-Premise dédié, support 24/7, intégration Active Directory.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout info">
+        <div class="callout-title">Prestations de Services One-Off (Onboarding & Migration)</div>
+        Chaque nouveau compte fait l'objet d'un forfait d'initialisation obligatoire (audit des arborescences existantes, injection des matrices de produits, formation du Pharmacien Directeur Technique et certification des équipes AR). Ces services génèrent un revenu additionnel immédiat de <strong>400 000 à 1 200 000 DZD</strong> par client à la signature.
+    </div>
+
+    <!-- ==================== SECTION 5 ==================== -->
+    <div class="page-break"></div>
+    <div class="header-strip">
+        <span>HOMOLOG • Étude Technico-Financière Professionnelle</span>
+        <span>Section 5 : Modélisation Financière</span>
+    </div>
+
+    <h1>5. Modélisation Financière Prévisionnelle (2027 – 2031)</h1>
+
+    <h3>5.1 Compte de Résultat Prévisionnel Consolidé (en milliers de DZD)</h3>
+    <p>
+        La projection repose sur une hypothèse d'adoption prudente atteignant 85 clients en Année 5 (13 % de part de marché) :
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Rubrique Financière (en kDZD)</th>
+                <th class="text-center">2027 (A1)</th>
+                <th class="text-center">2028 (A2)</th>
+                <th class="text-center">2029 (A3)</th>
+                <th class="text-center">2030 (A4)</th>
+                <th class="text-center">2031 (A5)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="background-color: #f1f5f9;">
+                <td><strong>Parc Clients Souscripteurs (Fin d'Année)</strong></td>
+                <td class="text-center font-bold">10</td>
+                <td class="text-center font-bold">23</td>
+                <td class="text-center font-bold">42</td>
+                <td class="text-center font-bold">63</td>
+                <td class="text-center font-bold">85</td>
+            </tr>
+            <tr>
+                <td>Revenus Récurrents Abonnements (ARR)</td>
+                <td class="text-right">31 300</td>
+                <td class="text-right">78 300</td>
+                <td class="text-right">147 000</td>
+                <td class="text-right">223 100</td>
+                <td class="text-right">314 600</td>
+            </tr>
+            <tr>
+                <td>Revenus Services (Onboarding / Migration)</td>
+                <td class="text-right">4 800</td>
+                <td class="text-right">8 500</td>
+                <td class="text-right">12 600</td>
+                <td class="text-right">15 200</td>
+                <td class="text-right">16 800</td>
+            </tr>
+            <tr class="highlight-row">
+                <td><strong>CHIFFRE D'AFFAIRES GLOBAL</strong></td>
+                <td class="text-right"><strong>36 100</strong></td>
+                <td class="text-right"><strong>86 800</strong></td>
+                <td class="text-right"><strong>159 600</strong></td>
+                <td class="text-right"><strong>238 300</strong></td>
+                <td class="text-right"><strong>331 400</strong></td>
+            </tr>
+            <tr>
+                <td>Coûts Directs Infrastructure & Hébergement</td>
+                <td class="text-right">1 500</td>
+                <td class="text-right">2 200</td>
+                <td class="text-right">3 200</td>
+                <td class="text-right">4 200</td>
+                <td class="text-right">5 200</td>
+            </tr>
+            <tr>
+                <td><strong>Marge Brute d'Exploitation</strong></td>
+                <td class="text-right"><strong>34 600</strong></td>
+                <td class="text-right"><strong>84 600</strong></td>
+                <td class="text-right"><strong>156 400</strong></td>
+                <td class="text-right"><strong>234 100</strong></td>
+                <td class="text-right"><strong>326 200</strong></td>
+            </tr>
+            <tr>
+                <td>Masse Salariale (Tech, Réglementaire, Vente)</td>
+                <td class="text-right">14 400</td>
+                <td class="text-right">18 600</td>
+                <td class="text-right">24 200</td>
+                <td class="text-right">29 800</td>
+                <td class="text-right">33 500</td>
+            </tr>
+            <tr>
+                <td>Frais Commerciaux, Salons (SIPHAL) & Marketing</td>
+                <td class="text-right">2 000</td>
+                <td class="text-right">2 500</td>
+                <td class="text-right">3 000</td>
+                <td class="text-right">3 500</td>
+                <td class="text-right">4 000</td>
+            </tr>
+            <tr>
+                <td>Frais Généraux, Déplacements & Juridique</td>
+                <td class="text-right">2 000</td>
+                <td class="text-right">2 800</td>
+                <td class="text-right">3 600</td>
+                <td class="text-right">4 500</td>
+                <td class="text-right">5 300</td>
+            </tr>
+            <tr style="background-color: #dbeafe; font-weight: bold;">
+                <td><strong>EBITDA (Excédent Brut d'Exploitation)</strong></td>
+                <td class="text-right"><strong>16 200</strong></td>
+                <td class="text-right"><strong>60 700</strong></td>
+                <td class="text-right"><strong>125 600</strong></td>
+                <td class="text-right"><strong>196 300</strong></td>
+                <td class="text-right"><strong>283 400</strong></td>
+            </tr>
+            <tr>
+                <td><em>Marge d'EBITDA (%)</em></td>
+                <td class="text-right"><em>44,9 %</em></td>
+                <td class="text-right"><em>69,9 %</em></td>
+                <td class="text-right"><em>78,7 %</em></td>
+                <td class="text-right"><em>82,4 %</em></td>
+                <td class="text-right"><em>85,5 %</em></td>
+            </tr>
+            <tr>
+                <td>Amortissements du CAPEX initial (sur 3 ans)</td>
+                <td class="text-right">4 833</td>
+                <td class="text-right">4 833</td>
+                <td class="text-right">4 833</td>
+                <td class="text-right">1 200</td>
+                <td class="text-right">1 500</td>
+            </tr>
+            <tr>
+                <td>Impôt sur les Bénéfices des Sociétés (IBS 19%)</td>
+                <td class="text-right">2 160</td>
+                <td class="text-right">10 615</td>
+                <td class="text-right">22 946</td>
+                <td class="text-right">37 069</td>
+                <td class="text-right">53 561</td>
+            </tr>
+            <tr class="total-row" style="color: #0369a1; font-size: 9pt;">
+                <td><strong>RÉSULTAT NET COMPTABLE (Bénéfice Net)</strong></td>
+                <td class="text-right"><strong>9 207</strong></td>
+                <td class="text-right"><strong>45 252</strong></td>
+                <td class="text-right"><strong>97 821</strong></td>
+                <td class="text-right"><strong>158 031</strong></td>
+                <td class="text-right"><strong>228 339</strong></td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+                <td><strong>Taux de Marge Nette (%)</strong></td>
+                <td class="text-right font-bold">25,5 %</td>
+                <td class="text-right font-bold">52,1 %</td>
+                <td class="text-right font-bold">61,3 %</td>
+                <td class="text-right font-bold">66,3 %</td>
+                <td class="text-right font-bold">68,9 %</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>5.2 Trajectoire Graphique des Revenus et du Résultat Net</h3>
+    <div class="chart-box">
+        <div class="chart-title">Trajectoire de Croissance Prévisionnelle (Millions de DZD)</div>
+        <svg viewBox="0 0 760 170" width="100%" height="160" xmlns="http://www.w3.org/2000/svg">
+            <!-- Axes -->
+            <line x1="50" y1="140" x2="720" y2="140" stroke="#cbd5e1" stroke-width="1.5"/>
+            <line x1="50" y1="20" x2="50" y2="140" stroke="#cbd5e1" stroke-width="1.5"/>
+
+            <!-- Horizontal Gridlines -->
+            <line x1="50" y1="110" x2="720" y2="110" stroke="#f1f5f9" stroke-width="1"/>
+            <line x1="50" y1="80" x2="720" y2="80" stroke="#f1f5f9" stroke-width="1"/>
+            <line x1="50" y1="50" x2="720" y2="50" stroke="#f1f5f9" stroke-width="1"/>
+
+            <!-- Y labels -->
+            <text x="40" y="144" font-size="7.5" fill="#94a3b8" text-anchor="end">0 M</text>
+            <text x="40" y="114" font-size="7.5" fill="#94a3b8" text-anchor="end">100 M</text>
+            <text x="40" y="84" font-size="7.5" fill="#94a3b8" text-anchor="end">200 M</text>
+            <text x="40" y="54" font-size="7.5" fill="#94a3b8" text-anchor="end">300 M</text>
+
+            <!-- A1 (2027) -->
+            <rect x="90" y="127" width="45" height="13" rx="3" fill="#0284c7"/>
+            <text x="112" y="123" font-size="8" font-weight="bold" fill="#0284c7" text-anchor="middle">36,1</text>
+            <text x="112" y="153" font-size="8" fill="#475569" text-anchor="middle">2027 (A1)</text>
+
+            <!-- A2 (2028) -->
+            <rect x="220" y="108" width="45" height="32" rx="3" fill="#0284c7"/>
+            <text x="242" y="104" font-size="8" font-weight="bold" fill="#0284c7" text-anchor="middle">86,8</text>
+            <text x="242" y="153" font-size="8" fill="#475569" text-anchor="middle">2028 (A2)</text>
+
+            <!-- A3 (2029) -->
+            <rect x="350" y="81" width="45" height="59" rx="3" fill="#0284c7"/>
+            <text x="372" y="77" font-size="8" font-weight="bold" fill="#0284c7" text-anchor="middle">159,6</text>
+            <text x="372" y="153" font-size="8" fill="#475569" text-anchor="middle">2029 (A3)</text>
+
+            <!-- A4 (2030) -->
+            <rect x="480" y="52" width="45" height="88" rx="3" fill="#0284c7"/>
+            <text x="502" y="48" font-size="8" font-weight="bold" fill="#0284c7" text-anchor="middle">238,3</text>
+            <text x="502" y="153" font-size="8" fill="#475569" text-anchor="middle">2030 (A4)</text>
+
+            <!-- A5 (2031) -->
+            <rect x="610" y="21" width="45" height="119" rx="3" fill="#0284c7"/>
+            <text x="632" y="17" font-size="8" font-weight="bold" fill="#0284c7" text-anchor="middle">331,4</text>
+            <text x="632" y="153" font-size="8" fill="#475569" text-anchor="middle">2031 (A5)</text>
+
+            <!-- Net Profit Curve -->
+            <path d="M 112 136 L 242 123 L 372 105 L 502 83 L 632 58" fill="none" stroke="#10b981" stroke-width="3"/>
+            <circle cx="112" cy="136" r="4" fill="#10b981"/>
+            <circle cx="242" cy="123" r="4" fill="#10b981"/>
+            <circle cx="372" cy="105" r="4" fill="#10b981"/>
+            <circle cx="502" cy="83" r="4" fill="#10b981"/>
+            <circle cx="632" cy="58" r="4" fill="#10b981"/>
+
+            <!-- Curve Labels -->
+            <text x="130" y="138" font-size="7.5" font-weight="bold" fill="#059669">Net: 9,2</text>
+            <text x="260" y="125" font-size="7.5" font-weight="bold" fill="#059669">45,3</text>
+            <text x="390" y="105" font-size="7.5" font-weight="bold" fill="#059669">97,8</text>
+            <text x="520" y="83" font-size="7.5" font-weight="bold" fill="#059669">158,0</text>
+            <text x="650" y="58" font-size="7.5" font-weight="bold" fill="#059669">228,3 M</text>
+        </svg>
+    </div>
+
+    <!-- ==================== SECTION 6 & 7 ==================== -->
+    <div class="page-break"></div>
+    <div class="header-strip">
+        <span>HOMOLOG • Étude Technico-Financière Professionnelle</span>
+        <span>Section 6 & 7 : Risques & Recommandations</span>
+    </div>
+
+    <h1>6. Matrice des Risques & Stratégies d'Atténuation</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Facteur de Risque</th>
+                <th style="width: 15%; text-align: center;">Niveau de Criticité</th>
+                <th style="width: 60%;">Plan de Mitigé & Sécurité Opérationnelle</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Lenteur des Cycles de Vente (3 à 8 mois)</strong></td>
+                <td class="text-center"><span class="badge badge-amber">Moyen</span></td>
+                <td>Mise en place d'une formule pilote "1 Dossier / 1 Produit" à prix réduit pour engager le laboratoire sans lourdeur administrative.</td>
+            </tr>
+            <tr>
+                <td><strong>Évolution Imprévue des Textes ANPP</strong></td>
+                <td class="text-center"><span class="badge badge-blue">Faible</span></td>
+                <td>Architecture découplée en JSONB. Mises à jour des modèles par paquets cryptographiques <code>.pkg</code> sans recompilation système.</td>
+            </tr>
+            <tr>
+                <td><strong>Confidentialité Industrielle & Formules</strong></td>
+                <td class="text-center"><span class="badge badge-green">Maîtrisé</span></td>
+                <td>Cloisonnement étanche par schémas PostgreSQL distincts, chiffrement au repos AES-GCM et option On-Premise 100% hors-ligne.</td>
+            </tr>
+            <tr>
+                <td><strong>Résistance au Changement des Équipes</strong></td>
+                <td class="text-center"><span class="badge badge-amber">Moyen</span></td>
+                <td>Ergonomie "Pharma Explorer" reprenant les codes de Windows Explorer (haute densité 32px) et formation certifiante incluse.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>7. Recommandations Stratégiques & Conclusion</h1>
+
+    <div class="callout">
+        <div class="callout-title">Conclusion de l'Évaluation Financière</div>
+        Le projet <strong>Homolog</strong> démontre une rentabilité financière exceptionnelle avec un <strong>TRI de 114 %</strong>, une <strong>VAN à 5 ans de 128,4 M DZD</strong> et un <strong>retour sur investissement en seulement 16 mois</strong>. Cette performance découle de la rencontre entre une obligation réglementaire impérieuse (ANPP), une cible industrielle à forte solvabilité et un coût d'ingénierie logiciel maîtrisé.
+    </div>
+
+    <h3>Feuille de Route Recommandée pour le Lancement :</h3>
+    <ol style="font-size: 9pt; padding-left: 20px;">
+        <li><strong>T4 2026 :</strong> Finalisation des Jalons 1.4 à 1.6 (Coffre-fort GED BPF, arborescence CTD 2025 et interface Pharma Explorer).</li>
+        <li><strong>T1 2027 :</strong> Signature de 3 accords pilotes Early Adopters (1 Fabricant local, 1 Fabricant DM, 1 Façonneur) avec caution des Directeurs Techniques.</li>
+        <li><strong>T2 2027 :</strong> Présentation officielle lors du salon SIPHAL à Alger et démarrage de la campagne commerciale de masse.</li>
+    </ol>
+
+    <div style="margin-top: 35px; border-top: 1px solid #cbd5e1; padding-top: 15px; font-size: 8pt; color: #64748b; display: flex; justify-content: space-between;">
+        <span>Homolog Regulatory Systems • Document Confidentiel</span>
+        <span>Édité le 11 Novembre 2026</span>
+    </div>
+
+</body>
+</html>
