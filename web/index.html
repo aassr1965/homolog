@@ -2130,7 +2130,7 @@
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
-                currentRefList = (data.establishments || data.sites || data.medicines || data.devices || []);
+                currentRefList = (data.items || data.establishments || data.sites || data.medicines || data.devices || []);
                 selectedRefIndex = 0;
                 renderRefTable(section, currentRefList);
             } catch (e) {

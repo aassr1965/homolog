@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -113,13 +114,15 @@ func (h *PharmaHandler) ListEstablishments(w http.ResponseWriter, r *http.Reques
 
 	list, total, err := h.repo.ListEstablishments(r.Context(), user.OrganizationID, limit, offset)
 	if err != nil {
+		log.Printf("[ERREUR] ListEstablishments: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Erreur de base de données")
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"total": total,
-		"items": list,
+		"total":          total,
+		"items":          list,
+		"establishments": list,
 	})
 }
 
@@ -233,6 +236,7 @@ func (h *PharmaHandler) ListManufacturingSites(w http.ResponseWriter, r *http.Re
 
 	list, total, err := h.repo.ListManufacturingSites(r.Context(), user.OrganizationID, roleFilter, limit, offset)
 	if err != nil {
+		log.Printf("[ERREUR] ListManufacturingSites: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Erreur base de données")
 		return
 	}
@@ -240,6 +244,7 @@ func (h *PharmaHandler) ListManufacturingSites(w http.ResponseWriter, r *http.Re
 	writeJSON(w, http.StatusOK, map[string]any{
 		"total": total,
 		"items": list,
+		"sites": list,
 	})
 }
 
@@ -365,13 +370,15 @@ func (h *PharmaHandler) ListMedicines(w http.ResponseWriter, r *http.Request) {
 
 	list, total, err := h.repo.ListMedicines(r.Context(), user.OrganizationID, origin, search, limit, offset)
 	if err != nil {
+		log.Printf("[ERREUR] ListMedicines: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Erreur base de données")
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"total": total,
-		"items": list,
+		"total":     total,
+		"items":     list,
+		"medicines": list,
 	})
 }
 
@@ -462,13 +469,15 @@ func (h *PharmaHandler) ListMedicalDevices(w http.ResponseWriter, r *http.Reques
 
 	list, total, err := h.repo.ListMedicalDevices(r.Context(), user.OrganizationID, classFilter, search, limit, offset)
 	if err != nil {
+		log.Printf("[ERREUR] ListMedicalDevices: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Erreur base de données")
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"total": total,
-		"items": list,
+		"total":   total,
+		"items":   list,
+		"devices": list,
 	})
 }
 
