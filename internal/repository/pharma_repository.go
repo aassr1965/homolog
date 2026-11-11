@@ -67,10 +67,21 @@ func (r *PharmaRepository) CreateEstablishment(ctx context.Context, e *domain.Es
 func (r *PharmaRepository) GetEstablishmentByID(ctx context.Context, orgID, id uuid.UUID) (*domain.Establishment, error) {
 	query := `
 		SELECT 
-			id, organization_id, name_fr, name_ar, legal_status,
-			miph_license_number, miph_license_grant_date, miph_license_expiry_date,
-			technical_director_name, technical_director_decision_ref, technical_director_decision_date,
-			address_fr, address_ar, wilaya, phone, email, is_active, created_at, updated_at
+			id, organization_id, name_fr,
+			COALESCE(name_ar, ''),
+			COALESCE(legal_status, ''),
+			COALESCE(miph_license_number, ''),
+			miph_license_grant_date,
+			miph_license_expiry_date,
+			technical_director_name,
+			COALESCE(technical_director_decision_ref, ''),
+			technical_director_decision_date,
+			COALESCE(address_fr, ''),
+			COALESCE(address_ar, ''),
+			COALESCE(wilaya, ''),
+			COALESCE(phone, ''),
+			COALESCE(email, ''),
+			is_active, created_at, updated_at
 		FROM establishments
 		WHERE organization_id = $1 AND id = $2
 	`
@@ -102,10 +113,21 @@ func (r *PharmaRepository) ListEstablishments(ctx context.Context, orgID uuid.UU
 
 	query := `
 		SELECT 
-			id, organization_id, name_fr, name_ar, legal_status,
-			miph_license_number, miph_license_grant_date, miph_license_expiry_date,
-			technical_director_name, technical_director_decision_ref, technical_director_decision_date,
-			address_fr, address_ar, wilaya, phone, email, is_active, created_at, updated_at
+			id, organization_id, name_fr,
+			COALESCE(name_ar, ''),
+			COALESCE(legal_status, ''),
+			COALESCE(miph_license_number, ''),
+			miph_license_grant_date,
+			miph_license_expiry_date,
+			technical_director_name,
+			COALESCE(technical_director_decision_ref, ''),
+			technical_director_decision_date,
+			COALESCE(address_fr, ''),
+			COALESCE(address_ar, ''),
+			COALESCE(wilaya, ''),
+			COALESCE(phone, ''),
+			COALESCE(email, ''),
+			is_active, created_at, updated_at
 		FROM establishments
 		WHERE organization_id = $1
 		ORDER BY name_fr ASC
@@ -201,9 +223,16 @@ func (r *PharmaRepository) CreateManufacturingSite(ctx context.Context, s *domai
 func (r *PharmaRepository) GetManufacturingSiteByID(ctx context.Context, orgID, id uuid.UUID) (*domain.ManufacturingSite, error) {
 	query := `
 		SELECT 
-			id, organization_id, establishment_id, site_name_fr, site_name_ar,
-			country_code, address, site_role,
-			manufacturing_license_number, gmp_certificate_number, gmp_grant_date, gmp_expiry_date, gmp_issuing_authority,
+			id, organization_id, establishment_id, site_name_fr,
+			COALESCE(site_name_ar, ''),
+			country_code,
+			COALESCE(address, ''),
+			site_role,
+			COALESCE(manufacturing_license_number, ''),
+			COALESCE(gmp_certificate_number, ''),
+			gmp_grant_date,
+			gmp_expiry_date,
+			COALESCE(gmp_issuing_authority, ''),
 			is_active, created_at, updated_at
 		FROM manufacturing_sites
 		WHERE organization_id = $1 AND id = $2
@@ -236,9 +265,16 @@ func (r *PharmaRepository) ListManufacturingSites(ctx context.Context, orgID uui
 	countQuery.WriteString(`SELECT COUNT(*) FROM manufacturing_sites WHERE organization_id = $1`)
 	listQuery.WriteString(`
 		SELECT 
-			id, organization_id, establishment_id, site_name_fr, site_name_ar,
-			country_code, address, site_role,
-			manufacturing_license_number, gmp_certificate_number, gmp_grant_date, gmp_expiry_date, gmp_issuing_authority,
+			id, organization_id, establishment_id, site_name_fr,
+			COALESCE(site_name_ar, ''),
+			country_code,
+			COALESCE(address, ''),
+			site_role,
+			COALESCE(manufacturing_license_number, ''),
+			COALESCE(gmp_certificate_number, ''),
+			gmp_grant_date,
+			gmp_expiry_date,
+			COALESCE(gmp_issuing_authority, ''),
 			is_active, created_at, updated_at
 		FROM manufacturing_sites
 		WHERE organization_id = $1
@@ -381,14 +417,40 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 	query := `
 		SELECT 
 			id, organization_id, product_id, origin_type,
-			brand_name_fr, brand_name_ar, dci_fr, dci_ar,
-			dosage_fr, dosage_ar, pharmaceutical_form_fr, pharmaceutical_form_ar,
-			administration_route_fr, administration_route_ar, atc_code,
-			has_pharmacopoeia_monograph, pharmacopoeia_name, has_cep, cep_number, cep_access_letter_held,
-			apimf_dmf_number, polymorphic_form, particle_size_criticality,
-			storage_conditions_fr, storage_conditions_ar, shelf_life_months, in_use_shelf_life, validation_batch_files_held,
-			economic_file_type, pcsu_amount, fob_price, fob_currency, has_chamber_of_commerce_visa, has_benchmark_dossier,
-			registration_decision_number, registration_date, expiry_date, status, created_at, updated_at
+			brand_name_fr,
+			COALESCE(brand_name_ar, ''),
+			dci_fr,
+			COALESCE(dci_ar, ''),
+			dosage_fr,
+			COALESCE(dosage_ar, ''),
+			pharmaceutical_form_fr,
+			COALESCE(pharmaceutical_form_ar, ''),
+			administration_route_fr,
+			COALESCE(administration_route_ar, ''),
+			COALESCE(atc_code, ''),
+			has_pharmacopoeia_monograph,
+			COALESCE(pharmacopoeia_name, ''),
+			has_cep,
+			COALESCE(cep_number, ''),
+			cep_access_letter_held,
+			COALESCE(apimf_dmf_number, ''),
+			COALESCE(polymorphic_form, ''),
+			particle_size_criticality,
+			COALESCE(storage_conditions_fr, ''),
+			COALESCE(storage_conditions_ar, ''),
+			shelf_life_months,
+			COALESCE(in_use_shelf_life, ''),
+			validation_batch_files_held,
+			economic_file_type,
+			pcsu_amount,
+			fob_price,
+			COALESCE(fob_currency, ''),
+			has_chamber_of_commerce_visa,
+			has_benchmark_dossier,
+			COALESCE(registration_decision_number, ''),
+			registration_date,
+			expiry_date,
+			status, created_at, updated_at
 		FROM medicines
 		WHERE organization_id = $1 AND id = $2
 	`
@@ -414,9 +476,16 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 	// Récupération des sites intervenants associés (1.H.8)
 	sitesQuery := `
 		SELECT 
-			s.id, s.organization_id, s.establishment_id, s.site_name_fr, s.site_name_ar,
-			s.country_code, s.address, s.site_role,
-			s.manufacturing_license_number, s.gmp_certificate_number, s.gmp_grant_date, s.gmp_expiry_date, s.gmp_issuing_authority,
+			s.id, s.organization_id, s.establishment_id, s.site_name_fr,
+			COALESCE(s.site_name_ar, ''),
+			s.country_code,
+			COALESCE(s.address, ''),
+			s.site_role,
+			COALESCE(s.manufacturing_license_number, ''),
+			COALESCE(s.gmp_certificate_number, ''),
+			s.gmp_grant_date,
+			s.gmp_expiry_date,
+			COALESCE(s.gmp_issuing_authority, ''),
 			s.is_active, s.created_at, s.updated_at
 		FROM manufacturing_sites s
 		JOIN medicine_manufacturing_sites mms ON s.id = mms.site_id
@@ -455,14 +524,40 @@ func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, o
 	listQuery.WriteString(`
 		SELECT 
 			id, organization_id, product_id, origin_type,
-			brand_name_fr, brand_name_ar, dci_fr, dci_ar,
-			dosage_fr, dosage_ar, pharmaceutical_form_fr, pharmaceutical_form_ar,
-			administration_route_fr, administration_route_ar, atc_code,
-			has_pharmacopoeia_monograph, pharmacopoeia_name, has_cep, cep_number, cep_access_letter_held,
-			apimf_dmf_number, polymorphic_form, particle_size_criticality,
-			storage_conditions_fr, storage_conditions_ar, shelf_life_months, in_use_shelf_life, validation_batch_files_held,
-			economic_file_type, pcsu_amount, fob_price, fob_currency, has_chamber_of_commerce_visa, has_benchmark_dossier,
-			registration_decision_number, registration_date, expiry_date, status, created_at, updated_at
+			brand_name_fr,
+			COALESCE(brand_name_ar, ''),
+			dci_fr,
+			COALESCE(dci_ar, ''),
+			dosage_fr,
+			COALESCE(dosage_ar, ''),
+			pharmaceutical_form_fr,
+			COALESCE(pharmaceutical_form_ar, ''),
+			administration_route_fr,
+			COALESCE(administration_route_ar, ''),
+			COALESCE(atc_code, ''),
+			has_pharmacopoeia_monograph,
+			COALESCE(pharmacopoeia_name, ''),
+			has_cep,
+			COALESCE(cep_number, ''),
+			cep_access_letter_held,
+			COALESCE(apimf_dmf_number, ''),
+			COALESCE(polymorphic_form, ''),
+			particle_size_criticality,
+			COALESCE(storage_conditions_fr, ''),
+			COALESCE(storage_conditions_ar, ''),
+			shelf_life_months,
+			COALESCE(in_use_shelf_life, ''),
+			validation_batch_files_held,
+			economic_file_type,
+			pcsu_amount,
+			fob_price,
+			COALESCE(fob_currency, ''),
+			has_chamber_of_commerce_visa,
+			has_benchmark_dossier,
+			COALESCE(registration_decision_number, ''),
+			registration_date,
+			expiry_date,
+			status, created_at, updated_at
 		FROM medicines
 		WHERE organization_id = $1
 	`)
@@ -588,9 +683,15 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id uuid.UUID) (*domain.MedicalDevice, error) {
 	query := `
 		SELECT 
-			id, organization_id, product_id, commercial_name_fr, commercial_name_ar,
-			manufacturer_reference, dm_class, classification_rule, is_sterile, is_single_use,
-			intended_use_fr, intended_use_ar, homologation_decision_number, homologation_date, homologation_expiry_date,
+			id, organization_id, product_id, commercial_name_fr,
+			COALESCE(commercial_name_ar, ''),
+			manufacturer_reference, dm_class,
+			COALESCE(classification_rule, ''),
+			is_sterile, is_single_use,
+			COALESCE(intended_use_fr, ''),
+			COALESCE(intended_use_ar, ''),
+			COALESCE(homologation_decision_number, ''),
+			homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
 		FROM medical_devices
 		WHERE organization_id = $1 AND id = $2
@@ -623,9 +724,15 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 	countQuery.WriteString(`SELECT COUNT(*) FROM medical_devices WHERE organization_id = $1`)
 	listQuery.WriteString(`
 		SELECT 
-			id, organization_id, product_id, commercial_name_fr, commercial_name_ar,
-			manufacturer_reference, dm_class, classification_rule, is_sterile, is_single_use,
-			intended_use_fr, intended_use_ar, homologation_decision_number, homologation_date, homologation_expiry_date,
+			id, organization_id, product_id, commercial_name_fr,
+			COALESCE(commercial_name_ar, ''),
+			manufacturer_reference, dm_class,
+			COALESCE(classification_rule, ''),
+			is_sterile, is_single_use,
+			COALESCE(intended_use_fr, ''),
+			COALESCE(intended_use_ar, ''),
+			COALESCE(homologation_decision_number, ''),
+			homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
 		FROM medical_devices
 		WHERE organization_id = $1
