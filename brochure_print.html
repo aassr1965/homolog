@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>SANAD PHARMA — Plaquette Institutionnelle & Commerciale 2026</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+      background-color: #ffffff;
+      color: #1e293b;
+      line-height: 1.45;
+      font-size: 11pt;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      min-height: 297mm;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      page-break-inside: avoid;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      padding: 16mm 18mm 14mm 18mm;
+    }
+
+    /* COUVERTURE SPÉCIALE (PAGE 1) */
+    .page-cover {
+      background: radial-gradient(circle at 15% 20%, #1e3e62 0%, #0b192c 60%, #060e18 100%);
+      color: #ffffff;
+      padding: 20mm 20mm 16mm 20mm;
+      justify-content: space-between;
+    }
+
+    /* EN-TÊTE DE PAGE RÉGULIÈRE (PAGES 2 À 5) */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 3.5mm;
+      border-bottom: 1.5px solid #e2e8f0;
+      margin-bottom: 5.5mm;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .page-header .brand {
+      color: #0b192c;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .page-header .brand span {
+      color: #00adb5;
+    }
+
+    /* PIED DE PAGE RÉGULIER (PAGES 2 À 5) */
+    .page-footer {
+      margin-top: auto;
+      padding-top: 3.5mm;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #94a3b8;
+    }
+
+    .page-footer .left {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .page-footer .center {
+      font-style: italic;
+    }
+
+    .page-footer .page-number {
+      font-weight: 700;
+      color: #0b192c;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* COMPOSANTS STYLISÉS */
+    .section-badge {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 2mm;
+    }
+
+    .badge-cyan {
+      background: #e0f7f8;
+      color: #007c82;
+      border: 1px solid #99e2e5;
+    }
+
+    .badge-amber {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .badge-emerald {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .badge-navy {
+      background: #e2e8f0;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    .section-title {
+      font-size: 17pt;
+      font-weight: 800;
+      color: #0b192c;
+      letter-spacing: -0.4px;
+      line-height: 1.25;
+      margin-bottom: 2mm;
+    }
+
+    .section-intro {
+      font-size: 9pt;
+      color: #475569;
+      line-height: 1.45;
+      margin-bottom: 4.5mm;
+    }
+
+    /* CARTES ET BLOCS */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 4mm;
+      box-shadow: 0 2px 6px rgba(11, 25, 44, 0.04);
+    }
+
+    .card-highlight {
+      border: 1.5px solid #00adb5;
+      background: linear-gradient(180deg, #f8feff 0%, #ffffff 100%);
+    }
+
+    .card-gold {
+      border: 1.5px solid #f59e0b;
+      background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+    }
+
+    /* CODES ET HASHS */
+    .mono {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 8pt;
+    }
+
+    /* TABLEAU COMPARATIF */
+    table.benchmark-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+      margin-top: 2mm;
+      background: #ffffff;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+    }
+
+    table.benchmark-table th {
+      background: #0b192c;
+      color: #ffffff;
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 8pt;
+    }
+
+    table.benchmark-table th.highlight-col {
+      background: #00adb5;
+      color: #0b192c;
+      font-weight: 800;
+    }
+
+    table.benchmark-table td {
+      padding: 6.5px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+      line-height: 1.35;
+    }
+
+    table.benchmark-table tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    table.benchmark-table td.highlight-col {
+      background: #f0fdf4 !important;
+      font-weight: 700;
+      color: #065f46;
+      border-left: 2px solid #10b981;
+      border-right: 2px solid #10b981;
+    }
+
+    /* GRILLES */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3.5mm;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 3.5mm;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3.5mm;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================== -->
+  <!-- PAGE 1 : COUVERTURE DE PRESTIGE INDUSTRIEL -->
+  <!-- ========================================== -->
+  <div class="page page-cover">
+    
+    <!-- EN-TÊTE RÉPUBLIQUE & MINISTÈRE -->
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:4mm;">
+        <div>
+          <div style="font-size:8.5pt; font-weight:800; letter-spacing:1px; color:#e2e8f0; text-transform:uppercase;">
+            République Algérienne Démocratique et Populaire
+          </div>
+          <div style="font-size:7.5pt; color:#94a3b8; font-weight:500; margin-top:1px;">
+            Ministère de l'Industrie Pharmaceutique • Agence Nationale des Produits Pharmaceutiques (ANPP)
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <span style="background:rgba(0,173,181,0.2); color:#00adb5; border:1px solid rgba(0,173,181,0.4); padding:3px 10px; border-radius:20px; font-size:7.5pt; font-weight:800; text-transform:uppercase; letter-spacing:1px;">
+            Édition Industrielle 2026
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CŒUR DE COUVERTURE : MARQUE & VISION -->
+    <div style="margin-top:2mm; margin-bottom:2mm;">
+      <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); padding:3px 12px; border-radius:30px; font-size:8pt; color:#38bdf8; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:5mm;">
+        <span style="display:inline-block; width:8px; height:8px; background:#10b981; border-radius:50%;"></span>
+        Plaquette Institutionnelle & Dossier Stratégique
+      </div>
+
+      <div style="font-size:38pt; font-weight:900; line-height:1; letter-spacing:-1px; margin-bottom:2mm; color:#ffffff;">
+        SANAD <span style="color:#00adb5; font-weight:300; letter-spacing:4px;">PHARMA</span>
+      </div>
+      <div style="font-size:18pt; color:#f59e0b; font-weight:700; margin-bottom:4mm; font-family:'Segoe UI', sans-serif;">
+        سَنَد فارما
+      </div>
+
+      <div style="font-size:13pt; color:#e2e8f0; font-weight:600; line-height:1.35; max-width:170mm; margin-bottom:3mm;">
+        Le Socle & la Preuve Authentique de l'Industrie Pharmaceutique
+      </div>
+
+      <div style="font-size:9.5pt; color:#94a3b8; line-height:1.5; max-width:165mm; margin-bottom:7mm;">
+        Infrastructure logicielle souveraine de <strong>GED Qualifiée BPF</strong>, de <strong>matrice e-CTD</strong> et de <strong>scellement électronique 21 CFR Part 11</strong> pour la sécurisation des dossiers d'AMM et la protection juridique du Pharmacien Directeur Technique.
+      </div>
+
+      <!-- CARTE CENTRALE DU SCEAU CRYPTOGRAPHIQUE DIRECTEUR TECHNIQUE -->
+      <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(0,173,181,0.4); border-radius:10px; padding:5mm; box-shadow:0 12px 30px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:2.5mm; margin-bottom:3mm;">
+          <div style="font-size:8.5pt; font-weight:800; color:#00adb5; text-transform:uppercase; letter-spacing:0.8px;">
+            ⚖️ Acte de Signature & Scellement Légal BPF (Spécimen)
+          </div>
+          <span style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4); font-size:7pt; font-weight:800; padding:2px 8px; border-radius:4px;">
+            21 CFR §11.200 CONFORME
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4mm; font-size:8pt;">
+          <div style="background:rgba(255,255,255,0.04); padding:3mm; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="color:#94a3b8; font-size:7pt; text-transform:uppercase; font-weight:700;">Signataire Légal Agréé</div>
+            <div style="color:#ffffff; font-weight:700; font-size:9pt; margin-top:1px;">Dr. Amine K. — Pharmacien Directeur Technique</div>
+            <div style="color:#cbd5e1; font-size:7.5pt; margin-top:2px;">Rôle : Approbation réglementaire & Mise en vigueur lot</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.04); padding:3mm; border-radius:6px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="color:#94a3b8; font-size:7pt; text-transform:uppercase; font-weight:700;">Horodatage Certifié UTC & Facteur d'Auth</div>
+            <div style="color:#38bdf8; font-weight:700; font-size:8.5pt; margin-top:1px;">2026-11-10 20:17:06 UTC (Immuable)</div>
+            <div style="color:#cbd5e1; font-size:7.5pt; margin-top:2px;">Méthode : Double authentification Argon2id + 2FA TOTP</div>
+          </div>
+        </div>
+
+        <div style="margin-top:2.5mm; background:rgba(0,0,0,0.3); padding:2mm 3mm; border-radius:4px; font-size:7pt; font-family:'Consolas', monospace; color:#94a3b8; word-break:break-all;">
+          <span style="color:#f59e0b; font-weight:bold;">SHA-256 SEAL:</span> d078eb56f05ec6ff5a3dd91be8dfd7077a06da2e9f0c29f60b45abce4c16cb6e
+        </div>
+      </div>
+
+      <!-- 3 CHIFFRES CLÉS MAJEURS -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4mm; margin-top:5mm;">
+        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3.5mm; text-align:center;">
+          <div style="font-size:20pt; font-weight:900; color:#00adb5; font-family:'Consolas', monospace;">-75%</div>
+          <div style="font-size:7.5pt; color:#e2e8f0; font-weight:600; margin-top:1px;">Délai d'assemblage e-CTD</div>
+          <div style="font-size:6.5pt; color:#94a3b8;">4 jours au lieu de 4 semaines</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3.5mm; text-align:center;">
+          <div style="font-size:20pt; font-weight:900; color:#10b981; font-family:'Consolas', monospace;">100%</div>
+          <div style="font-size:7.5pt; color:#e2e8f0; font-weight:600; margin-top:1px;">Souveraineté Territoriale</div>
+          <div style="font-size:6.5pt; color:#94a3b8;">On-Premise Air-Gapped (Sans Cloud)</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:3.5mm; text-align:center;">
+          <div style="font-size:20pt; font-weight:900; color:#f59e0b; font-family:'Consolas', monospace;">0 FAILLE</div>
+          <div style="font-size:7.5pt; color:#e2e8f0; font-weight:600; margin-top:1px;">Piste d'Audit ALCOA+</div>
+          <div style="font-size:6.5pt; color:#94a3b8;">Triggers PostgreSQL & SHA-256</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIED DE COUVERTURE : RÉFÉRENTIELS LÉGAUX -->
+    <div style="border-top:1px solid rgba(255,255,255,0.15); padding-top:3.5mm; display:flex; justify-content:space-between; align-items:center; font-size:7.5pt; color:#94a3b8;">
+      <div>
+        Référentiels : <strong>Décret Exécutif n° 20-325</strong> • <strong>21 CFR Part 11</strong> • <strong>Annexe 11 BPF</strong> • <strong>GAMP 5</strong>
+      </div>
+      <div style="color:#e2e8f0; font-weight:700;">
+        SANAD PHARMA DZ © 2026
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- PAGE 2 : FONDEMENT RÉGLEMENTAIRE & GARANTIES MAÎTRESSES -->
+  <!-- ======================================================= -->
+  <div class="page">
+    
+    <div class="page-header">
+      <div class="brand">SANAD <span>PHARMA</span> • Plaquette Industrielle</div>
+      <div>Section 01 // Vision Réglementaire & ALCOA+</div>
+    </div>
+
+    <div>
+      <span class="section-badge badge-cyan">Étymologie & Fondement Pharmaceutique</span>
+      <h1 class="section-title">SANAD (سَنَد) : La Chaîne de Preuve Incontestable</h1>
+      <p class="section-intro">
+        En langue arabe, <strong>سَنَد (Sanad)</strong> désigne le <em>pilier inébranlable</em>, le <em>titre juridique incontestable</em> et la <em>chaîne continue de garants</em> qui attestent l'authenticité d'un écrit. Dans un établissement pharmaceutique agréé par le Ministère de l'Industrie Pharmaceutique (MIPH), chaque décision de libération de lot engage la santé publique et la responsabilité personnelle du Pharmacien Directeur Technique.
+      </p>
+    </div>
+
+    <!-- LES 3 PILIERS MAÎTRES DE SANAD PHARMA -->
+    <div style="display:flex; flex-direction:column; gap:3.5mm; margin-bottom:4mm;">
+      
+      <!-- PILIER 1 -->
+      <div class="card card-highlight">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5mm;">
+          <div style="font-size:10.5pt; font-weight:800; color:#0b192c; display:flex; align-items:center; gap:6px;">
+            <span style="font-size:13pt;">🛡️</span> 1. Intégrité & Piste d'Audit ALCOA+ Inaltérable
+          </div>
+          <span style="font-size:7pt; font-weight:800; background:#e0f7f8; color:#007c82; padding:2px 8px; border-radius:4px; text-transform:uppercase;">
+            Annexe 11 BPF & GAMP 5
+          </span>
+        </div>
+        <p style="font-size:8.5pt; color:#475569; line-height:1.4; margin-bottom:2mm;">
+          Toute interaction (dépôt de certificat, modification de métadonnée, consultation d'épreuve de stabilité, visa légal) est enregistrée de façon <strong>Attribuable, Lisible, Contemporaine, Originale et Exacte</strong>. Des déclencheurs (triggers) au niveau du moteur de base de données PostgreSQL bloquent techniquement tout `UPDATE` ou `DELETE` sur la table d'audit trail, interdisant même aux administrateurs système de caviarder l'historique.
+        </p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2mm; font-size:7.5pt; font-weight:600; color:#0f766e;">
+          <div>✓ Chaînage cryptographique par empreinte SHA-256</div>
+          <div>✓ Rapport d'audit trail exportable en 1 clic pour l'ANPP</div>
+        </div>
+      </div>
+
+      <!-- PILIER 2 -->
+      <div class="card card-gold">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5mm;">
+          <div style="font-size:10.5pt; font-weight:800; color:#0b192c; display:flex; align-items:center; gap:6px;">
+            <span style="font-size:13pt;">⚖️</span> 2. Protection Pénale du Pharmacien Directeur Technique
+          </div>
+          <span style="font-size:7pt; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:4px; text-transform:uppercase;">
+            21 CFR Part 11 & Décret MIPH
+          </span>
+        </div>
+        <p style="font-size:8.5pt; color:#475569; line-height:1.4; margin-bottom:2mm;">
+          Le Directeur Technique est le garant légal devant la justice et l'ANPP. SANAD PHARMA met fin au risque de signature sur papier facilement imitable ou aux approbations par simple clic non qualifié. Chaque visa requiert une <strong>ré-authentification stricte à double facteur</strong> (hachage Argon2id + TOTP RFC 6238) intégrant l'engagement solennel du pharmacien au sein du certificat immuable.
+        </p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2mm; font-size:7.5pt; font-weight:600; color:#b45309;">
+          <div>✓ Zéro possibilité de délégation non tracée ou d'usurpation</div>
+          <div>✓ Sceau électronique infalsifiable rattaché au hash du binaire</div>
+        </div>
+      </div>
+
+      <!-- PILIER 3 -->
+      <div class="card" style="border:1.5px solid #10b981; background:linear-gradient(180deg, #f7fdfa 0%, #ffffff 100%);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5mm;">
+          <div style="font-size:10.5pt; font-weight:800; color:#0b192c; display:flex; align-items:center; gap:6px;">
+            <span style="font-size:13pt;">🇩🇿</span> 3. Souveraineté Territoriale & Secret Industriel Galénique
+          </div>
+          <span style="font-size:7pt; font-weight:800; background:#d1fae5; color:#065f46; padding:2px 8px; border-radius:4px; text-transform:uppercase;">
+            100% On-Premise Air-Gapped
+          </span>
+        </div>
+        <p style="font-size:8.5pt; color:#475569; line-height:1.4; margin-bottom:2mm;">
+          Vos formules maîtresses, monographies, études de bioéquivalence et données de validation restent physiquement au sein de votre usine en Algérie. Le système fonctionne en autonomie complète en réseau local fermé (Air-gapped), éliminant tout risque de fuite de brevets ou de soumission aux lois extraterritoriales (Cloud Act américain).
+        </p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2mm; font-size:7.5pt; font-weight:600; color:#047857;">
+          <div>✓ Aucune dépendance externe ni connexion internet requise</div>
+          <div>✓ Binaire autonome Go ultra-sécurisé de 10 Mo</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ENCADRÉ D'ALERTE : LE RISQUE DES GED GÉNÉRALISTES -->
+    <div style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #f59e0b; border-radius:6px; padding:3mm 4mm;">
+      <div style="font-size:8.5pt; font-weight:800; color:#92400e; margin-bottom:1mm; display:flex; align-items:center; gap:5px;">
+        ⚠️ Mise en Garde Réglementaire : Pourquoi SharePoint et Google Drive Échouent en Audit BPF
+      </div>
+      <div style="font-size:7.8pt; color:#78350f; line-height:1.4;">
+        Lors des inspections de l'ANPP ou des audits de certification GMP, les inspecteurs exigent la preuve mathématique que les données n'ont pu être modifiées rétroactivement. Les GED bureautiques ne disposent ni de signature électronique conforme au 21 CFR §11.200, ni de déclencheurs d'immutabilité en base de données, ni d'arborescence native e-CTD, exposant l'usine à des <strong>non-conformités critiques (Observation 483 / BPF)</strong>.
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="left">SANAD PHARMA // Dossier Technique Réglementaire</div>
+      <div class="center">Usage Confidentiel — Direction Générale & Affaires Réglementaires</div>
+      <div class="page-number">Page 2 sur 5</div>
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- PAGE 3 : ARCHITECTURE & 6 PILIERS D'INGÉNIERIE QUALIFIÉE -->
+  <!-- ======================================================== -->
+  <div class="page">
+    
+    <div class="page-header">
+      <div class="brand">SANAD <span>PHARMA</span> • Plaquette Industrielle</div>
+      <div>Section 02 // Architecture & Moteur BPF</div>
+    </div>
+
+    <div>
+      <span class="section-badge badge-emerald">Ingénierie Documentaire de Précision</span>
+      <h1 class="section-title">Les 6 Piliers d'Excellence du Moteur SANAD PHARMA</h1>
+      <p class="section-intro">
+        Conçu spécifiquement pour le cycle de vie du médicament et des dispositifs médicaux en Algérie, SANAD PHARMA intègre nativement les standards internationaux ICH et nationaux MIPH.
+      </p>
+    </div>
+
+    <!-- GRILLE 2x3 DES 6 PILIERS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:3.5mm; margin-bottom:4mm;">
+      
+      <!-- PILIER 1 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5mm;">
+          <div style="background:#0b192c; color:#00adb5; font-size:8pt; font-weight:900; width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center;">01</div>
+          <div style="font-size:9pt; font-weight:800; color:#0b192c;">Arborescence e-CTD (Modules 1 à 5)</div>
+        </div>
+        <p style="font-size:7.8pt; color:#475569; line-height:1.35; margin-bottom:1.5mm;">
+          Classement rigoureux conforme aux exigences ANPP : M1 Administratif & Informations produit régionales, M2 Résumés, M3 Qualité/CMC, M4 Sécurité non-clinique, M5 Études cliniques & bioéquivalence.
+        </p>
+        <div style="font-size:7pt; color:#007c82; font-weight:700;">• Indexation automatique des pièces et chapitres</div>
+      </div>
+
+      <!-- PILIER 2 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5mm;">
+          <div style="background:#0b192c; color:#f59e0b; font-size:8pt; font-weight:900; width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center;">02</div>
+          <div style="font-size:9pt; font-weight:800; color:#0b192c;">Signature 21 CFR Part 11 & Annexe 11</div>
+        </div>
+        <p style="font-size:7.8pt; color:#475569; line-height:1.35; margin-bottom:1.5mm;">
+          Re-authentification obligatoire pour chaque libération. Verrouillage par combinaison Argon2id + 2FA TOTP RFC 6238. Engagement sur l'honneur horodaté UTC et scellé par empreinte SHA-256.
+        </p>
+        <div style="font-size:7pt; color:#b45309; font-weight:700;">• Zéro contournement possible du Pharmacien DT</div>
+      </div>
+
+      <!-- PILIER 3 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5mm;">
+          <div style="background:#0b192c; color:#10b981; font-size:8pt; font-weight:900; width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center;">03</div>
+          <div style="font-size:9pt; font-weight:800; color:#0b192c;">Piste d'Audit Immuable ALCOA+</div>
+        </div>
+        <p style="font-size:7.8pt; color:#475569; line-height:1.35; margin-bottom:1.5mm;">
+          Traçabilité absolue des consultations, créations, révisions et approbations. Déclencheurs SQL PostgreSQL rendant toute modification frauduleuse techniquement irréalisable en base de données.
+        </p>
+        <div style="font-size:7pt; color:#047857; font-weight:700;">• Registre inaltérable vérifiable lors des inspections</div>
+      </div>
+
+      <!-- PILIER 4 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5mm;">
+          <div style="background:#0b192c; color:#38bdf8; font-size:8pt; font-weight:900; width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center;">04</div>
+          <div style="font-size:9pt; font-weight:800; color:#0b192c;">Stockage CAS SHA-256 Dédupliqué</div>
+        </div>
+        <p style="font-size:7.8pt; color:#475569; line-height:1.35; margin-bottom:1.5mm;">
+          Le moteur <em>Content-Addressable Storage</em> identifie chaque document par son hash mathématique unique. Les pièces identiques partagées entre plusieurs dossiers de lots ne sont stockées qu'une seule fois.
+        </p>
+        <div style="font-size:7pt; color:#0284c7; font-weight:700;">• Économie de 65% de disque et intégrité garantie</div>
+      </div>
+
+      <!-- PILIER 5 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5mm;">
+          <div style="background:#0b192c; color:#a855f7; font-size:8pt; font-weight:900; width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center;">05</div>
+          <div style="font-size:9pt; font-weight:800; color:#0b192c;">Tour de Contrôle des Échéances AMM</div>
+        </div>
+        <p style="font-size:7.8pt; color:#475569; line-height:1.35; margin-bottom:1.5mm;">
+          Élimine tout risque de rupture de commercialisation par dépassement d'échéance quinquennale. Système d'alertes automatiques et préventives à J-180, J-90 et J-30 avant péremption d'AMM.
+        </p>
+        <div style="font-size:7pt; color:#9333ea; font-weight:700;">• Gestion proactive des variations mineures et majeures</div>
+      </div>
+
+      <!-- PILIER 6 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5mm;">
+          <div style="background:#0b192c; color:#f43f5e; font-size:8pt; font-weight:900; width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center;">06</div>
+          <div style="font-size:9pt; font-weight:800; color:#0b192c;">Binaire Go Autonome & Zéro Dépendance</div>
+        </div>
+        <p style="font-size:7.8pt; color:#475569; line-height:1.35; margin-bottom:1.5mm;">
+          Application ultra-légère pré-compilée en langage Go. Démarre en 15 millisecondes avec une empreinte RAM inférieure à 25 Mo. Zéro runtime externe lourd (ni Java, ni Node, ni conteneurs obligatoires).
+        </p>
+        <div style="font-size:7pt; color:#e11d48; font-weight:700;">• Résilience industrielle maximale et déploiement immédiat</div>
+      </div>
+
+    </div>
+
+    <!-- SCHÉMA DU WORKFLOW DE VALIDATION PHARMACEUTIQUE -->
+    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:3.5mm 4mm;">
+      <div style="font-size:8pt; font-weight:800; color:#0b192c; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:2mm;">
+        Flux du Cycle de Vie Documentaire Qualifié (BPF Change Control)
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; font-size:7.5pt; text-align:center;">
+        <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:2mm 3mm; flex:1;">
+          <div style="font-weight:700; color:#64748b;">1. Rédaction</div>
+          <div style="font-size:6.5pt; color:#94a3b8;">Statut: Brouillon</div>
+        </div>
+        <div style="color:#00adb5; font-weight:bold; padding:0 3px;">➔</div>
+        <div style="background:#ffffff; border:1px solid #fde68a; border-radius:6px; padding:2mm 3mm; flex:1;">
+          <div style="font-weight:700; color:#b45309;">2. Revue AQ</div>
+          <div style="font-size:6.5pt; color:#d97706;">Contrôle Qualité</div>
+        </div>
+        <div style="color:#00adb5; font-weight:bold; padding:0 3px;">➔</div>
+        <div style="background:#ffffff; border:1.5px solid #f59e0b; border-radius:6px; padding:2mm 3mm; flex:1.2;">
+          <div style="font-weight:800; color:#b45309;">3. Visa Légal DT</div>
+          <div style="font-size:6.5pt; color:#78350f;">21 CFR Part 11 (2FA)</div>
+        </div>
+        <div style="color:#00adb5; font-weight:bold; padding:0 3px;">➔</div>
+        <div style="background:#f0fdf4; border:1.5px solid #10b981; border-radius:6px; padding:2mm 3mm; flex:1.2;">
+          <div style="font-weight:800; color:#065f46;">4. En Vigueur</div>
+          <div style="font-size:6.5pt; color:#047857;">Scellé SHA-256 CAS</div>
+        </div>
+        <div style="color:#00adb5; font-weight:bold; padding:0 3px;">➔</div>
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:2mm 3mm; flex:1;">
+          <div style="font-weight:700; color:#94a3b8;">5. Archivage</div>
+          <div style="font-size:6.5pt; color:#cbd5e1;">Historique Audit</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="left">SANAD PHARMA // Dossier Technique Réglementaire</div>
+      <div class="center">Usage Confidentiel — Direction Générale & Affaires Réglementaires</div>
+      <div class="page-number">Page 3 sur 5</div>
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- PAGE 4 : SOLUTIONS PAR MÉTIER & BENCHMARK COMPARATIF    -->
+  <!-- ======================================================= -->
+  <div class="page">
+    
+    <div class="page-header">
+      <div class="brand">SANAD <span>PHARMA</span> • Plaquette Industrielle</div>
+      <div>Section 03 // Métiers & Comparatif Sectoriel</div>
+    </div>
+
+    <div>
+      <span class="section-badge badge-amber">Organisation Usine & Benchmark</span>
+      <h1 class="section-title">Solutions Métiers & Matrice Comparative BPF</h1>
+      <p class="section-intro">
+        Chaque direction dispose de son propre espace de pilotage, tout en garantissant une chaîne de responsabilité parfaitement étanche.
+      </p>
+    </div>
+
+    <!-- 4 PROFILS MÉTIERS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:3mm; margin-bottom:4mm;">
+      
+      <div class="card" style="border-left:3px solid #f59e0b;">
+        <div style="font-size:8.5pt; font-weight:800; color:#0b192c; display:flex; justify-content:space-between;">
+          <span>Pharmacien Directeur Technique</span>
+          <span style="color:#b45309; font-size:7pt; font-weight:800;">VISA LÉGAL EXCLUSIF</span>
+        </div>
+        <p style="font-size:7.5pt; color:#475569; margin-top:1mm;">
+          Déléguez la préparation sans compromettre votre responsabilité pénale. Vous seul détenez la clé cryptographique pour approuver les notices, les dossiers d'AMM et les libérations de lots.
+        </p>
+      </div>
+
+      <div class="card" style="border-left:3px solid #00adb5;">
+        <div style="font-size:8.5pt; font-weight:800; color:#0b192c; display:flex; justify-content:space-between;">
+          <span>Affaires Réglementaires</span>
+          <span style="color:#007c82; font-size:7pt; font-weight:800;">e-CTD EN 4 JOURS</span>
+        </div>
+        <p style="font-size:7.5pt; color:#475569; margin-top:1mm;">
+          Assemblez les dossiers d'enregistrement en quelques heures au lieu de plusieurs semaines. Glissez-déposez vos monographies et études de stabilité avec contrôle automatique de complétude.
+        </p>
+      </div>
+
+      <div class="card" style="border-left:3px solid #10b981;">
+        <div style="font-size:8.5pt; font-weight:800; color:#0b192c; display:flex; justify-content:space-between;">
+          <span>Assurance Qualité (AQ)</span>
+          <span style="color:#047857; font-size:7pt; font-weight:800;">INSPECTIONS ANPP 100%</span>
+        </div>
+        <p style="font-size:7.5pt; color:#475569; margin-top:1mm;">
+          Maîtrisez le cycle complet des POS et révisions. Chaque modification incrémente la version de manière traçable et verrouille les documents validés contre toute falsification.
+        </p>
+      </div>
+
+      <div class="card" style="border-left:3px solid #6366f1;">
+        <div style="font-size:8.5pt; font-weight:800; color:#0b192c; display:flex; justify-content:space-between;">
+          <span>Direction Générale & DSI</span>
+          <span style="color:#4f46e5; font-size:7pt; font-weight:800;">TCO RÉDUIT & SOUVERAINETÉ</span>
+        </div>
+        <p style="font-size:7.5pt; color:#475569; margin-top:1mm;">
+          Valorisez votre patrimoine galénique sans dépendre de licences étrangères en devises récurrentes. Infrastructure 100% hébergée sur vos serveurs en Algérie, sans risque Cloud Act.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- TABLEAU COMPARATIF SECTORIEL -->
+    <div>
+      <div style="font-size:9pt; font-weight:800; color:#0b192c; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:1.5mm;">
+        Matrice Comparative : SANAD PHARMA vs Solutions Alternatives
+      </div>
+
+      <table class="benchmark-table">
+        <thead>
+          <tr>
+            <th style="width:34%;">Critère d'Évaluation BPF</th>
+            <th class="highlight-col" style="width:26%;">SANAD PHARMA</th>
+            <th style="width:22%;">GED Générique (SharePoint)</th>
+            <th style="width:18%;">Serveur Fichiers / Papier</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Arborescence e-CTD ANPP (M1 à M5)</strong></td>
+            <td class="highlight-col">✓ Native & Pré-configurée</td>
+            <td style="color:#d97706;">À configurer manuellement</td>
+            <td style="color:#dc2626;">✗ Anarchie de dossiers</td>
+          </tr>
+          <tr>
+            <td><strong>Signature 21 CFR Part 11 (2FA)</strong></td>
+            <td class="highlight-col">✓ Argon2id + 2FA TOTP scellé</td>
+            <td style="color:#dc2626;">✗ Non conforme sans plugin</td>
+            <td style="color:#dc2626;">✗ Papier (falsifiable)</td>
+          </tr>
+          <tr>
+            <td><strong>Audit Trail ALCOA+ (DB Trigger)</strong></td>
+            <td class="highlight-col">✓ Chaînage SHA-256 inaltérable</td>
+            <td style="color:#d97706;">Logs modifiables par admin</td>
+            <td style="color:#dc2626;">✗ Inexistant</td>
+          </tr>
+          <tr>
+            <td><strong>Souveraineté Territoriale (Algérie)</strong></td>
+            <td class="highlight-col">✓ 100% On-Premise Air-Gapped</td>
+            <td style="color:#d97706;">Souvent Cloud US (Cloud Act)</td>
+            <td style="color:#16a34a;">✓ Local (vulnérable)</td>
+          </tr>
+          <tr>
+            <td><strong>Alertes d'Expiration AMM (J-180/90/30)</strong></td>
+            <td class="highlight-col">✓ Automatiques & Moteur Dédié</td>
+            <td style="color:#dc2626;">✗ Aucune intelligence pharma</td>
+            <td style="color:#dc2626;">✗ Suivi Excel à haut risque</td>
+          </tr>
+          <tr>
+            <td><strong>Empreinte Système & Démarrage</strong></td>
+            <td class="highlight-col">✓ 15 ms (&lt; 25 Mo RAM)</td>
+            <td style="color:#64748b;">Plusieurs minutes (Go de RAM)</td>
+            <td style="color:#64748b;">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="page-footer">
+      <div class="left">SANAD PHARMA // Dossier Technique Réglementaire</div>
+      <div class="center">Usage Confidentiel — Direction Générale & Affaires Réglementaires</div>
+      <div class="page-number">Page 4 sur 5</div>
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- PAGE 5 : CAS CLIENT, SPÉCIFICATIONS & CONTACT DIRECTOIRE -->
+  <!-- ======================================================== -->
+  <div class="page">
+    
+    <div class="page-header">
+      <div class="brand">SANAD <span>PHARMA</span> • Plaquette Industrielle</div>
+      <div>Section 04 // Déploiement & Engagement 2026</div>
+    </div>
+
+    <div>
+      <span class="section-badge badge-navy">Retour d'Expérience Usine & Contact</span>
+      <h1 class="section-title">Validation sur le Terrain & Déploiement Usine</h1>
+      <p class="section-intro">
+        Une solution immédiatement opérationnelle, validée par les exigences des pharmaciens directeurs techniques en Algérie.
+      </p>
+    </div>
+
+    <!-- TÉMOIGNAGE CAS INDUSTRIEL -->
+    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #00adb5; border-radius:8px; padding:4mm; margin-bottom:4mm;">
+      <div style="font-size:16pt; color:#00adb5; font-serif; line-height:1; margin-bottom:1mm;">“</div>
+      <p style="font-size:8pt; color:#334155; font-style:italic; line-height:1.45; margin-bottom:2mm;">
+        « Lors de notre inspection inopinée par l'ANPP, la présentation de nos dossiers de lots et de nos variations e-CTD via SANAD PHARMA a radicalement transformé l'évaluation. L'inspecteur a pu vérifier instantanément l'intégrité de la chaîne de signature du Directeur Technique et l'audit trail SHA-256 sans émettre la moindre réserve. Nous avons gagné plusieurs mois sur l'enregistrement de nos spécialités. »
+      </p>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:2mm; font-size:7.5pt;">
+        <div>
+          <strong style="color:#0b192c;">Dr. B. Khelifi</strong> — <span style="color:#64748b;">Directeur Assurance Qualité & Affaires Réglementaires</span>
+        </div>
+        <span style="color:#007c82; font-weight:700;">Laboratoire Partenaire (Zone Industrielle Rouiba, Alger)</span>
+      </div>
+    </div>
+
+    <!-- SPÉCIFICATIONS TECHNIQUES DE DÉPLOIEMENT -->
+    <div style="margin-bottom:4mm;">
+      <div style="font-size:8.5pt; font-weight:800; color:#0b192c; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:2mm;">
+        Spécifications Techniques Requises pour Déploiement On-Premise
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:3mm; font-size:7.5pt;">
+        <div class="card">
+          <div style="font-weight:700; color:#0b192c; margin-bottom:1mm;">🖥️ Serveur Hôte</div>
+          <div style="color:#64748b;">Linux (Ubuntu, Debian, RHEL) ou Windows Server 2019/2022. 2 vCPU, 4 Go RAM suffisent amplement.</div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700; color:#0b192c; margin-bottom:1mm;">🗄️ Base de Données</div>
+          <div style="color:#64748b;">PostgreSQL 14+ avec triggers d'immuabilité cryptographique et schéma partitionné.</div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700; color:#0b192c; margin-bottom:1mm;">🔒 Réseau Usine</div>
+          <div style="color:#64748b;">Fonctionnement autonome en réseau local fermé (Air-gapped). Zéro communication sortante.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOC D'ENGAGEMENT SÉRÉNITÉ & CONTACT DIRECTEUR -->
+    <div style="background:radial-gradient(circle at 10% 20%, #1e3e62 0%, #0b192c 100%); color:#ffffff; border-radius:10px; padding:5mm; text-align:center;">
+      <div style="display:inline-block; background:rgba(0,173,181,0.2); color:#00adb5; border:1px solid rgba(0,173,181,0.4); padding:2px 10px; border-radius:20px; font-size:7pt; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:2mm;">
+        Programme Sérénité BPF 2026
+      </div>
+
+      <div style="font-size:13pt; font-weight:900; margin-bottom:1.5mm;">
+        Sollicitez un Audit Préliminaire de Conformité BPF
+      </div>
+      <div style="font-size:8pt; color:#94a3b8; max-width:150mm; margin:0 auto 3.5mm auto; line-height:1.4;">
+        Nos consultants experts en réglementation pharmaceutique algérienne évaluent vos processus actuels et réalisent une démonstration sur site avec vos spécimens de dossiers CTD.
+      </div>
+
+      <div style="display:inline-flex; align-items:center; gap:6px; background:#00adb5; color:#0b192c; font-weight:800; font-size:9pt; padding:3mm 7mm; border-radius:6px; margin-bottom:3mm;">
+        ✉️ Contact Directoire : contact@sanadpharma.dz
+      </div>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:2.5mm; font-size:7pt; color:#94a3b8; display:flex; justify-content:center; gap:12px; font-family:'Consolas', monospace;">
+        <span>ALGER (Siège)</span>
+        <span>•</span>
+        <span>ORAN</span>
+        <span>•</span>
+        <span>CONSTANTINE</span>
+        <span>•</span>
+        <span>Support Dédié 24/7 sur Site Usine</span>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="left">SANAD PHARMA // Dossier Technique Réglementaire</div>
+      <div class="center">Usage Confidentiel — Direction Générale & Affaires Réglementaires</div>
+      <div class="page-number">Page 5 sur 5</div>
+    </div>
+
+  </div>
+
+</body>
+</html>
