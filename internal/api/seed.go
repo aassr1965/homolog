@@ -90,19 +90,19 @@ func seedPharmaDemoData(ctx context.Context, pool *pgxpool.Pool, orgID string) {
 	// 3.1 ÉTABLISSEMENTS PHARMACEUTIQUES AGRÉÉS MIPH (Décret 20-325 & 1.A.7)
 	// ========================================================================
 	establishments := []struct {
-		NameFR             string
-		NameAR             string
-		LegalStatus        string
-		MIPHLicense        string
-		GrantDate          string
-		ExpiryDate         string
-		DTName             string
-		DTDecisionRef      string
-		DTDecisionDate     string
-		AddressFR          string
-		Wilaya             string
-		Phone              string
-		Email              string
+		NameFR         string
+		NameAR         string
+		LegalStatus    string
+		MIPHLicense    string
+		GrantDate      string
+		ExpiryDate     string
+		DTName         string
+		DTDecisionRef  string
+		DTDecisionDate string
+		AddressFR      string
+		Wilaya         string
+		Phone          string
+		Email          string
 	}{
 		{
 			NameFR:         "Laboratoires Pharmaceutiques Algériens (LPA)",
