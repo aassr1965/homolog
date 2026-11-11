@@ -6,19 +6,24 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserRole defines the 8 strict roles in the pharmaceutical platform
+// UserRole defines the 9 strict profiles in the pharmaceutical platform (CDC Section 7.1)
 type UserRole string
 
 const (
-	RoleSuperAdminEditeur      UserRole = "super_admin_editeur"
-	RoleAdminSystemeLocal      UserRole = "admin_systeme_local"
-	RoleAdminLaboratoire       UserRole = "admin_laboratoire"
-	RoleResponsableAffairesReg UserRole = "responsable_affaires_reglementaires"
-	RoleDirecteurTechnique     UserRole = "directeur_technique"
-	RoleContributeurTechnique  UserRole = "contributeur_technique"
-	RoleConsultantExterne      UserRole = "consultant_externe"
-	RoleLecteur                UserRole = "lecteur"
-	RoleAuditeur               UserRole = "auditeur"
+	RoleSuperAdminEditeur       UserRole = "super_admin_editeur"
+	RoleAdminSystemeLocal       UserRole = "admin_systeme_local"
+	RoleAdminLaboratoire        UserRole = "admin_laboratoire"
+	RoleResponsableAffairesReg  UserRole = "responsable_affaires_reglementaires"
+	RoleDirecteurTechnique      UserRole = "directeur_technique"
+	RoleContributeurQualiteBPF  UserRole = "contributeur_qualite_bpf"
+	RoleContributeurRDProd      UserRole = "contributeur_rd_production"
+	RoleConsultantExterne       UserRole = "consultant_externe"
+	RoleAuditeurInspecteur      UserRole = "auditeur_inspecteur"
+
+	// Alias de compatibilité
+	RoleContributeurTechnique UserRole = "contributeur_technique"
+	RoleLecteur               UserRole = "lecteur"
+	RoleAuditeur              UserRole = "auditeur"
 )
 
 // ProductType differentiates medicines and medical devices
