@@ -266,9 +266,102 @@
             overflow: hidden;
         }
 
+        /* Activity Bar Latérale Gauche (Style Pro Veeva Vault RIM / VS Code) */
+        .activity-bar {
+            width: 52px;
+            background: var(--bg-header);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            gap: 6px;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+        html[dir="rtl"] .activity-bar {
+            border-right: none;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .act-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            position: relative;
+            transition: all 0.15s ease;
+            background: transparent;
+            border: none;
+            user-select: none;
+        }
+        .act-btn:hover {
+            background: var(--bg-row-hover);
+            color: var(--accent-blue);
+        }
+        .act-btn.active {
+            background: var(--bg-panel);
+            color: var(--accent-blue);
+            box-shadow: inset 0 0 0 1px var(--border-color);
+        }
+        .act-btn.active::before {
+            content: "";
+            position: absolute;
+            left: -6px;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            background: var(--accent-blue);
+            border-radius: 0 2px 2px 0;
+        }
+        html[dir="rtl"] .act-btn.active::before {
+            left: auto;
+            right: -6px;
+            border-radius: 2px 0 0 2px;
+        }
+        .act-icon {
+            font-size: 17px;
+            line-height: 1;
+        }
+        .act-label {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            margin-top: 2px;
+            text-transform: uppercase;
+            max-width: 48px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .act-spacer {
+            flex: 1;
+        }
+        .act-badge {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: var(--accent-amber);
+            color: white;
+            font-size: 8px;
+            font-weight: 800;
+            padding: 1px 4px;
+            border-radius: 8px;
+            line-height: 1;
+        }
+        html[dir="rtl"] .act-badge {
+            right: auto;
+            left: 3px;
+        }
+
         /* Pane 1 : Left Tree Navigation */
         .pane-tree {
-            width: 280px;
+            width: 270px;
             background: var(--bg-tree);
             border-right: 1px solid var(--border-color);
             display: flex;
@@ -281,27 +374,25 @@
         }
 
         .tree-header {
-            padding: 8px 12px;
+            height: 38px;
+            padding: 0 12px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
-            gap: 4px;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 4px 6px;
+            align-items: center;
             background: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 600;
-            text-align: center;
         }
-        .tab-btn.active {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
+        .tree-header-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .tree-content {
@@ -899,15 +990,47 @@
             </div>
         </header>
 
-    <!-- Workspace (3 Panes Windows Explorer style) -->
+    <!-- Workspace (Activity Bar + 3 Panes) -->
     <div class="workspace">
         
-        <!-- Pane 1 : Left Tree Navigation -->
+        <!-- Activity Bar Latérale Gauche (Univers Métier Pharma) -->
+        <div class="activity-bar">
+            <button class="act-btn active" id="act-ref" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique (MIPH, Sites, Produits)">
+                <span class="act-icon">🏢</span>
+                <span class="act-label" id="lbl-act-ref">Référentiel</span>
+            </button>
+            <button class="act-btn" id="act-ctd" onclick="switchDomainModule('ctd')" title="Dossiers d'Enregistrement ANPP (Modules CTD 1 à 5)">
+                <span class="act-icon">📋</span>
+                <span class="act-label" id="lbl-act-ctd">Dossiers CTD</span>
+            </button>
+            <button class="act-btn" id="act-variations" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (12 Items ANPP)">
+                <span class="act-icon">🔄</span>
+                <span class="act-label" id="lbl-act-var">Variations</span>
+                <span class="act-badge">12</span>
+            </button>
+            <button class="act-btn" id="act-dm" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
+                <span class="act-icon">💉</span>
+                <span class="act-label" id="lbl-act-dm">Disp. Méd.</span>
+            </button>
+            <button class="act-btn" id="act-ged" onclick="switchDomainModule('ged')" title="GED BPF & Assurance Qualité (01_ à 05_)">
+                <span class="act-icon">📁</span>
+                <span class="act-label" id="lbl-act-ged">GED BPF</span>
+            </button>
+
+            <div class="act-spacer"></div>
+
+            <button class="act-btn" onclick="openAuditModal()" title="Piste d'Audit Trail Immuable (21 CFR Part 11)">
+                <span class="act-icon">🛡️</span>
+                <span class="act-label" id="lbl-act-audit">Audit</span>
+            </button>
+        </div>
+
+        <!-- Pane 1 : Left Tree Navigation (contextuelle selon le domaine) -->
         <div class="pane-tree">
             <div class="tree-header">
-                <button class="tab-btn active" id="tab-anpp" onclick="switchTreeTab('anpp')">📋 Dossiers ANPP</button>
-                <button class="tab-btn" id="tab-ged" onclick="switchTreeTab('ged')">📁 GED BPF</button>
-                <button class="tab-btn" id="tab-pharma" onclick="switchTreeTab('pharma')">🏭 Jalon 1.3</button>
+                <span class="tree-header-title" id="tree-section-title">
+                    <span>🏢</span> <span>Référentiel Pharmaceutique</span>
+                </span>
             </div>
             <div class="tree-content" id="tree-root">
                 <!-- Rendu dynamique par JS -->
@@ -1701,41 +1824,130 @@
             pane.classList.toggle("hidden");
         }
 
-        let currentTab = 'anpp';
-        let currentPharmaSection = 'establishments';
-        let currentPharmaList = [];
-        let selectedPharmaIndex = 0;
+        let currentDomain = 'ref';
+        let currentRefSection = 'establishments';
+        let currentRefList = [];
+        let selectedRefIndex = 0;
+        let selectedVarIndex = 0;
 
-        function switchTreeTab(tab) {
-            currentTab = tab;
-            document.getElementById("tab-anpp").classList.toggle("active", tab === 'anpp');
-            document.getElementById("tab-ged").classList.toggle("active", tab === 'ged');
-            document.getElementById("tab-pharma").classList.toggle("active", tab === 'pharma');
+        // Référentiel des variations réglementaires (Guide ANPP LD-DEPP07/V01)
+        const mockVariations = [
+            {
+                id: "VAR-2026-001",
+                item: "7.b.1",
+                label: "Remplacement ou ajout d'un matériau de départ / réactif intermédiaire",
+                product: "Paracétamol LPA 500 mg",
+                dci: "Paracétamol",
+                category: "Mmin",
+                categoryClass: "status-rev",
+                status: "EN INSTRUCTION ANPP",
+                statusClass: "status-rev",
+                submissionDate: "12/01/2026",
+                docsCount: "4 pièces (3.2.S.2 / BPF)",
+                desc: "Changement de fournisseur du p-aminophénol (matériau de départ). Spécifications et profil d'impuretés conformes Ph. Eur."
+            },
+            {
+                id: "VAR-2026-002",
+                item: "7.b.2",
+                label: "Modification substantielle du procédé de synthèse de la substance active",
+                product: "Amoxicilline LPA 1 g",
+                dci: "Amoxicilline trihydratée",
+                category: "Mmaj",
+                categoryClass: "status-req",
+                status: "DÉPÔT EFFECTUÉ",
+                statusClass: "status-ok",
+                submissionDate: "03/02/2026",
+                docsCount: "7 pièces (3.2.S.2 / Validation / Stabilité)",
+                desc: "Nouveau site de synthèse chimique avec étape de purification enzymatique. Dépôt majeur nécessitant avis de la Commission d'Enregistrement."
+            },
+            {
+                id: "VAR-2026-003",
+                item: "12.a",
+                label: "Prolongation de la durée de conservation du produit fini (36 à 48 mois)",
+                product: "Paracétamol LPA 500 mg",
+                dci: "Paracétamol",
+                category: "Mmod",
+                categoryClass: "status-rev",
+                status: "APPROUVÉ ANPP",
+                statusClass: "status-ok",
+                submissionDate: "15/10/2025",
+                docsCount: "3 pièces (3.2.P.8 Stabilité temps réel 48m zone IVb)",
+                desc: "Données de stabilité en temps réel à 30°C / 75% HR conformément aux exigences algériennes."
+            }
+        ];
+
+        function switchDomainModule(domain) {
+            currentDomain = domain;
             
-            updateToolbarForTab(tab);
-            renderTree();
-            
-            if (tab === 'pharma') {
-                loadPharmaSection(currentPharmaSection);
-            } else {
+            // Mise à jour de l'état actif dans l'Activity Bar
+            document.querySelectorAll('.act-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('act-' + domain);
+            if (btn) btn.classList.add('active');
+
+            // Titre contextuel de l'arborescence
+            const titleEl = document.getElementById("tree-section-title");
+            if (titleEl) {
+                let icon = "🏢";
+                let text = isArabic ? "المرجعية الصيدلانية" : "Référentiel Pharmaceutique";
+                if (domain === 'ctd') {
+                    icon = "📋";
+                    text = isArabic ? "ملفات التسجيل ANPP (CTD)" : "Dossiers d'Enregistrement (CTD)";
+                } else if (domain === 'variations') {
+                    icon = "🔄";
+                    text = isArabic ? "تعديلات ما بعد التسجيل" : "Variations & Post-AMM (12 Items)";
+                } else if (domain === 'dm') {
+                    icon = "💉";
+                    text = isArabic ? "المستلزمات الطبية (20-324)" : "Dispositifs Médicaux (Décret 20-324)";
+                } else if (domain === 'ged') {
+                    icon = "📁";
+                    text = isArabic ? "التوثيق الصيدلاني BPF" : "GED Pharmaceutique & BPF";
+                }
+                titleEl.innerHTML = `<span>${icon}</span> <span>${text}</span>`;
+            }
+
+            updateToolbarForDomain(domain);
+            renderTreeForDomain(domain);
+
+            // Chargement des données métier correspondantes
+            if (domain === 'ref') {
+                loadRefSection(currentRefSection || 'establishments');
+            } else if (domain === 'ctd') {
+                document.getElementById("bc-root").innerText = "DOSSIERS_ANPP";
+                document.getElementById("bc-sec").innerText = "Enregistrement";
+                document.getElementById("bc-prod").innerText = "Paracétamol 500mg";
+                document.getElementById("bc-mod").innerText = "Module 3 Qualité (CMC)";
+                renderTable();
+            } else if (domain === 'variations') {
+                document.getElementById("bc-root").innerText = "POST-AMM";
+                document.getElementById("bc-sec").innerText = "Variations";
+                document.getElementById("bc-prod").innerText = "LD-DEPP07/V01";
+                document.getElementById("bc-mod").innerText = "12 Items Réglementaires";
+                renderVariationsTable();
+            } else if (domain === 'dm') {
+                loadRefSection('devices');
+            } else if (domain === 'ged') {
+                document.getElementById("bc-root").innerText = "GED";
+                document.getElementById("bc-sec").innerText = "BPF_Qualite";
+                document.getElementById("bc-prod").innerText = "01_Affaires_Reglementaires";
+                document.getElementById("bc-mod").innerText = "Agrements_MIPH";
                 renderTable();
             }
         }
 
-        function updateToolbarForTab(tab) {
+        function updateToolbarForDomain(domain) {
             const tb = document.getElementById("main-toolbar");
             if (!tb) return;
-            if (tab === 'pharma') {
+            if (domain === 'ref') {
                 tb.innerHTML = `
                     <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewPharmaModal()">➕ Nouveau</button>
-                    <button class="btn-pill" onclick="loadPharmaSection(currentPharmaSection)">🔄 Actualiser</button>
+                    <button class="btn-pill" onclick="loadRefSection(currentRefSection)">🔄 Actualiser</button>
                     <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Base Référentiel : <strong style="color:var(--accent-emerald);">PostgreSQL Connecté</strong>
                     </div>
                 `;
-            } else {
+            } else if (domain === 'ctd') {
                 tb.innerHTML = `
                     <button class="btn-pill" onclick="openUploadModal()">➕ Nouveau Document</button>
                     <button class="btn-pill" onclick="simulateExportZip()">📦 Exporter Dossier CTD (ZIP)</button>
@@ -1745,64 +1957,124 @@
                         Complétude : <strong>12/14 pièces (85%)</strong>
                     </div>
                 `;
+            } else if (domain === 'variations') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
+                    <button class="btn-pill" onclick="renderVariationsTable()">🔄 Actualiser</button>
+                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Directive : <strong>ANPP LD-DEPP07/V01</strong>
+                    </div>
+                `;
+            } else if (domain === 'dm') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="document.getElementById('modal-new-dm').classList.add('open')">➕ Nouveau DM</button>
+                    <button class="btn-pill" onclick="loadRefSection('devices')">🔄 Actualiser</button>
+                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Cadre : <strong>Arrêté du 10 Mai 2021</strong>
+                    </div>
+                `;
+            } else if (domain === 'ged') {
+                tb.innerHTML = `
+                    <button class="btn-pill" onclick="openUploadModal()">➕ Nouveau Document BPF</button>
+                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Norme : <strong>Annexe 11 BPF</strong>
+                    </div>
+                `;
             }
         }
 
-        function openNewPharmaModal() {
-            closeAllModals();
-            if (currentPharmaSection === 'establishments') {
-                document.getElementById("modal-new-est").classList.add("open");
-            } else if (currentPharmaSection === 'medicines') {
-                document.getElementById("modal-new-med").classList.add("open");
-            } else if (currentPharmaSection === 'devices') {
-                document.getElementById("modal-new-dm").classList.add("open");
-            } else {
-                document.getElementById("modal-new-est").classList.add("open");
-            }
-        }
-
-        function toggleEcoFields() {
-            const origin = document.getElementById("med-origin").value;
-            const pcsuGroup = document.getElementById("eco-pcsu-group");
-            const fobGroup = document.getElementById("eco-fob-group");
-            const title = document.getElementById("eco-section-title");
-            if (origin === 'generique_local') {
-                pcsuGroup.style.display = 'flex';
-                fobGroup.style.display = 'none';
-                title.innerText = "💰 Volet Économique (1.H.4 - PCSU Fabrication Locale)";
-            } else {
-                pcsuGroup.style.display = 'none';
-                fobGroup.style.display = 'flex';
-                title.innerText = "💰 Volet Économique (1.H.4 & 1.H.5 - Prix FOB & Benchmark International)";
-            }
-        }
-
-        function renderTree() {
+        function renderTreeForDomain(domain) {
             const container = document.getElementById("tree-root");
-            if (currentTab === 'pharma') {
+            if (domain === 'ref') {
                 container.innerHTML = `
-                    <div class="tree-node ${currentPharmaSection === 'establishments' ? 'selected' : ''}" onclick="loadPharmaSection('establishments')">
+                    <div class="tree-node ${currentRefSection === 'establishments' ? 'selected' : ''}" onclick="loadRefSection('establishments')">
                         <span class="chevron">🏢</span>
                         <span>Établissements Agréés (MIPH)</span>
                         <span class="count-badge ok">Décret 20-325</span>
                     </div>
-                    <div class="tree-node ${currentPharmaSection === 'sites' ? 'selected' : ''}" onclick="loadPharmaSection('sites')">
+                    <div class="tree-node ${currentRefSection === 'sites' ? 'selected' : ''}" onclick="loadRefSection('sites')">
                         <span class="chevron">🏭</span>
                         <span>Sites Intervenants (1.H.8)</span>
                         <span class="count-badge ok">BPF / GMP</span>
                     </div>
-                    <div class="tree-node ${currentPharmaSection === 'medicines' ? 'selected' : ''}" onclick="loadPharmaSection('medicines')">
+                    <div class="tree-node ${currentRefSection === 'medicines' ? 'selected' : ''}" onclick="loadRefSection('medicines')">
                         <span class="chevron">💊</span>
-                        <span>Médicaments (Enreg. ANPP)</span>
+                        <span>Catalogue Médicaments</span>
                         <span class="count-badge warn">Princeps/Génér.</span>
                     </div>
-                    <div class="tree-node ${currentPharmaSection === 'devices' ? 'selected' : ''}" onclick="loadPharmaSection('devices')">
+                    <div class="tree-node ${currentRefSection === 'devices' ? 'selected' : ''}" onclick="loadRefSection('devices')">
                         <span class="chevron">💉</span>
-                        <span>Dispositifs Médicaux</span>
+                        <span>Répertoire Dispositifs Médicaux</span>
                         <span class="count-badge req">Arrêté 10 Mai</span>
                     </div>
                 `;
-            } else if (currentTab === 'ged') {
+            } else if (domain === 'ctd') {
+                container.innerHTML = `
+                    <div class="tree-node selected" onclick="toggleSub('sub-ctd-para')">
+                        <span class="chevron">▼</span>
+                        <span>💊 Paracétamol 500mg Comprimé</span>
+                        <span class="count-badge warn">85%</span>
+                    </div>
+                    <div class="tree-sub open" id="sub-ctd-para">
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderTable()"><span>📁 Module 1 : Administratif Algérie</span><span class="count-badge ok">6/6</span></div>
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderTable()"><span>📁 Module 2 : Résumés CTD</span><span class="count-badge ok">4/4</span></div>
+                        <div class="tree-node selected" style="padding-left:24px;" onclick="renderTable()"><span>📁 Module 3 : Qualité CMC</span><span class="count-badge warn">12/14</span></div>
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderTable()"><span>📁 Module 4 : Non-Clinique</span><span class="count-badge ok">3/3</span></div>
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderTable()"><span>📁 Module 5 : Clinique & BE</span><span class="count-badge ok">5/5</span></div>
+                    </div>
+
+                    <div class="tree-node" onclick="toggleSub('sub-ctd-amox')">
+                        <span class="chevron">▶</span>
+                        <span>💊 Amoxicilline 1g Dispersible</span>
+                        <span class="count-badge ok">100%</span>
+                    </div>
+                    <div class="tree-sub" id="sub-ctd-amox">
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 Dossier CTD Validé</span><span class="count-badge ok">48/48</span></div>
+                    </div>
+
+                    <div class="tree-node" onclick="toggleSub('sub-ctd-herc')">
+                        <span class="chevron">▶</span>
+                        <span>💊 Herceptin 440mg (Princeps)</span>
+                        <span class="count-badge ok">100%</span>
+                    </div>
+                `;
+            } else if (domain === 'variations') {
+                container.innerHTML = `
+                    <div class="tree-node selected" onclick="toggleSub('sub-var-active')">
+                        <span class="chevron">▼</span>
+                        <span>🔄 Variations en Cours (ANPP)</span>
+                        <span class="count-badge warn">3</span>
+                    </div>
+                    <div class="tree-sub open" id="sub-var-active">
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderVariationsTable()"><span>🟡 Mmin (Mineures - 7.b.1)</span><span class="count-badge ok">1</span></div>
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderVariationsTable()"><span>🟠 Mmod (Modérées - 12.a)</span><span class="count-badge ok">1</span></div>
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderVariationsTable()"><span>🔴 Mmaj (Majeures - 7.b.2)</span><span class="count-badge req">1</span></div>
+                    </div>
+
+                    <div class="tree-node" onclick="toggleSub('sub-var-history')">
+                        <span class="chevron">▶</span>
+                        <span>📅 Renouvellements Quinquennaux</span>
+                        <span class="count-badge ok">2026-2027</span>
+                    </div>
+                `;
+            } else if (domain === 'dm') {
+                container.innerHTML = `
+                    <div class="tree-node selected" onclick="loadRefSection('devices')">
+                        <span class="chevron">💉</span>
+                        <span>Tous les Dispositifs Homologués</span>
+                        <span class="count-badge ok">Décret 20-324</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadRefSection('devices')"><span>📁 Classe I (Non invasifs)</span></div>
+                    <div class="tree-node selected" style="padding-left:24px;" onclick="loadRefSection('devices')"><span>📁 Classe IIa (Seringues, Canules)</span></div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadRefSection('devices')"><span>📁 Classe IIb & III (Implants)</span></div>
+                `;
+            } else if (domain === 'ged') {
                 container.innerHTML = `
                     <div class="tree-node selected" onclick="toggleSub('sub-ged-01')">
                         <span class="chevron">▼</span>
@@ -1810,8 +2082,8 @@
                         <span class="count-badge ok">6</span>
                     </div>
                     <div class="tree-sub open" id="sub-ged-01">
-                        <div class="tree-node" style="padding-left:24px;"><span>📄 Agrements_MIPH</span></div>
-                        <div class="tree-node" style="padding-left:24px;"><span>📄 Decisions_Enregistrement</span></div>
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderTable()"><span>📄 Agrements_MIPH</span></div>
+                        <div class="tree-node" style="padding-left:24px;" onclick="renderTable()"><span>📄 Decisions_Enregistrement</span></div>
                     </div>
                     <div class="tree-node" onclick="toggleSub('sub-ged-02')">
                         <span class="chevron">▶</span>
@@ -1834,52 +2106,17 @@
                         <span class="count-badge ok">5</span>
                     </div>
                 `;
-            } else {
-                container.innerHTML = `
-                    <div class="tree-node selected" onclick="toggleSub('sub-ctd-para')">
-                        <span class="chevron">▼</span>
-                        <span>💊 Paracétamol 500mg (Enreg.)</span>
-                        <span class="count-badge warn">85%</span>
-                    </div>
-                    <div class="tree-sub open" id="sub-ctd-para">
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 1 : Administratif Algérie</span><span class="count-badge ok">6/6</span></div>
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 2 : Résumés CTD</span><span class="count-badge ok">4/4</span></div>
-                        <div class="tree-node selected" style="padding-left:24px;"><span>📁 Module 3 : Qualité CMC</span><span class="count-badge warn">12/14</span></div>
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 4 : Non-Clinique</span><span class="count-badge ok">3/3</span></div>
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 5 : Clinique & BE</span><span class="count-badge ok">5/5</span></div>
-                    </div>
-
-                    <div class="tree-node" onclick="toggleSub('sub-dm-ser')">
-                        <span class="chevron">▶</span>
-                        <span>💉 Seringue 3p 5ml (DM Classe IIa)</span>
-                        <span class="count-badge ok">100%</span>
-                    </div>
-                    <div class="tree-sub" id="sub-dm-ser">
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 01. Dossier Administratif & Agrément</span><span class="count-badge ok">4/4</span></div>
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 02. Dossier Technique (Arrêté 10 Mai)</span><span class="count-badge ok">8/8</span></div>
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 03. Certificats Stérilisation & ISO</span><span class="count-badge ok">3/3</span></div>
-                    </div>
-
-                    <div class="tree-node" onclick="toggleSub('sub-dm-reg')">
-                        <span class="chevron">▶</span>
-                        <span>🩹 Cathéter IV (Régularisation DM)</span>
-                        <span class="count-badge req">40%</span>
-                    </div>
-                    <div class="tree-sub" id="sub-dm-reg">
-                        <div class="tree-node" style="padding-left:24px;"><span>📁 Inventaire DM Décret 20-324</span><span class="count-badge req">2/5</span></div>
-                    </div>
-                `;
             }
         }
 
-        async function loadPharmaSection(section) {
-            currentPharmaSection = section;
-            renderTree();
+        async function loadRefSection(section) {
+            currentRefSection = section;
+            renderTreeForDomain(currentDomain);
             
             document.getElementById("bc-root").innerText = "RÉFÉRENTIEL";
-            document.getElementById("bc-sec").innerText = "Jalon 1.3";
+            document.getElementById("bc-sec").innerText = "Pharmacopée";
             document.getElementById("bc-prod").innerText = section.toUpperCase();
-            document.getElementById("bc-mod").innerText = "Catalogue Souverain";
+            document.getElementById("bc-mod").innerText = "Catalogue National";
 
             const tbody = document.getElementById("doc-tbody");
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement depuis PostgreSQL...</td></tr>`;
@@ -1893,15 +2130,15 @@
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
-                currentPharmaList = (data.establishments || data.sites || data.medicines || data.devices || []);
-                selectedPharmaIndex = 0;
-                renderPharmaTable(section, currentPharmaList);
+                currentRefList = (data.establishments || data.sites || data.medicines || data.devices || []);
+                selectedRefIndex = 0;
+                renderRefTable(section, currentRefList);
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--accent-red);">Impossible de charger : ${e.message}</td></tr>`;
             }
         }
 
-        function renderPharmaTable(section, items) {
+        function renderRefTable(section, items) {
             const thead = document.getElementById("table-head");
             const tbody = document.getElementById("doc-tbody");
             tbody.innerHTML = "";
@@ -1924,8 +2161,8 @@
                 }
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
-                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    if (idx === selectedRefIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
                     tr.innerHTML = `
                         <td><span class="status-tag status-ok">AGRÉÉ MIPH</span></td>
                         <td style="font-weight:600; color:var(--text-main);">${item.name_fr}</td>
@@ -1955,8 +2192,8 @@
                 }
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
-                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    if (idx === selectedRefIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
                     tr.innerHTML = `
                         <td><span class="status-tag status-ok">CONFORME BPF</span></td>
                         <td style="font-weight:600; color:var(--text-main);">${item.site_name_fr}</td>
@@ -1986,8 +2223,8 @@
                 }
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
-                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    if (idx === selectedRefIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
                     let tagClass = "status-ok";
                     let tagLabel = "GÉNÉRIQUE LOCAL";
                     if (item.origin_type === 'princeps') {
@@ -2027,8 +2264,8 @@
                 }
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
-                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    if (idx === selectedRefIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
                     tr.innerHTML = `
                         <td><span class="status-tag status-ok">CLASSE ${item.dm_class}</span></td>
                         <td style="font-weight:600; color:var(--text-main);">${item.commercial_name_fr}</td>
@@ -2041,10 +2278,10 @@
                     tbody.appendChild(tr);
                 });
             }
-            renderPharmaPreview(section, items[selectedPharmaIndex]);
+            renderRefPreview(section, items[selectedRefIndex]);
         }
 
-        function renderPharmaPreview(section, item) {
+        function renderRefPreview(section, item) {
             const preview = document.getElementById("preview-body");
             if (!item) {
                 preview.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-dim);">Sélectionnez un élément dans le tableau pour afficher sa fiche légale.</div>`;
@@ -2155,6 +2392,101 @@
             }
         }
 
+        function renderVariationsTable() {
+            const thead = document.getElementById("table-head");
+            const tbody = document.getElementById("doc-tbody");
+            tbody.innerHTML = "";
+
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 80px;">Classification</th>
+                    <th>N° Item &amp; Intitulé de la Variation (LD-DEPP07)</th>
+                    <th>Spécialité / Produit</th>
+                    <th>DCI</th>
+                    <th>Date Dépôt</th>
+                    <th>Pièces Régionales (3.2.R)</th>
+                    <th>Statut ANPP</th>
+                </tr>
+            `;
+
+            mockVariations.forEach((v, idx) => {
+                const tr = document.createElement("tr");
+                if (idx === selectedVarIndex) tr.classList.add("selected");
+                tr.onclick = () => { selectedVarIndex = idx; renderVariationsTable(); };
+                tr.innerHTML = `
+                    <td><span class="status-tag ${v.categoryClass}">${v.category}</span></td>
+                    <td style="font-weight:600; color:var(--text-main);"><code style="color:var(--accent-blue);">${v.item}</code> ${v.label}</td>
+                    <td style="font-weight:600;">${v.product}</td>
+                    <td style="color:var(--text-muted);">${v.dci}</td>
+                    <td style="font-family:monospace; color:var(--text-dim);">${v.submissionDate}</td>
+                    <td style="font-size:11px;">${v.docsCount}</td>
+                    <td><span class="status-tag ${v.statusClass}">${v.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            renderVariationPreview(mockVariations[selectedVarIndex]);
+        }
+
+        function renderVariationPreview(v) {
+            const preview = document.getElementById("preview-body");
+            if (!v) return;
+            preview.innerHTML = `
+                <div class="pdf-sim-page">
+                    <div class="pdf-sim-header">
+                        AGENCE NATIONALE DES PRODUITS PHARMACEUTIQUES (ANPP)<br>
+                        NOTIFICATION DE VARIATION POST-AMM (LD-DEPP07/V01)
+                    </div>
+                    <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                        ITEM ${v.item} : CLASSE ${v.category}
+                    </div>
+                    <div style="font-size:11px; line-height:1.6;">
+                        <strong>Produit concerné :</strong> ${v.product} (${v.dci})<br>
+                        <strong>Intitulé légal :</strong> ${v.label}<br><br>
+                        <strong>Justification scientifique &amp; réglementaire :</strong><br>
+                        ${v.desc}<br><br>
+                        <strong>Conformité Ligne Directrice ANPP :</strong><br>
+                        Dossier technique complet soumis avec visa du Pharmacien Directeur Technique conformément au Décret Exécutif 22-247.
+                    </div>
+                </div>
+
+                <div class="meta-box">
+                    <div class="meta-row"><span class="meta-label">Réf. Dossier :</span><span class="meta-val">${v.id}</span></div>
+                    <div class="meta-row"><span class="meta-label">Classification :</span><span class="meta-val">${v.category} (${v.category === 'Mmin' ? 'Mineure' : (v.category === 'Mmod' ? 'Modérée' : 'Majeure')})</span></div>
+                    <div class="meta-row"><span class="meta-label">Date soumission :</span><span class="meta-val">${v.submissionDate}</span></div>
+                    <div class="meta-row"><span class="meta-label">Statut commission :</span><span class="meta-val">${v.status}</span></div>
+                </div>
+            `;
+        }
+
+        function openNewPharmaModal() {
+            closeAllModals();
+            if (currentRefSection === 'establishments') {
+                document.getElementById("modal-new-est").classList.add("open");
+            } else if (currentRefSection === 'medicines') {
+                document.getElementById("modal-new-med").classList.add("open");
+            } else if (currentRefSection === 'devices') {
+                document.getElementById("modal-new-dm").classList.add("open");
+            } else {
+                document.getElementById("modal-new-est").classList.add("open");
+            }
+        }
+
+        function toggleEcoFields() {
+            const origin = document.getElementById("med-origin").value;
+            const pcsuGroup = document.getElementById("eco-pcsu-group");
+            const fobGroup = document.getElementById("eco-fob-group");
+            const title = document.getElementById("eco-section-title");
+            if (origin === 'generique_local') {
+                pcsuGroup.style.display = 'flex';
+                fobGroup.style.display = 'none';
+                title.innerText = "💰 Volet Économique (1.H.4 - PCSU Fabrication Locale)";
+            } else {
+                pcsuGroup.style.display = 'none';
+                fobGroup.style.display = 'flex';
+                title.innerText = "💰 Volet Économique (1.H.4 & 1.H.5 - Prix FOB & Benchmark International)";
+            }
+        }
+
         async function handleCreateEstablishment(e) {
             if (e) e.preventDefault();
             const payload = {
@@ -2178,7 +2510,7 @@
                 if (res.ok) {
                     closeModal('modal-new-est');
                     showNotifyModal("Établissement Enregistré", "L'établissement pharmaceutique a été inscrit en base PostgreSQL et son agrément MIPH a été validé.", "🏢");
-                    loadPharmaSection('establishments');
+                    loadRefSection('establishments');
                 } else {
                     const err = await res.json();
                     showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
@@ -2216,7 +2548,7 @@
                 if (res.ok) {
                     closeModal('modal-new-med');
                     showNotifyModal("Médicament Enregistré", "La spécialité pharmaceutique a été enregistrée avec ses données médico-économiques selon la typologie ANPP 2025.", "💊");
-                    loadPharmaSection('medicines');
+                    loadRefSection('medicines');
                 } else {
                     const err = await res.json();
                     showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
@@ -2247,7 +2579,7 @@
                 if (res.ok) {
                     closeModal('modal-new-dm');
                     showNotifyModal("Dispositif Médical Enregistré", "Le dossier d'homologation DM a été créé conformément au Décret 20-324 et à l'Arrêté du 10 mai 2021.", "💉");
-                    loadPharmaSection('devices');
+                    loadRefSection('devices');
                 } else {
                     const err = await res.json();
                     showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
@@ -2378,6 +2710,19 @@
                 if (lblPwd) lblPwd.innerText = "كلمة المرور المشفرة (Argon2id) :";
                 if (btnLogin) btnLogin.innerText = "تسجيل الدخول إلى النظام ➔";
                 if (loginLang) loginLang.innerText = "🇫🇷";
+
+                const lRef = document.getElementById("lbl-act-ref");
+                const lCtd = document.getElementById("lbl-act-ctd");
+                const lVar = document.getElementById("lbl-act-var");
+                const lDm = document.getElementById("lbl-act-dm");
+                const lGed = document.getElementById("lbl-act-ged");
+                const lAud = document.getElementById("lbl-act-audit");
+                if (lRef) lRef.innerText = "المرجعية";
+                if (lCtd) lCtd.innerText = "ملفات CTD";
+                if (lVar) lVar.innerText = "التعديلات";
+                if (lDm) lDm.innerText = "مستلزمات";
+                if (lGed) lGed.innerText = "وثائق BPF";
+                if (lAud) lAud.innerText = "التدقيق";
             } else {
                 html.setAttribute("dir", "ltr");
                 html.setAttribute("lang", "fr");
@@ -2393,7 +2738,21 @@
                 if (lblPwd) lblPwd.innerText = "Mot de passe sécurisé (Argon2id) :";
                 if (btnLogin) btnLogin.innerText = "Se connecter au cockpit ➔";
                 if (loginLang) loginLang.innerText = "🇩🇿";
+
+                const lRef = document.getElementById("lbl-act-ref");
+                const lCtd = document.getElementById("lbl-act-ctd");
+                const lVar = document.getElementById("lbl-act-var");
+                const lDm = document.getElementById("lbl-act-dm");
+                const lGed = document.getElementById("lbl-act-ged");
+                const lAud = document.getElementById("lbl-act-audit");
+                if (lRef) lRef.innerText = "Référentiel";
+                if (lCtd) lCtd.innerText = "Dossiers CTD";
+                if (lVar) lVar.innerText = "Variations";
+                if (lDm) lDm.innerText = "Disp. Méd.";
+                if (lGed) lGed.innerText = "GED BPF";
+                if (lAud) lAud.innerText = "Audit";
             }
+            switchDomainModule(currentDomain);
             applyTheme(currentTheme); // Met à jour le texte du bouton de thème dans la bonne langue
         }
 
@@ -2830,9 +3189,8 @@
             document.getElementById("clock-utc").innerText = new Date().toUTCString().split(" ")[4];
         }, 1000);
 
-        // Initialisation
-        renderTree();
-        renderTable();
+        // Initialisation au domaine Référentiel
+        switchDomainModule('ref');
     </script>
 </body>
 </html>
