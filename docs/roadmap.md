@@ -23,8 +23,8 @@ gantt
     Infra, Base PostgreSQL & CAS Dédupliqué (1.1)    :done, p1_1, 2026-11-10, 1d
     Auth 2FA, 8 Rôles & Audit Trail Immuable (1.2)   :done, p1_2, 2026-11-10, 1d
     Référentiel Produits & Établissements ANPP (1.3) :done, p1_3, 2026-11-11, 1d
-    Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :active, p1_4, after p1_3, 4d
-    Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :p1_5, after p1_4, 4d
+    Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :done, p1_4, after p1_3, 4d
+    Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :active, p1_5, after p1_4, 4d
     UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):p1_6, after p1_5, 4d
     Studio Compléments & Assistant Soumission ANPP (1.7) :p1_7, after p1_6, 3d
     Packaging Docker & Archive .homolog (1.8)        :p1_8, after p1_7, 2d
@@ -126,7 +126,7 @@ gantt
 - [x] Gestion des versions mineures/majeures (`v0.1`, `v1.0`, `v2.0`) avec saisie obligatoire du motif de révision et traçabilité.
 - [x] Mécanisme de verrouillage de document (Check-out / Check-in) pour prévenir les éditions concurrentes.
 - [x] Circuit d'approbation et **Signature électronique légale du Directeur Technique** (avec re-authentification 2FA, horodatage UTC et scellement SHA-256).
-- [x] Téléversement multipart et déduplication physique par hash SHA-256 via le driver CAS.
+- [x] Téléversement résilient par morceaux (Chunked Upload 5 Mo) et déduplication physique par hash SHA-256 via le driver CAS.
 - [x] Interface utilisateur Haute Densité 'Pharma Explorer' connectée en temps réel aux APIs GED du backend.
 
 ### Jalon 1.5 : Moteur de Dossiers ANPP & Checklists Dynamiques (Guide CTD Juillet 2025)
@@ -293,7 +293,7 @@ gantt
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
 | **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0) | Aligné Guide CTD ANPP 2025 & LD Modifications 2026 ✅ |
-| **Jalons Phase 1 complétés** | 8 / 8 jalons | 3 / 8 jalons complétés (Jalons 1.1, 1.2 & 1.3 ✅) | Jalon 1.4 en cours de préparation |
+| **Jalons Phase 1 complétés** | 8 / 8 jalons | 4 / 8 jalons complétés (Jalons 1.1, 1.2, 1.3 & 1.4 ✅) | Jalon 1.5 (Moteur Dossiers ANPP CTD 2025) en préparation |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth & Produits validés (100%) | Argon2id, TOTP, Sessions, CAS & Modèles ANPP conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
