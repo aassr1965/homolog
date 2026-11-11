@@ -32,6 +32,10 @@ type ProductType string
 const (
 	ProductTypeMedicament        ProductType = "medicament"
 	ProductTypeDispositifMedical ProductType = "dispositif_medical"
+
+	// Alias for CTD Engine
+	ProductTypeMedicine      ProductType = "medicament"
+	ProductTypeMedicalDevice ProductType = "dispositif_medical"
 )
 
 // ProcedureType defines regulatory submission procedures in Algeria
@@ -46,22 +50,6 @@ const (
 	ProcHomologationDM        ProcedureType = "homologation_dm"
 	ProcRegularisationDM      ProcedureType = "regularisation_dm"
 	ProcHomologationExportDM  ProcedureType = "homologation_export_dm"
-)
-
-// DossierStatus defines the workflow status of an ANPP dossier
-type DossierStatus string
-
-const (
-	DossierStatusBrouillon          DossierStatus = "brouillon"
-	DossierStatusConstitution       DossierStatus = "constitution"
-	DossierStatusValidationDT       DossierStatus = "validation_dt"
-	DossierStatusDeposeANPP         DossierStatus = "depose_anpp"
-	DossierStatusEvaluation         DossierStatus = "evaluation"
-	DossierStatusAttenteComplements DossierStatus = "attente_complements"
-	DossierStatusAvisCommission     DossierStatus = "avis_commission"
-	DossierStatusDecisionEnregistre DossierStatus = "decision_enregistre"
-	DossierStatusDecisionRefuse     DossierStatus = "decision_refuse"
-	DossierStatusArchive            DossierStatus = "archive"
 )
 
 // GEDDocumentStatus defines the GxP lifecycle status of an EDMS document
@@ -180,46 +168,6 @@ type GEDVersion struct {
 	SignatureDeclaration string     `json:"signature_declaration,omitempty"`
 	AuthorID             *uuid.UUID `json:"author_id,omitempty"`
 	CreatedAt            time.Time  `json:"created_at"`
-}
-
-// ChecklistItem represents a single required or conditional document slot in an ANPP dossier
-type ChecklistItem struct {
-	SlotID            string     `json:"slot_id"` // e.g. "CTD_3.2.P.5"
-	TitleFR           string     `json:"title_fr"`
-	TitleAR           string     `json:"title_ar"`
-	ModuleNumber      string     `json:"module_number"` // "Module 1", "Module 3"
-	IsMandatory       bool       `json:"is_mandatory"`
-	ConditionRule     string     `json:"condition_rule,omitempty"`
-	Status            string     `json:"status"` // "manquant", "en_revue", "valide"
-	AttachedDocID     *uuid.UUID `json:"attached_doc_id,omitempty"`
-	AttachedVersionID *uuid.UUID `json:"attached_version_id,omitempty"`
-	AttachedFilename  string     `json:"attached_filename,omitempty"`
-	AttachedSHA256    string     `json:"attached_sha256,omitempty"`
-	IsValidatedByDT   bool       `json:"is_validated_by_dt"`
-}
-
-// Dossier represents an official submission dossier for ANPP
-type Dossier struct {
-	ID                    uuid.UUID       `json:"id"`
-	OrganizationID        uuid.UUID       `json:"organization_id"`
-	ProductID             uuid.UUID       `json:"product_id"`
-	ProcedureType         ProcedureType   `json:"procedure_type"`
-	InternalReference     string          `json:"internal_reference"`
-	ANPPOfficialReference string          `json:"anpp_official_reference,omitempty"`
-	ANPPDepositDate       *time.Time      `json:"anpp_deposit_date,omitempty"`
-	ANPPDecisionDate      *time.Time      `json:"anpp_decision_date,omitempty"`
-	ANPPValidityEndDate   *time.Time      `json:"anpp_validity_end_date,omitempty"`
-	Status                DossierStatus   `json:"status"`
-	ResponsibleID         *uuid.UUID      `json:"responsible_id,omitempty"`
-	ModelTemplateID       string          `json:"model_template_id"`
-	ModelVersion          string          `json:"model_version"`
-	ChecklistData         []ChecklistItem `json:"checklist_data"`
-	CompletenessPercent   int             `json:"completeness_percent"`
-	IsLockedForDeposit    bool            `json:"is_locked_for_deposit"`
-	LockedByDTID          *uuid.UUID      `json:"locked_by_dt_id,omitempty"`
-	LockedAt              *time.Time      `json:"locked_at,omitempty"`
-	CreatedAt             time.Time       `json:"created_at"`
-	UpdatedAt             time.Time       `json:"updated_at"`
 }
 
 // AuditLog represents an immutable audit trail entry (append-only)
