@@ -2305,6 +2305,10 @@
 
             try {
                 const res = await fetch(url);
+                if (res.status === 401) {
+                    handleAuthExpired();
+                    return;
+                }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
                 currentRefList = (data.items || data.establishments || data.sites || data.medicines || data.devices || []);
@@ -3007,6 +3011,17 @@
             if (err) err.style.display = "none";
         }
 
+        function handleAuthExpired(message) {
+            currentUser = null;
+            currentOrg = null;
+            showLoginView();
+            const errBox = document.getElementById("login-error");
+            if (errBox) {
+                errBox.innerText = message || (isArabic ? "انتهت صلاحية الجلسة لعدم النشاط (15 دقيقة BPF). يرجى إعادة تسجيل الدخول." : "Session verrouillée après 15 minutes d'inactivité (Règle BPF / 21 CFR Part 11). Veuillez vous reconnecter.");
+                errBox.style.display = "block";
+            }
+        }
+
         function showAppView(user, org) {
             document.getElementById("screen-login").style.display = "none";
             document.getElementById("screen-app").style.display = "flex";
@@ -3070,6 +3085,7 @@
                     showAppView(data.user, data.organization);
                     btn.disabled = false;
                     btn.innerText = "Se connecter au cockpit ➔";
+                    switchDomainModule(currentDomain || 'ged');
                 } else {
                     errBox.innerText = data.error || "Identifiants invalides";
                     errBox.style.display = "block";
@@ -3458,6 +3474,10 @@
         async function loadGEDTaxonomy() {
             try {
                 const res = await fetch('/api/v1/ged/taxonomy');
+                if (res.status === 401) {
+                    handleAuthExpired();
+                    return;
+                }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
                 if (data.branches && data.branches.length > 0) {
@@ -3566,6 +3586,10 @@
 
             try {
                 const res = await fetch(url);
+                if (res.status === 401) {
+                    handleAuthExpired();
+                    return;
+                }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
                 currentGEDDocuments = data.documents || data.items || [];
