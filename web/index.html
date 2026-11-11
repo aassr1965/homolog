@@ -2853,6 +2853,16 @@
 
         function filterTable() {
             const query = document.getElementById("search-box").value.toLowerCase();
+            if (currentDomain === 'ged') {
+                const filtered = currentGEDDocuments.filter(d => 
+                    (d.title_fr && d.title_fr.toLowerCase().includes(query)) || 
+                    (d.title_ar && d.title_ar.toLowerCase().includes(query)) ||
+                    (d.document_code && d.document_code.toLowerCase().includes(query)) ||
+                    (d.status && d.status.toLowerCase().includes(query))
+                );
+                renderGEDDocumentsTable(filtered);
+                return;
+            }
             const filtered = mockDocuments.filter(d => 
                 d.name.toLowerCase().includes(query) || 
                 d.code.toLowerCase().includes(query) ||
@@ -3364,11 +3374,81 @@
         // ============================================================================
         // COFFRE-FORT GED PHARMACEUTIQUE (Jalon 1.4 - BPF & ALCOA+)
         // ============================================================================
-        let currentGEDTaxonomy = [];
+        const defaultGEDTaxonomy = [
+            {
+                code: "01",
+                name_fr: "01. Affaires Réglementaires",
+                name_ar: "01. الشؤون التنظيمية والصيدلانية",
+                description: "Agréments d'exploitation, décisions d'enregistrement/homologation, dossiers CTD et correspondances officielles avec l'ANPP",
+                total_docs: 0,
+                folders: [
+                    { path: "01_Affaires_Reglementaires/01_01_Agrements_Etablissement", code: "01_01", name_fr: "01.01 Agréments Établissement (MIPH)", name_ar: "اعتمادات المؤسسة الصيدلانية", document_count: 0 },
+                    { path: "01_Affaires_Reglementaires/01_02_Decisions_Enregistrement", code: "01_02", name_fr: "01.02 Décisions d'Enregistrement (DE)", name_ar: "قرارات تسجيل الأدوية", document_count: 0 },
+                    { path: "01_Affaires_Reglementaires/01_03_Decisions_Homologation", code: "01_03", name_fr: "01.03 Décisions d'Homologation DM", name_ar: "قرارات المصادقة على المستلزمات الطبية", document_count: 0 },
+                    { path: "01_Affaires_Reglementaires/01_04_Dossiers_CTD_Reference", code: "01_04", name_fr: "01.04 Dossiers CTD de Référence", name_ar: "ملفات التسجيل التقنية المرجعية CTD", document_count: 0 },
+                    { path: "01_Affaires_Reglementaires/01_05_Notices_Articles_Conditionnement", code: "01_05", name_fr: "01.05 Notices & Articles Conditionnement", name_ar: "النشرات ومواد التغليف والتوضيب", document_count: 0 },
+                    { path: "01_Affaires_Reglementaires/01_06_Correspondances_ANPP", code: "01_06", name_fr: "01.06 Correspondances & Notifications ANPP", name_ar: "المراسلات والإخطارات مع الوكالة الوطنية", document_count: 0 }
+                ]
+            },
+            {
+                code: "02",
+                name_fr: "02. Assurance Qualité & BPF",
+                name_ar: "02. ضمان الجودة وحسن ممارسات الصنع",
+                description: "Manuel qualité, SOPs, certificats BPF/GMP, rapports d'audits et CAPA",
+                total_docs: 0,
+                folders: [
+                    { path: "02_Assurance_Qualite_BPF/02_01_Manuel_Qualite_Procedures", code: "02_01", name_fr: "02.01 Manuel Qualité & Procédures (SOP)", name_ar: "دليل الجودة وإجراءات العمل الموحدة", document_count: 0 },
+                    { path: "02_Assurance_Qualite_BPF/02_02_Certificats_BPF_ISO", code: "02_02", name_fr: "02.02 Certificats BPF & ISO", name_ar: "شهادات حسن ممارسات الصنع وISO", document_count: 0 },
+                    { path: "02_Assurance_Qualite_BPF/02_03_Rapports_Audit_Inspections", code: "02_03", name_fr: "02.03 Rapports d'Audit & Inspections ANPP", name_ar: "تقارير التدقيق والتفتيش الصيدلاني", document_count: 0 },
+                    { path: "02_Assurance_Qualite_BPF/02_04_CAPA_Deviations", code: "02_04", name_fr: "02.04 CAPA & Gestion des Déviations", name_ar: "الإجراءات التصحيحية والوقائية والانحرافات", document_count: 0 }
+                ]
+            },
+            {
+                code: "03",
+                name_fr: "03. Développement & Production",
+                name_ar: "03. التطوير والإنتاج الصيدلاني",
+                description: "Formules de fabrication, méthodes de contrôle, stabilités zone IVb et dossiers lots pilotes",
+                total_docs: 0,
+                folders: [
+                    { path: "03_Developpement_Production/03_01_Formules_Fabrication_DMF", code: "03_01", name_fr: "03.01 Formules de Fabrication & DMF", name_ar: "صيغ التصنيع وملفات المواد الفعالة", document_count: 0 },
+                    { path: "03_Developpement_Production/03_02_Methodes_Controle_Validation", code: "03_02", name_fr: "03.02 Méthodes de Contrôle & Validations", name_ar: "طرق المراقبة والتحقق التحليلي", document_count: 0 },
+                    { path: "03_Developpement_Production/03_03_Etudes_Stabilite", code: "03_03", name_fr: "03.03 Études de Stabilité (Zone IVb)", name_ar: "دراسات الثبات وحفظ الأدوية", document_count: 0 },
+                    { path: "03_Developpement_Production/03_04_Specifications_Matieres_PF", code: "03_04", name_fr: "03.04 Spécifications Matières & PF", name_ar: "دفاتر مواصفات المواد والمنتج النهائي", document_count: 0 },
+                    { path: "03_Developpement_Production/03_05_Dossiers_Techniques_DM", code: "03_05", name_fr: "03.05 Dossiers Techniques DM", name_ar: "الملفات التقنية للمستلزمات الطبية", document_count: 0 }
+                ]
+            },
+            {
+                code: "04",
+                name_fr: "04. Vigilance & Post-Market",
+                name_ar: "04. اليقظة الصيدلانية ومتابعة ما بعد التسويق",
+                description: "Pharmacovigilance, matériovigilance et gestion des retraits/rappels de lots",
+                total_docs: 0,
+                folders: [
+                    { path: "04_Vigilance_Post_Market/04_01_Pharmacovigilance", code: "04_01", name_fr: "04.01 Pharmacovigilance & PSUR", name_ar: "اليقظة الدوائية وتقارير السلامة الدورية", document_count: 0 },
+                    { path: "04_Vigilance_Post_Market/04_02_Materiovigilance", code: "04_02", name_fr: "04.02 Matériovigilance", name_ar: "اليقظة الخاصة بالمستلزمات الطبية", document_count: 0 },
+                    { path: "04_Vigilance_Post_Market/04_03_Rappels_Lots", code: "04_03", name_fr: "04.03 Gestion des Rappels de Lots", name_ar: "إجراءات سحب واسترجاع الحصص الدوائية", document_count: 0 }
+                ]
+            },
+            {
+                code: "05",
+                name_fr: "05. Contrats Tiers & Façonnage",
+                name_ar: "05. العقود مع الغير والمناولة",
+                description: "Accords qualité QTA, contrats de façonnage/sous-traitance et certificats CEP",
+                total_docs: 0,
+                folders: [
+                    { path: "05_Contrats_Tiers/05_01_Accords_Qualite_QTA", code: "05_01", name_fr: "05.01 Accords Qualité (QTA)", name_ar: "اتفاقيات الجودة التقنية مع الشركاء", document_count: 0 },
+                    { path: "05_Contrats_Tiers/05_02_Contrats_Faconnage_SousTraitance", code: "05_02", name_fr: "05.02 Contrats Façonnage & Sous-Traitance", name_ar: "عقود التصنيع بالمناولة والتحاليل الخارجية", document_count: 0 },
+                    { path: "05_Contrats_Tiers/05_03_Certificats_Fournisseurs_APIs", code: "05_03", name_fr: "05.03 Certificats CEP & Accès APIs", name_ar: "شهادات المطابقة الأوروبية ورسائل الوصول للمواد", document_count: 0 }
+                ]
+            }
+        ];
+
+        let currentGEDTaxonomy = JSON.parse(JSON.stringify(defaultGEDTaxonomy));
         let currentGEDTaxonomyPath = '';
         let currentGEDStatusFilter = '';
         let currentGEDDocuments = [];
         let selectedGEDDocId = null;
+        const openedGEDBranches = new Set(['01', '02', '03', '04', '05']);
 
         function openNewGEDDocModal() {
             document.getElementById('form-new-ged-doc').reset();
@@ -3380,11 +3460,29 @@
                 const res = await fetch('/api/v1/ged/taxonomy');
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
-                currentGEDTaxonomy = data.branches || [];
+                if (data.branches && data.branches.length > 0) {
+                    currentGEDTaxonomy = data.branches;
+                }
                 renderGEDTree();
             } catch (e) {
                 console.error("Erreur chargement taxonomie GED :", e);
+                renderGEDTree();
             }
+        }
+
+        function toggleGEDBranchCollapse(branchCode, evt) {
+            if (evt) evt.stopPropagation();
+            if (openedGEDBranches.has(branchCode)) {
+                openedGEDBranches.delete(branchCode);
+            } else {
+                openedGEDBranches.add(branchCode);
+            }
+            renderGEDTree();
+        }
+
+        function selectGEDBranch(branchCode, branchPrefix, branchName) {
+            openedGEDBranches.add(branchCode);
+            selectGEDFolder(branchPrefix, branchName);
         }
 
         function renderGEDTree() {
@@ -3392,30 +3490,42 @@
             if (!container) return;
 
             let html = `
-                <div class="tree-node ${currentGEDTaxonomyPath === '' ? 'selected' : ''}" onclick="selectGEDFolder('', 'Tous les Documents')">
+                <div class="tree-node ${currentGEDTaxonomyPath === '' ? 'selected' : ''}" onclick="selectGEDFolder('', '${isArabic ? "جميع وثائق المخزن الرقمي" : "Tous les Documents GED"}')">
                     <span class="chevron">📁</span>
-                    <span><strong>Tous les Documents GED</strong></span>
+                    <span><strong>${isArabic ? "جميع وثائق GED BPF" : "Tous les Documents GED"}</strong></span>
                     <span class="count-badge ok">Coffre-Fort BPF</span>
                 </div>
             `;
 
             currentGEDTaxonomy.forEach(branch => {
-                const isBranchActive = currentGEDTaxonomyPath.startsWith(branch.Folders[0]?.Path.split('/')[0] || '---');
+                const bCode = branch.code || branch.Code || '';
+                const bName = (isArabic ? branch.name_ar : branch.name_fr) || branch.name_fr || branch.NameFR || '';
+                const bDocs = branch.total_docs ?? branch.TotalDocs ?? 0;
+                const folders = branch.folders || branch.Folders || [];
+                const bPrefix = folders[0] ? (folders[0].path || folders[0].Path || '').split('/')[0] : '';
+                const isOpen = openedGEDBranches.has(bCode);
+                const isBranchSelected = currentGEDTaxonomyPath === bPrefix;
+
                 html += `
-                    <div class="tree-node" onclick="toggleSub('sub-branch-${branch.Code}')">
-                        <span class="chevron">${isBranchActive ? '▼' : '▶'}</span>
-                        <span>📁 ${branch.NameFR}</span>
-                        <span class="count-badge ok">${branch.TotalDocs || 0}</span>
+                    <div class="tree-node ${isBranchSelected ? 'selected' : ''}" onclick="selectGEDBranch('${bCode}', '${bPrefix}', '${bName.replace(/'/g, "\\'")}')">
+                        <span class="chevron" onclick="toggleGEDBranchCollapse('${bCode}', event)" style="cursor:pointer; padding:2px;">${isOpen ? '▼' : '▶'}</span>
+                        <span>📁 <strong>${bName}</strong></span>
+                        <span class="count-badge ok">${bDocs}</span>
                     </div>
-                    <div class="tree-sub ${isBranchActive ? 'open' : ''}" id="sub-branch-${branch.Code}">
+                    <div class="tree-sub ${isOpen ? 'open' : ''}" id="sub-branch-${bCode}">
                 `;
 
-                branch.Folders.forEach(folder => {
-                    const isSelected = currentGEDTaxonomyPath === folder.Path;
+                folders.forEach(folder => {
+                    const fPath = folder.path || folder.Path || '';
+                    const fCode = folder.code || folder.Code || '';
+                    const fName = (isArabic ? folder.name_ar : folder.name_fr) || folder.name_fr || folder.NameFR || '';
+                    const fCount = folder.document_count ?? folder.DocumentCount ?? 0;
+                    const isFolderSelected = currentGEDTaxonomyPath === fPath;
+
                     html += `
-                        <div class="tree-node ${isSelected ? 'selected' : ''}" style="padding-left:24px;" onclick="selectGEDFolder('${folder.Path}', '${folder.NameFR}')">
-                            <span>📄 ${folder.Code} ${folder.NameFR.split(' ')[1] || folder.NameFR}</span>
-                            <span class="count-badge ${folder.DocumentCount > 0 ? 'ok' : 'req'}">${folder.DocumentCount || 0}</span>
+                        <div class="tree-node ${isFolderSelected ? 'selected' : ''}" style="padding-left:24px;" onclick="selectGEDFolder('${fPath}', '${fName.replace(/'/g, "\\'")}')">
+                            <span>📄 ${fName}</span>
+                            <span class="count-badge ${fCount > 0 ? 'ok' : 'req'}">${fCount}</span>
                         </div>
                     `;
                 });
@@ -3432,7 +3542,7 @@
 
             document.getElementById("bc-root").innerText = "COFFRE-FORT";
             document.getElementById("bc-sec").innerText = "GED_BPF";
-            document.getElementById("bc-prod").innerText = path ? path.split('/')[0] : "TOUS";
+            document.getElementById("bc-prod").innerText = path ? (path.split('/')[0] || "TOUS") : "TOUS";
             document.getElementById("bc-mod").innerText = name || "Tous les dossiers";
 
             loadGEDDocuments(path, currentGEDStatusFilter);

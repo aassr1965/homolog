@@ -138,7 +138,7 @@ func (r *GEDRepository) ListDocuments(ctx context.Context, orgID uuid.UUID, taxo
 
 	if taxonomyPath != "" {
 		args = append(args, taxonomyPath)
-		cond := fmt.Sprintf(` AND d.taxonomy_path = $%d`, len(args))
+		cond := fmt.Sprintf(` AND (d.taxonomy_path = $%d OR d.taxonomy_path LIKE $%d || '/%%')`, len(args), len(args))
 		countQuery.WriteString(cond)
 		listQuery.WriteString(cond)
 	}
