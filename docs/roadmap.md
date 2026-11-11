@@ -26,7 +26,7 @@ gantt
     Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :active, p1_4, after p1_3, 4d
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :p1_5, after p1_4, 4d
     UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):p1_6, after p1_5, 4d
-    Studio Compléments ANPP & Moteur d'Alertes (1.7) :p1_7, after p1_6, 3d
+    Studio Compléments & Assistant Soumission ANPP (1.7) :p1_7, after p1_6, 3d
     Packaging Docker & Archive .homolog (1.8)        :p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
     Redevances, Devises & Justificatifs Bancaires(2.1):p2_1, after p1_8, 3d
@@ -168,13 +168,26 @@ gantt
 - [ ] Intégration des polices locales `Cairo` (Arabe) et `Inter` (Français) sans aucun appel CDN externe.
 - [ ] Bascule bilingue dynamique LTR ↔ RTL (`dir="rtl"`) avec inversion symétrique des 3 volets.
 
-### Jalon 1.7 : Studio de Compléments ANPP & Moteur d'Alertes
-- [ ] Enregistrement des courriers officiels ANPP (date de réception, numéro de référence, motif).
-- [ ] Découpage des questions du courrier en sous-tâches unitaires avec assignation à un responsable (Qualité, R&D, Réglementaire).
-- [ ] Moteur de compte à rebours légal multi-niveaux :
-  - Bandeau d'urgence visuel dans l'application (J < 30 jours).
-  - Notifications e-mails programmées (J-180, J-90, J-30, J-7).
-  - Escalade automatique vers le Pharmacien Directeur Technique si une échéance critique est non traitée à J-30.
+### Jalon 1.7 : Studio de Compléments ANPP, Assistant de Soumission E-Services & Veille RDV
+- [ ] **Gestion des Compléments et Notifications ANPP :**
+  - Enregistrement des courriers officiels ANPP (date de réception, numéro de référence, motif).
+  - Découpage des questions du courrier en sous-tâches unitaires avec assignation à un responsable (Qualité, R&D, Réglementaire).
+  - Moteur de compte à rebours légal multi-niveaux :
+    - Bandeau d'urgence visuel dans l'application (J < 30 jours).
+    - Notifications e-mails programmées (J-180, J-90, J-30, J-7).
+    - Escalade automatique vers le Pharmacien Directeur Technique si une échéance critique est non traitée à J-30.
+- [ ] **Assistant de Soumission E-Services ANPP (E-TASJIL & RDV PP/DM) :**
+  - **Génération automatique des bordereaux et formulaires officiels ANPP :**
+    - Production automatique des bordereaux de versement **BV1** (Enregistrement initial NI/NF, Homologation DM) et **BV2** (Modifications MI/MF, Renouvellements RI/RF) au format Word/Excel et PDF scellé avec calcul automatique des redevances en DZD ou devises.
+    - Production automatique du Formulaire officiel de demande d'homologation DM (Décret 20-324 / Arrêté 10 mai 2021) et des Récépissés de dépôt pré-remplis.
+    - Production automatique de l'Attestation formelle de non-modification des autres sections (LD-DEPP07/V01).
+  - **Générateur du Submission Package pour E-TASJIL (`etasjil.anpp.dz`) :**
+    - Exportation 1-clic de l'arborescence eCTD / DM normalisée avec index PDF et manifestes d'intégrité SHA-256.
+    - Fiche récapitulative de télé-saisie E-TASJIL (copier-coller sans erreur aligné champ par champ avec les masques du portail officiel).
+  - **Veille calendaire et Assistant Prise de Rendez-vous (`rdvpp.anpp.dz` / `rdvdm.anpp.dz`) :**
+    - Alertes proactives avant ouverture des guichets : mardi à 09h50 pour les DM, mercredi à 09h50 pour les Produits Pharmaceutiques.
+    - Fast-Fill sécurisé préparant les données du dossier (raison sociale, agrément MIPH, PDT, produit, annexe Alger/Oran/Constantine) pour réservation immédiate du créneau.
+  - **Audit de conformité pré-dépôt bloquant :** Interdiction d'exportation si pièces manquantes, certificat expiré ou absence de signature électronique légale du PDT (21 CFR Part 11).
 
 ### Jalon 1.8 : Packaging, Déploiement & Réversibilité
 - [ ] Fichier `docker-compose.yml` de production (PostgreSQL 16 + conteneur binaire Go Homolog).
@@ -266,9 +279,10 @@ gantt
 - [ ] Authentification unique SSO d'entreprise (SAML 2.0 / OpenID Connect) et synchronisation d'annuaire LDAP / Active Directory.
 - [ ] Flux de calendrier réglementaire iCal (synchronisation Outlook/Google Calendar des dates d'échéance ANPP et des renouvellements).
 
-### Jalon 3.3 : Passerelle Officielle ANPP
-- [ ] Connecteur d'interopérabilité API dès publication des spécifications techniques de télé-procédure par l'ANPP.
-- [ ] Télétransmission automatisée des paquets de soumission CTD scellés.
+### Jalon 3.3 : Passerelle Officielle API ANPP (Télétransmission Directe M2M)
+- [ ] Connecteur d'interopérabilité API (`internal/anpp`) dès publication des spécifications techniques de télé-procédure ou webhook par l'ANPP.
+- [ ] Télétransmission automatisée sécurisée des paquets de soumission CTD scellés (Submission Packages) avec accusé de réception cryptographique.
+- [ ] Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Homolog.
 
 ---
 
