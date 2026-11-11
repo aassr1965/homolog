@@ -26,7 +26,7 @@ import (
 
 func main() {
 	log.Println("==================================================================")
-	log.Println("  HOMOLOG - Plateforme Réglementaire ANPP & GED Pharmaceutique   ")
+	log.Println("  SANAD PHARMA - Plateforme Réglementaire ANPP & GED Pharmaceutique")
 	log.Println("  Version 0.7 - Hébergement Hybride (On-Premise & Cloud SaaS)     ")
 	log.Println("==================================================================")
 
@@ -51,6 +51,7 @@ func main() {
 	var auditService *audit.Service
 	var authHandler *api.AuthHandler
 	var pharmaHandler *api.PharmaHandler
+	var gedHandler *api.GEDHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -64,12 +65,18 @@ func main() {
 			log.Printf("[AVERTISSEMENT] Erreur lors de l'initialisation des comptes : %v", err)
 		}
 
+		// Initialisation des documents modèles du Coffre-Fort GED (Jalon 1.4)
+		api.SeedInitialGEDDocuments(ctx, db.Pool, storageProvider, cfg.OnPremOrgSlug)
+
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService)
 
 		pharmaRepo := repository.NewPharmaRepository(db.Pool)
 		pharmaHandler = api.NewPharmaHandler(pharmaRepo, auditService)
+
+		gedRepo := repository.NewGEDRepository(db.Pool)
+		gedHandler = api.NewGEDHandler(gedRepo, storageProvider, auditService, db.Pool)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -118,7 +125,7 @@ func main() {
 	r.Get("/api/v1/system/info", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		resp := fmt.Sprintf(`{
-			"app": "Homolog",
+			"app": "Sanad Pharma",
 			"version": "0.7.0",
 			"deployment_mode": "%s",
 			"org_slug": "%s",
@@ -164,6 +171,28 @@ func main() {
 				protected.Get("/api/v1/medical-devices", pharmaHandler.ListMedicalDevices)
 				protected.Post("/api/v1/medical-devices", pharmaHandler.CreateMedicalDevice)
 				protected.Get("/api/v1/medical-devices/{id}", pharmaHandler.GetMedicalDevice)
+			}
+
+			// Coffre-Fort GED Pharmaceutique (Jalon 1.4 - BPF & ALCOA+)
+			if gedHandler != nil {
+				// Taxonomie en 5 branches maîtresses
+				protected.Get("/api/v1/ged/taxonomy", gedHandler.GetTaxonomy)
+
+				// Documents & Versions
+				protected.Get("/api/v1/ged/documents", gedHandler.ListDocuments)
+				protected.Post("/api/v1/ged/documents", gedHandler.CreateDocument)
+				protected.Get("/api/v1/ged/documents/{id}", gedHandler.GetDocument)
+				protected.Get("/api/v1/ged/documents/{id}/versions", gedHandler.GetDocumentVersions)
+				protected.Post("/api/v1/ged/documents/{id}/versions", gedHandler.UploadNewVersion)
+				protected.Get("/api/v1/ged/documents/{id}/download", gedHandler.DownloadVersion)
+
+				// Cycle de vie & Verrouillage
+				protected.Post("/api/v1/ged/documents/{id}/checkout", gedHandler.CheckOut)
+				protected.Post("/api/v1/ged/documents/{id}/cancel-checkout", gedHandler.CancelCheckOut)
+				protected.Post("/api/v1/ged/documents/{id}/status", gedHandler.UpdateStatus)
+
+				// Signature électronique officielle du Pharmacien Directeur Technique (PDT)
+				protected.Post("/api/v1/ged/documents/{id}/sign-dt", gedHandler.SignDocumentDT)
 			}
 		})
 	}
