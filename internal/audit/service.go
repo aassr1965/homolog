@@ -15,15 +15,15 @@ import (
 
 // Actions standardisées pour l'Audit Trail BPF / 21 CFR Part 11
 const (
-	ActionAuthLogin       = "AUTH_LOGIN"
-	ActionAuthLoginFailed = "AUTH_LOGIN_FAILED"
-	ActionAuthLogout      = "AUTH_LOGOUT"
-	Action2FASetup        = "2FA_SETUP"
-	Action2FAVerify       = "2FA_VERIFY"
-	ActionDocView         = "DOC_VIEW"
-	ActionDocUpload       = "DOC_UPLOAD"
-	ActionDocSignDT       = "DOC_SIGN_DT"
-	ActionDocStatusChange = "DOC_STATUS_CHANGE"
+	ActionAuthLogin         = "AUTH_LOGIN"
+	ActionAuthLoginFailed   = "AUTH_LOGIN_FAILED"
+	ActionAuthLogout        = "AUTH_LOGOUT"
+	Action2FASetup          = "2FA_SETUP"
+	Action2FAVerify         = "2FA_VERIFY"
+	ActionDocView           = "DOC_VIEW"
+	ActionDocUpload         = "DOC_UPLOAD"
+	ActionDocSignDT         = "DOC_SIGN_DT"
+	ActionDocStatusChange   = "DOC_STATUS_CHANGE"
 	ActionDossierCreate     = "DOSSIER_CREATE"
 	ActionDossierLockDT     = "DOSSIER_LOCK_DT"
 	ActionDossierExport     = "DOSSIER_EXPORT"
@@ -33,8 +33,8 @@ const (
 	ActionDossierPDTSign    = "DOSSIER_PDT_SIGN"
 	ActionDossierStatus     = "DOSSIER_STATUS_CHANGE"
 	ActionSysBackup         = "SYS_BACKUP"
-	ActionRoleChange      = "ROLE_CHANGE"
-	ActionUserCreated     = "USER_CREATED"
+	ActionRoleChange        = "ROLE_CHANGE"
+	ActionUserCreated       = "USER_CREATED"
 )
 
 // Entry représente les données à consigner dans l'Audit Trail
