@@ -124,8 +124,10 @@ gantt
     - `05_03_Certificats_Fournisseurs_APIs` (CEP EDQM, lettres d'accès APIMF, déclarations EST/OGM)
 - [x] Gestion du cycle de vie documentaire (*Brouillon* → *En revue* → *En approbation* → *En vigueur* → *Obsolète*).
 - [x] Gestion des versions mineures/majeures (`v0.1`, `v1.0`, `v2.0`) avec saisie obligatoire du motif de révision et traçabilité.
+- [x] Mécanisme de verrouillage de document (Check-out / Check-in) pour prévenir les éditions concurrentes.
 - [x] Circuit d'approbation et **Signature électronique légale du Directeur Technique** (avec re-authentification 2FA, horodatage UTC et scellement SHA-256).
 - [x] Téléversement résilient par morceaux (Chunked Upload 5 Mo) et déduplication physique par hash SHA-256 via le driver CAS.
+- [x] Interface utilisateur Haute Densité 'Pharma Explorer' connectée en temps réel aux APIs GED du backend.
 
 ### Jalon 1.5 : Moteur de Dossiers ANPP & Checklists Dynamiques (Guide CTD Juillet 2025)
 - [ ] **Générateur dynamique de dossier CTD selon les 6 procédures officielles :**
