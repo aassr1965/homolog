@@ -3502,6 +3502,7 @@
 
         function selectGEDBranch(branchCode, branchPrefix, branchName) {
             openedGEDBranches.add(branchCode);
+            selectedGEDDocId = null;
             selectGEDFolder(branchPrefix, branchName);
         }
 
@@ -3558,6 +3559,7 @@
 
         function selectGEDFolder(path, name) {
             currentGEDTaxonomyPath = path;
+            selectedGEDDocId = null;
             renderGEDTree();
 
             document.getElementById("bc-root").innerText = "COFFRE-FORT";
@@ -3570,6 +3572,7 @@
 
         function filterGEDByStatus(status) {
             currentGEDStatusFilter = status;
+            selectedGEDDocId = null;
             loadGEDDocuments(currentGEDTaxonomyPath, status);
         }
 
@@ -3593,14 +3596,27 @@
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
                 currentGEDDocuments = data.documents || data.items || [];
-                if (currentGEDDocuments.length > 0 && !selectedGEDDocId) {
-                    selectedGEDDocId = currentGEDDocuments[0].id;
+                const exists = currentGEDDocuments.some(d => d.id === selectedGEDDocId);
+                if (!exists) {
+                    selectedGEDDocId = currentGEDDocuments.length > 0 ? currentGEDDocuments[0].id : null;
                 }
                 renderGEDDocumentsTable(currentGEDDocuments);
             } catch (e) {
                 if (tbody) {
                     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--accent-red);">Erreur lors de la lecture des documents : ${e.message}</td></tr>`;
                 }
+            }
+        }
+
+        function selectGEDDocument(id) {
+            selectedGEDDocId = id;
+            document.querySelectorAll('#doc-tbody tr').forEach(tr => {
+                if (tr.getAttribute('data-doc-id') === id) tr.classList.add('selected');
+                else tr.classList.remove('selected');
+            });
+            const doc = currentGEDDocuments.find(d => d.id === id);
+            if (doc) {
+                renderGEDPreview(doc);
             }
         }
 
@@ -3644,17 +3660,17 @@
             tbody.innerHTML = "";
             if (docs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:25px; color:var(--text-dim);">Aucun document dans ce dossier. Cliquez sur '➕ Déposer Document' pour téléverser votre première pièce.</td></tr>`;
+                renderGEDPreview(null);
                 return;
             }
 
             docs.forEach(doc => {
                 const tr = document.createElement("tr");
+                tr.setAttribute('data-doc-id', doc.id);
+                tr.style.cursor = 'pointer';
                 if (doc.id === selectedGEDDocId) tr.classList.add("selected");
                 tr.onclick = (e) => {
-                    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
-                        selectedGEDDocId = doc.id;
-                        renderGEDDocumentsTable(docs);
-                    }
+                    selectGEDDocument(doc.id);
                 };
 
                 const v = doc.latest_version;
@@ -3691,14 +3707,14 @@
                         <div style="font-size:10px; color:var(--text-muted);">${sizeKB}</div>
                     </td>
                     <td style="text-align:right;">
-                        <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="downloadGEDVersion('${doc.id}', '${v ? v.id : ''}')" title="Télécharger le fichier physique">📥</button>
-                        <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="openGEDVersionsModal('${doc.id}')" title="Historique & Check-in">📜</button>
+                        <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); downloadGEDVersion('${doc.id}', '${v ? v.id : ''}')" title="Télécharger le fichier physique">📥</button>
+                        <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); openGEDVersionsModal('${doc.id}')" title="Historique & Check-in">📜</button>
                         ${doc.is_locked ? 
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; color:var(--accent-red);" onclick="handleCancelCheckOutGED('${doc.id}')" title="Annuler le verrouillage">🔓</button>` :
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="handleCheckOutGED('${doc.id}')" title="Verrouiller pour édition (Check-out)">🔒</button>`
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; color:var(--accent-red);" onclick="selectGEDDocument('${doc.id}'); handleCancelCheckOutGED('${doc.id}')" title="Annuler le verrouillage">🔓</button>` :
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); handleCheckOutGED('${doc.id}')" title="Verrouiller pour édition (Check-out)">🔒</button>`
                         }
                         ${(doc.status === 'en_approbation_dt' || (v && !v.is_signed_dt)) ?
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')" title="Signer électroniquement (PDT)">✍️</button>` : ''
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${doc.id}'); openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')" title="Signer électroniquement (PDT)">✍️</button>` : ''
                         }
                     </td>
                 `;
@@ -3706,7 +3722,8 @@
                 tbody.appendChild(tr);
             });
 
-            renderGEDPreview(currentGEDDocuments.find(d => d.id === selectedGEDDocId) || currentGEDDocuments[0]);
+            const selectedDoc = currentGEDDocuments.find(d => d.id === selectedGEDDocId) || currentGEDDocuments[0] || null;
+            renderGEDPreview(selectedDoc);
         }
 
         function renderGEDPreview(doc) {
@@ -3820,6 +3837,7 @@
         }
 
         async function openGEDVersionsModal(docID) {
+            selectGEDDocument(docID);
             document.getElementById('ver-doc-id').value = docID;
             document.getElementById('form-ged-new-version').reset();
             const container = document.getElementById('ged-history-table-container');
@@ -3905,17 +3923,20 @@
                 const v = await res.json();
                 showNotifyModal(
                     "Nouvelle Version Enregistrée (Check-in)",
-                    `La version <strong>${v.version_label}</strong> a été archivée avec succès. Le document a été déverrouillé.`,
+                    `La version <strong>${v.version_label}</strong> a été archivée avec succès. Le document a été déverrouillé et l'aperçu ALCOA+ a été mis à jour.`,
                     "✅"
                 );
                 openGEDVersionsModal(docID);
-                loadGEDDocuments(currentGEDTaxonomyPath);
+                selectedGEDDocId = docID;
+                await loadGEDDocuments(currentGEDTaxonomyPath);
+                selectGEDDocument(docID);
             } catch (err) {
                 showNotifyModal("Erreur de Versioning", err.message, "⚠️");
             }
         }
 
         async function handleCheckOutGED(docID) {
+            selectGEDDocument(docID);
             try {
                 const res = await fetch(`/api/v1/ged/documents/${docID}/checkout`, {
                     method: 'POST',
@@ -3926,13 +3947,15 @@
                     const err = await res.json();
                     throw new Error(err.error || "Impossible de verrouiller");
                 }
-                loadGEDDocuments(currentGEDTaxonomyPath);
+                await loadGEDDocuments(currentGEDTaxonomyPath);
+                selectGEDDocument(docID);
             } catch (err) {
                 showNotifyModal("Verrouillage Échoué", err.message, "⚠️");
             }
         }
 
         async function handleCancelCheckOutGED(docID) {
+            selectGEDDocument(docID);
             try {
                 const res = await fetch(`/api/v1/ged/documents/${docID}/cancel-checkout`, {
                     method: 'POST'
@@ -3941,13 +3964,15 @@
                     const err = await res.json();
                     throw new Error(err.error || "Impossible d'annuler");
                 }
-                loadGEDDocuments(currentGEDTaxonomyPath);
+                await loadGEDDocuments(currentGEDTaxonomyPath);
+                selectGEDDocument(docID);
             } catch (err) {
                 showNotifyModal("Erreur", err.message, "⚠️");
             }
         }
 
         async function handleStatusChangeGED(docID, targetStatus) {
+            selectGEDDocument(docID);
             try {
                 const res = await fetch(`/api/v1/ged/documents/${docID}/status`, {
                     method: 'POST',
@@ -3958,13 +3983,15 @@
                     const err = await res.json();
                     throw new Error(err.error || "Transition refusée");
                 }
-                loadGEDDocuments(currentGEDTaxonomyPath);
+                await loadGEDDocuments(currentGEDTaxonomyPath);
+                selectGEDDocument(docID);
             } catch (err) {
                 showNotifyModal("Transition Refusée", err.message, "⚠️");
             }
         }
 
         function openSignGEDDTModal(docID, versionID, docCode, title, sha) {
+            selectGEDDocument(docID);
             document.getElementById('sign-ged-doc-id').value = docID;
             document.getElementById('sign-ged-version-id').value = versionID;
             document.getElementById('sign-ged-doc-name').value = `[${docCode}] ${title}`;
@@ -4007,7 +4034,9 @@
                     Empreinte cryptographique de signature : <code style="word-break:break-all;">${data.signature_seal}</code>`,
                     "✅"
                 );
-                loadGEDDocuments(currentGEDTaxonomyPath);
+                selectedGEDDocId = docID;
+                await loadGEDDocuments(currentGEDTaxonomyPath);
+                selectGEDDocument(docID);
             } catch (err) {
                 showNotifyModal("Échec de Signature BPF", err.message, "⚠️");
             }
