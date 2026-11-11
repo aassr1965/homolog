@@ -15,12 +15,12 @@ import (
 type ProcedureCode string
 
 const (
-	ProcedureNI ProcedureCode = "NI" // Enregistrement Initial d'un produit Importé
-	ProcedureRI ProcedureCode = "RI" // Renouvellement de la DE d'un produit Importé
-	ProcedureMI ProcedureCode = "MI" // Modification relative à un produit Importé
-	ProcedureNF ProcedureCode = "NF" // Enregistrement Initial d'un produit Fabriqué localement
-	ProcedureRF ProcedureCode = "RF" // Renouvellement de la DE d'un produit Fabriqué localement
-	ProcedureMF ProcedureCode = "MF" // Modification relative à un produit Fabriqué localement
+	ProcedureNI ProcedureCode = "NI"         // Enregistrement Initial d'un produit Importé
+	ProcedureRI ProcedureCode = "RI"         // Renouvellement de la DE d'un produit Importé
+	ProcedureMI ProcedureCode = "MI"         // Modification relative à un produit Importé
+	ProcedureNF ProcedureCode = "NF"         // Enregistrement Initial d'un produit Fabriqué localement
+	ProcedureRF ProcedureCode = "RF"         // Renouvellement de la DE d'un produit Fabriqué localement
+	ProcedureMF ProcedureCode = "MF"         // Modification relative à un produit Fabriqué localement
 	ProcedureDM ProcedureCode = "HOMOLOG_DM" // Homologation Dispositif Médical
 )
 
@@ -60,39 +60,39 @@ const (
 
 // Dossier represents an official ANPP regulatory dossier instance
 type Dossier struct {
-	ID                     uuid.UUID     `json:"id"`
-	OrganizationID         uuid.UUID     `json:"organization_id"`
-	MedicineID             *uuid.UUID    `json:"medicine_id,omitempty"`
-	MedicalDeviceID        *uuid.UUID    `json:"medical_device_id,omitempty"`
-	ProductType            ProductType   `json:"product_type"`
-	DossierCode            string        `json:"dossier_code"`
-	ProcedureCode          ProcedureCode `json:"procedure_code"`
-	InternalReference      string        `json:"internal_reference"`
-	ANPPOfficialReference  *string       `json:"anpp_official_reference,omitempty"`
-	ANPPDepositDate        *time.Time    `json:"anpp_deposit_date,omitempty"`
-	ANPPDecisionDate       *time.Time    `json:"anpp_decision_date,omitempty"`
-	ANPPValidityEndDate    *time.Time    `json:"anpp_validity_end_date,omitempty"`
-	TargetDepositDate      *time.Time    `json:"target_deposit_date,omitempty"`
-	TrackingNumber         *string       `json:"tracking_number,omitempty"`
-	DepositReceiptRef      *string       `json:"deposit_receipt_ref,omitempty"`
-	DepositReceiptDate     *time.Time    `json:"deposit_receipt_date,omitempty"`
-	SubmissionNotes        *string       `json:"submission_notes,omitempty"`
-	Status                 DossierStatus `json:"status"`
-	ResponsibleID          *uuid.UUID    `json:"responsible_id,omitempty"`
-	CompletenessPercent    int           `json:"completeness_percent"`
-	IsLockedForDeposit     bool          `json:"is_locked_for_deposit"`
-	LockedByDTID           *uuid.UUID    `json:"locked_by_dt_id,omitempty"`
-	LockedAt               *time.Time    `json:"locked_at,omitempty"`
-	PDTSignedAt            *time.Time    `json:"pdt_signed_at,omitempty"`
-	PDTSignedBy            *uuid.UUID    `json:"pdt_signed_by,omitempty"`
-	PDTSignatureSeal       *string       `json:"pdt_signature_seal,omitempty"`
-	PDTSignatureRole       *string       `json:"pdt_signature_role,omitempty"`
-	ChecklistData          []ChecklistItem `json:"checklist_data,omitempty"`
-	Items                  []ChecklistItem `json:"items,omitempty"`
-	Medicine               *Medicine     `json:"medicine,omitempty"`
-	MedicalDevice          *MedicalDevice `json:"medical_device,omitempty"`
-	CreatedAt              time.Time     `json:"created_at"`
-	UpdatedAt              time.Time     `json:"updated_at"`
+	ID                    uuid.UUID       `json:"id"`
+	OrganizationID        uuid.UUID       `json:"organization_id"`
+	MedicineID            *uuid.UUID      `json:"medicine_id,omitempty"`
+	MedicalDeviceID       *uuid.UUID      `json:"medical_device_id,omitempty"`
+	ProductType           ProductType     `json:"product_type"`
+	DossierCode           string          `json:"dossier_code"`
+	ProcedureCode         ProcedureCode   `json:"procedure_code"`
+	InternalReference     string          `json:"internal_reference"`
+	ANPPOfficialReference *string         `json:"anpp_official_reference,omitempty"`
+	ANPPDepositDate       *time.Time      `json:"anpp_deposit_date,omitempty"`
+	ANPPDecisionDate      *time.Time      `json:"anpp_decision_date,omitempty"`
+	ANPPValidityEndDate   *time.Time      `json:"anpp_validity_end_date,omitempty"`
+	TargetDepositDate     *time.Time      `json:"target_deposit_date,omitempty"`
+	TrackingNumber        *string         `json:"tracking_number,omitempty"`
+	DepositReceiptRef     *string         `json:"deposit_receipt_ref,omitempty"`
+	DepositReceiptDate    *time.Time      `json:"deposit_receipt_date,omitempty"`
+	SubmissionNotes       *string         `json:"submission_notes,omitempty"`
+	Status                DossierStatus   `json:"status"`
+	ResponsibleID         *uuid.UUID      `json:"responsible_id,omitempty"`
+	CompletenessPercent   int             `json:"completeness_percent"`
+	IsLockedForDeposit    bool            `json:"is_locked_for_deposit"`
+	LockedByDTID          *uuid.UUID      `json:"locked_by_dt_id,omitempty"`
+	LockedAt              *time.Time      `json:"locked_at,omitempty"`
+	PDTSignedAt           *time.Time      `json:"pdt_signed_at,omitempty"`
+	PDTSignedBy           *uuid.UUID      `json:"pdt_signed_by,omitempty"`
+	PDTSignatureSeal      *string         `json:"pdt_signature_seal,omitempty"`
+	PDTSignatureRole      *string         `json:"pdt_signature_role,omitempty"`
+	ChecklistData         []ChecklistItem `json:"checklist_data,omitempty"`
+	Items                 []ChecklistItem `json:"items,omitempty"`
+	Medicine              *Medicine       `json:"medicine,omitempty"`
+	MedicalDevice         *MedicalDevice  `json:"medical_device,omitempty"`
+	CreatedAt             time.Time       `json:"created_at"`
+	UpdatedAt             time.Time       `json:"updated_at"`
 }
 
 // ChecklistItem represents an atomic documentary requirement of an ANPP dossier

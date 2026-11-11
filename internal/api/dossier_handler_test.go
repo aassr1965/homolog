@@ -28,6 +28,18 @@ func TestDossierAPI_Workflow(t *testing.T) {
 	testOrgID := uuid.New()
 	orgSlug := "org-test-dossier-" + testOrgID.String()[:8]
 
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), `
+			DELETE FROM dossier_checklist_items WHERE dossier_id IN (SELECT id FROM dossiers WHERE organization_id = $1);
+			DELETE FROM dossiers WHERE organization_id = $1;
+			DELETE FROM ged_documents WHERE organization_id = $1;
+			DELETE FROM medicines WHERE organization_id = $1;
+			DELETE FROM products WHERE organization_id = $1;
+			DELETE FROM users WHERE organization_id = $1;
+			DELETE FROM organizations WHERE id = $1;
+		`, testOrgID)
+	}()
+
 	// 1. Créer l'organisation de test
 	_, err := db.Pool.Exec(ctx, `
 		INSERT INTO organizations (id, slug, legal_name, miph_license_number, technical_director_name)
