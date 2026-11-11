@@ -60,6 +60,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/001_initial_schema.sql",
 		"migrations/002_establishments_and_products.sql",
 		"migrations/003_ged_vault_alcoa.sql",
+		"migrations/004_anpp_ctd_dossiers.sql",
 	}
 
 	for _, file := range migrationFiles {
