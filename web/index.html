@@ -907,6 +907,7 @@
             <div class="tree-header">
                 <button class="tab-btn active" id="tab-anpp" onclick="switchTreeTab('anpp')">📋 Dossiers ANPP</button>
                 <button class="tab-btn" id="tab-ged" onclick="switchTreeTab('ged')">📁 GED BPF</button>
+                <button class="tab-btn" id="tab-pharma" onclick="switchTreeTab('pharma')">🏭 Jalon 1.3</button>
             </div>
             <div class="tree-content" id="tree-root">
                 <!-- Rendu dynamique par JS -->
@@ -915,9 +916,9 @@
 
         <!-- Pane 2 : Center Details View Table -->
         <div class="pane-center">
-            <div class="toolbar">
-                <button class="btn-pill" onclick="openUploadModal()">➕ Nouveau Document</button>
-                <button class="btn-pill" onclick="simulateExportZip()">📦 Exporter Dossier CTD (ZIP)</button>
+            <div class="toolbar" id="main-toolbar">
+                <button class="btn-pill" id="tb-btn-primary" onclick="openUploadModal()">➕ Nouveau Document</button>
+                <button class="btn-pill" id="tb-btn-export" onclick="simulateExportZip()">📦 Exporter Dossier CTD (ZIP)</button>
                 <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
                 <button class="btn-pill" onclick="togglePreviewPane()" title="Afficher/Masquer le volet d'aperçu (Alt+P)">
                     👁️ <span id="txt-toggle-preview">Volet Aperçu (Alt+P)</span>
@@ -929,7 +930,7 @@
 
             <div class="table-container">
                 <table id="doc-table">
-                    <thead>
+                    <thead id="table-head">
                         <tr>
                             <th style="width: 80px;">Statut</th>
                             <th>Nom de la pièce</th>
@@ -1221,6 +1222,220 @@
         </div>
     </div>
 
+    <!-- Modal Nouvel Établissement Pharmaceutique (Jalon 1.3) -->
+    <div class="modal-overlay" id="modal-new-est" onclick="if(event.target === this) closeModal('modal-new-est')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">🏢</span>
+                    <span>Enregistrement d'un Établissement Pharmaceutique (MIPH / Décret 20-325)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-new-est')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-est" onsubmit="handleCreateEstablishment(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Raison Sociale (FR) * :</label>
+                            <input type="text" id="est-name-fr" required placeholder="Ex: Laboratoires Pharmaceutiques Atlas" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Statut Juridique * :</label>
+                            <select id="est-legal-status" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="SPA">SPA (Société par Actions)</option>
+                                <option value="SARL">SARL (Resp. Limitée)</option>
+                                <option value="EURL">EURL (Unipersonnelle)</option>
+                                <option value="SNC">SNC</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° Agrément MIPH * :</label>
+                            <input type="text" id="est-license-number" required placeholder="Ex: MIPH-DZ-2025-0199" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date d'Octroi Agrément :</label>
+                            <input type="date" id="est-license-date" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Pharmacien Directeur Technique (PDT 1.A.7) * :</label>
+                            <input type="text" id="est-dt-name" required placeholder="Ex: Dr. Karima T." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Réf Décision Ministérielle DT :</label>
+                            <input type="text" id="est-decision-ref" placeholder="Ex: DEC-MIPH-DT-2025/082" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Wilaya :</label>
+                            <input type="text" id="est-wilaya" value="Alger" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Téléphone :</label>
+                            <input type="text" id="est-phone" placeholder="+213 21 00 00 00" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Email Professionnel :</label>
+                            <input type="email" id="est-email" placeholder="contact@etablissement.dz" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:10px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-new-est')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer l'Établissement (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Médicament (Jalon 1.3 - Typologie ANPP) -->
+    <div class="modal-overlay" id="modal-new-med" onclick="if(event.target === this) closeModal('modal-new-med')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">💊</span>
+                    <span>Nouveau Médicament (Guide Enregistrement ANPP 2025)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-new-med')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-med" onsubmit="handleCreateMedicine(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Typologie Réglementaire * :</label>
+                            <select id="med-origin" onchange="toggleEcoFields()" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px; font-size:12px; font-weight:600;">
+                                <option value="generique_local">Générique Fabrication Locale (Volet Éco : PCSU obligatoire)</option>
+                                <option value="princeps">Princeps / Référence (Dossier Clinique Module 4 & 5)</option>
+                                <option value="generique_importe">Générique Importé (Volet Éco : Prix FOB & Benchmark)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nom Commercial / Spécialité * :</label>
+                            <input type="text" id="med-brand-name" required placeholder="Ex: Ciprofloxacine Atlas 500 mg" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Dénomination Commune (DCI) * :</label>
+                            <input type="text" id="med-dci" required placeholder="Ex: Ciprofloxacine" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Dosage * :</label>
+                            <input type="text" id="med-dosage" required placeholder="Ex: 500 mg" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Forme Pharmaceutique * :</label>
+                            <input type="text" id="med-form" required placeholder="Ex: Comprimé pelliculé sécable" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Voie d'administration * :</label>
+                            <input type="text" id="med-route" required value="Voie orale" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Code ATC (OMS) :</label>
+                            <input type="text" id="med-atc" placeholder="Ex: J01MA02" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Durée de conservation (mois) :</label>
+                            <input type="number" id="med-shelf-life" value="36" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+
+                    <!-- Volet Économique Conditionnel -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <h4 style="font-size:11px; margin-bottom:8px; color:var(--accent-blue);" id="eco-section-title">💰 Volet Économique (1.H.4 - PCSU Fabrication Locale)</h4>
+                        <div id="eco-pcsu-group" style="display:flex; gap:10px; align-items:center;">
+                            <label style="font-size:11px; font-weight:600;">Prix de Revient Sortie Usine (PCSU) en DZD :</label>
+                            <input type="number" step="0.01" id="med-pcsu" placeholder="Ex: 210.50" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; width:150px;">
+                            <span style="font-size:11px; color:var(--text-dim);">(Structure des coûts matières et amortissements industriels)</span>
+                        </div>
+                        <div id="eco-fob-group" style="display:none; gap:10px; align-items:center;">
+                            <label style="font-size:11px; font-weight:600;">Prix FOB unitaire :</label>
+                            <input type="number" step="0.01" id="med-fob" placeholder="Ex: 12.50" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; width:120px;">
+                            <select id="med-currency" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="EUR">EUR (€)</option>
+                                <option value="USD">USD ($)</option>
+                            </select>
+                            <label style="display:flex; align-items:center; gap:4px; font-size:11px; margin-left:10px;">
+                                <input type="checkbox" id="med-visa-cc" checked> Visa Chambre de Commerce (1.H.4)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-new-med')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Médicament (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Dispositif Médical (Jalon 1.3 - Décret 20-324) -->
+    <div class="modal-overlay" id="modal-new-dm" onclick="if(event.target === this) closeModal('modal-new-dm')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">💉</span>
+                    <span>Nouveau Dispositif Médical (Arrêté du 10 Mai 2021 &amp; Décret 20-324)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-new-dm')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-dm" onsubmit="handleCreateDevice(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nom Commercial du DM * :</label>
+                            <input type="text" id="dm-name" required placeholder="Ex: Cathéter Intraveineux de Sécurité 20G" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Référence Fabricant * :</label>
+                            <input type="text" id="dm-ref" required placeholder="Ex: LPA-IVC-20G" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Classe de Risque ANPP * :</label>
+                            <select id="dm-class" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px; font-size:12px; font-weight:600;">
+                                <option value="I">Classe I (Faible risque - ex: compresses, béquilles)</option>
+                                <option value="IIa" selected>Classe IIa (Risque potentiel modéré - ex: seringues, canules)</option>
+                                <option value="IIb">Classe IIb (Risque élevé - ex: perfuseurs, dialyseurs)</option>
+                                <option value="III">Classe III (Risque très élevé - ex: implants, stents)</option>
+                                <option value="DMDIV">DMDIV (Diagnostic In Vitro)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Règle de Classification (Arrêté 10/05/2021) :</label>
+                            <input type="text" id="dm-rule" value="Règle 2 (Dispositif invasif chirurgical temporaire)" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:20px; align-items:center;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                            <input type="checkbox" id="dm-sterile" checked> Dispositif Stérile
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                            <input type="checkbox" id="dm-single-use" checked> Dispositif à Usage Unique
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Destination d'Usage &amp; Indications Cliniques :</label>
+                        <textarea id="dm-intended-use" rows="2" placeholder="Accès vasculaire périphérique court terme pour administration intraveineuse de fluides thérapeutiques." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-new-dm')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le DM (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Script applicatif -->
     <script>
         // Cibles de navigation pour la barre d'adresse (Ctrl+K)
@@ -1486,42 +1701,560 @@
             pane.classList.toggle("hidden");
         }
 
+        let currentTab = 'anpp';
+        let currentPharmaSection = 'establishments';
+        let currentPharmaList = [];
+        let selectedPharmaIndex = 0;
+
+        function switchTreeTab(tab) {
+            currentTab = tab;
+            document.getElementById("tab-anpp").classList.toggle("active", tab === 'anpp');
+            document.getElementById("tab-ged").classList.toggle("active", tab === 'ged');
+            document.getElementById("tab-pharma").classList.toggle("active", tab === 'pharma');
+            
+            updateToolbarForTab(tab);
+            renderTree();
+            
+            if (tab === 'pharma') {
+                loadPharmaSection(currentPharmaSection);
+            } else {
+                renderTable();
+            }
+        }
+
+        function updateToolbarForTab(tab) {
+            const tb = document.getElementById("main-toolbar");
+            if (!tb) return;
+            if (tab === 'pharma') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewPharmaModal()">➕ Nouveau</button>
+                    <button class="btn-pill" onclick="loadPharmaSection(currentPharmaSection)">🔄 Actualiser</button>
+                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Base Référentiel : <strong style="color:var(--accent-emerald);">PostgreSQL Connecté</strong>
+                    </div>
+                `;
+            } else {
+                tb.innerHTML = `
+                    <button class="btn-pill" onclick="openUploadModal()">➕ Nouveau Document</button>
+                    <button class="btn-pill" onclick="simulateExportZip()">📦 Exporter Dossier CTD (ZIP)</button>
+                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Complétude : <strong>12/14 pièces (85%)</strong>
+                    </div>
+                `;
+            }
+        }
+
+        function openNewPharmaModal() {
+            closeAllModals();
+            if (currentPharmaSection === 'establishments') {
+                document.getElementById("modal-new-est").classList.add("open");
+            } else if (currentPharmaSection === 'medicines') {
+                document.getElementById("modal-new-med").classList.add("open");
+            } else if (currentPharmaSection === 'devices') {
+                document.getElementById("modal-new-dm").classList.add("open");
+            } else {
+                document.getElementById("modal-new-est").classList.add("open");
+            }
+        }
+
+        function toggleEcoFields() {
+            const origin = document.getElementById("med-origin").value;
+            const pcsuGroup = document.getElementById("eco-pcsu-group");
+            const fobGroup = document.getElementById("eco-fob-group");
+            const title = document.getElementById("eco-section-title");
+            if (origin === 'generique_local') {
+                pcsuGroup.style.display = 'flex';
+                fobGroup.style.display = 'none';
+                title.innerText = "💰 Volet Économique (1.H.4 - PCSU Fabrication Locale)";
+            } else {
+                pcsuGroup.style.display = 'none';
+                fobGroup.style.display = 'flex';
+                title.innerText = "💰 Volet Économique (1.H.4 & 1.H.5 - Prix FOB & Benchmark International)";
+            }
+        }
+
         function renderTree() {
             const container = document.getElementById("tree-root");
-            container.innerHTML = `
-                <div class="tree-node selected" onclick="toggleSub('sub-ctd-para')">
-                    <span class="chevron">▼</span>
-                    <span>💊 Paracétamol 500mg (Enreg.)</span>
-                    <span class="count-badge warn">85%</span>
-                </div>
-                <div class="tree-sub open" id="sub-ctd-para">
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 1 : Administratif Algérie</span><span class="count-badge ok">6/6</span></div>
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 2 : Résumés CTD</span><span class="count-badge ok">4/4</span></div>
-                    <div class="tree-node selected" style="padding-left:24px;"><span>📁 Module 3 : Qualité CMC</span><span class="count-badge warn">12/14</span></div>
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 4 : Non-Clinique</span><span class="count-badge ok">3/3</span></div>
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 Module 5 : Clinique & BE</span><span class="count-badge ok">5/5</span></div>
-                </div>
+            if (currentTab === 'pharma') {
+                container.innerHTML = `
+                    <div class="tree-node ${currentPharmaSection === 'establishments' ? 'selected' : ''}" onclick="loadPharmaSection('establishments')">
+                        <span class="chevron">🏢</span>
+                        <span>Établissements Agréés (MIPH)</span>
+                        <span class="count-badge ok">Décret 20-325</span>
+                    </div>
+                    <div class="tree-node ${currentPharmaSection === 'sites' ? 'selected' : ''}" onclick="loadPharmaSection('sites')">
+                        <span class="chevron">🏭</span>
+                        <span>Sites Intervenants (1.H.8)</span>
+                        <span class="count-badge ok">BPF / GMP</span>
+                    </div>
+                    <div class="tree-node ${currentPharmaSection === 'medicines' ? 'selected' : ''}" onclick="loadPharmaSection('medicines')">
+                        <span class="chevron">💊</span>
+                        <span>Médicaments (Enreg. ANPP)</span>
+                        <span class="count-badge warn">Princeps/Génér.</span>
+                    </div>
+                    <div class="tree-node ${currentPharmaSection === 'devices' ? 'selected' : ''}" onclick="loadPharmaSection('devices')">
+                        <span class="chevron">💉</span>
+                        <span>Dispositifs Médicaux</span>
+                        <span class="count-badge req">Arrêté 10 Mai</span>
+                    </div>
+                `;
+            } else if (currentTab === 'ged') {
+                container.innerHTML = `
+                    <div class="tree-node selected" onclick="toggleSub('sub-ged-01')">
+                        <span class="chevron">▼</span>
+                        <span>📁 01_Affaires_Reglementaires</span>
+                        <span class="count-badge ok">6</span>
+                    </div>
+                    <div class="tree-sub open" id="sub-ged-01">
+                        <div class="tree-node" style="padding-left:24px;"><span>📄 Agrements_MIPH</span></div>
+                        <div class="tree-node" style="padding-left:24px;"><span>📄 Decisions_Enregistrement</span></div>
+                    </div>
+                    <div class="tree-node" onclick="toggleSub('sub-ged-02')">
+                        <span class="chevron">▶</span>
+                        <span>📁 02_Assurance_Qualite_BPF</span>
+                        <span class="count-badge ok">14</span>
+                    </div>
+                    <div class="tree-node" onclick="toggleSub('sub-ged-03')">
+                        <span class="chevron">▶</span>
+                        <span>📁 03_Developpement_Production</span>
+                        <span class="count-badge ok">8</span>
+                    </div>
+                    <div class="tree-node" onclick="toggleSub('sub-ged-04')">
+                        <span class="chevron">▶</span>
+                        <span>📁 04_Vigilance_Post_Market</span>
+                        <span class="count-badge ok">3</span>
+                    </div>
+                    <div class="tree-node" onclick="toggleSub('sub-ged-05')">
+                        <span class="chevron">▶</span>
+                        <span>📁 05_Contrats_Tiers_QTA</span>
+                        <span class="count-badge ok">5</span>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="tree-node selected" onclick="toggleSub('sub-ctd-para')">
+                        <span class="chevron">▼</span>
+                        <span>💊 Paracétamol 500mg (Enreg.)</span>
+                        <span class="count-badge warn">85%</span>
+                    </div>
+                    <div class="tree-sub open" id="sub-ctd-para">
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 1 : Administratif Algérie</span><span class="count-badge ok">6/6</span></div>
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 2 : Résumés CTD</span><span class="count-badge ok">4/4</span></div>
+                        <div class="tree-node selected" style="padding-left:24px;"><span>📁 Module 3 : Qualité CMC</span><span class="count-badge warn">12/14</span></div>
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 4 : Non-Clinique</span><span class="count-badge ok">3/3</span></div>
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 Module 5 : Clinique & BE</span><span class="count-badge ok">5/5</span></div>
+                    </div>
 
-                <div class="tree-node" onclick="toggleSub('sub-dm-ser')">
-                    <span class="chevron">▶</span>
-                    <span>💉 Seringue 3p 5ml (DM Classe IIa)</span>
-                    <span class="count-badge ok">100%</span>
-                </div>
-                <div class="tree-sub" id="sub-dm-ser">
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 01. Dossier Administratif & Agrément</span><span class="count-badge ok">4/4</span></div>
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 02. Dossier Technique (Arrêté 10 Mai)</span><span class="count-badge ok">8/8</span></div>
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 03. Certificats Stérilisation & ISO</span><span class="count-badge ok">3/3</span></div>
-                </div>
+                    <div class="tree-node" onclick="toggleSub('sub-dm-ser')">
+                        <span class="chevron">▶</span>
+                        <span>💉 Seringue 3p 5ml (DM Classe IIa)</span>
+                        <span class="count-badge ok">100%</span>
+                    </div>
+                    <div class="tree-sub" id="sub-dm-ser">
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 01. Dossier Administratif & Agrément</span><span class="count-badge ok">4/4</span></div>
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 02. Dossier Technique (Arrêté 10 Mai)</span><span class="count-badge ok">8/8</span></div>
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 03. Certificats Stérilisation & ISO</span><span class="count-badge ok">3/3</span></div>
+                    </div>
 
-                <div class="tree-node" onclick="toggleSub('sub-dm-reg')">
-                    <span class="chevron">▶</span>
-                    <span>🩹 Cathéter IV (Régularisation DM)</span>
-                    <span class="count-badge req">40%</span>
-                </div>
-                <div class="tree-sub" id="sub-dm-reg">
-                    <div class="tree-node" style="padding-left:24px;"><span>📁 Inventaire DM Décret 20-324</span><span class="count-badge req">2/5</span></div>
-                </div>
-            `;
+                    <div class="tree-node" onclick="toggleSub('sub-dm-reg')">
+                        <span class="chevron">▶</span>
+                        <span>🩹 Cathéter IV (Régularisation DM)</span>
+                        <span class="count-badge req">40%</span>
+                    </div>
+                    <div class="tree-sub" id="sub-dm-reg">
+                        <div class="tree-node" style="padding-left:24px;"><span>📁 Inventaire DM Décret 20-324</span><span class="count-badge req">2/5</span></div>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadPharmaSection(section) {
+            currentPharmaSection = section;
+            renderTree();
+            
+            document.getElementById("bc-root").innerText = "RÉFÉRENTIEL";
+            document.getElementById("bc-sec").innerText = "Jalon 1.3";
+            document.getElementById("bc-prod").innerText = section.toUpperCase();
+            document.getElementById("bc-mod").innerText = "Catalogue Souverain";
+
+            const tbody = document.getElementById("doc-tbody");
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement depuis PostgreSQL...</td></tr>`;
+
+            let url = '/api/v1/establishments';
+            if (section === 'sites') url = '/api/v1/manufacturing-sites';
+            else if (section === 'medicines') url = '/api/v1/medicines';
+            else if (section === 'devices') url = '/api/v1/medical-devices';
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const data = await res.json();
+                currentPharmaList = (data.establishments || data.sites || data.medicines || data.devices || []);
+                selectedPharmaIndex = 0;
+                renderPharmaTable(section, currentPharmaList);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--accent-red);">Impossible de charger : ${e.message}</td></tr>`;
+            }
+        }
+
+        function renderPharmaTable(section, items) {
+            const thead = document.getElementById("table-head");
+            const tbody = document.getElementById("doc-tbody");
+            tbody.innerHTML = "";
+
+            if (section === 'establishments') {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 90px;">Statut MIPH</th>
+                        <th>Raison Sociale</th>
+                        <th>Statut Juridique</th>
+                        <th>N° Agrément MIPH</th>
+                        <th>Pharmacien DT (1.A.7)</th>
+                        <th>Décision Nominative</th>
+                        <th>Wilaya</th>
+                    </tr>
+                `;
+                if (items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:var(--text-dim);">Aucun établissement enregistré. Cliquez sur '➕ Nouveau' pour en créer un.</td></tr>`;
+                    return;
+                }
+                items.forEach((item, idx) => {
+                    const tr = document.createElement("tr");
+                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    tr.innerHTML = `
+                        <td><span class="status-tag status-ok">AGRÉÉ MIPH</span></td>
+                        <td style="font-weight:600; color:var(--text-main);">${item.name_fr}</td>
+                        <td>${item.legal_status || 'SPA'}</td>
+                        <td style="font-family:monospace; color:var(--accent-blue);">${item.miph_license_number || '-'}</td>
+                        <td style="font-weight:600;">${item.technical_director_name}</td>
+                        <td style="font-family:monospace; color:var(--text-muted);">${item.technical_director_decision_ref || '-'}</td>
+                        <td>${item.wilaya || '-'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else if (section === 'sites') {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 90px;">Statut BPF</th>
+                        <th>Site de Fabrication / Contrôle</th>
+                        <th>Rôle Réglementaire (1.H.8)</th>
+                        <th>Pays</th>
+                        <th>Licence ML</th>
+                        <th>Certificat BPF/GMP</th>
+                        <th>Autorité Émettrice</th>
+                    </tr>
+                `;
+                if (items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:var(--text-dim);">Aucun site intervenant enregistré.</td></tr>`;
+                    return;
+                }
+                items.forEach((item, idx) => {
+                    const tr = document.createElement("tr");
+                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    tr.innerHTML = `
+                        <td><span class="status-tag status-ok">CONFORME BPF</span></td>
+                        <td style="font-weight:600; color:var(--text-main);">${item.site_name_fr}</td>
+                        <td><span style="background:var(--badge-bg); padding:2px 6px; border-radius:3px; font-weight:600; font-size:10px;">${item.site_role}</span></td>
+                        <td style="font-weight:700;">${item.country_code}</td>
+                        <td style="font-family:monospace;">${item.manufacturing_license_number || '-'}</td>
+                        <td style="font-family:monospace; color:var(--accent-emerald);">${item.gmp_certificate_number || '-'}</td>
+                        <td>${item.gmp_issuing_authority || '-'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else if (section === 'medicines') {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 120px;">Typologie ANPP</th>
+                        <th>Spécialité Commerciale</th>
+                        <th>DCI (Substance Active)</th>
+                        <th>Forme Galénique</th>
+                        <th>Dosage</th>
+                        <th>Dossier Économique</th>
+                        <th>Code ATC</th>
+                    </tr>
+                `;
+                if (items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:var(--text-dim);">Aucun médicament enregistré. Cliquez sur '➕ Nouveau' pour en créer un.</td></tr>`;
+                    return;
+                }
+                items.forEach((item, idx) => {
+                    const tr = document.createElement("tr");
+                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    let tagClass = "status-ok";
+                    let tagLabel = "GÉNÉRIQUE LOCAL";
+                    if (item.origin_type === 'princeps') {
+                        tagClass = "status-rev";
+                        tagLabel = "PRINCEPS RÉF.";
+                    } else if (item.origin_type === 'generique_importe') {
+                        tagClass = "status-req";
+                        tagLabel = "GÉNÉRIQUE IMPORTÉ";
+                    }
+                    let ecoLabel = item.economic_file_type === 'pcsu' ? `PCSU : ${item.pcsu_amount || 0} DZD` : `FOB : ${item.fob_price || 0} ${item.fob_currency || 'EUR'}`;
+                    tr.innerHTML = `
+                        <td><span class="status-tag ${tagClass}">${tagLabel}</span></td>
+                        <td style="font-weight:600; color:var(--text-main);">${item.brand_name_fr}</td>
+                        <td style="color:var(--accent-blue);">${item.dci_fr}</td>
+                        <td>${item.pharmaceutical_form_fr}</td>
+                        <td style="font-weight:600;">${item.dosage_fr}</td>
+                        <td style="font-family:monospace; font-size:11px;">${ecoLabel}</td>
+                        <td style="font-family:monospace; color:var(--text-dim);">${item.atc_code || '-'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else if (section === 'devices') {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 80px;">Classe DM</th>
+                        <th>Nom Commercial du DM</th>
+                        <th>Référence Fabricant</th>
+                        <th>Règle Arrêté 10/05/2021</th>
+                        <th>Stérile</th>
+                        <th>Usage Unique</th>
+                        <th>Statut Homolog.</th>
+                    </tr>
+                `;
+                if (items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:var(--text-dim);">Aucun dispositif médical enregistré.</td></tr>`;
+                    return;
+                }
+                items.forEach((item, idx) => {
+                    const tr = document.createElement("tr");
+                    if (idx === selectedPharmaIndex) tr.classList.add("selected");
+                    tr.onclick = () => { selectedPharmaIndex = idx; renderPharmaTable(section, items); };
+                    tr.innerHTML = `
+                        <td><span class="status-tag status-ok">CLASSE ${item.dm_class}</span></td>
+                        <td style="font-weight:600; color:var(--text-main);">${item.commercial_name_fr}</td>
+                        <td style="font-family:monospace; color:var(--text-muted);">${item.manufacturer_reference}</td>
+                        <td style="font-size:11px;">${item.classification_rule || '-'}</td>
+                        <td>${item.is_sterile ? '✓ Oui' : 'Non'}</td>
+                        <td>${item.is_single_use ? '✓ Oui' : 'Non'}</td>
+                        <td><span style="color:var(--accent-emerald); font-weight:600;">EN COURS</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            renderPharmaPreview(section, items[selectedPharmaIndex]);
+        }
+
+        function renderPharmaPreview(section, item) {
+            const preview = document.getElementById("preview-body");
+            if (!item) {
+                preview.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-dim);">Sélectionnez un élément dans le tableau pour afficher sa fiche légale.</div>`;
+                return;
+            }
+
+            if (section === 'establishments') {
+                preview.innerHTML = `
+                    <div class="pdf-sim-page">
+                        <div class="pdf-sim-header">
+                            RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE<br>
+                            MINISTÈRE DE L'INDUSTRIE ET DE LA PRODUCTION PHARMACEUTIQUE
+                        </div>
+                        <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                            AGRÉMENT D'ÉTABLISSEMENT PHARMACEUTIQUE (DÉCRET 20-325)
+                        </div>
+                        <div style="font-size:11px; line-height:1.6;">
+                            Il est certifié que l'établissement :<br>
+                            <strong>${item.name_fr}</strong> (${item.legal_status || 'SPA'})<br>
+                            Adresse : ${item.address_fr || 'Non renseignée'}, ${item.wilaya || 'Alger'}<br><br>
+                            Est dûment agréé sous le numéro :<br>
+                            <span style="font-size:13px; font-weight:700; color:var(--accent-blue); font-family:monospace;">${item.miph_license_number}</span><br><br>
+                            <strong>Pharmacien Directeur Technique Titulaire (1.A.7) :</strong><br>
+                            ${item.technical_director_name}<br>
+                            Décision ministérielle nominative : <code>${item.technical_director_decision_ref || 'DEC-MIPH-DT-01'}</code>
+                        </div>
+                    </div>
+
+                    <div class="meta-box">
+                        <div class="meta-row"><span class="meta-label">Raison Sociale :</span><span class="meta-val">${item.name_fr}</span></div>
+                        <div class="meta-row"><span class="meta-label">Agrément MIPH :</span><span class="meta-val">${item.miph_license_number}</span></div>
+                        <div class="meta-row"><span class="meta-label">Pharmacien DT :</span><span class="meta-val">${item.technical_director_name}</span></div>
+                        <div class="meta-row"><span class="meta-label">Wilaya :</span><span class="meta-val">${item.wilaya}</span></div>
+                        <div class="meta-row"><span class="meta-label">Téléphone :</span><span class="meta-val">${item.phone || '-'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Email :</span><span class="meta-val">${item.email || '-'}</span></div>
+                    </div>
+                `;
+            } else if (section === 'sites') {
+                preview.innerHTML = `
+                    <div class="pdf-sim-page">
+                        <div class="pdf-sim-header">
+                            AGENCE NATIONALE DES PRODUITS PHARMACEUTIQUES (ANPP)<br>
+                            CARTOGRAPHIE DES SITES INTERVENANTS (1.H.8 & 1.M)
+                        </div>
+                        <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                            CERTIFICAT DE BONNES PRATIQUES DE FABRICATION (BPF)
+                        </div>
+                        <div style="font-size:11px; line-height:1.6;">
+                            Site : <strong>${item.site_name_fr}</strong><br>
+                            Pays : <strong>${item.country_code}</strong> | Rôle : <code>${item.site_role}</code><br><br>
+                            Certificat GMP/BPF : <strong>${item.gmp_certificate_number || '-'}</strong><br>
+                            Autorité émettrice : ${item.gmp_issuing_authority || 'ANPP'}<br>
+                            Licence de fabrication (ML) : ${item.manufacturing_license_number || '-'}
+                        </div>
+                    </div>
+                `;
+            } else if (section === 'medicines') {
+                preview.innerHTML = `
+                    <div class="pdf-sim-page">
+                        <div class="pdf-sim-header">
+                            AGENCE NATIONALE DES PRODUITS PHARMACEUTIQUES (ANPP)<br>
+                            FICHE TECHNIQUE RÉGLEMENTAIRE MÉDICAMENT
+                        </div>
+                        <div style="font-size:13px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                            ${item.brand_name_fr}
+                        </div>
+                        <div style="font-size:11px; line-height:1.6;">
+                            <strong>DCI :</strong> ${item.dci_fr}<br>
+                            <strong>Forme galénique :</strong> ${item.pharmaceutical_form_fr}<br>
+                            <strong>Dosage :</strong> ${item.dosage_fr} | <strong>Voie :</strong> ${item.administration_route_fr}<br>
+                            <strong>Code ATC :</strong> <code>${item.atc_code || '-'}</code><br>
+                            <strong>Typologie :</strong> <code>${item.origin_type}</code><br>
+                            <strong>Péremption :</strong> ${item.shelf_life_months} mois<br>
+                            <strong>Conservation :</strong> ${item.storage_conditions_fr || '-'}<br><br>
+                            <strong>Volet Économique :</strong><br>
+                            ${item.economic_file_type === 'pcsu' ? `PCSU Sortie Usine : <strong>${item.pcsu_amount} DZD</strong> (Fabrication Locale)` : `Prix FOB : <strong>${item.fob_price} ${item.fob_currency}</strong> (Importation avec Benchmark 1.H.5)`}
+                        </div>
+                    </div>
+                    <div class="meta-box">
+                        <div class="meta-row"><span class="meta-label">Spécialité :</span><span class="meta-val">${item.brand_name_fr}</span></div>
+                        <div class="meta-row"><span class="meta-label">DCI :</span><span class="meta-val">${item.dci_fr}</span></div>
+                        <div class="meta-row"><span class="meta-label">Typologie :</span><span class="meta-val">${item.origin_type}</span></div>
+                        <div class="meta-row"><span class="meta-label">Monographie Ph. Eur. :</span><span class="meta-val">${item.has_pharmacopoeia_monograph ? 'Oui' : 'Non'}</span></div>
+                        <div class="meta-row"><span class="meta-label">CEP EDQM :</span><span class="meta-val">${item.cep_number || 'Non requis'}</span></div>
+                    </div>
+                `;
+            } else if (section === 'devices') {
+                preview.innerHTML = `
+                    <div class="pdf-sim-page">
+                        <div class="pdf-sim-header">
+                            AGENCE NATIONALE DES PRODUITS PHARMACEUTIQUES (ANPP)<br>
+                            DOSSIER D'HOMOLOGATION DISPOSITIF MÉDICAL (DÉCRET 20-324)
+                        </div>
+                        <div style="font-size:13px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                            ${item.commercial_name_fr}
+                        </div>
+                        <div style="font-size:11px; line-height:1.6;">
+                            <strong>Classe de risque :</strong> Classe ${item.dm_class}<br>
+                            <strong>Référence Fabricant :</strong> <code>${item.manufacturer_reference}</code><br>
+                            <strong>Règle de classification :</strong> ${item.classification_rule || 'Arrêté 10/05/2021'}<br>
+                            <strong>Stérilité :</strong> ${item.is_sterile ? '✓ Stérile' : 'Non stérile'}<br>
+                            <strong>Usage unique :</strong> ${item.is_single_use ? '✓ Usage unique' : 'Réutilisable'}<br><br>
+                            <strong>Indication Clinique :</strong><br>
+                            ${item.intended_use_fr || 'Non renseignée'}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function handleCreateEstablishment(e) {
+            if (e) e.preventDefault();
+            const payload = {
+                name_fr: document.getElementById("est-name-fr").value.trim(),
+                legal_status: document.getElementById("est-legal-status").value,
+                miph_license_number: document.getElementById("est-license-number").value.trim(),
+                miph_license_grant_date: document.getElementById("est-license-date").value || null,
+                technical_director_name: document.getElementById("est-dt-name").value.trim(),
+                technical_director_decision_ref: document.getElementById("est-decision-ref").value.trim(),
+                wilaya: document.getElementById("est-wilaya").value.trim(),
+                phone: document.getElementById("est-phone").value.trim(),
+                email: document.getElementById("est-email").value.trim(),
+                is_active: true
+            };
+            try {
+                const res = await fetch('/api/v1/establishments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    closeModal('modal-new-est');
+                    showNotifyModal("Établissement Enregistré", "L'établissement pharmaceutique a été inscrit en base PostgreSQL et son agrément MIPH a été validé.", "🏢");
+                    loadPharmaSection('establishments');
+                } else {
+                    const err = await res.json();
+                    showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
+                }
+            } catch(err) {
+                showNotifyModal("Erreur Réseau", err.message, "⚠️");
+            }
+        }
+
+        async function handleCreateMedicine(e) {
+            if (e) e.preventDefault();
+            const origin = document.getElementById("med-origin").value;
+            const payload = {
+                origin_type: origin,
+                brand_name_fr: document.getElementById("med-brand-name").value.trim(),
+                dci_fr: document.getElementById("med-dci").value.trim(),
+                dosage_fr: document.getElementById("med-dosage").value.trim(),
+                pharmaceutical_form_fr: document.getElementById("med-form").value.trim(),
+                administration_route_fr: document.getElementById("med-route").value.trim(),
+                atc_code: document.getElementById("med-atc").value.trim() || null,
+                shelf_life_months: parseInt(document.getElementById("med-shelf-life").value) || 36,
+                economic_file_type: origin === 'generique_local' ? 'pcsu' : 'fob_benchmark',
+                pcsu_amount: origin === 'generique_local' ? parseFloat(document.getElementById("med-pcsu").value) || 0 : null,
+                fob_price: origin !== 'generique_local' ? parseFloat(document.getElementById("med-fob").value) || 0 : null,
+                fob_currency: document.getElementById("med-currency").value,
+                has_chamber_of_commerce_visa: origin !== 'generique_local' ? document.getElementById("med-visa-cc").checked : false,
+                status: 'en_preparation'
+            };
+            try {
+                const res = await fetch('/api/v1/medicines', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    closeModal('modal-new-med');
+                    showNotifyModal("Médicament Enregistré", "La spécialité pharmaceutique a été enregistrée avec ses données médico-économiques selon la typologie ANPP 2025.", "💊");
+                    loadPharmaSection('medicines');
+                } else {
+                    const err = await res.json();
+                    showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
+                }
+            } catch(err) {
+                showNotifyModal("Erreur Réseau", err.message, "⚠️");
+            }
+        }
+
+        async function handleCreateDevice(e) {
+            if (e) e.preventDefault();
+            const payload = {
+                commercial_name_fr: document.getElementById("dm-name").value.trim(),
+                manufacturer_reference: document.getElementById("dm-ref").value.trim(),
+                dm_class: document.getElementById("dm-class").value,
+                classification_rule: document.getElementById("dm-rule").value.trim(),
+                is_sterile: document.getElementById("dm-sterile").checked,
+                is_single_use: document.getElementById("dm-single-use").checked,
+                intended_use_fr: document.getElementById("dm-intended-use").value.trim(),
+                status: 'en_cours'
+            };
+            try {
+                const res = await fetch('/api/v1/medical-devices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    closeModal('modal-new-dm');
+                    showNotifyModal("Dispositif Médical Enregistré", "Le dossier d'homologation DM a été créé conformément au Décret 20-324 et à l'Arrêté du 10 mai 2021.", "💉");
+                    loadPharmaSection('devices');
+                } else {
+                    const err = await res.json();
+                    showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
+                }
+            } catch(err) {
+                showNotifyModal("Erreur Réseau", err.message, "⚠️");
+            }
         }
 
         function toggleSub(id) {
@@ -1530,6 +2263,20 @@
         }
 
         function renderTable(docs = mockDocuments) {
+            const thead = document.getElementById("table-head");
+            if (thead) {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 80px;">Statut</th>
+                        <th>Nom de la pièce</th>
+                        <th>Code Référence</th>
+                        <th style="width: 70px;">Version</th>
+                        <th>Échéance</th>
+                        <th>Validation DT</th>
+                        <th>Empreinte SHA-256</th>
+                    </tr>
+                `;
+            }
             const tbody = document.getElementById("doc-tbody");
             tbody.innerHTML = "";
             docs.forEach(doc => {
