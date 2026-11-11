@@ -12,13 +12,13 @@ import (
 type SiteRole string
 
 const (
-	SiteRoleSyntheseSA               SiteRole = "synthese_sa"
-	SiteRoleIntermediaire            SiteRole = "intermediaire"
-	SiteRoleFormulateurPF            SiteRole = "formulateur_pf"
-	SiteRoleConditionneurPrimaire    SiteRole = "conditionneur_primaire"
-	SiteRoleConditionneurSecondaire  SiteRole = "conditionneur_secondaire"
-	SiteRoleControleAnalytique       SiteRole = "controle_analytique"
-	SiteRoleStockage                 SiteRole = "stockage"
+	SiteRoleSyntheseSA              SiteRole = "synthese_sa"
+	SiteRoleIntermediaire           SiteRole = "intermediaire"
+	SiteRoleFormulateurPF           SiteRole = "formulateur_pf"
+	SiteRoleConditionneurPrimaire   SiteRole = "conditionneur_primaire"
+	SiteRoleConditionneurSecondaire SiteRole = "conditionneur_secondaire"
+	SiteRoleControleAnalytique      SiteRole = "controle_analytique"
+	SiteRoleStockage                SiteRole = "stockage"
 )
 
 // MedicineOriginType catégorise le produit selon la matrice ANPP Juillet 2025
@@ -113,57 +113,57 @@ func (s *ManufacturingSite) Validate() error {
 
 // Medicine représente la fiche exhaustive d'un médicament (Guide CTD Juillet 2025)
 type Medicine struct {
-	ID                         uuid.UUID          `json:"id"`
-	OrganizationID             uuid.UUID          `json:"organization_id"`
-	ProductID                  uuid.UUID          `json:"product_id"`
-	OriginType                 MedicineOriginType `json:"origin_type"` // princeps, generique_importe, generique_local
-	BrandNameFR                string             `json:"brand_name_fr"`
-	BrandNameAR                string             `json:"brand_name_ar,omitempty"`
-	DCIFR                      string             `json:"dci_fr"`
-	DCIAR                      string             `json:"dci_ar,omitempty"`
-	DosageFR                   string             `json:"dosage_fr"`
-	DosageAR                   string             `json:"dosage_ar,omitempty"`
-	PharmaceuticalFormFR       string             `json:"pharmaceutical_form_fr"`
-	PharmaceuticalFormAR       string             `json:"pharmaceutical_form_ar,omitempty"`
-	AdministrationRouteFR      string             `json:"administration_route_fr"`
-	AdministrationRouteAR      string             `json:"administration_route_ar,omitempty"`
-	ATCCode                    string             `json:"atc_code,omitempty"` // Code OMS
-	
+	ID                    uuid.UUID          `json:"id"`
+	OrganizationID        uuid.UUID          `json:"organization_id"`
+	ProductID             uuid.UUID          `json:"product_id"`
+	OriginType            MedicineOriginType `json:"origin_type"` // princeps, generique_importe, generique_local
+	BrandNameFR           string             `json:"brand_name_fr"`
+	BrandNameAR           string             `json:"brand_name_ar,omitempty"`
+	DCIFR                 string             `json:"dci_fr"`
+	DCIAR                 string             `json:"dci_ar,omitempty"`
+	DosageFR              string             `json:"dosage_fr"`
+	DosageAR              string             `json:"dosage_ar,omitempty"`
+	PharmaceuticalFormFR  string             `json:"pharmaceutical_form_fr"`
+	PharmaceuticalFormAR  string             `json:"pharmaceutical_form_ar,omitempty"`
+	AdministrationRouteFR string             `json:"administration_route_fr"`
+	AdministrationRouteAR string             `json:"administration_route_ar,omitempty"`
+	ATCCode               string             `json:"atc_code,omitempty"` // Code OMS
+
 	// Substance Active (3.2.S)
-	HasPharmacopoeiaMonograph  bool               `json:"has_pharmacopoeia_monograph"`
-	PharmacopoeiaName          string             `json:"pharmacopoeia_name,omitempty"` // Ph. Eur., USP...
-	HasCEP                     bool               `json:"has_cep"`
-	CEPNumber                  string             `json:"cep_number,omitempty"` // 1.M.S.3 / 3.2.S.3
-	CEPAccessLetterHeld        bool               `json:"cep_access_letter_held"`
-	APIMFNumber                string             `json:"apimf_dmf_number,omitempty"` // DPSA
-	PolymorphicForm            string             `json:"polymorphic_form,omitempty"` // 1.P.4 / 3.2.S.1.3
-	ParticleSizeCriticality    bool               `json:"particle_size_criticality"`   // 1.P.4 / 3.2.S.4
-	
+	HasPharmacopoeiaMonograph bool   `json:"has_pharmacopoeia_monograph"`
+	PharmacopoeiaName         string `json:"pharmacopoeia_name,omitempty"` // Ph. Eur., USP...
+	HasCEP                    bool   `json:"has_cep"`
+	CEPNumber                 string `json:"cep_number,omitempty"` // 1.M.S.3 / 3.2.S.3
+	CEPAccessLetterHeld       bool   `json:"cep_access_letter_held"`
+	APIMFNumber               string `json:"apimf_dmf_number,omitempty"` // DPSA
+	PolymorphicForm           string `json:"polymorphic_form,omitempty"` // 1.P.4 / 3.2.S.1.3
+	ParticleSizeCriticality   bool   `json:"particle_size_criticality"`  // 1.P.4 / 3.2.S.4
+
 	// Produit Fini (3.2.P)
-	StorageConditionsFR        string             `json:"storage_conditions_fr,omitempty"`
-	StorageConditionsAR        string             `json:"storage_conditions_ar,omitempty"`
-	ShelfLifeMonths            int                `json:"shelf_life_months"`
-	InUseShelfLife             string             `json:"in_use_shelf_life,omitempty"`
-	ValidationBatchFilesHeld   bool               `json:"validation_batch_files_held"` // 3.2.P.3.5 / 1.P.8
-	
+	StorageConditionsFR      string `json:"storage_conditions_fr,omitempty"`
+	StorageConditionsAR      string `json:"storage_conditions_ar,omitempty"`
+	ShelfLifeMonths          int    `json:"shelf_life_months"`
+	InUseShelfLife           string `json:"in_use_shelf_life,omitempty"`
+	ValidationBatchFilesHeld bool   `json:"validation_batch_files_held"` // 3.2.P.3.5 / 1.P.8
+
 	// Données Économiques (1.H.4 / 1.H.5)
-	EconomicFileType           EconomicFileType   `json:"economic_file_type"`
-	PCSUAmount                 *float64           `json:"pcsu_amount,omitempty"`
-	FOBPrice                   *float64           `json:"fob_price,omitempty"`
-	FOBCurrency                string             `json:"fob_currency,omitempty"`
-	HasChamberOfCommerceVisa   bool               `json:"has_chamber_of_commerce_visa"`
-	HasBenchmarkDossier        bool               `json:"has_benchmark_dossier"` // 1.H.5
-	
+	EconomicFileType         EconomicFileType `json:"economic_file_type"`
+	PCSUAmount               *float64         `json:"pcsu_amount,omitempty"`
+	FOBPrice                 *float64         `json:"fob_price,omitempty"`
+	FOBCurrency              string           `json:"fob_currency,omitempty"`
+	HasChamberOfCommerceVisa bool             `json:"has_chamber_of_commerce_visa"`
+	HasBenchmarkDossier      bool             `json:"has_benchmark_dossier"` // 1.H.5
+
 	// Références Réglementaires
-	RegistrationDecisionNumber string             `json:"registration_decision_number,omitempty"`
-	RegistrationDate           *time.Time         `json:"registration_date,omitempty"`
-	ExpiryDate                 *time.Time         `json:"expiry_date,omitempty"` // Échéance quinquennale
-	Status                     string             `json:"status"`
-	CreatedAt                  time.Time          `json:"created_at"`
-	UpdatedAt                  time.Time          `json:"updated_at"`
-	
+	RegistrationDecisionNumber string     `json:"registration_decision_number,omitempty"`
+	RegistrationDate           *time.Time `json:"registration_date,omitempty"`
+	ExpiryDate                 *time.Time `json:"expiry_date,omitempty"` // Échéance quinquennale
+	Status                     string     `json:"status"`
+	CreatedAt                  time.Time  `json:"created_at"`
+	UpdatedAt                  time.Time  `json:"updated_at"`
+
 	// Sites associés (Cartographie 1.H.8)
-	AssociatedSites            []ManufacturingSite `json:"associated_sites,omitempty"`
+	AssociatedSites []ManufacturingSite `json:"associated_sites,omitempty"`
 }
 
 // Validate valide la cohérence pharmaceutique selon le guide CTD ANPP 2025
