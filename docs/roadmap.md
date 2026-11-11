@@ -60,35 +60,69 @@ gantt
 - [x] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** avec table de sessions PostgreSQL pour révocation instantanée
 - [x] Développer le second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés)
 - [x] Mettre en place le verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 essais = 15 min de blocage)
-- [x] Implémenter la matrice des 8 rôles stricts (Admin Sys, Admin Labo, Affaires Réglementaires, DT, Qualité/Prod, Consultant, Lecteur, Auditeur)
-- [x] Créer le flux de **re-authentification pour signature électronique légale** (mot de passe/2FA + déclaration solennelle de rôle BPF/ANPP)
+- [x] Implémenter la matrice des **9 profils d'utilisateurs stricts** (Section 7.1 du Cahier des Charges) :
+  1. *Super-Administrateur Éditeur* (Mode Cloud SaaS - provisioning & quotas, aucun accès aux données pharmaceutiques).
+  2. *Administrateur Système Local* (Mode On-Premise - maintenance, sauvegardes, aucun accès aux documents).
+  3. *Administrateur de Laboratoire* (Gestion des comptes et affectations internes).
+  4. *Responsable Affaires Réglementaires* (Création, coordination des dossiers CTD/DM et suivi des soumissions ANPP).
+  5. *Pharmacien Directeur Technique (PDT)* (Seul titulaire du pouvoir légal d'approbation et signature électronique bloquante).
+  6. *Contributeur Qualité / BPF* (Gestion des SOP, revues qualité, certificats BPF et audits).
+  7. *Contributeur R&D / Production* (Dépôt des formules cadres, dossiers de validation 3.2.P.3.5 et stabilités).
+  8. *Consultant Externe* (Accès restreint et cloisonné aux seuls dossiers assignés avec date d'expiration contractuelle).
+  9. *Auditeur / Inspecteur* (Consultation en lecture seule avec accès au journal d'audit trail immuable).
+- [x] Créer le flux de **re-authentification pour signature électronique légale du PDT** :
+  - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
+    *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
+  - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
 - [x] Créer la table `audit_logs` strictement *append-only* (triggers SQL PostgreSQL interdisant `UPDATE` et `DELETE`)
 - [x] Logger automatiquement toutes les actions sensibles (connexion, consultation, téléchargement, approbation, signature, modification de rôle)
 - [x] Valider les suites de tests unitaires d'authentification (`password_test.go`, `totp_test.go`, `auth_handler_test.go`)
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Conforme Guide ANPP 2025)
 - [ ] **Modèle et tables PostgreSQL pour les Établissements :**
-  - Table `establishments` : Raison sociale, statut juridique, agrément ministériel MIPH (numéro, date d'octroi, échéance), coordonnées du Pharmacien Directeur Technique (PDT - 1.A.7).
-  - Table `manufacturing_sites` (1.H.8) : Liste exhaustive des sites intervenants, rôle (Synthèse SA, Intermédiaire, Formulateur PF, Conditionneur primaire, Conditionneur secondaire, Laboratoire de contrôle), licences de fabrication (ML 1.M.S.1, 1.M.P.1) et certificats BPF (1.M.S.2, 1.M.P.2) avec dates d'échéance.
+  - Table `establishments` : Raison sociale, statut juridique, agrément ministériel MIPH (numéro, date d'octroi, échéance), coordonnées du Pharmacien Directeur Technique (PDT - 1.A.7) avec décision ministérielle nominative.
+  - Table `manufacturing_sites` (1.H.8) : Liste exhaustive des sites intervenants, rôle (Synthèse SA, Intermédiaire, Formulateur PF, Conditionneur primaire, Conditionneur secondaire, Laboratoire de contrôle analytique), licences de fabrication (ML 1.M.S.1, 1.M.P.1) et certificats BPF/GMP (1.M.S.2, 1.M.P.2) avec dates d'échéance.
 - [ ] **Modèle et tables pour les Médicaments (Typologie ANPP Juillet 2025) :**
   - Table `medicines` : Dénomination commerciale, DCI, forme galénique, dosage, voie d'administration, classe pharmacothérapeutique ATC (Code OMS).
   - Classification d'origine : `princeps` (innovateur), `generique_importe`, `generique_local`.
-  - Données SA / API : Présence de monographie pharmacopée (Ph. Eur.), détention d'un CEP EDQM (1.M.S.3 / 3.2.S.3), numéro APIMF/DMF, forme polymorphique et criticité granulométrique.
-  - Données Produit Fini : Conditions de stockage (°C, humidité), durée de conservation initiale et après reconstitution/ouverture.
+  - Données SA / API : Présence de monographie pharmacopée (Ph. Eur.), détention d'un CEP EDQM (1.M.S.3 / 3.2.S.3) avec lettre d'accès nominative, numéro APIMF/DMF (DPSA), forme polymorphique et criticité granulométrique (1.P.4 / 3.2.S.1.3 / 3.2.S.4).
+  - Données Produit Fini : Conditions de stockage (°C, humidité), durée de conservation initiale et après reconstitution/ouverture. Dossiers de lots de validation industrielle (3.2.P.3.5 / 1.P.8) pour la fabrication locale.
+  - Données économiques réglementaires : Structure de prix PCSU pour fabrication locale (1.H.4) ou Attestation prix FOB visée Chambre de Commerce et dossier de Benchmark international pour l'importation (1.H.4 / 1.H.5).
   - Références administratives : N° de Décision d'Enregistrement (DE), date d'enregistrement initial, date d'échéance quinquennale.
 - [ ] **Modèle et tables pour les Dispositifs Médicaux :**
-  - Table `medical_devices` : Dénomination, référence fabricant, classe (I, IIa, IIb, III, DMDIV), stérilité, usage unique, décision d'homologation.
+  - Table `medical_devices` : Dénomination, référence fabricant, classe (I, IIa, IIb, III, DMDIV), stérilité, usage unique, décision d'homologation selon le décret exécutif n° 20-324 et l'arrêté du 10 mai 2021.
 - [ ] Support complet des champs bilingues FR/AR (`name_fr`, `name_ar`, `inn_fr`, `inn_ar`, `presentation_fr`, `presentation_ar`).
 - [ ] API RESTful : CRUD établissements, sites, médicaments et DM avec filtrage et pagination.
 
 ### Jalon 1.4 : Coffre-Fort GED Pharmaceutique (Standard BPF / ALCOA+)
-- [ ] Arborescence standardisée préconfigurée en 5 branches maîtresses :
-  - `01_Affaires_Reglementaires` (Agréments MIPH, Décisions DE/Homologation, dossiers CTD maîtres, notices bilingues, courriers ANPP)
-  - `02_Assurance_Qualite_BPF` (Manuel qualité, SOP en vigueur, certificats BPF/GMP, rapports d'inspection ANPP, CAPA)
-  - `03_Developpement_Production` (Formules cadres, dossiers de lots de validation 3.2.P.3.5, méthodes d'analyse, stabilités Zone IVa/IVb, spécifications)
-  - `04_Vigilance_Post_Market` (PSUR pharmacovigilance, matériovigilance DM, retraits de lots)
-  - `05_Contrats_Tiers` (Accords qualité QTA, contrats de façonnage/sous-traitance, CEP et déclarations fournisseurs d'API)
-- [ ] Gestion du cycle de vie documentaire (*Brouillon* $\to$ *En revue* $\to$ *En approbation* $\to$ *En vigueur* $\to$ *Obsolète*).
+- [ ] **Arborescence standardisée préconfigurée en 5 branches maîtresses normalisées (Section 8 du CDC) :**
+  - `01_Affaires_Reglementaires` :
+    - `01_01_Agrements_Etablissement` (Agréments MIPH demandeur, façonniers et sous-traitants)
+    - `01_02_Decisions_Enregistrement` (DE initiales, renouvellements et avenants ministériels)
+    - `01_03_Decisions_Homologation` (Décisions d'homologation DM/DMDIV)
+    - `01_04_Dossiers_CTD_Reference` (Dossiers maîtres archivés et dossiers de variations)
+    - `01_05_Notices_Articles_Conditionnement` (Notices bilingues FR/AR, étiquettes, maquettes à l'échelle)
+    - `01_06_Correspondances_ANPP` (Courriers de compléments, notifications, accusés de réception)
+  - `02_Assurance_Qualite_BPF` :
+    - `02_01_Manuel_Qualite_Procedures` (Manuel qualité, procédures opératoires normalisées - POS / SOP)
+    - `02_02_Certificats_BPF_ISO` (Certificats GMP fabricants SA et PF, certificats ISO 13485)
+    - `02_03_Rapports_Audit_Inspections` (Rapports d'inspection ANPP, audits fournisseurs)
+    - `02_04_CAPA_Deviations` (Déviations qualité et actions correctives/préventives CAPA)
+  - `03_Developpement_Production` :
+    - `03_01_Formules_Fabrication_DMF` (Dossiers de lot maîtres, Drug Master Files / DPSA)
+    - `03_02_Methodes_Controle_Validation` (Méthodes d'analyse, transferts et validations analytiques)
+    - `03_03_Etudes_Stabilite` (Protocoles et rapports de stabilité Zone IVa/IVb, temps réel et accéléré)
+    - `03_04_Specifications_Matieres_PF` (Spécifications SA, excipients, articles de conditionnement, PF)
+    - `03_05_Dossiers_Techniques_DM` (Fichiers techniques DM selon l'arrêté du 10 mai 2021)
+  - `04_Vigilance_Post_Market` :
+    - `04_01_Pharmacovigilance` (Rapports périodiques de sécurité - PSUR, fiches de notification d'effets indésirables)
+    - `04_02_Materiovigilance` (Signalements d'incidents DM, fiches d'alerte)
+    - `04_03_Rappels_Lots` (Procédures de retrait et dossiers d'investigation de lot)
+  - `05_Contrats_Tiers` :
+    - `05_01_Accords_Qualite_QTA` (Quality Technical Agreements avec façonniers et fournisseurs)
+    - `05_02_Contrats_Faconnage_SousTraitance` (Contrats de fabrication, conditionnement, analyse)
+    - `05_03_Certificats_Fournisseurs_APIs` (CEP EDQM, lettres d'accès APIMF, déclarations EST/OGM)
+- [ ] Gestion du cycle de vie documentaire (*Brouillon* → *En revue* → *En approbation* → *En vigueur* → *Obsolète*).
 - [ ] Gestion des versions mineures/majeures (`v0.1`, `v1.0`, `v2.0`) avec saisie obligatoire du motif de révision et traçabilité.
 - [ ] Circuit d'approbation et **Signature électronique légale du Directeur Technique** (avec re-authentification 2FA, horodatage UTC et scellement SHA-256).
 - [ ] Téléversement résilient par morceaux (Chunked Upload 5 Mo) et déduplication physique par hash SHA-256 via le driver CAS.
@@ -103,33 +137,42 @@ gantt
   - **`MF`** : Modification relative à un produit Fabriqué localement.
 - [ ] **Implémentation intégrale de la nomenclature officielle du Module 1 Algérie :**
   - **Sous-module 1.A (Applicant) :** Récépissé de dépôt (1.A.1), Courrier de demande (1.A.2), Formulaire officiel paraphé/signé/cacheté PDT (1.A.3), Bordereau de versement + document bancaire / quittance + attestation de change Banque d'Algérie (1.A.4), Réponse pré-soumission + BV (1.A.5), Agrément MIPH (1.A.6), Décision d'exercice du PDT (1.A.7), Contrats exploitation/façonnage (1.A.8), Historique DE et anciens dépôts (1.A.9).
-  - **Sous-module 1.H (Holder) :** Courrier (1.H.1), AMM pays d'origine (1.H.2), Certificat CPP modèle OMS (1.H.3), Structure PCSU ou attestation FOB visée Chambre de Commerce (1.H.4), Benchmark prix (1.H.5 - obligatoire import NI/RI/MI), Approbation pays d'origine (1.H.6), Descriptif mise à jour (1.H.7), Liste des sites intervenants visée (1.H.8), Déclaration de similarité (1.H.9), Déclaration de non-modification (1.H.10 - renouvellements RI/RF), Accord transfert DE (1.H.11), Date d'implémentation pays d'origine (1.H.12).
+  - **Sous-module 1.H (Holder) :** Courrier (1.H.1), AMM pays d'origine (1.H.2), Certificat CPP modèle OMS (1.H.3), Structure PCSU ou attestation FOB visée Chambre de Commerce (1.H.4), Benchmark prix international (1.H.5 - obligatoire import NI/RI/MI), Approbation pays d'origine (1.H.6), Descriptif mise à jour (1.H.7), Liste des sites intervenants visée (1.H.8), Déclaration de similarité (1.H.9), Déclaration de non-modification (1.H.10 - renouvellements RI/RF), Accord transfert DE (1.H.11), Date d'implémentation pays d'origine (1.H.12).
   - **Sous-module 1.M (Manufacturers) :** Agréments et BPF API (1.M.S.1/2), Lettre d'accès / CEP API (1.M.S.3), Agrément et BPF Produit Fini (1.M.P.1/2), Étude de bioéquivalence ou justification d'exonération Biowaiver (1.M.P.3).
-  - **Sous-module 1.P (Product Information) :** Textes pays d'origine RCP/Notice/Étiquette (1.P.1), Modèle Algérie visé PDT avec notice bilingue FR/AR (1.P.2), Échantillons (1.P.3), Bulletins SA avec granulométrie/polymorphisme et recontrôle (1.P.4), Bulletins PF et prémix (1.P.5), Attestation correspondance lots (1.P.6), Certificat libération lot (1.P.7), **Lettre d'engagement de non-commercialisation des lots de validation** (1.P.8 - obligatoire fabrication locale NF/MF), **Lettre d'engagement suivi stabilité PF** (1.P.9 - obligatoire fabrication locale NF/MF).
-- [ ] **Règles de complétude Modules 2 à 5 :**
-  - Contrôle strict de présence des Modules 2 à 5 pour les Princeps.
-  - Dérogation automatisée pour les Génériques : Module 2 incorporé, Module 4 facultatif (`F`), Module 5 centré sur la Bioéquivalence 5.3.1.2 et validation bioanalytique 5.3.1.4.
-  - Exigence des dossiers de lots industriels de validation en 3.2.P.3.5 pour la fabrication locale.
-  - Support du CEP EDQM avec lettre d'accès en 3.2.S.3.
-- [ ] Questionnaire de qualification dynamique **Dispositifs Médicaux** (génération automatique de checklist selon l'arrêté du 10 mai 2021).
-- [ ] Liaison dynamique GED $\leftrightarrow$ Checklist CTD/DM avec calcul du pourcentage de complétude en temps réel.
-- [ ] **Verrouillage légal strict :** Interdiction de passage au statut *« Validé interne / Prêt pour dépôt ANPP »* si complétude $< 100\,\%$ ou absence de signature électronique du DT.
+  - **Sous-module 1.P (Product Information) :** Textes pays d'origine RCP/Notice/Étiquette (1.P.1.1 à 1.P.1.3), Modèle Algérie visé PDT avec notice bilingue FR/AR et maquettes couleurs échelle 100% (1.P.2.1 à 1.P.2.4), Échantillons (1.P.3), Bulletins SA avec granulométrie/polymorphisme et recontrôle (1.P.4), Bulletins PF et prémix (1.P.5), Attestation correspondance lots (1.P.6), Certificat libération lot (1.P.7), **Lettre d'engagement de non-commercialisation des lots de validation** (1.P.8 - obligatoire fabrication locale NF/MF), **Lettre d'engagement suivi stabilité PF en temps réel Zone IVa/IVb** (1.P.9 - obligatoire fabrication locale NF/MF).
+- [ ] **Règles de complétude et Spécificités Régionales des Modules 2 à 5 :**
+  - Contrôle strict de présence des Modules 2 à 5 pour les Princeps (`E` sur l'ensemble des modules).
+  - Dérogation automatisée pour les Génériques : Module 1 exigé (`E`), Module 2 incorporé, Module 3 exigé (`E`), Module 4 facultatif (`F`), Module 5 centré sur la Bioéquivalence (`P`).
+  - **Exigences Module 3.2.S (Substance Active) :** Intégration du CEP EDQM avec lettre d'accès nominative, contrôle obligatoire du polymorphisme cristallin (3.2.S.1.3) et de la granulométrie (3.2.S.4).
+  - **Exigences Module 3.2.P (Produit Fini) :** Dépôt obligatoire des dossiers de lots industriels de validation en 3.2.P.3.5 pour la fabrication locale (NF/MF), spécifications à libération et à péremption (3.2.P.5.1).
+  - **Exigences Module 3.2.R (Documentation Régionale Algérienne) :**
+    - `3.2.R.1.1` : Exécution des documents de production (Master Batch Records exécutés).
+    - `3.2.R.1.2` : Documents de production principaux (Formules cadres de fabrication et conditionnement).
+    - `3.2.R.2` : Procédures analytiques et informations de validation sur site.
+  - **Exigences Module 5 (Données Cliniques et Bioéquivalence Génériques) :**
+    - Étude comparative de Biodisponibilité (BA) et Bioéquivalence (BE) in vivo en 5.3.1.2 (intervalle de confiance 90 % compris entre 80,00 % et 125,00 % sur Cmax et AUC).
+    - Validation complète des méthodes bioanalytiques humaines en 5.3.1.4 (BPL/GCP).
+    - Rattachement obligatoire du dossier de justification d'exonération *Biowaiver* en cas d'absence d'étude in vivo (profils de dissolution comparatifs multipoints à pH 1.2, 4.5, 6.8 et classification biopharmaceutique BCS classe I/III en 1.M.P.3 et 5.3.1.2).
+- [ ] Questionnaire de qualification dynamique **Dispositifs Médicaux** (génération automatique de checklist selon le décret exécutif n° 20-324 et l'arrêté du 10 mai 2021).
+- [ ] Liaison dynamique GED ↔ Checklist CTD/DM avec calcul du pourcentage de complétude en temps réel.
+- [ ] **Verrouillage légal strict :** Interdiction de passage au statut *« Validé interne / Prêt pour dépôt ANPP »* si complétude < 100% ou absence de signature électronique légale du Pharmacien Directeur Technique.
 
 ### Jalon 1.6 : Interface Web Haute Densité 'Pharma Explorer' (3 Volets & RTL FR/AR)
 - [ ] Architecture frontend TypeScript / Tailwind CSS / Lucide Icons embarquée via `//go:embed` (zéro serveur Node.js en production).
 - [ ] Layout 'Pharma Explorer' à 3 volets façon Windows Explorer Pro :
   - **Volet gauche (Arbre de navigation) :** Navigation hiérarchique dépliable (les 5 modules CTD, rubriques 1.A/1.H/1.M/1.P, chapitres DM ou branches GED) avec badges compacts de complétude (ex: `(4/4)` en vert, `(2/5)` en rouge).
   - **Zone centrale (Vue détaillée) :** Tableau haute densité (lignes compactes de 32px, 25-30 documents visibles sans scroll), colonnes triables, filtrage instantané.
-  - **Volet droit (Volet de prévisualisation - Alt+P) :** Prévisualisation PDF.js instantanée avec métadonnées d'intégrité SHA-256 et bouton d'action de signature électronique légale DT.
+  - **Volet droit (Volet de prévisualisation - Alt+P) :** Prévisualisation PDF.js instantanée avec métadonnées d'intégrité SHA-256, date de versement, version, bouton d'action de signature électronique légale PDT et téléchargement avec certificat d'intégrité.
 - [ ] Barre d'adresse fil d'Ariane navigable (`📁 Dossiers > ENR-2026-0042 > Module 1 > 1.P`).
+- [ ] Barre d'état inférieure : Nombre d'éléments, pourcentage de complétude globale avec alerte bloquante si incomplète, et jauge d'espace de stockage consommé / quota.
 - [ ] Intégration des polices locales `Cairo` (Arabe) et `Inter` (Français) sans aucun appel CDN externe.
-- [ ] Bascule bilingue dynamique LTR $\leftrightarrow$ RTL (`dir="rtl"`) avec inversion symétrique des 3 volets.
+- [ ] Bascule bilingue dynamique LTR ↔ RTL (`dir="rtl"`) avec inversion symétrique des 3 volets.
 
 ### Jalon 1.7 : Studio de Compléments ANPP & Moteur d'Alertes
 - [ ] Enregistrement des courriers officiels ANPP (date de réception, numéro de référence, motif).
 - [ ] Découpage des questions du courrier en sous-tâches unitaires avec assignation à un responsable (Qualité, R&D, Réglementaire).
 - [ ] Moteur de compte à rebours légal multi-niveaux :
-  - Bandeau d'urgence visuel dans l'application ($J < 30$ jours).
+  - Bandeau d'urgence visuel dans l'application (J < 30 jours).
   - Notifications e-mails programmées (J-180, J-90, J-30, J-7).
   - Escalade automatique vers le Pharmacien Directeur Technique si une échéance critique est non traitée à J-30.
 
@@ -137,7 +180,7 @@ gantt
 - [ ] Fichier `docker-compose.yml` de production (PostgreSQL 16 + conteneur binaire Go Homolog).
 - [ ] Script d'assistant de premier démarrage (Setup Wizard pour configuration du labo et du premier compte DT).
 - [ ] Module d'export / import de l'archive universelle chiffrée `.homolog` (dump base + blobs GED dédupliqués + contrôle SHA-256).
-- [ ] Validation de la réversibilité complète (sauvegarde SaaS $\to$ restauration On-Premise 100% fonctionnelle).
+- [ ] Validation de la réversibilité complète (sauvegarde SaaS  →  restauration On-Premise 100% fonctionnelle).
 
 ---
 
@@ -162,11 +205,23 @@ gantt
   - **Rubriques qualitatives Produit Fini 3.2.P (17 à 34) :** Système d'aromatisation/coloration (17), Masse enrobage/capsules (18.a), Composition formes solides (19 - Mmod/Mmaj), Site de fabrication PF (20.a conditionnement secondaire Mmin, 20.b conditionnement primaire Mmin, 20.c fabrication conventionnelle Mmod), Site de contrôle PF (21.a - Mmin), Taille de lot PF (22 - x10 Mmin, >x10 Mmod), Procédé de fabrication PF (23 - Mmod), Contrôles en cours PF (24), Remplacement excipient risque EST par végétal/synthétique (25 - Mmin), Spécifications/méthodes excipient (26), Monographie pharmacopée PF (27 - Mmin), Spécifications PF (28), Procédures analytiques PF (29), Type de contenant primaire (30 - non stérile Mmod, stérile Mmaj), Composition emballage primaire (31), Durée de conservation PF (32 - Mmod), Durée après première ouverture/reconstitution (33 - Mmod), Conditions de stockage PF (34 - Mmod).
 - [ ] **Moteur d'évaluation des "Conditions à remplir" et Reclassement Automatique (Escalade) :**
   - Questionnaire guidé pour chaque modification sélectionnée vérifiant les critères techniques.
-  - **Algorithme d'escalade :** Dès qu'une condition n'est pas satisfaite, le système reclasse immédiatement la modification (Mmin $\to$ Mmod ou Mmaj, et Mmod $\to$ Mmaj) et recalcule dynamiquement la liste des pièces justificatives obligatoires.
+  - **Algorithme d'escalade :** Dès qu'une condition n'est pas satisfaite, le système reclasse immédiatement la modification (Mmin  →  Mmod ou Mmaj, et Mmod  →  Mmaj) et recalcule dynamiquement la liste des pièces justificatives obligatoires.
 - [ ] **Générateur du Dossier de Modification ANPP (Section 5.3 LD-DEPP07/V01) :**
-  - Production du **Tableau comparatif standardisé** (*État actuel approuvé vs Situation proposée*).
-  - Production du modèle officiel d'**Attestation formelle de non-modification des autres sections**.
-  - Intégration des pièces requises : lettre officielle signée PDT, justificatif technique, bordereau de paiement, copie de la DE en vigueur, accusés de dépôts en cours, approbation du pays d'origine (si importé), autorisations des sites et certificats BPF/BPL.
+  - Production automatique du **Tableau comparatif standardisé** (*État actuel approuvé vs Situation proposée*).
+  - Production automatique du modèle officiel d'**Attestation formelle de non-modification des autres sections**.
+  - Contrôle et agrégation des **12 pièces obligatoires exigées pour toute variation (Section 5.3 du CDC)** :
+    1. Lettre de demande officielle visée par le PDT.
+    2. Tableau comparatif standardisé approuvé vs proposé.
+    3. Justificatif technico-réglementaire motivant le changement.
+    4. Bordereau de versement de la redevance ANPP (+ quittance bancaire).
+    5. Sections modifiées du dossier CTD (remplacement page à page).
+    6. Liste actualisée et visée de tous les intervenants (SA, PF, conditionnement, contrôle).
+    7. Attestation formelle de non-modification des autres sections.
+    8. Copie de la décision d’enregistrement (DE) en vigueur.
+    9. Accusés de dépôt des modifications et renouvellements en cours d'instruction.
+    10. Approbation de la modification dans le pays d'origine (produits importés).
+    11. Autorisations des sites et certificats BPF/BPL en vigueur.
+    12. Informations "produit" révisées (RCP, notice bilingue FR/AR, étiquetage et maquettes couleurs visées PDT).
 - [ ] **Module de Regroupement de Modifications (*Grouping* - Article 09 de l'arrêté du 07/11/2021) :**
   - Création d'une soumission groupée pour un même produit combinant plusieurs modifications interdépendantes.
   - Calcul du niveau de criticité global du groupe (alignement sur la modification la plus sévère du groupe).

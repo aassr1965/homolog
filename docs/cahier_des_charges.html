@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Cahier des charges fonctionnel & technique - Homolog</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 18mm 16mm 20mm 16mm;
+            @top-right {
+                content: "Homolog • Cahier des Charges v1.0";
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                font-size: 8pt;
+                color: #64748b;
+                border-bottom: 1px solid #cbd5e1;
+                padding-bottom: 4px;
+            }
+            @bottom-left {
+                content: "Confidentiel — Direction Affaires Réglementaires & Qualité";
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                font-size: 8pt;
+                color: #94a3b8;
+            }
+            @bottom-right {
+                content: "Page " counter(page);
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                font-size: 8pt;
+                color: #334155;
+                font-weight: 700;
+            }
+        }
+
+        @page:first {
+            margin: 0;
+            @top-right { content: normal; }
+            @bottom-left { content: normal; }
+            @bottom-right { content: normal; }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 9.2pt;
+            line-height: 1.5;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* COVER PAGE */
+        .cover-page {
+            page-break-after: always;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #091e3a 0%, #0d3b66 50%, #082846 100%);
+            color: #ffffff;
+            padding: 60px 50px 50px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::after {
+            content: "";
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(13, 148, 136, 0.28) 0%, rgba(13, 148, 136, 0) 70%);
+            border-radius: 50%;
+        }
+
+        .cover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding-bottom: 25px;
+        }
+
+        .cover-logo {
+            font-size: 26pt;
+            font-weight: 800;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cover-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: #0d9488;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20pt;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+        }
+
+        .cover-tag {
+            background: rgba(13, 148, 136, 0.25);
+            border: 1px solid rgba(13, 148, 136, 0.5);
+            color: #2dd4bf;
+            font-size: 9pt;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cover-main {
+            margin-top: auto;
+            margin-bottom: auto;
+            padding: 20px 0;
+        }
+
+        .cover-title {
+            font-size: 28pt;
+            font-weight: 800;
+            line-height: 1.15;
+            margin: 0 0 16px 0;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .cover-subtitle {
+            font-size: 13pt;
+            font-weight: 400;
+            line-height: 1.45;
+            color: #cbd5e1;
+            margin: 0 0 28px 0;
+            max-width: 92%;
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .meta-label {
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .meta-val {
+            font-size: 9.5pt;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 16px;
+            font-size: 8.5pt;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* TOC */
+        .toc-container {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 24px;
+            margin: 20px 0 30px 0;
+            page-break-after: always;
+        }
+
+        .toc-title {
+            font-size: 15pt;
+            font-weight: 800;
+            color: #0f3a5d;
+            border-bottom: 2px solid #0d9488;
+            padding-bottom: 8px;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+        }
+
+        .toc-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toc-item {
+            font-weight: 700;
+            color: #0f3a5d;
+            font-size: 10pt;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .toc-num {
+            background: #0d9488;
+            color: white;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            font-size: 8.5pt;
+            font-weight: 800;
+        }
+
+        .toc-sub {
+            font-size: 8.5pt;
+            color: #475569;
+            padding-left: 32px;
+            margin-top: -2px;
+        }
+
+        .toc-subnum {
+            font-weight: 600;
+            color: #0d9488;
+            margin-right: 6px;
+        }
+
+        /* HEADINGS */
+        h1, h2, h3, h4 {
+            color: #0f2d4a;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h1 {
+            font-size: 17pt;
+            font-weight: 800;
+            border-bottom: 2.5px solid #0d9488;
+            padding-bottom: 8px;
+            margin-top: 32px;
+            margin-bottom: 14px;
+            color: #0d3b66;
+        }
+
+        h2 {
+            font-size: 12pt;
+            font-weight: 700;
+            border-left: 4.5px solid #0d9488;
+            padding-left: 10px;
+            margin-top: 22px;
+            margin-bottom: 12px;
+            background: linear-gradient(90deg, #f0fdfa 0%, #ffffff 100%);
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+
+        h3 {
+            font-size: 10.5pt;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        h4 {
+            font-size: 9.2pt;
+            font-weight: 700;
+            color: #334155;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 12px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        /* TABLES */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 16px;
+            font-size: 8pt;
+            page-break-inside: avoid;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        th {
+            background: #0f3a5d;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 6px 7px;
+            text-align: left;
+            border: 1px solid #0f3a5d;
+            font-size: 8pt;
+            letter-spacing: 0.2px;
+        }
+
+        td {
+            padding: 5px 6px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 2.5px 6.5px;
+            font-size: 7.2pt;
+            font-weight: 800;
+            border-radius: 4px;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-req {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+
+        .badge-na {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+
+        .badge-fac {
+            background-color: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fde047;
+        }
+
+        .badge-part {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #7dd3fc;
+        }
+
+        .badge-inc {
+            background-color: #f3e8ff;
+            color: #7e22ce;
+            border: 1px solid #d8b4fe;
+        }
+
+        .badge-mmin {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .badge-mmod {
+            background-color: #ffedd5;
+            color: #c2410c;
+            border: 1px solid #fdba74;
+        }
+
+        .badge-mmaj {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+
+        .badge-proc {
+            background-color: #ede9fe;
+            color: #6d28d9;
+            border: 1px solid #c4b5fd;
+        }
+
+        /* CALLOUTS */
+        .callout {
+            margin: 14px 0;
+            border-radius: 8px;
+            border-left: 4.5px solid;
+            padding: 12px 14px;
+            page-break-inside: avoid;
+        }
+
+        .callout-important {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .callout-note {
+            background-color: #f0fdfa;
+            border-color: #0d9488;
+            color: #115e59;
+        }
+
+        .callout-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-size: 8.8pt;
+        }
+
+        .callout-title {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 800;
+        }
+
+        .callout-body p {
+            margin-bottom: 0;
+            color: inherit;
+        }
+
+        /* DIAGRAM CARDS */
+        .diagram-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 14px;
+            margin: 14px 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            page-break-inside: avoid;
+        }
+
+        .diagram-title {
+            font-size: 9pt;
+            font-weight: 800;
+            color: #0f3a5d;
+            text-align: center;
+            letter-spacing: 0.5px;
+            border-bottom: 1.5px solid #0d9488;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+        }
+
+        .diagram-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .diagram-col {
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .princeps-col {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+        }
+
+        .generic-col {
+            background: #f0fdfa;
+            border: 1px solid #99f6e4;
+        }
+
+        .diagram-badge {
+            font-size: 7.8pt;
+            font-weight: 800;
+            padding: 3px 6px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 2px;
+            letter-spacing: 0.4px;
+        }
+
+        .badge-princeps {
+            background: #0284c7;
+            color: white;
+        }
+
+        .badge-generic {
+            background: #0d9488;
+            color: white;
+        }
+
+        .diagram-step {
+            font-size: 7.8pt;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            padding: 4px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .diagram-footer {
+            font-size: 7.2pt;
+            font-style: italic;
+            text-align: center;
+            color: #475569;
+            margin-top: 4px;
+        }
+
+        /* ESCALATION FLOW */
+        .escalation-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flow-box {
+            width: 85%;
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        .main-box {
+            background: #eff6ff;
+            border: 1.5px solid #3b82f6;
+        }
+
+        .eval-box {
+            background: #fefce8;
+            border: 1.5px solid #eab308;
+        }
+
+        .flow-label {
+            font-size: 8.2pt;
+            font-weight: 800;
+            color: #1e3a8a;
+            letter-spacing: 0.4px;
+        }
+
+        .flow-desc {
+            font-size: 7.8pt;
+            color: #475569;
+            margin-top: 1px;
+        }
+
+        .flow-arrow {
+            font-size: 12pt;
+            color: #0d9488;
+            font-weight: bold;
+        }
+
+        .flow-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            margin-top: 2px;
+        }
+
+        .flow-branch {
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .branch-success {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+        }
+
+        .branch-warning {
+            background: #fff1f2;
+            border: 1.5px dashed #f43f5e;
+        }
+
+        .branch-status {
+            font-size: 7.8pt;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .branch-card {
+            background: white;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 7.6pt;
+            text-align: center;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* MOCKUP CARD */
+        .mockup-window {
+            background: #ffffff;
+            border: 1px solid #94a3b8;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .mockup-header {
+            background: #1e293b;
+            color: #f1f5f9;
+            padding: 5px 10px;
+            font-size: 7.2pt;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: monospace;
+        }
+
+        .mockup-dots {
+            color: #64748b;
+            font-size: 8.5pt;
+        }
+
+        .mockup-body {
+            display: grid;
+            grid-template-columns: 28% 44% 28%;
+            min-height: 190px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .mockup-pane {
+            padding: 7px;
+            font-size: 7.2pt;
+        }
+
+        .mockup-tree {
+            background: #f8fafc;
+            border-right: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .pane-title {
+            font-size: 6.8pt;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 2px;
+        }
+
+        .tree-item {
+            font-weight: bold;
+            color: #0f3a5d;
+        }
+
+        .tree-sub {
+            padding-left: 8px;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .sub-open {
+            color: #0d9488;
+        }
+
+        .tree-leaf {
+            padding-left: 16px;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge-mini {
+            font-size: 6.2pt;
+            font-weight: 700;
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+
+        .badge-mini.ok {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-mini.alert {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .mockup-table {
+            border-right: 1px solid #cbd5e1;
+            padding: 5px;
+        }
+
+        .inner-mockup-table {
+            width: 100%;
+            font-size: 6.8pt;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        .inner-mockup-table th {
+            padding: 3px;
+            font-size: 6.8pt;
+            background: #334155;
+        }
+
+        .inner-mockup-table td {
+            padding: 2.5px 4px;
+            font-size: 6.8pt;
+        }
+
+        .mockup-preview {
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .preview-box {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 7px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .preview-thumb {
+            background: #e0f2fe;
+            border: 1px dashed #0284c7;
+            border-radius: 4px;
+            padding: 10px 4px;
+            text-align: center;
+            font-weight: bold;
+            color: #0369a1;
+            font-size: 7.2pt;
+        }
+
+        .preview-meta {
+            font-size: 6.5pt;
+            color: #475569;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .preview-btn {
+            background: #0d9488;
+            color: white;
+            padding: 3.5px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 6.8pt;
+            font-weight: bold;
+        }
+
+        .mockup-status {
+            background: #f1f5f9;
+            padding: 3.5px 10px;
+            font-size: 6.8pt;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        /* CODE & PRE */
+        pre {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+            font-size: 7.8pt;
+            overflow-x: auto;
+            margin: 10px 0;
+            page-break-inside: avoid;
+            border: 1px solid #1e293b;
+        }
+
+        code {
+            font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 8pt;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+        }
+    </style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover-page">
+    <div class="cover-header">
+        <div class="cover-logo">
+            <div class="cover-logo-icon">H</div>
+            <span>HOMOLOG</span>
+        </div>
+        <div class="cover-tag">Conformité Réglementaire ANPP</div>
+    </div>
+
+    <div class="cover-main">
+        <h1 class="cover-title">Cahier des Charges Fonctionnel & Technique</h1>
+        <p class="cover-subtitle">Plateforme collaborative de gestion de l'enregistrement des médicaments, de l'homologation des dispositifs médicaux et GED pharmaceutique en Algérie</p>
+
+        <div class="cover-meta-grid">
+            <div class="meta-item">
+                <span class="meta-label">Version du document</span>
+                <span class="meta-val">Version 1.0 (Harmonisation Officielle ANPP)</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Date d'édition</span>
+                <span class="meta-val">Novembre 2026</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Référentiel CTD</span>
+                <span class="meta-val">Guide ANPP CTD (DEPP v01 - Juillet 2025)</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Référentiel Variations</span>
+                <span class="meta-val">Ligne Directrice LD-DEPP07/V01 (Avril 2026)</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Conformité Qualité & Audit</span>
+                <span class="meta-val">BPF / 21 CFR Part 11 / ALCOA+</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Architecture Cible</span>
+                <span class="meta-val">Go 1.26+ • PostgreSQL 16+ • CAS SHA-256</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="cover-footer">
+        <span>République Algérienne Démocratique et Populaire • Ministère de l'Industrie Pharmaceutique</span>
+        <span>Diffusion Restreinte — Usage Professionnel</span>
+    </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+
+<div class="toc-container">
+    <div class="toc-title">TABLE DES MATIÈRES</div>
+    <div class="toc-grid">
+        <div class="toc-item"><span class="toc-num">1</span> <span class="toc-text">Contexte, Cadre Juridique et Objectifs Stratégiques</span></div>
+        <div class="toc-sub"><span class="toc-subnum">1.1</span> Cadre Réglementaire Algérien (ANPP / MIPH)</div>
+        <div class="toc-sub"><span class="toc-subnum">1.2</span> Objectifs Stratégiques de la Plateforme « Homolog »</div>
+        
+        <div class="toc-item"><span class="toc-num">2</span> <span class="toc-text">Typologie des Procédures et Matrice CTD ANPP (Guide Juillet 2025)</span></div>
+        <div class="toc-sub"><span class="toc-subnum">2.1</span> Les 6 Parcours Officiels de Soumission (NI, RI, MI, NF, RF, MF)</div>
+        <div class="toc-sub"><span class="toc-subnum">2.2</span> Structure des 5 Modules CTD selon le Type d'Origine (Princeps vs Générique)</div>
+
+        <div class="toc-item"><span class="toc-num">3</span> <span class="toc-text">Spécification Exhaustive du Module 1 (Spécificités ANPP Algérie)</span></div>
+        <div class="toc-sub"><span class="toc-subnum">3.1</span> Sous-Module 1.A : APPLICANT (Demandeur & Établissement)</div>
+        <div class="toc-sub"><span class="toc-subnum">3.2</span> Sous-Module 1.H : HOLDER (Détenteur de la DE)</div>
+        <div class="toc-sub"><span class="toc-subnum">3.3</span> Sous-Module 1.M : MANUFACTURERS (Fabricants SA & Produit Fini)</div>
+        <div class="toc-sub"><span class="toc-subnum">3.4</span> Sous-Module 1.P : PRODUCT INFORMATION (Informations Produit & Contrôle)</div>
+
+        <div class="toc-item"><span class="toc-num">4</span> <span class="toc-text">Modules Techniques CTD 2, 3, 4 et 5 (Exigences et Spécificités Régionales)</span></div>
+        <div class="toc-sub"><span class="toc-subnum">4.1</span> Module 3 : Qualité Pharmaceutique, Chimique et Biologique</div>
+        <div class="toc-sub"><span class="toc-subnum">4.2</span> Module 5 : Données Cliniques et Bioéquivalence</div>
+
+        <div class="toc-item"><span class="toc-num">5</span> <span class="toc-text">Moteur Intelligent des Modifications (Ligne Directrice LD-DEPP07/V01)</span></div>
+        <div class="toc-sub"><span class="toc-subnum">5.1</span> Cadre Conceptuel et Règle d'Escalade Dynamique (Mmin, Mmod, Mmaj)</div>
+        <div class="toc-sub"><span class="toc-subnum">5.2</span> Regroupement de Modifications (Grouping - Arrêté du 07/11/2021)</div>
+        <div class="toc-sub"><span class="toc-subnum">5.3</span> Documentation Générale Requise pour TOUTE Demande de Modification</div>
+        <div class="toc-sub"><span class="toc-subnum">5.4</span> Référentiel des 34 Rubriques de Modifications Réglementaires</div>
+
+        <div class="toc-item"><span class="toc-num">6</span> <span class="toc-text">Architecture Technique et Ergonomie « Pharma Explorer »</span></div>
+        <div class="toc-sub"><span class="toc-subnum">6.1</span> Stack Technologique Native et Souveraine (Go / PostgreSQL / CAS)</div>
+        <div class="toc-sub"><span class="toc-subnum">6.2</span> Modèle Ergonomique « Pharma Explorer » à 3 Volets & Bilinguisme RTL</div>
+
+        <div class="toc-item"><span class="toc-num">7</span> <span class="toc-text">Sécurité, Rôles et Conformité 21 CFR Part 11 / BPF</span></div>
+        <div class="toc-sub"><span class="toc-subnum">7.1</span> Matrice des Rôles Stricts (9 Profils)</div>
+        <div class="toc-sub"><span class="toc-subnum">7.2</span> Signature Électronique Légale et Intégrité ALCOA+</div>
+
+        <div class="toc-item"><span class="toc-num">8</span> <span class="toc-text">Taxonomie du Coffre-Fort GED Pharmaceutique (Standard BPF)</span></div>
+
+        <div class="toc-item"><span class="toc-num">9</span> <span class="toc-text">Conclusion et Validation</span></div>
+    </div>
+</div>
+<div class="page-break"></div>
+
+
+<!-- CONTENT -->
+<div class="content-container">
+<h1 id="cahier-des-charges-fonctionnel-technique-detaille">Cahier des charges fonctionnel &amp; technique détaillé</h1>
+<h2 id="plateforme-collaborative-de-gestion-de-lenregistrement-des-medicaments-de-lhomologation-des-dispositifs-medicaux-et-ged-pharmaceutique-en-algerie">Plateforme collaborative de gestion de l'enregistrement des médicaments, de l'homologation des dispositifs médicaux et GED pharmaceutique en Algérie</h2>
+<p><strong>Version :</strong> 1.0 (Harmonisation Réglementaire ANPP &amp; Lignes Directrices Officielles) — Novembre 2026.<br />
+<strong>Documents sources et référentiels officiels de l'ANPP intégrés :</strong>
+1. <strong>Guide pour la soumission du Dossier Technique Commun (CTD)</strong> destiné à l'enregistrement des produits pharmaceutiques à usage humain (DEPP/ANPP, Version 01, Date d'effet : 31/07/2025).
+2. <strong>Ligne directrice relative aux modifications des décisions d’enregistrement</strong> des produits pharmaceutiques à usage de la médecine humaine (Code : <code>LD-DEPP07/V01</code>, Version 01, Date : 22/04/2026).
+3. <strong>Décret exécutif n° 20-325</strong> du 22 novembre 2020 relatif aux modalités d'enregistrement des produits pharmaceutiques.
+4. <strong>Arrêté du 26 Safar 1443 (3 octobre 2021)</strong> fixant les modalités de modification de la décision d'enregistrement des produits pharmaceutiques à usage humain.
+5. <strong>Arrêté du 07 novembre 2021</strong> (Notamment article 09 régissant le regroupement des modifications - <em>Grouping</em>).
+6. <strong>Décret exécutif n° 20-324</strong> et <strong>Arrêté du 10 mai 2021</strong> fixant les modalités d'homologation des dispositifs médicaux (DM).</p>
+<hr />
+<h2 id="1-contexte-cadre-juridique-et-objectifs-strategiques">1. Contexte, Cadre Juridique et Objectifs Stratégiques</h2>
+<h3 id="11-contexte-reglementaire-algerien">1.1 Contexte Réglementaire Algérien</h3>
+<p>En Algérie, la mise sur le marché d'un médicament à usage de la médecine humaine est soumise à l'obtention d'une <strong>Décision d'Enregistrement (DE)</strong>, délivrée après évaluation technique, pharmaceutique, biologique, préclinique et clinique par la <strong>Direction de l'Enregistrement des Produits Pharmaceutiques de l'Agence Nationale des Produits Pharmaceutiques (ANPP/DEPP)</strong>. De même, les dispositifs médicaux (DM) et dispositifs médicaux de diagnostic in vitro (DMDIV) sont assujettis à une <strong>Décision d'Homologation</strong>.</p>
+<p>Deux textes fondamentaux publiés par l'ANPP structurent l'ensemble du cycle de vie des médicaments :
+1. <strong>Le Guide CTD ANPP (Juillet 2025) :</strong> Instaure l'exigence du format CTD (Common Technical Document - Modules 1 à 5) pour toute soumission d'enregistrement initial, de renouvellement quinquennal et de variation, en formalisant les exigences spécifiques pour les produits princeps (innovateurs), génériques importés et génériques fabriqués localement.
+2. <strong>La Ligne Directrice des Modifications LD-DEPP07/V01 (Avril 2026) :</strong> Établit la nomenclature algérienne des modifications post-enregistrement en trois classes rigoureuses : <strong>Modification Mineure (Mmin)</strong>, <strong>Modification Modérée (Mmod)</strong> et <strong>Modification Majeure (Mmaj)</strong>, rompant définitivement avec les terminologies étrangères obsolètes (Types IA/IB/II européens). Elle formalise également le principe de reclassement automatique en cas de non-respect d'une condition et la possibilité de regroupement de modifications (<em>Grouping</em>, article 09 de l'arrêté du 07/11/2021).</p>
+<h3 id="12-objectifs-de-la-plateforme-homolog">1.2 Objectifs de la Plateforme "Homolog"</h3>
+<ul>
+<li><strong>Centraliser et piloter le cycle de vie complet 360°</strong> de tous les dossiers d'enregistrement de médicaments et d'homologation de DM au sein d'une instance unique.</li>
+<li><strong>Assurer la conformité native au format CTD ANPP 2025</strong> : instancier automatiquement les checklists et arborescences selon le type de produit (Princeps, Générique importé, Générique local) et le type de procédure (<strong>NI</strong>, <strong>RI</strong>, <strong>MI</strong>, <strong>NF</strong>, <strong>RF</strong>, <strong>MF</strong>).</li>
+<li><strong>Intégrer un Coffre-Fort GED Pharmaceutique (Standard BPF / ALCOA+)</strong> garantissant l'intégrité, la gestion des versions (mineures/majeures), les circuits d'approbation et la signature électronique légale du Directeur Technique.</li>
+<li><strong>Intégrer un Moteur Intelligent de Variations (LD-DEPP07/V01)</strong> : détecter l'impact d'une modification documentaire, qualifier le type de modification (Mmin, Mmod, Mmaj) parmi les 34 rubriques réglementaires, vérifier les conditions, exécuter le reclassement dynamique et générer automatiquement le dossier complet de modification (avec tableau comparatif <em>État actuel vs Proposé</em> et attestation de non-modification des autres sections).</li>
+<li><strong>Anticiper les échéances critiques et péremptions</strong> : renouvellements quinquennaux à J-180/J-90, réponses aux compléments ANPP avec compte à rebours légal, expiration des certificats BPF, CEP et licences d'exploitation.</li>
+<li><strong>Garantir la souveraineté numérique et la flexibilité hybride</strong> : déployable en mode On-Premise 100 % hors-ligne (en intranet sécurisé de laboratoire) ou en mode Cloud SaaS souverain multi-tenant avec réversibilité absolue via l'archive chiffrée <code>.homolog</code>.</li>
+<li><strong>Offrir une ergonomie "Pharma Explorer" haute densité</strong> : navigation 3 volets inspirée de Windows Explorer Pro, affichage compact (32px par ligne), volet de prévisualisation PDF instantané et bilinguisme intégral FR/AR avec support RTL natif.</li>
+</ul>
+<hr />
+<h2 id="2-typologie-des-procedures-et-matrice-ctd-anpp-guide-juillet-2025">2. Typologie des Procédures et Matrice CTD ANPP (Guide Juillet 2025)</h2>
+<h3 id="21-les-6-parcours-officiels-de-soumission">2.1 Les 6 Parcours Officiels de Soumission</h3>
+<p>La plateforme distingue nativement les six codes de procédure définis par l'ANPP :</p>
+<table>
+<thead>
+<tr>
+<th>Code ANPP</th>
+<th>Intitulé officiel de la procédure</th>
+<th>Portée</th>
+<th>Périmètre documentaire principal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NI</strong></td>
+<td><strong>Enregistrement Initial d’un produit Importé</strong></td>
+<td>Médicaments fabriqués à l'étranger importés en Algérie</td>
+<td>Dossier CTD complet + CPP + Prix FOB Chambre Commerce + Benchmark</td>
+</tr>
+<tr>
+<td><strong>RI</strong></td>
+<td><strong>Renouvellement de la DE d'un produit Importé</strong></td>
+<td>Renouvellement quinquennal d'un produit importé</td>
+<td>Module 1 actualisé + Déclaration de non-modification + BPF/CPP à jour</td>
+</tr>
+<tr>
+<td><strong>MI</strong></td>
+<td><strong>Modification d’un produit Importé</strong></td>
+<td>Variations administratives ou qualitatives</td>
+<td>Dossier de modification ciblé + Approbation pays d'origine + Sections CTD modifiées</td>
+</tr>
+<tr>
+<td><strong>NF</strong></td>
+<td><strong>Enregistrement Initial d’un produit Fabriqué localement</strong></td>
+<td>Médicaments produits sur un site industriel national</td>
+<td>CTD complet + Structure de prix PCSU + Dossiers lots validation + Non-commercialisation</td>
+</tr>
+<tr>
+<td><strong>RF</strong></td>
+<td><strong>Renouvellement de la DE d’un produit Fabriqué localement</strong></td>
+<td>Renouvellement quinquennal production locale</td>
+<td>Module 1 + Déclaration de non-modification + BPF national + Revue qualité produit</td>
+</tr>
+<tr>
+<td><strong>MF</strong></td>
+<td><strong>Modification d’un produit Fabriqué localement</strong></td>
+<td>Variations administratives ou techniques locales</td>
+<td>Dossier de variation ciblé + Données comparatives de lots/stabilité + Sections CTD</td>
+</tr>
+</tbody>
+</table>
+<h3 id="22-structure-des-5-modules-ctd-selon-le-type-dorigine">2.2 Structure des 5 Modules CTD selon le Type d'Origine</h3>
+<p>Conformément au tableau récapitulatif officiel de l'ANPP :</p>
+<div class="diagram-card">
+    <div class="diagram-title">STRUCTURE COMPARATIVE DU DOSSIER CTD ANPP (GUIDE JUILLET 2025)</div>
+    <div class="diagram-grid-2">
+        <div class="diagram-col princeps-col">
+            <div class="diagram-badge badge-princeps">PRODUIT PRINCEPS (INNOVATEUR)</div>
+            <div class="diagram-step"><span class="badge badge-req">E</span> <strong>Module 1 :</strong> Renseignements administratifs nationaux</div>
+            <div class="diagram-step"><span class="badge badge-req">E</span> <strong>Module 2 :</strong> Résumés et synthèses (2.1 à 2.7)</div>
+            <div class="diagram-step"><span class="badge badge-req">E</span> <strong>Module 3 :</strong> Qualité (Substance active & Produit fini)</div>
+            <div class="diagram-step"><span class="badge badge-req">E</span> <strong>Module 4 :</strong> Rapports d'études non cliniques</div>
+            <div class="diagram-step"><span class="badge badge-req">E</span> <strong>Module 5 :</strong> Rapports d'études cliniques complètes</div>
+            <div class="diagram-footer">Modules 1 à 5 obligatoires et exhaustifs</div>
+        </div>
+        <div class="diagram-col generic-col">
+            <div class="diagram-badge badge-generic">PRODUIT GÉNÉRIQUE (IMPORTÉ OU LOCAL)</div>
+            <div class="diagram-step"><span class="badge badge-req">E</span> <strong>Module 1 :</strong> Exigences administratives algériennes</div>
+            <div class="diagram-step"><span class="badge badge-inc">Incorporé</span> <strong>Module 2 :</strong> Directement intégré aux Modules 3, 4 et 5</div>
+            <div class="diagram-step"><span class="badge badge-req">E</span> <strong>Module 3 :</strong> Qualité (Identique princeps + validation locale)</div>
+            <div class="diagram-step"><span class="badge badge-fac">F</span> <strong>Module 4 :</strong> Facultatif (sur demande motivée ANPP)</div>
+            <div class="diagram-step"><span class="badge badge-part">P</span> <strong>Module 5 :</strong> Partiellement requis (Bioéquivalence & Bioanalyse)</div>
+            <div class="diagram-footer">Démonstration stricte de la bioéquivalence ou Biowaiver</div>
+        </div>
+    </div>
+</div>
+
+<ul>
+<li><strong>Règle Princeps :</strong> Modules 1, 2, 3, 4 et 5 obligatoirement exigés (<code>E</code>).</li>
+<li><strong>Règle Générique :</strong></li>
+<li><strong>Module 1 :</strong> Exigé (<code>E</code>) dans son intégralité selon les exigences algériennes.</li>
+<li><strong>Module 2 :</strong> Non requis sous forme de classeurs isolés 2.1 à 2.7 ; les résumés et synthèses sont directement incorporés dans les modules 3, 4 et 5.</li>
+<li><strong>Module 3 :</strong> Exigé (<code>E</code>) à l'identique d'un princeps (Substance Active 3.2.S, Produit Fini 3.2.P, Documentation régionale 3.2.R).</li>
+<li><strong>Module 4 :</strong> Facultatif (<code>F</code>) : non requis lors de la soumission initiale, mais l'ANPP se réserve formellement le droit d'exiger des données de toxicité ou pharmacologie si des impuretés nouvelles ou des excipients nouveaux apparaissent.</li>
+<li><strong>Module 5 :</strong> Partiellement requis (<code>P</code>) : focalisé impérativement sur la démonstration de la bioéquivalence (5.3.1.2) ou son exonération légitime (<em>Biowaiver</em> justifié en 1.M.P.3), les méthodes bioanalytiques humaines (5.3.1.4), et la tolérance clinique.</li>
+</ul>
+<hr />
+<h2 id="3-specification-exhaustive-du-module-1-specificites-anpp-algerie">3. Spécification Exhaustive du Module 1 (Spécificités ANPP Algérie)</h2>
+<p>Le Module 1 est découpé en quatre sous-sections normalisées (<code>1.A</code>, <code>1.H</code>, <code>1.M</code>, <code>1.P</code>). Chaque pièce possède un identifiant strict, un titre légal et des conditions d'exigibilité selon le vecteur de soumission (NI, RI, MI, NF, RF, MF) :</p>
+<h3 id="31-sous-module-1a-applicant-demandeur-etablissement">3.1 Sous-Module 1.A : APPLICANT (Demandeur &amp; Établissement)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Règles métier de validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.A.1</strong></td>
+<td>Récépissé de dépôt du dossier</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Document scanné avec numéro d'enregistrement ANPP et horodatage</td>
+</tr>
+<tr>
+<td><strong>1.A.2</strong></td>
+<td>Courrier de demande officiel</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>À en-tête du laboratoire, signé par le Pharmacien Directeur Technique</td>
+</tr>
+<tr>
+<td><strong>1.A.3</strong></td>
+<td>Formulaire de demande parafé, daté, signé et cacheté par le PDT</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Formulaire officiel ANPP, paraphes sur chaque page, signature et cachet DT</td>
+</tr>
+<tr>
+<td><strong>1.A.4</strong></td>
+<td>Bordereau de versement + document bancaire / quittance ou autres + Attestation de taux de change si applicable</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Preuve de paiement des redevances réglementaires, attestation de change Banque d'Algérie si devises</td>
+</tr>
+<tr>
+<td><strong>1.A.5</strong></td>
+<td>Copie de la réponse à la demande de pré-soumission (+ copie justificatif de paiement + BV)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Obligatoire pour NI, MI, NF, MF. Accord formel de pré-soumission de l'ANPP</td>
+</tr>
+<tr>
+<td><strong>1.A.6</strong></td>
+<td>Agrément d'exploitation / Fabrication / Sous-traitance</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Agrément en cours de validité délivré par le Ministère de l'Industrie Pharmaceutique</td>
+</tr>
+<tr>
+<td><strong>1.A.7</strong></td>
+<td>Décision d'exercice du Pharmacien Directeur Technique (PDT)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Décision ministérielle nominative nommant le DT responsable</td>
+</tr>
+<tr>
+<td><strong>1.A.8</strong></td>
+<td>Copie des Contrats (exploitation, façonnage, sous-traitance et tout autre accord qualité)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Contrats liant le demandeur aux différents sites et détenteurs</td>
+</tr>
+<tr>
+<td><strong>1.A.9</strong></td>
+<td>Copie(s) de la DE, des approbations et des accusés des anciens dépôts (récépissés, notifications, paiements antérieurs)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Historique complet indispensable pour les renouvellements et variations</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-sous-module-1h-holder-detenteur-de-la-decision-denregistrement">3.2 Sous-Module 1.H : HOLDER (Détenteur de la Décision d'Enregistrement)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Règles métier de validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.H.1</strong></td>
+<td>Courrier de demande du détenteur</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Courrier officiel autorisant le demandeur local à déposer</td>
+</tr>
+<tr>
+<td><strong>1.H.2</strong></td>
+<td>Autorisation de Mise sur le Marché (original ou copie certifiée conforme)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>AMM délivrée dans le pays d'origine par l'autorité compétente</td>
+</tr>
+<tr>
+<td><strong>1.H.3</strong></td>
+<td>Certificat de Produit Pharmaceutique (CPP - Modèle OMS)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>CPP légalisé/apostillé conforme au modèle de certification OMS</td>
+</tr>
+<tr>
+<td><strong>1.H.4</strong></td>
+<td>Structure de prix (PCSU Fabrication) / Attestation de prix FOB Algérie visée Chambre de Commerce</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Structure PCSU (Prix de Revient/Sortie Usine) pour le local (NF/RF/MF) ; Attestation FOB visée pour l'import (NI/RI/MI)</td>
+</tr>
+<tr>
+<td><strong>1.H.5</strong></td>
+<td>Dossier BENCHMARK de prix international</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td>Comparatif de prix dans les pays de référence (obligatoire pour importations)</td>
+</tr>
+<tr>
+<td><strong>1.H.6</strong></td>
+<td>Approbation de la variation par le pays d'origine</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Preuve que la modification est approuvée dans le pays d'origine (ou justification)</td>
+</tr>
+<tr>
+<td><strong>1.H.7</strong></td>
+<td>Descriptif de la mise à jour signé</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Document de synthèse expliquant le rationnel technico-réglementaire</td>
+</tr>
+<tr>
+<td><strong>1.H.8</strong></td>
+<td>Liste des sites intervenants dans la fabrication des substances actives et du produit fini (signée et visée)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Cartographie exhaustive des sites (SA, intermédiaires, PF, conditionnement, contrôle)</td>
+</tr>
+<tr>
+<td><strong>1.H.9</strong></td>
+<td>Déclaration de similarité</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td>Attestation certifiant la similarité de composition et procédé</td>
+</tr>
+<tr>
+<td><strong>1.H.10</strong></td>
+<td>Déclaration de non-modification</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td>Attestation formelle certifiant qu'aucune modification non autorisée n'a été opérée</td>
+</tr>
+<tr>
+<td><strong>1.H.11</strong></td>
+<td>Accord du détenteur actuel sur le transfert de la DE</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Requis si la variation implique un transfert de titulaire de la DE</td>
+</tr>
+<tr>
+<td><strong>1.H.12</strong></td>
+<td>Attestation de déclaration de la date d’implémentation de la variation dans le pays d’origine</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td>Engagement sur la date de bascule industrielle dans le pays d'origine</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-sous-module-1m-manufacturers-fabricants-sa-et-produit-fini">3.3 Sous-Module 1.M : MANUFACTURERS (Fabricants SA et Produit Fini)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th>Cible</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Exigences techniques clés</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.M.S.1</strong></td>
+<td>Agrément(s) du/des site(s) de fabrication SA (Manufacturing License)</td>
+<td>API / SA</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Licence de fabrication officielle de l'usine d'API</td>
+</tr>
+<tr>
+<td><strong>1.M.S.2</strong></td>
+<td>Certificat(s) BPF/GMP de conformité aux Bonnes Pratiques de Fabrication de la SA</td>
+<td>API / SA</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Certificat GMP valide émis par autorité compétente</td>
+</tr>
+<tr>
+<td><strong>1.M.S.3</strong></td>
+<td>Lettre d’accès / Certificate of Suitability (CEP)</td>
+<td>API / SA</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>CEP EDQM valide avec déclaration d'accès nominative au nom du fabricant du FPP</td>
+</tr>
+<tr>
+<td><strong>1.M.P.1</strong></td>
+<td>Agrément d’ouverture d'établissement pharmaceutique (ML)</td>
+<td>FPP (PF)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Licence d'établissement pour le fabricant du produit fini</td>
+</tr>
+<tr>
+<td><strong>1.M.P.2</strong></td>
+<td>Certificat(s) de conformité BPF/GMP du produit fini</td>
+<td>FPP (PF)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Certificat BPF valide pour toutes les étapes de fabrication et conditionnement</td>
+</tr>
+<tr>
+<td><strong>1.M.P.3</strong></td>
+<td>Étude de bioéquivalence OU justificatif d’exonération de l'étude (Biowaiver)</td>
+<td>FPP (PF)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td>Rapport clinique BE in vivo ou justification scientifique robuste (BCS classe I/III)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-sous-module-1p-product-information-informations-sur-le-produit-controle">3.4 Sous-Module 1.P : PRODUCT INFORMATION (Informations sur le Produit &amp; Contrôle)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Règles métier et contraintes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.P.1</strong></td>
+<td><strong>Textes officiels pays d'origine :</strong><br>• 1.P.1.1 RCP d'origine<br>• 1.P.1.2 Notice d'origine<br>• 1.P.1.3 Étiquette d'origine</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Documents approuvés dans le pays exportateur ou de référence</td>
+</tr>
+<tr>
+<td><strong>1.P.2</strong></td>
+<td><strong>Modèle Algérie (visé obligatoirement par le PDT) :</strong><br>• 1.P.2.1 RCP Modèle Algérie<br>• 1.P.2.2 Notice Modèle Algérie (Bilingue FR/AR)<br>• 1.P.2.3 Étiquette Modèle Algérie<br>• 1.P.2.4 Maquette Modèle Algérie (Conditionnement primaire &amp; secondaire)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Textes conformes à la réglementation algérienne (notamment arabe obligatoire), maquettes en couleurs à échelle 100%, visées par le DT</td>
+</tr>
+<tr>
+<td><strong>1.P.3</strong></td>
+<td>Échantillons du produit fini</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Enregistrement de la remise physique au laboratoire de contrôle de l'ANPP</td>
+</tr>
+<tr>
+<td><strong>1.P.4</strong></td>
+<td>Bulletin d'analyse de la substance active (avec granulométrie et polymorphisme) et son recontrôle</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>CoA du fabricant SA + bulletin de recontrôle complet par le fabricant du produit fini</td>
+</tr>
+<tr>
+<td><strong>1.P.5</strong></td>
+<td>Bulletin d’analyse du produit fini (et bulletin du prémix le cas échéant)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Certificat d'analyse libératoire complet conforme aux spécifications</td>
+</tr>
+<tr>
+<td><strong>1.P.6</strong></td>
+<td>Attestation de correspondance entre les lots</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Traçabilité entre le lot soumis, le lot de bioéquivalence et les lots de stabilité</td>
+</tr>
+<tr>
+<td><strong>1.P.7</strong></td>
+<td>Certificat de libération de lot (précisant la libération pays d'origine / pays tiers)</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td>Certificat officiel de libération par la personne qualifiée (QP/DT)</td>
+</tr>
+<tr>
+<td><strong>1.P.8</strong></td>
+<td>Lettre d’engagement de non-commercialisation des lots de validation</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td><strong>Spécifique Fabrication Locale (NF/MF) :</strong> Engagement formel signé du DT à ne pas commercialiser les lots industriels de validation avant l'obtention de la DE</td>
+</tr>
+<tr>
+<td><strong>1.P.9</strong></td>
+<td>Lettre d’engagement du demandeur à compléter les résultats des études de stabilité du PF</td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-na">NA</span></td>
+<td style="text-align: center;" class="text-center"><span class="badge badge-req">E</span></td>
+<td><strong>Spécifique Fabrication Locale (NF/MF) :</strong> Engagement à poursuivre les stabilités en temps réel (Zone IVa/IVb) et transmettre les résultats à l'ANPP</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-modules-techniques-ctd-2-3-4-et-5-exigences-et-specificites-regionales">4. Modules Techniques CTD 2, 3, 4 et 5 (Exigences et Spécificités Régionales)</h2>
+<h3 id="41-module-3-qualite-pharmaceutique-chimique-et-biologique">4.1 Module 3 : Qualité Pharmaceutique, Chimique et Biologique</h3>
+<p>Le Module 3 est obligatoire (<code>E</code>) pour toutes les catégories (Princeps, Génériques importés, Génériques locaux). Le système intègre des contrôles stricts sur les éléments critiques imposés par l'ANPP :
+1. <strong>Partie 3.2.S (Substance Active) :</strong>
+   - Acceptabilité formelle du <strong>CEP (Certificat de conformité à la Pharmacopée Européenne)</strong> : la présence d'un CEP valide avec sa déclaration d'accès et ses annexes allège la documentation technique requise tout en garantissant la conformité analytique.
+   - Contrôle obligatoire du <strong>polymorphisme cristallin</strong> et de la <strong>granulométrie</strong> (taille des particules) en 3.2.S.1.3 et 3.2.S.4.
+2. <strong>Partie 3.2.P (Produit Fini) :</strong>
+   - <strong>Exigence spécifique fabrication locale (3.2.P.3.5) :</strong> Dépôt obligatoire des dossiers complets de fabrication et de conditionnement des <strong>lots industriels de validation</strong> exécutés sur le site national.
+   - Spécifications complètes à libération et à péremption (3.2.P.5.1).
+3. <strong>Partie 3.2.R (Informations Régionales Algériennes) :</strong>
+   - <code>3.2.R.1.1</code> : Exécution des documents de production (Master Batch Records exécutés).
+   - <code>3.2.R.1.2</code> : Documents de production principaux (Formules cadres de fabrication et conditionnement).
+   - <code>3.2.R.2</code> : Procédures analytiques et informations de validation sur site.</p>
+<h3 id="42-module-5-donnees-cliniques-et-bioequivalence">4.2 Module 5 : Données Cliniques et Bioéquivalence</h3>
+<p>Pour les médicaments génériques (importés et locaux), le moteur de checklist conditionne la recevabilité du dossier aux exigences suivantes :
+- <strong>5.3.1.2 Étude comparative de Biodisponibilité (BA) et Bioéquivalence (BE) :</strong> Rapport complet de l'étude clinique in vivo démontrant la bioéquivalence du produit candidat vis-à-vis du produit princeps de référence (intervalle de confiance 90 % compris entre 80,00 % et 125,00 % sur Cmax et AUC).
+- <strong>5.3.1.4 Méthodes bioanalytiques et analytiques :</strong> Validation complète selon les lignes directrices internationales (BPL/GCP).
+- <strong>Justification d'exonération (Biowaiver) :</strong> En cas d'absence d'étude in vivo, rattachement obligatoire d'un dossier justificatif complet en 1.M.P.3 et 5.3.1.2 (profils de dissolution comparatifs multipoints à pH 1.2, 4.5, 6.8 et classification biopharmaceutique BCS).</p>
+<hr />
+<h2 id="5-moteur-intelligent-des-modifications-ligne-directrice-anpp-ld-depp07v01">5. Moteur Intelligent des Modifications (Ligne Directrice ANPP LD-DEPP07/V01)</h2>
+<h3 id="51-cadre-conceptuel-et-regle-descalade-dynamique">5.1 Cadre Conceptuel et Règle d'Escalade Dynamique</h3>
+<p>L'ANPP classe toute modification post-approbation de la décision d'enregistrement en trois catégories exclusives :
+1. <strong>Modification Mineure (Mmin) :</strong> Répercussions sur la qualité, la sécurité ou l'efficacité minimes ou nulles.
+2. <strong>Modification Modérée (Mmod) :</strong> Impact potentiel sur la qualité, la sécurité ou l'efficacité.
+3. <strong>Modification Majeure (Mmaj) :</strong> Répercussions significatives sur la qualité, la sécurité ou l'efficacité.</p>
+<div class="diagram-card">
+    <div class="diagram-title">ALGORITHME DE QUALIFICATION ET DE RECLASSEMENT ANPP (LD-DEPP07/V01)</div>
+    <div class="escalation-flow">
+        <div class="flow-box main-box">
+            <div class="flow-label">1. SÉLECTION DE LA MODIFICATION</div>
+            <div class="flow-desc">Choix parmi les 34 rubriques réglementaires (Admin, CEP, Substance Active, Produit Fini)</div>
+        </div>
+        <div class="flow-arrow">⬇</div>
+        <div class="flow-box eval-box">
+            <div class="flow-label">2. CONTRÔLE DES CONDITIONS LÉGALES</div>
+            <div class="flow-desc">Vérification algorithmique de chaque « Condition à remplir » de la rubrique</div>
+        </div>
+        <div class="flow-split">
+            <div class="flow-branch branch-success">
+                <div class="branch-status">✅ Toutes les conditions sont remplies</div>
+                <div class="branch-card card-nominal">
+                    <strong>Classification Nominale</strong><br>
+                    Instruction selon le statut d'origine :<br>
+                    <span class="badge badge-mmin">Mmin</span> ou <span class="badge badge-mmod">Mmod</span>
+                </div>
+            </div>
+            <div class="flow-branch branch-warning">
+                <div class="branch-status">⚠️ Au moins une condition NON remplie</div>
+                <div class="branch-card card-escalated">
+                    <strong>RECLASSEMENT OBLIGATOIRE (Escalade)</strong><br>
+                    • <span class="badge badge-mmin">Mmin</span> reclassée en <span class="badge badge-mmod">Mmod</span> ou <span class="badge badge-mmaj">Mmaj</span><br>
+                    • <span class="badge badge-mmod">Mmod</span> reclassée en <span class="badge badge-mmaj">Mmaj</span><br>
+                    <em>Actualisation immédiate des justificatifs requis</em>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="callout callout-important"><div class="callout-header"><strong class="callout-title">IMPORTANT</strong></div><div class="callout-body">
+**Règle réglementaire de reclassement (Section 5.1 & 5.2 de la Ligne Directrice) :**
+Dès lors qu'une ou plusieurs conditions prédéfinies pour une modification mineure (`Mmin`) ou modérée (`Mmod`) ne sont pas strictement satisfaites, la plateforme réévalue et **reclasse automatiquement** la demande au niveau supérieur (`Mmin` reclassée en `Mmod` ou `Mmaj`, et `Mmod` reclassée en `Mmaj`), en ajustant instantanément la liste des documents justificatifs requis.
+</div></div>
+
+<h3 id="52-regroupement-de-modifications-grouping-arrete-du-07112021">5.2 Regroupement de Modifications (<em>Grouping</em> - Arrêté du 07/11/2021)</h3>
+<p>En vertu de l'article 09 de l'arrêté du 07 novembre 2021, la plateforme permet de soumettre plusieurs modifications au sein d'une même procédure groupée (<em>Grouping</em>) lorsque :
+- Elles concernent une même décision d'enregistrement et découlent d'un même changement technique (ex: changement de site de fabrication de l'API entraînant une modification de taille de lot et de méthode analytique).
+- La plateforme calcule le niveau global de risque du groupe : si un groupe contient une modification <code>Mmaj</code>, l'ensemble du dossier groupé est instruit selon le niveau de sévérité maximal <code>Mmaj</code>.</p>
+<h3 id="53-documentation-generale-requise-pour-toute-demande-de-modification">5.3 Documentation Générale Requise pour TOUTE Demande de Modification</h3>
+<p>Selon la section 5.3 de la Ligne Directrice, toute soumission de variation (Mmin, Mmod, Mmaj) génère obligatoirement le bordereau de pièces maîtresses suivant :
+1. <strong>Lettre de demande officielle</strong> de modification de la DE, visée par le PDT.
+2. <strong>Tableau comparatif standardisé :</strong> État actuel approuvé vs Situation proposée, définissant clairement la portée du changement.
+3. <strong>Justificatif technico-réglementaire</strong> motivant la modification.
+4. <strong>Bordereau de versement</strong> de la redevance ANPP applicable (+ justificatif bancaire).
+5. <strong>Version modifiée des sections concernées du dossier CTD</strong> (remplacement page à page).
+6. <strong>Liste actualisée et visée</strong> de tous les intervenants (fabricants SA, PF, sites de conditionnement et de contrôle).
+7. <strong>Attestation formelle de non-modification des autres sections</strong> en dehors de celles déclarées.
+8. <strong>Copie de la décision d’enregistrement (DE) en vigueur</strong>.
+9. <strong>Accusés de dépôt</strong> des demandes de modifications et/ou renouvellements actuellement en cours d'instruction par l'ANPP avec leurs bordereaux.
+10. <strong>Approbation de la modification par les autorités du pays d'origine</strong> (pour les médicaments importés).
+11. <strong>Autorisations des sites et preuves BPF/BPL</strong> valides pour les opérations concernées.
+12. <strong>Informations "produit" révisées</strong> (RCP, notice bilingue, étiquetage, maquettes visées PDT).</p>
+<h3 id="54-referentiel-des-34-rubriques-de-modifications-reglementaires">5.4 Référentiel des 34 Rubriques de Modifications Réglementaires</h3>
+<h4 id="i-modifications-administratives-ld-depp07-section-541">I. Modifications Administratives (LD-DEPP07 Section 5.4.1)</h4>
+<ul>
+<li><strong>1.</strong> Changement dans la dénomination commerciale du produit fini.</li>
+<li><strong>2.</strong> Changement dans la dénomination de la substance active, d'un excipient ou d'un article de conditionnement (avec maintien de l'entité chimique/spécification).</li>
+<li><strong>3.</strong> Changement ou attribution du code ATC par l'OMS.</li>
+<li><strong>4.</strong> Changement du nom et/ou de l'adresse du titulaire de l'AMM, du titulaire du dossier permanent de la substance active (DPSA/DMF), du site de stockage de la banque de cellules, du site de fabrication de l'API, du produit intermédiaire ou du produit fini, du conditionneur primaire/secondaire, ou du site de contrôle.</li>
+<li><strong>5.</strong> Suppression d'un site de fabrication, de contrôle, de conditionnement ou de stockage (avec maintien d'au moins un site approuvé opérationnel).</li>
+</ul>
+<h4 id="ii-modifications-relatives-au-cep-ou-prequalification-api-ld-depp07-section-5412">II. Modifications relatives au CEP ou Préqualification API (LD-DEPP07 Section 5.4.1.2)</h4>
+<ul>
+<li><strong>6.a.</strong> Soumission d'un CEP nouveau ou mis à jour provenant d'un fabricant déjà approuvé (<code>6.a.1</code>  →  Mmin, <code>6.a.2</code>  →  Mmin, <code>6.a.3</code>  →  Mmod).</li>
+<li><strong>6.b.</strong> Soumission d'un CEP provenant d'un nouveau fabricant (<code>6.b.1</code>  →  Mmin, <code>6.b.2</code>  →  Mmod).</li>
+</ul>
+<h4 id="iii-modifications-qualitatives-substance-active-32s-ld-depp07-section-5421">III. Modifications Qualitatives Substance Active 3.2.S (LD-DEPP07 Section 5.4.2.1)</h4>
+<ul>
+<li><strong>7.</strong> Remplacement ou ajout d'un site de fabrication ou d'un nouveau fabricant d'API :</li>
+<li><em>7.a :</em> Uniquement le contrôle de la SA (<code>7.a.1</code>  →  Mmin, <code>7.a.2</code>  →  Mmod).</li>
+<li><em>7.b :</em> Production du matériau de départ (<code>7.b.1</code>  →  Mmin, <code>7.b.2</code>  →  Mmaj).</li>
+<li><em>7.c :</em> Production de l'intermédiaire (<code>7.c.1</code>  →  Mmod, <code>7.c.2</code>  →  Mmin).</li>
+<li><em>7.d :</em> Production complète de l'API (<code>7.d.1</code>  →  Mmod, <code>7.d.2</code>  →  Mmaj).</li>
+<li><strong>8.a.</strong> Ajout ou changement d'un bloc de fabrication ou d'une unité de production sur un site API approuvé  →  Mmin.</li>
+<li><strong>9.</strong> Changement dans le procédé de fabrication de l'API :</li>
+<li><em>9.a.1 :</em> Changement mineur sans altération du profil d'impuretés ni de la voie de synthèse  →  Mmod.</li>
+<li><em>9.a.2 :</em> Changement important susceptible d'avoir des répercussions significatives  →  Mmaj.</li>
+<li><strong>10.</strong> Modification de la taille de lot de l'API ou d'un intermédiaire :</li>
+<li><em>10.a.1 :</em> Augmentation jusqu'à 10 fois la taille acceptée  →  Mmin.</li>
+<li><em>10.b :</em> Réduction de la taille de lot  →  Mmin.</li>
+<li><em>10.c.1 :</em> Augmentation supérieure à 10 fois la taille acceptée  →  Mmod.</li>
+<li><strong>11.</strong> Essais en cours de fabrication ou limites durant la synthèse de l'API :</li>
+<li><em>11.a :</em> Resserrement des limites  →  Mmin.</li>
+<li><em>11.b :</em> Changement mineur d'une procédure analytique  →  Mmin.</li>
+<li><em>11.c :</em> Ajout d'un nouveau paramètre de spécification  →  Mmin.</li>
+<li><em>11.d :</em> Suppression d'un paramètre redondant  →  Mmin.</li>
+<li><em>11.e :</em> Ajout suite à un problème de qualité/sécurité  →  Mmod.</li>
+<li><em>11.f :</em> Élargissement des limites acceptées  →  Mmaj.</li>
+<li><strong>12.</strong> Changement des spécifications et critères d'acceptation de l'API :</li>
+<li><em>12.a :</em> Mise à jour suite à révision de monographie de Pharmacopée officielle  →  Mmin.</li>
+<li><em>12.c :</em> Ajout de paramètre (<code>12.c.1</code>  →  Mmin, <code>12.c.2</code>  →  Mmod, <code>12.c.3</code>  →  Mmaj).</li>
+<li><em>12.b :</em> Suppression de paramètre (<code>12.b.1</code>  →  Mmin, <code>12.b.2</code>  →  Mmod, <code>12.b.3</code>  →  Mmaj).</li>
+<li><em>12.d :</em> Remplacement de paramètre (<code>12.d.1</code>  →  Mmin, <code>12.d.2</code>  →  Mmod, <code>12.d.3</code>  →  Mmaj).</li>
+<li><em>12.e :</em> Resserrement d'un critère d'acceptation  →  Mmin.</li>
+<li><em>12.f :</em> Élargissement d'un critère (<code>12.f.1</code>  →  Mmin, <code>12.f.2</code>  →  Mmod, <code>12.f.3</code>  →  Mmaj).</li>
+<li><strong>13.</strong> Procédures d'essai de la SA ou de ses intermédiaires :</li>
+<li><em>13.a :</em> Mise à jour suite à révision pharmacopée officielle  →  Mmin.</li>
+<li><em>13.b :</em> Passage d'une méthode interne à une pharmacopée reconnue  →  Mmin.</li>
+<li><em>13.c :</em> Ajout d'une procédure (<code>13.c.1</code>  →  Mmin, <code>13.c.2</code>  →  Mmod, <code>13.c.3</code>  →  Mmaj).</li>
+<li><em>13.d :</em> Modification/remplacement de procédure (<code>13.d.1</code>  →  Mmin, <code>13.d.2</code>  →  Mmod, <code>13.d.3</code>  →  Mmaj).</li>
+<li><em>13.e :</em> Suppression d'une procédure alternative (<code>13.e.1/2</code>  →  Mmin, <code>13.e.3</code>  →  Mmaj).</li>
+<li><strong>14.</strong> Changement de conditionnement primaire de la SA :</li>
+<li><em>14.a :</em> Composition qualitative/quantitative  →  Mmin.</li>
+<li><em>14.b :</em> SA liquides non stériles  →  Mmod.</li>
+<li><strong>15.</strong> Période de recontrôle ou durée de vie de l'API :</li>
+<li><em>15.a :</em> Réduction  →  Mmin.</li>
+<li><em>15.b :</em> Extension  →  Mmod.</li>
+<li><strong>16.</strong> Conditions de stockage de l'API sur l'étiquette :</li>
+<li><em>16.a :</em> Conditions plus restrictives  →  Mmin.</li>
+<li><em>16.b :</em> Tout autre changement  →  Mmod.</li>
+</ul>
+<h4 id="iv-modifications-qualitatives-produit-fini-32p-ld-depp07-section-5422">IV. Modifications Qualitatives Produit Fini 3.2.P (LD-DEPP07 Section 5.4.2.2)</h4>
+<ul>
+<li><strong>17.</strong> Système d'aromatisation ou de coloration du produit fini :</li>
+<li><em>17.a :</em> Augmentation ou réduction de teneur  →  Mmin.</li>
+<li><em>17.b :</em> Ajout, suppression ou remplacement d'arôme/colorant  →  Mmin.</li>
+<li><strong>18.a.</strong> Masse de l'enrobage ou des capsules vides pour formes orales solides à libération immédiate  →  Mmin.</li>
+<li><strong>19.</strong> Composition en excipients d'une forme orale solide à libération immédiate :</li>
+<li><em>19.a :</em> Remplacement d'un excipient par un excipient comparable à concentration similaire  →  Mmod (ou Mmaj si conditions non satisfaites).</li>
+<li><em>19.b :</em> Changement quantitatif des excipients  →  Mmaj.</li>
+<li><strong>20.</strong> Site de fabrication du produit fini :</li>
+<li><em>20.a :</em> Site de conditionnement secondaire  →  Mmin.</li>
+<li><em>20.b :</em> Site de conditionnement primaire (solides, crèmes, sirops)  →  Mmin.</li>
+<li><em>20.c :</em> Site chargé de la fabrication (procédé conventionnel non complexe)  →  Mmod.</li>
+<li><strong>21.a.</strong> Remplacement ou ajout d'un site de contrôle analytique  →  Mmin.</li>
+<li><strong>22.</strong> Taille de lot du produit fini (formes orales solides ou solutions non stériles) :</li>
+<li><em>22.a :</em> Augmentation jusqu'à 10 fois la taille approuvée  →  Mmin.</li>
+<li><em>22.b :</em> Réduction jusqu'à 10 fois  →  Mmin.</li>
+<li><em>22.c :</em> Plus de 10 fois supérieure ou inférieure  →  Mmod.</li>
+<li><strong>23.</strong> Changement dans le procédé de fabrication du produit fini (sans changement du principe fondamental)  →  Mmod.</li>
+<li><strong>24.</strong> Contrôles en cours de fabrication du produit intermédiaire ou fini :</li>
+<li><em>24.a :</em> Resserrement des limites  →  Mmin.</li>
+<li><em>24.b :</em> Suppression d'un contrôle redondant  →  Mmin.</li>
+<li><em>24.c / 24.d :</em> Ajout, révision ou remplacement d'un contrôle  →  Mmin.</li>
+<li><strong>25.</strong> Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique  →  Mmin.</li>
+<li><strong>26.</strong> Spécifications ou procédures analytiques d'un excipient :</li>
+<li><em>26.a :</em> Suppression d'un paramètre interne non critique  →  Mmin.</li>
+<li><em>26.b :</em> Ajout d'un nouveau paramètre  →  Mmin.</li>
+<li><em>26.c :</em> Resserrement des limites  →  Mmin.</li>
+<li><em>26.d :</em> Changement ou remplacement d'une méthode  →  Mmod.</li>
+<li><strong>27.</strong> Mise à jour des spécifications du produit fini suite à révision d'une monographie de Pharmacopée officielle  →  Mmin.</li>
+<li><strong>28.</strong> Spécifications et critères d'acceptation du produit fini :</li>
+<li><em>28.a :</em> Suppression d'un paramètre non critique redondant  →  Mmin.</li>
+<li><em>28.b :</em> Ajout d'un paramètre de contrôle  →  Mmin.</li>
+<li><em>28.c :</em> Resserrement d'un critère  →  Mmin.</li>
+<li><em>28.d :</em> Remplacement d'un paramètre  →  Mmin.</li>
+<li><strong>29.</strong> Procédures analytiques du produit fini :</li>
+<li><em>29.a :</em> Suppression d'une procédure alternative  →  Mmin.</li>
+<li><em>29.b :</em> Ajout d'une procédure analytique  →  Mmin.</li>
+<li><em>29.c :</em> Modification ou remplacement d'une procédure  →  Mmod.</li>
+<li><em>29.d :</em> Mise à jour selon monographie pharmacopée  →  Mmin.</li>
+<li><em>29.e :</em> Transfert vers une pharmacopée reconnue  →  Mmin.</li>
+<li><strong>30.</strong> Conditionnement primaire du produit fini (changement ou ajout de type de contenant) :</li>
+<li><em>30.a :</em> Formes pharmaceutiques non stériles  →  Mmod.</li>
+<li><em>30.b :</em> Médicaments stériles  →  Mmaj.</li>
+<li><em>30.c :</em> Suppression d'un contenant sans supprimer de dosage/forme  →  Mmod.</li>
+<li><strong>31.</strong> Composition qualitative et quantitative du conditionnement primaire :</li>
+<li><em>31.a :</em> Formes solides (ex: blister vers autre blister équivalent)  →  Mmin.</li>
+<li><em>31.b :</em> Formes semi-solides et liquides non stériles  →  Mmod.</li>
+<li><strong>32.</strong> Durée de conservation du produit fini pour la vente :</li>
+<li><em>32.a :</em> Réduction  →  Mmod.</li>
+<li><em>32.b :</em> Extension (sur base de données de stabilité temps réel)  →  Mmod.</li>
+<li><strong>33.</strong> Durée de conservation après première ouverture, dilution ou reconstitution :</li>
+<li><em>33.a :</em> Réduction  →  Mmod.</li>
+<li><em>33.b :</em> Extension  →  Mmod.</li>
+<li><strong>34.</strong> Changement des conditions de stockage du produit fini ou en cours d'utilisation  →  Mmod.</li>
+</ul>
+<hr />
+<h2 id="6-architecture-technique-et-ergonomie-pharma-explorer">6. Architecture Technique et Ergonomie "Pharma Explorer"</h2>
+<h3 id="61-stack-technologique-native-et-souveraine">6.1 Stack Technologique Native et Souveraine</h3>
+<ul>
+<li><strong>Backend &amp; Serveur Applicatif :</strong> <strong>Golang (Go 1.26+)</strong></li>
+<li>Performance native sans runtime lourd, binaire unique auto-suffisant (<code>homolog.exe</code>).</li>
+<li>Streaming de documents par morceaux (Chunked upload 5 Mo) résilient aux micro-coupures réseau.</li>
+<li>Driver PostgreSQL natif <code>jackc/pgx/v5</code> avec pool de connexions optimisé.</li>
+<li><strong>Stockage Abstrait Sécurisé (<code>StorageProvider</code>) :</strong></li>
+<li>Architecture CAS (Content-Addressed Storage) basée sur l'empreinte cryptographique <strong>SHA-256</strong>.</li>
+<li>Déduplication physique des fichiers à la source et chiffrement AES-GCM sur disque.</li>
+<li><strong>Base de Données Relationnelle :</strong> <strong>PostgreSQL 16+</strong></li>
+<li>Schémas configurables via colonnes <code>JSONB</code> indexées (checklists dynamiques, modèles de dossiers).</li>
+<li>Recherche plein texte bilingue intégrée (<code>tsvector</code> / <code>tsquery</code>).</li>
+<li>Table <code>audit_logs</code> strictement <em>append-only</em> (triggers SQL interdisant formellement <code>UPDATE</code> et <code>DELETE</code> selon 21 CFR Part 11).</li>
+<li><strong>Frontend Embarqué (<code>//go:embed</code>) :</strong></li>
+<li>TypeScript strict, Tailwind CSS, Lucide Icons, PDF.js local sans appel à aucun CDN public externe.</li>
+<li>Zéro dépendance Node.js requise sur le serveur en production.</li>
+</ul>
+<h3 id="62-modele-ergonomique-pharma-explorer-a-3-volets">6.2 Modèle Ergonomique "Pharma Explorer" à 3 Volets</h3>
+<p>Inspiré des outils d'exploration professionnelle haute densité, l'écran de travail optimise chaque pixel disponible :</p>
+<div class="diagram-card layout-mockup-card">
+    <div class="diagram-title">ERGONOMIE « PHARMA EXPLORER » HAUTE DENSITÉ (MODÈLE 3 VOLETS)</div>
+    <div class="mockup-window">
+        <div class="mockup-header">
+            <span class="mockup-dots">● ● ●</span>
+            <span class="mockup-path">📁 Homolog &gt; Dossiers &gt; ENR-2026-0042 (Amoxicilline 500mg) &gt; CTD_Module_1 &gt; 1.P</span>
+        </div>
+        <div class="mockup-body">
+            <div class="mockup-pane mockup-tree">
+                <div class="pane-title">NAVIGATION (Tree)</div>
+                <div class="tree-item active">▼ ENR-2026-0042</div>
+                <div class="tree-sub">► Mod 1 : Administratif</div>
+                <div class="tree-sub sub-open">▼ 1.P Info Produit</div>
+                <div class="tree-leaf">• 1.P.1 RCP/Notice <span class="badge-mini ok">3/3</span></div>
+                <div class="tree-leaf">• 1.P.2 Modèle Algérie <span class="badge-mini ok">4/4</span></div>
+                <div class="tree-leaf">• 1.P.3 Échantillons <span class="badge-mini alert">0/1</span></div>
+                <div class="tree-leaf">• 1.P.8 Validation <span class="badge-mini ok">1/1</span></div>
+                <div class="tree-sub">► Mod 2 : Résumé</div>
+                <div class="tree-sub">► Mod 3 : Qualité</div>
+                <div class="tree-sub">► Mod 5 : Bioéquivalence</div>
+            </div>
+            <div class="mockup-pane mockup-table">
+                <div class="pane-title">VUE DÉTAILLÉE COMPACTE (32px par ligne)</div>
+                <table class="inner-mockup-table">
+                    <tr><th>Réf</th><th>Statut</th><th>Document</th><th>Ver</th><th>Signé DT</th></tr>
+                    <tr><td>1.P.1</td><td><span class="badge badge-req">Validé</span></td><td>RCP_Origine.pdf</td><td>1.0</td><td>✅ DT</td></tr>
+                    <tr><td>1.P.2</td><td><span class="badge badge-req">Validé</span></td><td>Notice_FR_AR.pdf</td><td>2.0</td><td>✅ DT</td></tr>
+                    <tr><td>1.P.3</td><td><span class="badge badge-mmaj">Manquant</span></td><td>Bordereau_Échantillons</td><td>-</td><td>❌</td></tr>
+                    <tr><td>1.P.4</td><td><span class="badge badge-req">Validé</span></td><td>CoA_Substance_Active.pdf</td><td>1.0</td><td>✅ DT</td></tr>
+                    <tr><td>1.P.5</td><td><span class="badge badge-req">Validé</span></td><td>CoA_Produit_Fini.pdf</td><td>1.0</td><td>✅ DT</td></tr>
+                    <tr><td>1.P.8</td><td><span class="badge badge-req">Validé</span></td><td>Engagement_NonCommercialisation.pdf</td><td>1.0</td><td>✅ DT</td></tr>
+                </table>
+            </div>
+            <div class="mockup-pane mockup-preview">
+                <div class="pane-title">PRÉVISUALISATION (Alt+P)</div>
+                <div class="preview-box">
+                    <div class="preview-thumb">📄 Notice_FR_AR.pdf</div>
+                    <div class="preview-meta">
+                        <div><strong>Version :</strong> 2.0 (En vigueur)</div>
+                        <div><strong>Hash SHA-256 :</strong> e3b0c44298fc...</div>
+                        <div><strong>Horodatage :</strong> 2026-11-10 14:32Z</div>
+                    </div>
+                    <div class="preview-btn">✍️ Signer Électroniquement (DT)</div>
+                </div>
+            </div>
+        </div>
+        <div class="mockup-status">
+            <span>Éléments : 6 pièces</span>
+            <span>Complétude : 83 % (1 manquante)</span>
+            <span>Espace labo : 1.42 Go / 50 Go</span>
+            <span>Langue : FR / AR (RTL disponible)</span>
+        </div>
+    </div>
+</div>
+
+<ul>
+<li><strong>Adaptation RTL Arabe Intégrale :</strong></li>
+<li>Bascule instantanée LTR  ↔  RTL via <code>dir="rtl"</code>.</li>
+<li>Inversion symétrique naturelle de l'interface : arbre de navigation ancré à droite, tableau de données au centre, volet de prévisualisation à gauche.</li>
+<li>Polices locales sans appel réseau : <code>Cairo</code> (typographie arabe fluide) et <code>Inter</code> (typographie latine).</li>
+</ul>
+<hr />
+<h2 id="7-securite-roles-et-conformite-21-cfr-part-11-bpf">7. Sécurité, Rôles et Conformité 21 CFR Part 11 / BPF</h2>
+<h3 id="71-matrice-des-roles-stricts-9-profils">7.1 Matrice des Rôles Stricts (9 Profils)</h3>
+<ol>
+<li><strong>Super-Administrateur Éditeur (Mode Cloud SaaS) :</strong> Provisioning d'instances laboratoires, isolation des schémas PostgreSQL, quotas de stockage. Aucun accès aux données métier.</li>
+<li><strong>Administrateur Système Local (Mode On-Premise) :</strong> Sauvegardes, certificats TLS, surveillance système. Aucun accès aux documents pharmaceutiques.</li>
+<li><strong>Administrateur de Laboratoire :</strong> Gestion des comptes utilisateurs internes, attribution des profils.</li>
+<li><strong>Responsable Affaires Réglementaires :</strong> Création et pilotage des dossiers CTD/DM, coordination des pièces justificatives, suivi des échanges ANPP.</li>
+<li><strong>Directeur Technique (Pharmacien DT) :</strong> Seul titulaire du pouvoir légal d'approbation et de scellement. Droit de signature électronique légale bloquante pour validation finale des dossiers.</li>
+<li><strong>Contributeur Qualité / BPF :</strong> Gestion documentaire interne, téléversement de SOP, certificats BPF, rapports d'audit.</li>
+<li><strong>Contributeur R&amp;D / Production :</strong> Dépôt des formules cadres, dossiers de lots de validation (3.2.P.3.5), données de stabilité et méthodes d'analyse.</li>
+<li><strong>Consultant Externe :</strong> Accès strictement cloisonné aux seuls dossiers auxquels il est invité (aucune visibilité sur le reste du laboratoire), avec date d'expiration contractuelle automatique.</li>
+<li><strong>Auditeur / Inspecteur :</strong> Consultation en lecture seule avec accès au journal d'audit immuable (<code>audit_logs</code>).</li>
+</ol>
+<h3 id="72-signature-electronique-legale-et-integrite-alcoa">7.2 Signature Électronique Légale et Intégrité ALCOA+</h3>
+<ul>
+<li><strong>Double facteur (2FA) TOTP 100 % hors-ligne (RFC 6238) :</strong> Compatible Google Authenticator, Microsoft Authenticator, FreeOTP, avec 10 codes de secours à usage unique chiffrés.</li>
+<li><strong>Re-authentification à la signature :</strong> Toute signature de pièce critique ou validation de dossier impose la re-saisie du mot de passe ou validation TOTP accompagnée de la mention solennelle légale obligatoire :<blockquote>
+<p><em>"En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur."</em></p>
+</blockquote>
+</li>
+<li><strong>Scellement cryptographique :</strong> Génération d'une empreinte SHA-256 scellant le binaire du document, l'identifiant nominatif du signataire, le rôle officiel, l'horodatage UTC et l'adresse IP.</li>
+</ul>
+<hr />
+<h2 id="8-taxonomie-du-coffre-fort-ged-pharmaceutique-standard-bpf">8. Taxonomie du Coffre-Fort GED Pharmaceutique (Standard BPF)</h2>
+<p>Les documents de référence du laboratoire sont organisés en cinq branches maîtresses interconnectées avec les checklists des dossiers d'enregistrement :</p>
+<ol>
+<li><strong><code>01_Affaires_Reglementaires</code></strong></li>
+<li><code>01_01_Agrements_Etablissement</code> (Agréments MIPH demandeur et fabricants)</li>
+<li><code>01_02_Decisions_Enregistrement</code> (DE initiales, renouvellements et avenants)</li>
+<li><code>01_03_Decisions_Homologation</code> (Décisions d'homologation DM/DMDIV)</li>
+<li><code>01_04_Dossiers_CTD_Reference</code> (Dossiers maîtres archivés et fiches de variations)</li>
+<li><code>01_05_Notices_Articles_Conditionnement</code> (Notices bilingues FR/AR, étiquettes, maquettes à l'échelle)</li>
+<li><code>01_06_Correspondances_ANPP</code> (Courriers de compléments, notifications, accusés de réception)</li>
+<li><strong><code>02_Assurance_Qualite_BPF</code></strong></li>
+<li><code>02_01_Manuel_Qualite_Procedures</code> (Procédures opératoires normalisées - POS / SOP)</li>
+<li><code>02_02_Certificats_BPF_ISO</code> (Certificats GMP fabricants SA et PF, certificats ISO 13485)</li>
+<li><code>02_03_Rapports_Audit_Inspections</code> (Rapports d'inspection ANPP, audits fournisseurs)</li>
+<li><code>02_04_CAPA_Deviations</code> (Déviations qualité et actions correctives/préventives)</li>
+<li><strong><code>03_Developpement_Production</code></strong></li>
+<li><code>03_01_Formules_Fabrication_DMF</code> (Dossiers de lot maîtres, Drug Master Files / DPSA)</li>
+<li><code>03_02_Methodes_Controle_Validation</code> (Méthodes d'analyse, transferts et validations analytiques)</li>
+<li><code>03_03_Etudes_Stabilite</code> (Protocoles et rapports de stabilité Zone IVa/IVb, temps réel et accéléré)</li>
+<li><code>03_04_Specifications_Matieres_PF</code> (Spécifications SA, excipients, articles de conditionnement, PF)</li>
+<li><code>03_05_Dossiers_Techniques_DM</code> (Fichiers techniques DM selon arrêté du 10 mai 2021)</li>
+<li><strong><code>04_Vigilance_Post_Market</code></strong></li>
+<li><code>04_01_Pharmacovigilance</code> (Rapports périodiques de sécurité - PSUR, fiches de notification d'effets indésirables)</li>
+<li><code>04_02_Materiovigilance</code> (Incidents DM, fiches d'alerte)</li>
+<li><code>04_03_Rappels_Lots</code> (Procédures de retrait et dossiers d'investigation)</li>
+<li><strong><code>05_Contrats_Tiers</code></strong></li>
+<li><code>05_01_Accords_Qualite_QTA</code> (Quality Technical Agreements avec façonniers et fournisseurs)</li>
+<li><code>05_02_Contrats_Faconnage_SousTraitance</code> (Contrats de fabrication, conditionnement, analyse)</li>
+<li><code>05_03_Certificats_Fournisseurs_APIs</code> (CEP EDQM, lettres d'accès APIMF, déclarations EST/OGM)</li>
+</ol>
+<hr />
+<h2 id="9-conclusion-et-validation">9. Conclusion et Validation</h2>
+<p>Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme <strong>Homolog</strong>. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.</p>
+</div>
+
+</body>
+</html>

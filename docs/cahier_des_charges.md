@@ -158,7 +158,7 @@ Le Module 3 est obligatoire (`E`) pour toutes les catégories (Princeps, Génér
 
 ### 4.2 Module 5 : Données Cliniques et Bioéquivalence
 Pour les médicaments génériques (importés et locaux), le moteur de checklist conditionne la recevabilité du dossier aux exigences suivantes :
-- **5.3.1.2 Étude comparative de Biodisponibilité (BA) et Bioéquivalence (BE) :** Rapport complet de l'étude clinique in vivo démontrant la bioéquivalence du produit candidat vis-à-vis du produit princeps de référence (intervalle de confiance 90 % compris entre 80,00 % et 125,00 % sur $C_{max}$ et $AUC$).
+- **5.3.1.2 Étude comparative de Biodisponibilité (BA) et Bioéquivalence (BE) :** Rapport complet de l'étude clinique in vivo démontrant la bioéquivalence du produit candidat vis-à-vis du produit princeps de référence (intervalle de confiance 90 % compris entre 80,00 % et 125,00 % sur Cmax et AUC).
 - **5.3.1.4 Méthodes bioanalytiques et analytiques :** Validation complète selon les lignes directrices internationales (BPL/GCP).
 - **Justification d'exonération (Biowaiver) :** En cas d'absence d'étude in vivo, rattachement obligatoire d'un dossier justificatif complet en 1.M.P.3 et 5.3.1.2 (profils de dissolution comparatifs multipoints à pH 1.2, 4.5, 6.8 et classification biopharmaceutique BCS).
 
@@ -229,107 +229,107 @@ Selon la section 5.3 de la Ligne Directrice, toute soumission de variation (Mmin
 - **5.** Suppression d'un site de fabrication, de contrôle, de conditionnement ou de stockage (avec maintien d'au moins un site approuvé opérationnel).
 
 #### II. Modifications relatives au CEP ou Préqualification API (LD-DEPP07 Section 5.4.1.2)
-- **6.a.** Soumission d'un CEP nouveau ou mis à jour provenant d'un fabricant déjà approuvé (`6.a.1` $\to$ Mmin, `6.a.2` $\to$ Mmin, `6.a.3` $\to$ Mmod).
-- **6.b.** Soumission d'un CEP provenant d'un nouveau fabricant (`6.b.1` $\to$ Mmin, `6.b.2` $\to$ Mmod).
+- **6.a.** Soumission d'un CEP nouveau ou mis à jour provenant d'un fabricant déjà approuvé (`6.a.1`  →  Mmin, `6.a.2`  →  Mmin, `6.a.3`  →  Mmod).
+- **6.b.** Soumission d'un CEP provenant d'un nouveau fabricant (`6.b.1`  →  Mmin, `6.b.2`  →  Mmod).
 
 #### III. Modifications Qualitatives Substance Active 3.2.S (LD-DEPP07 Section 5.4.2.1)
 - **7.** Remplacement ou ajout d'un site de fabrication ou d'un nouveau fabricant d'API :
-  - *7.a :* Uniquement le contrôle de la SA (`7.a.1` $\to$ Mmin, `7.a.2` $\to$ Mmod).
-  - *7.b :* Production du matériau de départ (`7.b.1` $\to$ Mmin, `7.b.2` $\to$ Mmaj).
-  - *7.c :* Production de l'intermédiaire (`7.c.1` $\to$ Mmod, `7.c.2` $\to$ Mmin).
-  - *7.d :* Production complète de l'API (`7.d.1` $\to$ Mmod, `7.d.2` $\to$ Mmaj).
-- **8.a.** Ajout ou changement d'un bloc de fabrication ou d'une unité de production sur un site API approuvé $\to$ Mmin.
+  - *7.a :* Uniquement le contrôle de la SA (`7.a.1`  →  Mmin, `7.a.2`  →  Mmod).
+  - *7.b :* Production du matériau de départ (`7.b.1`  →  Mmin, `7.b.2`  →  Mmaj).
+  - *7.c :* Production de l'intermédiaire (`7.c.1`  →  Mmod, `7.c.2`  →  Mmin).
+  - *7.d :* Production complète de l'API (`7.d.1`  →  Mmod, `7.d.2`  →  Mmaj).
+- **8.a.** Ajout ou changement d'un bloc de fabrication ou d'une unité de production sur un site API approuvé  →  Mmin.
 - **9.** Changement dans le procédé de fabrication de l'API :
-  - *9.a.1 :* Changement mineur sans altération du profil d'impuretés ni de la voie de synthèse $\to$ Mmod.
-  - *9.a.2 :* Changement important susceptible d'avoir des répercussions significatives $\to$ Mmaj.
+  - *9.a.1 :* Changement mineur sans altération du profil d'impuretés ni de la voie de synthèse  →  Mmod.
+  - *9.a.2 :* Changement important susceptible d'avoir des répercussions significatives  →  Mmaj.
 - **10.** Modification de la taille de lot de l'API ou d'un intermédiaire :
-  - *10.a.1 :* Augmentation jusqu'à 10 fois la taille acceptée $\to$ Mmin.
-  - *10.b :* Réduction de la taille de lot $\to$ Mmin.
-  - *10.c.1 :* Augmentation supérieure à 10 fois la taille acceptée $\to$ Mmod.
+  - *10.a.1 :* Augmentation jusqu'à 10 fois la taille acceptée  →  Mmin.
+  - *10.b :* Réduction de la taille de lot  →  Mmin.
+  - *10.c.1 :* Augmentation supérieure à 10 fois la taille acceptée  →  Mmod.
 - **11.** Essais en cours de fabrication ou limites durant la synthèse de l'API :
-  - *11.a :* Resserrement des limites $\to$ Mmin.
-  - *11.b :* Changement mineur d'une procédure analytique $\to$ Mmin.
-  - *11.c :* Ajout d'un nouveau paramètre de spécification $\to$ Mmin.
-  - *11.d :* Suppression d'un paramètre redondant $\to$ Mmin.
-  - *11.e :* Ajout suite à un problème de qualité/sécurité $\to$ Mmod.
-  - *11.f :* Élargissement des limites acceptées $\to$ Mmaj.
+  - *11.a :* Resserrement des limites  →  Mmin.
+  - *11.b :* Changement mineur d'une procédure analytique  →  Mmin.
+  - *11.c :* Ajout d'un nouveau paramètre de spécification  →  Mmin.
+  - *11.d :* Suppression d'un paramètre redondant  →  Mmin.
+  - *11.e :* Ajout suite à un problème de qualité/sécurité  →  Mmod.
+  - *11.f :* Élargissement des limites acceptées  →  Mmaj.
 - **12.** Changement des spécifications et critères d'acceptation de l'API :
-  - *12.a :* Mise à jour suite à révision de monographie de Pharmacopée officielle $\to$ Mmin.
-  - *12.c :* Ajout de paramètre (`12.c.1` $\to$ Mmin, `12.c.2` $\to$ Mmod, `12.c.3` $\to$ Mmaj).
-  - *12.b :* Suppression de paramètre (`12.b.1` $\to$ Mmin, `12.b.2` $\to$ Mmod, `12.b.3` $\to$ Mmaj).
-  - *12.d :* Remplacement de paramètre (`12.d.1` $\to$ Mmin, `12.d.2` $\to$ Mmod, `12.d.3` $\to$ Mmaj).
-  - *12.e :* Resserrement d'un critère d'acceptation $\to$ Mmin.
-  - *12.f :* Élargissement d'un critère (`12.f.1` $\to$ Mmin, `12.f.2` $\to$ Mmod, `12.f.3` $\to$ Mmaj).
+  - *12.a :* Mise à jour suite à révision de monographie de Pharmacopée officielle  →  Mmin.
+  - *12.c :* Ajout de paramètre (`12.c.1`  →  Mmin, `12.c.2`  →  Mmod, `12.c.3`  →  Mmaj).
+  - *12.b :* Suppression de paramètre (`12.b.1`  →  Mmin, `12.b.2`  →  Mmod, `12.b.3`  →  Mmaj).
+  - *12.d :* Remplacement de paramètre (`12.d.1`  →  Mmin, `12.d.2`  →  Mmod, `12.d.3`  →  Mmaj).
+  - *12.e :* Resserrement d'un critère d'acceptation  →  Mmin.
+  - *12.f :* Élargissement d'un critère (`12.f.1`  →  Mmin, `12.f.2`  →  Mmod, `12.f.3`  →  Mmaj).
 - **13.** Procédures d'essai de la SA ou de ses intermédiaires :
-  - *13.a :* Mise à jour suite à révision pharmacopée officielle $\to$ Mmin.
-  - *13.b :* Passage d'une méthode interne à une pharmacopée reconnue $\to$ Mmin.
-  - *13.c :* Ajout d'une procédure (`13.c.1` $\to$ Mmin, `13.c.2` $\to$ Mmod, `13.c.3` $\to$ Mmaj).
-  - *13.d :* Modification/remplacement de procédure (`13.d.1` $\to$ Mmin, `13.d.2` $\to$ Mmod, `13.d.3` $\to$ Mmaj).
-  - *13.e :* Suppression d'une procédure alternative (`13.e.1/2` $\to$ Mmin, `13.e.3` $\to$ Mmaj).
+  - *13.a :* Mise à jour suite à révision pharmacopée officielle  →  Mmin.
+  - *13.b :* Passage d'une méthode interne à une pharmacopée reconnue  →  Mmin.
+  - *13.c :* Ajout d'une procédure (`13.c.1`  →  Mmin, `13.c.2`  →  Mmod, `13.c.3`  →  Mmaj).
+  - *13.d :* Modification/remplacement de procédure (`13.d.1`  →  Mmin, `13.d.2`  →  Mmod, `13.d.3`  →  Mmaj).
+  - *13.e :* Suppression d'une procédure alternative (`13.e.1/2`  →  Mmin, `13.e.3`  →  Mmaj).
 - **14.** Changement de conditionnement primaire de la SA :
-  - *14.a :* Composition qualitative/quantitative $\to$ Mmin.
-  - *14.b :* SA liquides non stériles $\to$ Mmod.
+  - *14.a :* Composition qualitative/quantitative  →  Mmin.
+  - *14.b :* SA liquides non stériles  →  Mmod.
 - **15.** Période de recontrôle ou durée de vie de l'API :
-  - *15.a :* Réduction $\to$ Mmin.
-  - *15.b :* Extension $\to$ Mmod.
+  - *15.a :* Réduction  →  Mmin.
+  - *15.b :* Extension  →  Mmod.
 - **16.** Conditions de stockage de l'API sur l'étiquette :
-  - *16.a :* Conditions plus restrictives $\to$ Mmin.
-  - *16.b :* Tout autre changement $\to$ Mmod.
+  - *16.a :* Conditions plus restrictives  →  Mmin.
+  - *16.b :* Tout autre changement  →  Mmod.
 
 #### IV. Modifications Qualitatives Produit Fini 3.2.P (LD-DEPP07 Section 5.4.2.2)
 - **17.** Système d'aromatisation ou de coloration du produit fini :
-  - *17.a :* Augmentation ou réduction de teneur $\to$ Mmin.
-  - *17.b :* Ajout, suppression ou remplacement d'arôme/colorant $\to$ Mmin.
-- **18.a.** Masse de l'enrobage ou des capsules vides pour formes orales solides à libération immédiate $\to$ Mmin.
+  - *17.a :* Augmentation ou réduction de teneur  →  Mmin.
+  - *17.b :* Ajout, suppression ou remplacement d'arôme/colorant  →  Mmin.
+- **18.a.** Masse de l'enrobage ou des capsules vides pour formes orales solides à libération immédiate  →  Mmin.
 - **19.** Composition en excipients d'une forme orale solide à libération immédiate :
-  - *19.a :* Remplacement d'un excipient par un excipient comparable à concentration similaire $\to$ Mmod (ou Mmaj si conditions non satisfaites).
-  - *19.b :* Changement quantitatif des excipients $\to$ Mmaj.
+  - *19.a :* Remplacement d'un excipient par un excipient comparable à concentration similaire  →  Mmod (ou Mmaj si conditions non satisfaites).
+  - *19.b :* Changement quantitatif des excipients  →  Mmaj.
 - **20.** Site de fabrication du produit fini :
-  - *20.a :* Site de conditionnement secondaire $\to$ Mmin.
-  - *20.b :* Site de conditionnement primaire (solides, crèmes, sirops) $\to$ Mmin.
-  - *20.c :* Site chargé de la fabrication (procédé conventionnel non complexe) $\to$ Mmod.
-- **21.a.** Remplacement ou ajout d'un site de contrôle analytique $\to$ Mmin.
+  - *20.a :* Site de conditionnement secondaire  →  Mmin.
+  - *20.b :* Site de conditionnement primaire (solides, crèmes, sirops)  →  Mmin.
+  - *20.c :* Site chargé de la fabrication (procédé conventionnel non complexe)  →  Mmod.
+- **21.a.** Remplacement ou ajout d'un site de contrôle analytique  →  Mmin.
 - **22.** Taille de lot du produit fini (formes orales solides ou solutions non stériles) :
-  - *22.a :* Augmentation jusqu'à 10 fois la taille approuvée $\to$ Mmin.
-  - *22.b :* Réduction jusqu'à 10 fois $\to$ Mmin.
-  - *22.c :* Plus de 10 fois supérieure ou inférieure $\to$ Mmod.
-- **23.** Changement dans le procédé de fabrication du produit fini (sans changement du principe fondamental) $\to$ Mmod.
+  - *22.a :* Augmentation jusqu'à 10 fois la taille approuvée  →  Mmin.
+  - *22.b :* Réduction jusqu'à 10 fois  →  Mmin.
+  - *22.c :* Plus de 10 fois supérieure ou inférieure  →  Mmod.
+- **23.** Changement dans le procédé de fabrication du produit fini (sans changement du principe fondamental)  →  Mmod.
 - **24.** Contrôles en cours de fabrication du produit intermédiaire ou fini :
-  - *24.a :* Resserrement des limites $\to$ Mmin.
-  - *24.b :* Suppression d'un contrôle redondant $\to$ Mmin.
-  - *24.c / 24.d :* Ajout, révision ou remplacement d'un contrôle $\to$ Mmin.
-- **25.** Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique $\to$ Mmin.
+  - *24.a :* Resserrement des limites  →  Mmin.
+  - *24.b :* Suppression d'un contrôle redondant  →  Mmin.
+  - *24.c / 24.d :* Ajout, révision ou remplacement d'un contrôle  →  Mmin.
+- **25.** Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique  →  Mmin.
 - **26.** Spécifications ou procédures analytiques d'un excipient :
-  - *26.a :* Suppression d'un paramètre interne non critique $\to$ Mmin.
-  - *26.b :* Ajout d'un nouveau paramètre $\to$ Mmin.
-  - *26.c :* Resserrement des limites $\to$ Mmin.
-  - *26.d :* Changement ou remplacement d'une méthode $\to$ Mmod.
-- **27.** Mise à jour des spécifications du produit fini suite à révision d'une monographie de Pharmacopée officielle $\to$ Mmin.
+  - *26.a :* Suppression d'un paramètre interne non critique  →  Mmin.
+  - *26.b :* Ajout d'un nouveau paramètre  →  Mmin.
+  - *26.c :* Resserrement des limites  →  Mmin.
+  - *26.d :* Changement ou remplacement d'une méthode  →  Mmod.
+- **27.** Mise à jour des spécifications du produit fini suite à révision d'une monographie de Pharmacopée officielle  →  Mmin.
 - **28.** Spécifications et critères d'acceptation du produit fini :
-  - *28.a :* Suppression d'un paramètre non critique redondant $\to$ Mmin.
-  - *28.b :* Ajout d'un paramètre de contrôle $\to$ Mmin.
-  - *28.c :* Resserrement d'un critère $\to$ Mmin.
-  - *28.d :* Remplacement d'un paramètre $\to$ Mmin.
+  - *28.a :* Suppression d'un paramètre non critique redondant  →  Mmin.
+  - *28.b :* Ajout d'un paramètre de contrôle  →  Mmin.
+  - *28.c :* Resserrement d'un critère  →  Mmin.
+  - *28.d :* Remplacement d'un paramètre  →  Mmin.
 - **29.** Procédures analytiques du produit fini :
-  - *29.a :* Suppression d'une procédure alternative $\to$ Mmin.
-  - *29.b :* Ajout d'une procédure analytique $\to$ Mmin.
-  - *29.c :* Modification ou remplacement d'une procédure $\to$ Mmod.
-  - *29.d :* Mise à jour selon monographie pharmacopée $\to$ Mmin.
-  - *29.e :* Transfert vers une pharmacopée reconnue $\to$ Mmin.
+  - *29.a :* Suppression d'une procédure alternative  →  Mmin.
+  - *29.b :* Ajout d'une procédure analytique  →  Mmin.
+  - *29.c :* Modification ou remplacement d'une procédure  →  Mmod.
+  - *29.d :* Mise à jour selon monographie pharmacopée  →  Mmin.
+  - *29.e :* Transfert vers une pharmacopée reconnue  →  Mmin.
 - **30.** Conditionnement primaire du produit fini (changement ou ajout de type de contenant) :
-  - *30.a :* Formes pharmaceutiques non stériles $\to$ Mmod.
-  - *30.b :* Médicaments stériles $\to$ Mmaj.
-  - *30.c :* Suppression d'un contenant sans supprimer de dosage/forme $\to$ Mmod.
+  - *30.a :* Formes pharmaceutiques non stériles  →  Mmod.
+  - *30.b :* Médicaments stériles  →  Mmaj.
+  - *30.c :* Suppression d'un contenant sans supprimer de dosage/forme  →  Mmod.
 - **31.** Composition qualitative et quantitative du conditionnement primaire :
-  - *31.a :* Formes solides (ex: blister vers autre blister équivalent) $\to$ Mmin.
-  - *31.b :* Formes semi-solides et liquides non stériles $\to$ Mmod.
+  - *31.a :* Formes solides (ex: blister vers autre blister équivalent)  →  Mmin.
+  - *31.b :* Formes semi-solides et liquides non stériles  →  Mmod.
 - **32.** Durée de conservation du produit fini pour la vente :
-  - *32.a :* Réduction $\to$ Mmod.
-  - *32.b :* Extension (sur base de données de stabilité temps réel) $\to$ Mmod.
+  - *32.a :* Réduction  →  Mmod.
+  - *32.b :* Extension (sur base de données de stabilité temps réel)  →  Mmod.
 - **33.** Durée de conservation après première ouverture, dilution ou reconstitution :
-  - *33.a :* Réduction $\to$ Mmod.
-  - *33.b :* Extension $\to$ Mmod.
-- **34.** Changement des conditions de stockage du produit fini ou en cours d'utilisation $\to$ Mmod.
+  - *33.a :* Réduction  →  Mmod.
+  - *33.b :* Extension  →  Mmod.
+- **34.** Changement des conditions de stockage du produit fini ou en cours d'utilisation  →  Mmod.
 
 ---
 
@@ -377,7 +377,7 @@ Inspiré des outils d'exploration professionnelle haute densité, l'écran de tr
 ```
 
 - **Adaptation RTL Arabe Intégrale :**
-  - Bascule instantanée LTR $\leftrightarrow$ RTL via `dir="rtl"`.
+  - Bascule instantanée LTR  ↔  RTL via `dir="rtl"`.
   - Inversion symétrique naturelle de l'interface : arbre de navigation ancré à droite, tableau de données au centre, volet de prévisualisation à gauche.
   - Polices locales sans appel réseau : `Cairo` (typographie arabe fluide) et `Inter` (typographie latine).
 
