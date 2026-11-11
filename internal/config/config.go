@@ -17,12 +17,12 @@ const (
 
 // Config holds all configuration values for the Homolog platform
 type Config struct {
-	DeploymentMode DeploymentMode
-	Port           int
-	DatabaseURL    string
-	StoragePath    string
-	StorageType    string // "local" or "s3"
-	JWTSecret      string
+	DeploymentMode       DeploymentMode
+	Port                 int
+	DatabaseURL          string
+	StoragePath          string
+	StorageType          string // "local" or "s3"
+	JWTSecret            string
 	SessionExpiryMinutes int
 	IdleTimeoutMinutes   int
 	MaxUploadSizeBytes   int64
@@ -49,8 +49,8 @@ func Load() *Config {
 	}
 
 	port, _ := strconv.Atoi(getEnv("PORT", "8090"))
-	sessionExpiry, _ := strconv.Atoi(getEnv("SESSION_EXPIRY_MINUTES", "480")) // 8 hours
-	idleTimeout, _ := strconv.Atoi(getEnv("IDLE_TIMEOUT_MINUTES", "15"))     // 15 min BPF compliance
+	sessionExpiry, _ := strconv.Atoi(getEnv("SESSION_EXPIRY_MINUTES", "480"))   // 8 hours
+	idleTimeout, _ := strconv.Atoi(getEnv("IDLE_TIMEOUT_MINUTES", "15"))        // 15 min BPF compliance
 	maxUploadMB, _ := strconv.ParseInt(getEnv("MAX_UPLOAD_MB", "1024"), 10, 64) // 1 GB max per file
 
 	smtpPort, _ := strconv.Atoi(getEnv("SMTP_PORT", "587"))
