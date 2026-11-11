@@ -36,6 +36,27 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 		LastName  string
 	}{
 		{
+			Email:     "dt@sanadpharma.dz",
+			Password:  "P@ssw0rdPharma2026!",
+			Role:      domain.RoleDirecteurTechnique,
+			FirstName: "Amine",
+			LastName:  "K.",
+		},
+		{
+			Email:     "admin@sanadpharma.dz",
+			Password:  "Admin@Pharma2026!",
+			Role:      domain.RoleAdminLaboratoire,
+			FirstName: "Karim",
+			LastName:  "M.",
+		},
+		{
+			Email:     "reg@sanadpharma.dz",
+			Password:  "Reg@Pharma2026!",
+			Role:      domain.RoleResponsableAffairesReg,
+			FirstName: "Sarah",
+			LastName:  "B.",
+		},
+		{
 			Email:     "dt@homolog.dz",
 			Password:  "P@ssw0rdPharma2026!",
 			Role:      domain.RoleDirecteurTechnique,

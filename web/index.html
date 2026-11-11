@@ -855,7 +855,7 @@
 
                 <div class="login-field">
                     <label for="login-email" id="lbl-login-email">Adresse e-mail nominative (Habilitation BPF) :</label>
-                    <input type="email" id="login-email" class="login-input" placeholder="ex: dt@homolog.dz" required autocomplete="username">
+                    <input type="email" id="login-email" class="login-input" placeholder="ex: dt@sanadpharma.dz" required autocomplete="username">
                 </div>
 
                 <div class="login-field">
@@ -878,26 +878,26 @@
                     <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase;">
                         ⚡ Comptes nominatifs d'habilitation pré-configurés :
                     </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('dt@homolog.dz', 'P@ssw0rdPharma2026!')">
+                    <div class="demo-btn" onclick="fillDemoAccount('dt@sanadpharma.dz', 'P@ssw0rdPharma2026!')">
                         <div>
                             <strong>💊 Dr. Amine K.</strong>
                             <div style="color:var(--text-dim); font-size:10px;">Directeur Technique (Agrément MIPH)</div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">dt@homolog.dz</span>
+                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">dt@sanadpharma.dz</span>
                     </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('admin@homolog.dz', 'Admin@Pharma2026!')">
+                    <div class="demo-btn" onclick="fillDemoAccount('admin@sanadpharma.dz', 'Admin@Pharma2026!')">
                         <div>
                             <strong>🏢 Karim M.</strong>
                             <div style="color:var(--text-dim); font-size:10px;">Administrateur Laboratoire</div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">admin@homolog.dz</span>
+                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">admin@sanadpharma.dz</span>
                     </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('reg@homolog.dz', 'Reg@Pharma2026!')">
+                    <div class="demo-btn" onclick="fillDemoAccount('reg@sanadpharma.dz', 'Reg@Pharma2026!')">
                         <div>
                             <strong>📋 Sarah B.</strong>
                             <div style="color:var(--text-dim); font-size:10px;">Affaires Réglementaires</div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">reg@homolog.dz</span>
+                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">reg@sanadpharma.dz</span>
                     </div>
                 </div>
 
@@ -975,7 +975,7 @@
                     <div class="user-dropdown" id="user-dropdown" style="display:none; position:absolute; right:0; top:34px; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; width:280px; box-shadow:0 15px 35px rgba(0,0,0,0.45); z-index:99999; padding:8px;">
                         <div style="padding:8px; border-bottom:1px solid var(--border-color); margin-bottom:6px;">
                             <div id="u-drop-name" style="font-weight:700; color:var(--text-main); font-size:13px;">Dr. Amine K.</div>
-                            <div id="u-drop-email" style="font-size:11px; color:var(--text-muted); font-family:monospace;">dt@homolog.dz</div>
+                            <div id="u-drop-email" style="font-size:11px; color:var(--text-muted); font-family:monospace;">dt@sanadpharma.dz</div>
                             <div id="u-drop-role" style="font-size:11px; color:var(--accent-emerald); font-weight:600; margin-top:3px;">Directeur Technique (BPF)</div>
                             <div id="u-drop-org" style="font-size:10px; color:var(--text-dim); margin-top:2px;">Laboratoire Pharmaceutique National</div>
                         </div>
@@ -1296,7 +1296,7 @@
                     <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
                         <h4 style="font-size:12px; margin-bottom:8px; color:var(--text-main);">🔐 Données Techniques de l'Archive</h4>
                         <div style="font-size:11px; display:flex; flex-direction:column; gap:6px;">
-                            <div>Format : <strong>Archive universelle chiffrée (.homolog)</strong></div>
+                            <div>Format : <strong>Archive universelle chiffrée (.sanad)</strong></div>
                             <div>Taille totale : <strong>184.2 Mo (Dédupliquée CAS)</strong></div>
                             <div>Norme de dépôt : <strong>Recommandation ANPP Bouchaoui</strong></div>
                             <div>Empreinte globale SHA-256 :</div>
@@ -1320,7 +1320,7 @@
             <div class="modal-footer">
                 <button class="btn-pill" onclick="closeModal('modal-export')">Fermer</button>
                 <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="triggerArchiveDownload()">
-                    ⬇️ Télécharger l'Archive Officielle (.zip / .homolog)
+                    ⬇️ Télécharger l'Archive Officielle (.zip / .sanad)
                 </button>
             </div>
         </div>
@@ -1850,14 +1850,14 @@
         let selectedDocId = 1;
         let isArabic = false;
         let paletteSelectedIndex = 0;
-        let currentTheme = localStorage.getItem("homolog-theme") || "dark";
+        let currentTheme = localStorage.getItem("sanad-theme") || "dark";
 
         // Application initiale du thème
         applyTheme(currentTheme);
 
         function toggleTheme() {
             currentTheme = (currentTheme === "dark") ? "light" : "dark";
-            localStorage.setItem("homolog-theme", currentTheme);
+            localStorage.setItem("sanad-theme", currentTheme);
             applyTheme(currentTheme);
         }
 
@@ -2939,7 +2939,7 @@
             { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
             { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
             { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
-            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle homolog_20261110.homolog", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
+            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle sanad_20261110.sanad", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
             { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
         ];
 
