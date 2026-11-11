@@ -54,7 +54,7 @@ func (h *PharmaHandler) CreateEstablishment(w http.ResponseWriter, r *http.Reque
 	// Journalisation BPF (21 CFR Part 11)
 	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
 		OrganizationID: user.OrganizationID,
-		UserID:         &user.ID,
+		UserID:         &user.UserID,
 		UserEmail:      user.Email,
 		UserRole:       user.Role,
 		Action:         "ESTABLISHMENT_CREATE",
@@ -159,7 +159,7 @@ func (h *PharmaHandler) UpdateEstablishment(w http.ResponseWriter, r *http.Reque
 	// Audit trail
 	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
 		OrganizationID: user.OrganizationID,
-		UserID:         &user.ID,
+		UserID:         &user.UserID,
 		UserEmail:      user.Email,
 		UserRole:       user.Role,
 		Action:         "ESTABLISHMENT_UPDATE",
@@ -201,7 +201,7 @@ func (h *PharmaHandler) CreateManufacturingSite(w http.ResponseWriter, r *http.R
 
 	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
 		OrganizationID: user.OrganizationID,
-		UserID:         &user.ID,
+		UserID:         &user.UserID,
 		UserEmail:      user.Email,
 		UserRole:       user.Role,
 		Action:         "MANUFACTURING_SITE_CREATE",
@@ -303,7 +303,7 @@ func (h *PharmaHandler) CreateMedicine(w http.ResponseWriter, r *http.Request) {
 
 	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
 		OrganizationID: user.OrganizationID,
-		UserID:         &user.ID,
+		UserID:         &user.UserID,
 		UserEmail:      user.Email,
 		UserRole:       user.Role,
 		Action:         "MEDICINE_CREATE",
@@ -401,7 +401,7 @@ func (h *PharmaHandler) CreateMedicalDevice(w http.ResponseWriter, r *http.Reque
 
 	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
 		OrganizationID: user.OrganizationID,
-		UserID:         &user.ID,
+		UserID:         &user.UserID,
 		UserEmail:      user.Email,
 		UserRole:       user.Role,
 		Action:         "MEDICAL_DEVICE_CREATE",
