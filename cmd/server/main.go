@@ -117,15 +117,23 @@ func main() {
 		w.Write(content)
 	})
 
-	// Favicon pour éviter toute erreur 404 du navigateur
+	// Favicon Caducée officiel Sanad Pharma
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		ico, err := web.Files.ReadFile("img/favicon-caducee.svg")
+		if err == nil {
+			w.Header().Set("Content-Type", "image/svg+xml")
+			w.Header().Set("Cache-Control", "public, max-age=86400")
+			w.Write(ico)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	// Servir les assets statiques embarqués (css, js)
+	// Servir les assets statiques embarqués (css, js, img)
 	staticFS := http.FileServer(http.FS(web.Files))
 	r.Handle("/css/*", staticFS)
 	r.Handle("/js/*", staticFS)
+	r.Handle("/img/*", staticFS)
 
 	// Routes de diagnostic et d'état de santé
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
