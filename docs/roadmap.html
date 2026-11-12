@@ -562,15 +562,15 @@
     </h1>
 
     <div class="kpi-grid">
-        <div class="kpi-card green">
-            <div class="kpi-label">Phase 1 (Socle & GED)</div>
-            <div class="kpi-value">75 %</div>
-            <div class="kpi-sub">6 / 8 Jalons complétés</div>
-        </div>
         <div class="kpi-card blue">
-            <div class="kpi-label">Phase 2 (Variations ANPP)</div>
-            <div class="kpi-value">100 %</div>
-            <div class="kpi-sub">Modélisée & Spécifiée</div>
+            <div class="kpi-label">Phase 1 (Socle & PSSI)</div>
+            <div class="kpi-value">5 / 8 Complétés</div>
+            <div class="kpi-sub">Jalons 1.2 & 1.7 Actifs</div>
+        </div>
+        <div class="kpi-card amber">
+            <div class="kpi-label">Phase 2 (Élaboration & Variations)</div>
+            <div class="kpi-value">8 Jalons</div>
+            <div class="kpi-sub">Studio 2.1 & 34 Rubriques</div>
         </div>
         <div class="kpi-card amber">
             <div class="kpi-label">Phase 3 (Extensions M2M)</div>
@@ -588,70 +588,76 @@
 
     <div class="gantt-box">
         <div class="gantt-title">
-            <span>Chronologie d'Exécution des 18 Jalons</span>
+            <span>Chronologie d'Exécution des 19 Jalons (Phases 1, 2 & 3)</span>
             <span style="font-size: 7.2pt; color: #64748b; font-weight: normal;">Novembre 2026 - T1 2027</span>
         </div>
-        <svg viewBox="0 0 760 160" width="100%" height="160" style="font-family: inherit;">
-            <rect x="0" y="0" width="760" height="160" fill="#f8fafc" rx="4"/>
-            <line x1="190" y1="0" x2="190" y2="160" stroke="#e2e8f0" stroke-width="1"/>
-            <line x1="380" y1="0" x2="380" y2="160" stroke="#e2e8f0" stroke-width="1"/>
-            <line x1="570" y1="0" x2="570" y2="160" stroke="#e2e8f0" stroke-width="1"/>
+        <svg viewBox="0 0 760 175" width="100%" height="175" style="font-family: inherit;">
+            <rect x="0" y="0" width="760" height="175" fill="#f8fafc" rx="4"/>
+            <line x1="190" y1="0" x2="190" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="380" y1="0" x2="380" y2="175" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="570" y1="0" x2="570" y2="175" stroke="#e2e8f0" stroke-width="1"/>
 
-            <text x="95" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">NOVEMBRE 2026 (SOCLE)</text>
-            <text x="285" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">DÉCEMBRE 2026 (EXPANSION)</text>
-            <text x="475" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">JANVIER 2027 (VARIATIONS)</text>
-            <text x="665" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">FÉVRIER 2027 (ÉCOSYSTÈME)</text>
+            <text x="95" y="14" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">NOVEMBRE 2026 (SOCLE & PSSI)</text>
+            <text x="285" y="14" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">DÉCEMBRE 2026 (EXPANSION & STUDIO)</text>
+            <text x="475" y="14" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">JANVIER 2027 (VARIATIONS ANPP)</text>
+            <text x="665" y="14" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">FÉVRIER 2027 (ÉCOSYSTÈME M2M)</text>
 
             <!-- Lignes Phase 1 -->
-            <text x="10" y="36" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 1 : SOCLE & GED</text>
-            <rect x="10" y="42" width="175" height="15" rx="3" fill="#10b981"/>
-            <text x="97" y="52" fill="#ffffff" font-size="7" font-weight="700" text-anchor="middle">Jalons 1.1 à 1.6 (Complétés)</text>
-
-            <rect x="190" y="42" width="70" height="15" rx="3" fill="#0284c7"/>
-            <text x="225" y="52" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">1.7 (En cours)</text>
-
-            <rect x="265" y="42" width="55" height="15" rx="3" fill="#94a3b8"/>
-            <text x="292" y="52" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">1.8 (Docker)</text>
+            <text x="10" y="32" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 1 : SOCLE, PSSI & GED</text>
+            <!-- 1.1 -->
+            <rect x="10" y="38" width="32" height="14" rx="2" fill="#10b981"/>
+            <text x="26" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.1 ✅</text>
+            <!-- 1.2 -->
+            <rect x="45" y="38" width="50" height="14" rx="2" fill="#0284c7" stroke="#0369a1" stroke-width="1"/>
+            <text x="70" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.2 PSSI 🔄</text>
+            <!-- 1.3-1.6 -->
+            <rect x="98" y="38" width="88" height="14" rx="2" fill="#10b981"/>
+            <text x="142" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.3-1.6 (GED/CTD) ✅</text>
+            <!-- 1.7 -->
+            <rect x="189" y="38" width="42" height="14" rx="2" fill="#0284c7"/>
+            <text x="210" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.7 Studio 🔄</text>
+            <!-- 1.8 -->
+            <rect x="234" y="38" width="36" height="14" rx="2" fill="#94a3b8"/>
+            <text x="252" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.8 Pkg</text>
 
             <!-- Lignes Phase 2 -->
-            <text x="10" y="76" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 2 : VARIATIONS ANPP</text>
-            <rect x="325" y="82" width="90" height="15" rx="3" fill="#38bdf8"/>
-            <text x="370" y="92" fill="#0f2942" font-size="6.8" font-weight="700" text-anchor="middle">2.1 & 2.2 Variations</text>
-
-            <rect x="420" y="82" width="80" height="15" rx="3" fill="#38bdf8"/>
-            <text x="460" y="92" fill="#0f2942" font-size="6.8" font-weight="700" text-anchor="middle">2.3 & 2.4 Régul. DM</text>
-
-            <rect x="505" y="82" width="60" height="15" rx="3" fill="#38bdf8"/>
-            <text x="535" y="92" fill="#0f2942" font-size="6.8" font-weight="700" text-anchor="middle">2.5-2.7 SaaS</text>
+            <text x="10" y="72" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 2 : ÉLABORATION & VARIATIONS</text>
+            <!-- 2.1 -->
+            <rect x="274" y="78" width="62" height="14" rx="2" fill="#0d9488"/>
+            <text x="305" y="88" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">2.1 Studio BPF</text>
+            <!-- 2.2 & 2.3 -->
+            <rect x="339" y="78" width="76" height="14" rx="2" fill="#0284c7"/>
+            <text x="377" y="88" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">2.2 & 2.3 Variations</text>
+            <!-- 2.4 & 2.5 -->
+            <rect x="418" y="78" width="70" height="14" rx="2" fill="#38bdf8"/>
+            <text x="453" y="88" fill="#0f2942" font-size="6.5" font-weight="700" text-anchor="middle">2.4 & 2.5 Régul DM</text>
+            <!-- 2.6-2.8 -->
+            <rect x="491" y="78" width="75" height="14" rx="2" fill="#38bdf8"/>
+            <text x="528" y="88" fill="#0f2942" font-size="6.5" font-weight="700" text-anchor="middle">2.6-2.8 FTS & SaaS</text>
 
             <!-- Lignes Phase 3 -->
-            <text x="10" y="116" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 3 : EXTENSIONS M2M</text>
-            <rect x="575" y="122" width="55" height="15" rx="3" fill="#818cf8"/>
-            <text x="602" y="132" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">3.1 Vigilance</text>
-
-            <rect x="635" y="122" width="55" height="15" rx="3" fill="#818cf8"/>
-            <text x="662" y="132" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">3.2 SSO/iCal</text>
-
-            <rect x="695" y="122" width="55" height="15" rx="3" fill="#f59e0b"/>
-            <text x="722" y="132" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">3.3 API ANPP</text>
+            <text x="10" y="112" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 3 : EXTENSIONS M2M</text>
+            <rect x="575" y="118" width="55" height="14" rx="2" fill="#818cf8"/>
+            <text x="602" y="128" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">3.1 Vigilance</text>
+            <rect x="635" y="118" width="55" height="14" rx="2" fill="#818cf8"/>
+            <text x="662" y="128" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">3.2 SSO/iCal</text>
+            <rect x="695" y="118" width="55" height="14" rx="2" fill="#6366f1"/>
+            <text x="722" y="128" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">3.3 API ANPP</text>
 
             <!-- Légende -->
-            <circle cx="15" cy="150" r="3.5" fill="#10b981"/>
-            <text x="22" y="153" fill="#475569" font-size="7">Jalon Réalisé</text>
-
-            <circle cx="105" cy="150" r="3.5" fill="#0284c7"/>
-            <text x="112" y="153" fill="#475569" font-size="7">Jalon En cours</text>
-
-            <circle cx="205" cy="150" r="3.5" fill="#38bdf8"/>
-            <text x="212" y="153" fill="#475569" font-size="7">Phase 2 Planifiée</text>
-
-            <circle cx="315" cy="150" r="3.5" fill="#818cf8"/>
-            <text x="322" y="153" fill="#475569" font-size="7">Phase 3 Planifiée</text>
-
-            <circle cx="425" cy="150" r="3.5" fill="#f59e0b"/>
-            <text x="432" y="153" fill="#475569" font-size="7">Guichet M2M ANPP</text>
-        </svg>
-    </div>
+            <g transform="translate(10, 150)">
+                <circle cx="5" cy="5" r="3.5" fill="#10b981"/>
+                <text x="13" y="8" fill="#475569" font-size="6.8">Complété (5 jalons)</text>
+                <circle cx="105" cy="5" r="3.5" fill="#0284c7"/>
+                <text x="113" y="8" fill="#475569" font-size="6.8">En cours (1.2 PSSI & 1.7 Studio)</text>
+                <circle cx="260" cy="5" r="3.5" fill="#0d9488"/>
+                <text x="268" y="8" fill="#475569" font-size="6.8">2.1 Atelier Collaboratif</text>
+                <circle cx="385" cy="5" r="3.5" fill="#38bdf8"/>
+                <text x="393" y="8" fill="#475569" font-size="6.8">Phase 2 Planifiée</text>
+                <circle cx="495" cy="5" r="3.5" fill="#818cf8"/>
+                <text x="503" y="8" fill="#475569" font-size="6.8">Phase 3 Écosystème M2M</text>
+            </g>
+        </svg>    </div>
 
     <h2>Tableau de Synthèse des 3 Phases</h2>
     <table>
@@ -668,15 +674,15 @@
             <tr>
                 <td><strong>Phase 1</strong><br>Socle & GED</td>
                 <td>Disposer d'une plateforme opérationnelle de bout en bout pour monter, signer et réviser un dossier CTD/DM.</td>
-                <td>Base PostgreSQL, 2FA TOTP, 9 rôles 21 CFR 11, Référentiel ANPP 2025, GED ALCOA+, Pharma Explorer 3 volets, E-Services.</td>
-                <td><span class="badge badge-done">75% Réalisé</span></td>
+                <td>Base PostgreSQL, 2FA TOTP, PSSI, RBAC 14 Perms/SoD, Référentiel ANPP 2025, GED ALCOA+, Pharma Explorer 3 volets, E-Services.</td>
+                <td><span class="badge badge-progress">5/8 Complétés (1.2 & 1.7 Actifs)</span></td>
                 <td><span class="badge badge-anpp">Priorité M (Must)</span></td>
             </tr>
             <tr>
-                <td><strong>Phase 2</strong><br>Variations ANPP</td>
-                <td>Maîtrise complète du cycle de vie post-enregistrement et efficacité opérationnelle accrue.</td>
-                <td>Moteur 34 variations LD-DEPP07/V01 (Mmin/Mmod/Mmaj), escalade, Grouping, régularisation DM, FTS PostgreSQL, SaaS.</td>
-                <td><span class="badge badge-progress">Spécifiée</span></td>
+                <td><strong>Phase 2</strong><br>Élaboration & Variations</td>
+                <td>Atelier documentaire collaboratif BPF et maîtrise du cycle de vie post-enregistrement.</td>
+                <td>Atelier d'élaboration collaborative, Maker-Checker BPF, Redevances, Moteur 34 variations LD-DEPP07/V01 (Mmin/Mmod/Mmaj), Grouping, Consultants, DM, FTS, SaaS.</td>
+                <td><span class="badge badge-planned">Spécifiée (8 Jalons)</span></td>
                 <td><span class="badge badge-progress">Priorité S (Should)</span></td>
             </tr>
             <tr>
@@ -691,7 +697,7 @@
 
     <div class="page-footer">
         <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
-        <span>Page 2 / 8</span>
+        <span>Page 2 / 9</span>
     </div>
 
     <!-- ==================== PAGE 3 : PHASE 1 (JALONS 1.1 À 1.3) ==================== -->
@@ -727,19 +733,22 @@
     </div>
 
     <!-- Jalon 1.2 -->
-    <div class="milestone-card done">
+    <div class="milestone-card in-progress">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, 9 Rôles & Audit Trail (21 CFR Part 11)</span>
-            <span class="badge badge-done">Complété ✅</span>
+            <span class="milestone-title">Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, PSSI, RBAC 14 Perms & SoD (21 CFR Part 11)</span>
+            <span class="badge badge-progress">En cours (Extension RBAC / SoD) 🔄</span>
         </div>
         <ul class="milestone-items">
-            <li class="milestone-item"><span class="check-icon checked">✓</span> Hachage sécurisé des mots de passe avec <strong>Argon2id</strong> et politique stricte de complexité (min. 12 car.).</li>
-            <li class="milestone-item"><span class="check-icon checked">✓</span> Sessions sécurisées par Cookies HttpOnly, SameSite=Strict et table de révocation instantanée en base PostgreSQL.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Socle d'authentification et sessions BPF :</strong> Argon2id, Cookies HttpOnly SameSite=Strict, table de révocation en base PostgreSQL.</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> Second facteur <strong>TOTP (RFC 6238) 100% hors-ligne</strong> (Google/Microsoft Authenticator) + 10 codes de secours chiffrés.</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> Verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 échecs = 15 min).</li>
-            <li class="milestone-item"><span class="check-icon checked">✓</span> Matrice des <strong>9 profils d'utilisateurs stricts</strong> (Super-Admin, Admin Système, Admin Labo, Affaires Réglementaires, Pharmacien DT, Qualité BPF, R&D/Prod, Consultant, Auditeur).</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Signature électronique solennelle du Pharmacien Directeur Technique (PDT)</strong> avec déclaration légale sur l'honneur, re-authentification 2FA, horodatage UTC et scellement d'intégrité SHA-256.</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> Journal d'audit trail immuable (`audit_logs`) strictement *append-only* (triggers SQL interdisant `UPDATE` et `DELETE`).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Extension RBAC Dynamique à 14 Permissions (Section 7.2 CDC) :</strong> Matrice granulaire pour les 9 profils (tables `roles`, `permissions`, `role_permissions`, `user_permissions`, `permissions_version`).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Ségrégation Stricte des Tâches SoD :</strong> Interdiction absolue d'auto-approbation BPF (Règle Go hermétique : Rédacteur Maker ≠ Relecteur Checker ≠ Approbateur PDT).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Blocage Hermétique des Routes API (Backend Defense-in-Depth) :</strong> Interception immédiate `HTTP 403 Forbidden` pour tout jeton dépourvu de la permission requise et journalisation automatique de l'événement de sécurité dans `audit_logs`.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :</strong> Back-Office autonome pour l'Administrateur de Laboratoire (gestion collaborateurs, matrice interactive, rattachement PDT 1.A.7, sites 1.H.8, surveillance audit trail, quotas CAS).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :</strong> Masquage strict (`display: none`) des volets de prix 1.H.4/5, signature PDT, menus admin ; mode cloisonné *Guest* pour consultants externes ; actions désactivées avec infobulles contextuelles (*Disabled + Tooltip*).</li>
         </ul>
     </div>
 
@@ -762,7 +771,7 @@
 
     <div class="page-footer">
         <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
-        <span>Page 3 / 8</span>
+        <span>Page 3 / 9</span>
     </div>
 
     <!-- ==================== PAGE 4 : PHASE 1 (JALONS 1.4 À 1.6) ==================== -->
@@ -828,7 +837,7 @@
 
     <div class="page-footer">
         <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
-        <span>Page 4 / 8</span>
+        <span>Page 4 / 9</span>
     </div>
 
     <!-- ==================== PAGE 5 : PHASE 1 (JALONS 1.7 & 1.8) ==================== -->
@@ -872,12 +881,12 @@
 
     <div class="callout amber">
         <div class="callout-title">Point d'Étape Phase 1</div>
-        Avec 6 jalons complétés sur 8 et le Jalon 1.7 en phase active de finalisation, le socle de la plateforme <strong>Homolog</strong> garantit déjà la couverture intégrale du processus d'enregistrement et d'homologation selon les directives ANPP 2025.
+        Avec 5 jalons complétés sur 8, le Jalon 1.2 en cours d'extension RBAC/SoD et le Jalon 1.7 en phase active de finalisation, le socle de la plateforme <strong>Homolog</strong> garantit déjà la couverture intégrale du processus d'enregistrement et d'homologation selon les directives ANPP 2025.
     </div>
 
     <div class="page-footer">
         <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
-        <span>Page 5 / 8</span>
+        <span>Page 5 / 9</span>
     </div>
 
     <!-- ==================== PAGE 6 : PHASE 2 (VARIATIONS ANPP) ==================== -->
@@ -894,13 +903,29 @@
 
     <div class="callout">
         <div class="callout-title">Objectif Stratégique de la Phase 2</div>
-        Intégrer le moteur expert de modifications post-enregistrement selon la ligne directrice officielle algérienne <strong>LD-DEPP07/V01 (Avril 2026)</strong>, la gestion des redevances, la régularisation des dispositifs médicaux, la recherche plein texte et le multi-tenant Cloud SaaS.
+        Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), le moteur expert de modifications post-enregistrement selon la ligne directrice officielle algérienne <strong>LD-DEPP07/V01 (Avril 2026)</strong>, la gestion des redevances, la régularisation des dispositifs médicaux, la recherche plein texte et le multi-tenant Cloud SaaS.
     </div>
 
     <!-- Jalon 2.1 -->
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 2.1 : Suivi des Redevances Réglementaires & Devises</span>
+            <span class="milestone-title">Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF</span>
+            <span class="badge badge-planned">Planifié (Nouveau)</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Matrice d'Attribution Multi-Départements (Section 7.4.1 CDC) :</strong> Affaires Réglementaires (1.A/1.H), R&D / CQ (3.2.S/P), Production Industrielle (3.2.P.3), Assurance Qualité (Relecture Checker), Partenaires Tiers (ASMF/DMF, CROs).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :</strong> `À Rédiger` ➔ `En Cours` ➔ `En Revue Qualité/Checker` ➔ `Prêt pour Visa DT` ➔ `Approuvé & Scellé`, avec verrouillage Check-out / Check-in et gestion des versions mineures/majeures (`v0.1` à `v1.0`).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Gating Chronologique & Chemin Critique :</strong> Modélisation du graphe DAG des dépendances en 5 phases successives avec verrous bloquants prévenant les erreurs de rédaction prématurée (suivi incombustible des stabilités Zone IVb 6 mois min. et bioéquivalence).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :</strong> Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications produit fini (3.2.P.5), Rapports de stabilité Zone IVb (3.2.P.8), QOS Module 2.3, Dossier technique DM.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic :</strong> Production instantanée en PDF/A de la lettre 1.P.8 (validation 3 premiers lots), 1.P.9 (suivi stabilité Zone IVb), 1.H.10 (attestation DT), bordereaux BV1 et BV2 avec calcul des redevances.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Cockpit de Supervision & Parapheur Électronique pour le Pharmacien DT :</strong> Suivi temps réel d'avancement par module CTD, parapheur électronique consolidé avec visualisation diff, rapport du Checker et signature groupée (*Batch Signing*).</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 2.2 -->
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.2 : Suivi des Redevances Réglementaires & Devises</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -910,10 +935,10 @@
         </ul>
     </div>
 
-    <!-- Jalon 2.2 -->
+    <!-- Jalon 2.3 -->
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 2.2 : Moteur Expert de Variations ANPP (Ligne Directrice LD-DEPP07/V01)</span>
+            <span class="milestone-title">Jalon 2.3 : Moteur Expert de Variations ANPP (Ligne Directrice LD-DEPP07/V01)</span>
             <span class="badge badge-anpp">Réglementaire Majeur</span>
         </div>
         <ul class="milestone-items">
@@ -929,10 +954,22 @@
         </ul>
     </div>
 
-    <!-- Jalon 2.3 -->
+        <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 6 / 9</span>
+    </div>
+
+    <!-- ==================== PAGE 7 : PHASE 2 (SUITE) ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Phase 2 (Suite) : Consultants, FTS & Déploiement SaaS</span>
+    </div>
+
+    <!-- Jalon 2.4 -->
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 2.3 : Espace Sécurisé pour Consultants Externes</span>
+            <span class="milestone-title">Jalon 2.4 : Espace Sécurisé pour Consultants Externes</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -942,10 +979,10 @@
         </ul>
     </div>
 
-    <!-- Jalon 2.4 -->
+    <!-- Jalon 2.5 -->
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 2.4 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)</span>
+            <span class="milestone-title">Jalon 2.5 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -954,21 +991,11 @@
         </ul>
     </div>
 
-    <div class="page-footer">
-        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
-        <span>Page 6 / 8</span>
-    </div>
-
-    <!-- ==================== PAGE 7 : PHASE 2 (SUITE) & PHASE 3 ==================== -->
-    <div class="page-break"></div>
-    <div class="page-header">
-        <span>HOMOLOG • Feuille de Route Stratégique</span>
-        <span>Phase 2 (Suite) & Phase 3 : Extensions M2M</span>
-    </div>
+    
 
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 2.5 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)</span>
+            <span class="milestone-title">Jalon 2.6 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -980,7 +1007,7 @@
 
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 2.6 : Console Super-Admin Éditeur (Mode Cloud SaaS)</span>
+            <span class="milestone-title">Jalon 2.7 : Console Super-Admin Éditeur (Mode Cloud SaaS)</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -991,7 +1018,7 @@
 
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 2.7 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)</span>
+            <span class="milestone-title">Jalon 2.8 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -1000,11 +1027,28 @@
         </ul>
     </div>
 
+        <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 7 / 9</span>
+    </div>
+
+    <!-- ==================== PAGE 8 : PHASE 3 ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Phase 3 : Surveillance Post-Marché & Écosystème M2M</span>
+    </div>
+
     <!-- ==================== PHASE 3 ==================== -->
     <h1>
         <span>4. Phase 3 : Extensions & Écosystème M2M</span>
         <span class="badge badge-planned">Priorité C (Could Have)</span>
     </h1>
+
+    <div class="callout">
+        <div class="callout-title">Objectif Stratégique de la Phase 3</div>
+        Étendre la plateforme à la surveillance post-marché (Pharmacovigilance et Matériovigilance des DM), aux interconnexions d'entreprise sécurisées (SSO SAML/LDAP et flux iCal) et à l'interopérabilité directe Machine-to-Machine avec les plateformes de l'Agence Nationale des Produits Pharmaceutiques (E-TASJIL / guichet M2M).
+    </div>
 
     <div class="milestone-card planned">
         <div class="milestone-header">
@@ -1043,10 +1087,10 @@
 
     <div class="page-footer">
         <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
-        <span>Page 7 / 8</span>
+        <span>Page 8 / 9</span>
     </div>
 
-    <!-- ==================== PAGE 8 : VALIDATION & GOUVERNANCE ==================== -->
+    <!-- ==================== PAGE 9 : VALIDATION & GOUVERNANCE ==================== -->
     <div class="page-break"></div>
     <div class="page-header">
         <span>HOMOLOG • Feuille de Route Stratégique</span>
@@ -1074,8 +1118,8 @@
             <tr>
                 <td><strong>Jalons Phase 1 Complétés</strong></td>
                 <td>8 / 8 Jalons</td>
-                <td><strong>6 / 8 Jalons</strong> (1.1 à 1.6 réalisés)</td>
-                <td><span class="badge badge-done">Jalon 1.7 en cours (75%) ✅</span></td>
+                <td><strong>5 / 8 Jalons Complétés</strong> (1.1, 1.3, 1.4, 1.5, 1.6)</td>
+                <td><span class="badge badge-progress">Jalon 1.2 (PSSI/RBAC) & 1.7 (Studio) Actifs 🔄</span></td>
             </tr>
             <tr>
                 <td><strong>Couverture Tests Unitaires</strong></td>
@@ -1132,7 +1176,7 @@
 
     <div class="page-footer" style="margin-top: 25px;">
         <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
-        <span>Page 8 / 8</span>
+        <span>Page 9 / 9</span>
     </div>
 
 </body>
