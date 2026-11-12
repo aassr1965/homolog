@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="cadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#cadGrad)" />
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Base du calice -->
+    <path d="M10 27h12M12 27c0-1.2 1.3-2 3-2s3 .8 3 2" stroke-width="1.6"/>
+    <!-- Tige du calice -->
+    <path d="M15.5 18v7" stroke-width="1.8"/>
+    <!-- Corps du calice -->
+    <path d="M9.5 12c0 4.2 2.7 6.5 6 6.5s6-2.3 6-6.5H9.5z" stroke-width="1.6" fill="#ffffff" fill-opacity="0.25"/>
+    <ellipse cx="15.5" cy="12" rx="6" ry="1.2" stroke-width="1.4" fill="#ffffff" fill-opacity="0.3"/>
+    <!-- Serpent d'Épidaure -->
+    <path d="M13 24.5c1.8-.6 4-.4 4.5-1.5.5-1.2-.8-1.7-2-2-1.5-.4-2-1.2-1.8-2" stroke-width="1.6"/>
+    <path d="M14.5 18c2.5 0 5.2-1 6-3.2.7-2-.2-4-2-5-2.2-1.2-5-.5-5.5 1.5-.4 1.4.5 2.5 1.8 2.5" stroke-width="1.6"/>
+    <!-- Tête du serpent -->
+    <circle cx="15.3" cy="13.8" r="1.1" fill="#ffffff" stroke="none"/>
+    <!-- Goutte de venin -->
+    <path d="M15.5 15c-.4.5-.7.9-.7 1.2a.7.7 0 0 0 1.4 0c0-.3-.3-.7-.7-1.2z" fill="#ffffff" stroke="none"/>
+  </g>
+</svg>
