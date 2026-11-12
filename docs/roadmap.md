@@ -225,6 +225,11 @@ gantt
   - Mécanisme de verrouillage collaboratif (**Check-out / Check-in**) évitant les conflits d'édition simultanée.
   - Gestion granulaire du versionnage : révisions de travail mineures incrémentales (`v0.1`, `v0.2`, `v0.3`...) jusqu'à la révision majeure officielle scellée (`v1.0`) par le PDT.
   - Circuit de revue par les pairs / AQ (*Checker*) avec annotations, demandes d'ajustements motivées et journal d'audit complet.
+- [ ] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
+  - Modélisation du graphe orienté acyclique (DAG) des dépendances techniques et réglementaires CTD/DM en 5 phases successives (Matières & Méthodes ➔ Lots pilotes & CoA ➔ Stabilités Zone IVb & Bioéquivalence ➔ QOS & Notice/RCP ➔ Engagements & Visa PDT).
+  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé).
+  - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
+  - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
 - [ ] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
   - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
   - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).

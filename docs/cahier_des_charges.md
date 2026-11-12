@@ -444,7 +444,53 @@ stateDiagram-v2
 4. **`Prêt pour Visa DT` (*Pending Approval*) :** La revue qualité est validée avec succès. Le document est converti en version figée (format PDF/A normalisé avec indexation plein texte) et soumis au parapheur électronique du Pharmacien Directeur Technique.
 5. **`Approuvé & Scellé` (*Approved - PDT Visa*) :** Le Pharmacien Directeur Technique effectue la re-authentification forte (2FA TOTP), valide la mention solennelle légale et appose sa signature électronique conforme 21 CFR Part 11. Le document bascule en version majeure (`1.0`), est scellé par empreinte SHA-256 dans le stockage CAS immuable, et devient inaltérable.
 
-#### 7.3.3 Bibliothèque de Modèles Maîtres Pharmaceutiques (*Master Templates*)
+#### 7.3.3 Ordonnancement Chronologique, Chemin Critique & Dépendances Conditionnelles (Gating)
+L'élaboration des centaines de pièces composant un dossier CTD (Guide ANPP Juillet 2025) ou un dossier DM (Arrêté du 10 mai 2021) ne s'opère pas au hasard ni en vrac. Elle est gouvernée par un **Chemin Critique industriel et réglementaire** articulé en 5 phases successives, avec **déverrouillage conditionnel (*Gating*)** et **propagation descendante des données critiques** :
+
+```mermaid
+flowchart TD
+    subgraph P1 ["Phase 1 : Socle Amont & Méthodes (Mois 1-3)"]
+        A1["Sourçage API & CEP/ASMF (3.2.S)"] --> A2["Développement Galénique (3.2.P.2)"]
+        A2 --> A3["Validation Méthodes Analytiques ICH Q2 (3.2.P.5.3)"]
+    end
+
+    subgraph P2 ["Phase 2 : Lots Pilotes & Libération (Mois 3-4)"]
+        A3 --> B1["Fabrication Lots Pilotes/Enregistrement (3.2.P.3)"]
+        B1 --> B2["Bulletins d'Analyse Libératoires CoA (1.P.4 / 1.P.5)"]
+    end
+
+    subgraph P3 ["Phase 3 : Épreuves Temporelles Incompressibles (Mois 4-10+)"]
+        B2 --> C1["Études de Stabilité Zone IVb 30°C/75% RH (3.2.P.8)<br>(Min. 6 mois accéléré / 12 mois temps réel)"]
+        B2 --> C2["Étude de Bioéquivalence in vivo CRO (Module 5)<br>ou Justification Biowaiver (1.M.P.3)"]
+    end
+
+    subgraph P4 ["Phase 4 : Synthèses & Informations Produit (Mois 10-11)"]
+        C1 & C2 --> D1["Résumé Global de la Qualité - QOS (Module 2.3)"]
+        C1 --> D2["RCP (1.P.1) & Notice Patient FR/AR (1.P.2)<br>(Conditions de conservation & durée de vie validées)"]
+        D2 --> D3["Maquettes d'Emballage & Étiquetage (1.P.2)"]
+    end
+
+    subgraph P5 ["Phase 5 : Engagements, Formulaires & Visa Légal PDT (Mois 11-12)"]
+        D1 & D3 --> E1["Lettres d'Engagement (1.P.8, 1.P.9, 1.H.10)"]
+        E1 --> E2["Formulaire Officiel 1.A.3 & Bordereau BV1/BV2"]
+        E2 --> E3["Revue Assurance Qualité (Checker)"]
+        E3 --> E4["Visa & Signature Électronique PDT (Approver)"]
+        E4 --> E5["Submission Package E-TASJIL / Dépôt Physique"]
+    end
+```
+
+##### Règles de Déverrouillage Conditionnel (*Gating Rules*) dans la Plateforme :
+1. **Verrouillage amont de la fabrication :** La section 3.2.P.3 (Fabrication) et les spécifications de contrôle 3.2.P.5 ne peuvent être figées tant que la validation des méthodes analytiques (ICH Q2 - 3.2.P.5.3) n'a pas été formellement validée par le CQ (*Checker*).
+2. **Verrouillage des épreuves physiques :** Les études de stabilité (3.2.P.8) et les essais de bioéquivalence (Module 5) ne peuvent être déclarés initiés sans certificat d'analyse libératoire conforme (CoA 1.P.4 / 1.P.5). L'horloge de stabilité impose un compte à rebours réglementaire (M0, M3, M6, M9, M12) avec blocage de la soumission tant que le jalon M6 accéléré et temps réel n'est pas scellé.
+3. **Verrouillage des synthèses et de l'information médicale :** 
+   - Le Résumé Global de la Qualité (**QOS 2.3**) reste au statut *« Verrouillé - En attente données brutes Module 3 »* tant que 100 % des sous-sections de 3.2.S et 3.2.P ne sont pas au minimum en statut de revue validée.
+   - La **Notice patient (1.P.2)**, le **RCP (1.P.1)** et les **Maquettes d'emballage** restent verrouillés en édition finale tant que les conclusions de stabilité (durée de vie en mois, température maximale de conservation, précautions particulières de conservation) ne sont pas validées par le Responsable Stabilités.
+4. **Propagation descendante en cascade des données maîtresses :**
+   - Dès validation du rapport 3.2.P.8, les données finales (ex: *« 36 mois »*, *« À conserver à une température ne dépassant pas 30°C »*) sont répercutées automatiquement dans les champs dynamiques de la Notice FR/AR, du RCP et des articles de conditionnement.
+   - Dès validation de la formule de lot (3.2.P.3.2), la composition qualitative et quantitative exacte est injectée dans le RCP (rubrique 2), la Notice et le formulaire de demande 1.A.3.
+5. **Verrou de complétude pré-dépôt :** L'export du Submission Package (E-TASJIL) et la signature légale finale du PDT sont techniquement bloqués tant que l'ensemble des branches du DAG (Directed Acyclic Graph) documentaire ne sont pas toutes à l'état *« Approuvé & Scellé »*.
+
+#### 7.3.4 Bibliothèque de Modèles Maîtres Pharmaceutiques (*Master Templates*)
 Pour garantir l'uniformité rédactionnelle et la stricte conformité aux exigences de l'ANPP et aux référentiels internationaux (ICH Q1, Q2, Q3, Q6, CTD), la plateforme intègre une bibliothèque native de modèles maîtres paramétrables :
 - **Template Notice Patient Bilingue (FR/AR - 1.P.2) :** Modèle pré-structuré selon le canevas officiel de l'ANPP (Dénomination, composition, indications thérapeutiques, contre-indications, précautions d'emploi, posologie et mode d'administration, effets indésirables, conditions de conservation, date de révision). Support bilingue côte-à-côte ou séquencé avec mise en page RTL/LTR optimisée.
 - **Template Résumé des Caractéristiques du Produit (RCP - 1.P.1) :** Structure conforme au standard ANPP et EMA (rubriques 1 à 10 : composition qualitative/quantitative, forme pharmaceutique, données cliniques, propriétés pharmacologiques, données pharmaceutiques).
@@ -454,7 +500,7 @@ Pour garantir l'uniformité rédactionnelle et la stricte conformité aux exigen
 - **Template Protocole et Rapport de Validation de Procédé (3.2.P.3.5) :** Définition des paramètres opératoires critiques (CPP), des attributs qualité critiques (CQA), plan d'échantillonnage intensif sur 3 lots consécutifs à échelle industrielle et critères d'acceptation statistiques (indices $C_p$ / $C_{pk}$).
 - **Template Fiche Technique Dispositif Médical (Arrêté du 10 mai 2021) :** Structure réglementaire requise pour l'homologation des DM (classification selon annexe I, description, principes de fonctionnement, matières premières, stérilisation, performances et évaluation clinique).
 
-#### 7.3.4 Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic
+#### 7.3.5 Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic
 Afin d'éliminer les erreurs manuelles de saisie et les rejets administratifs de dossiers par l'ANPP, la plateforme intègre un générateur dynamique capable de composer instantanément les documents réglementaires obligatoires en fusionnant les métadonnées de l'établissement et du produit :
 - **Lettre d'engagement de validation industrielle (1.P.8) :** Génération automatique de l'engagement officiel du PDT de réaliser la validation du procédé de fabrication sur les trois (03) premiers lots industriels consécutifs dès l'obtention de la DE et d'en transmettre les résultats à l'ANPP.
 - **Lettre d'engagement de suivi de stabilité en Zone IVb (1.P.9) :** Génération de l'engagement de poursuivre le suivi de stabilité en temps réel sur les lots commerciaux en conditions Zone IVb jusqu'au terme de la durée de conservation autorisée.
@@ -462,7 +508,7 @@ Afin d'éliminer les erreurs manuelles de saisie et les rejets administratifs de
 - **Bordereaux de versement officiels BV1 et BV2 :** Édition automatique des bordereaux normalisés de l'ANPP avec calcul précis des montants de redevance (selon la procédure NI, NF, MI, MF, RI, RF ou DM), ventilation par rubriques et références bancaires pré-remplies.
 - **Attestation formelle de non-modification des autres sections (LD-DEPP07/V01) :** Pour les dossiers de variations, génération automatique de l'attestation légale jurant sur l'honneur qu'aucune autre modification qualitative ou quantitative n'a été introduite dans les sections non déclarées.
 
-#### 7.3.5 Tableau de Bord de Supervision du Pharmacien Directeur Technique (Cockpit DT)
+#### 7.3.6 Tableau de Bord de Supervision du Pharmacien Directeur Technique (Cockpit DT)
 Pour lui permettre d'exercer pleinement sa responsabilité de garant légal sans être submergé par les micro-tâches rédactionnelles, le Pharmacien Directeur Technique dispose d'un tableau de bord de supervision dédié :
 - **Vue d'avancement global en temps réel :** Matrice visuelle de complétude par module CTD (Modules 1 à 5) et par département responsable.
 - **Parapheur électronique unifié :** Liste consolidée de tous les documents arrivés au statut *Prêt pour Visa DT*, avec accès direct au diff des révisions, au rapport de conformité du *Checker* et au volet d'aperçu instantané.
