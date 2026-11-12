@@ -788,7 +788,3 @@
 
         // Initialisation des splitters glissants
         initSplitters();
-
-        // Initialisation au domaine Référentiel
-        switchDomainModule('ref');
-    </script>

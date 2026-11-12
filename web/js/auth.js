@@ -75,6 +75,9 @@ const mockAuditTrail = [
                 currentOrg = org;
                 document.getElementById("u-drop-org").innerText = org.name;
             }
+
+            // Charger les données du domaine actif uniquement après authentification
+            switchDomainModule(currentDomain || 'ref');
         }
 
         function formatRole(role) {
