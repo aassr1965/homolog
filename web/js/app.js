@@ -147,13 +147,13 @@
             const backdrop = document.getElementById('preview-backdrop');
             if (!preview) return;
             
-            // Sur desktop >= 1200px
-            if (window.innerWidth >= 1200) {
+            // Sur desktop large >= 1400px (ancré dans le flux)
+            if (window.innerWidth >= 1400) {
                 const hidden = (typeof force === 'boolean') ? !force : !preview.classList.contains('hidden');
                 preview.classList.toggle('hidden', hidden);
                 if (backdrop) backdrop.classList.remove('active');
             } else {
-                // Sur tablettes/laptops : mode slide-over
+                // Sur laptops / tablettes / mobiles : mode slide-over drawer
                 const open = (typeof force === 'boolean') ? force : !preview.classList.contains('slide-open');
                 preview.classList.toggle('slide-open', open);
                 if (backdrop) backdrop.classList.toggle('active', open);
@@ -308,10 +308,20 @@
             const btn = document.getElementById('act-' + domain);
             if (btn) btn.classList.add('active');
 
-            // Mise à jour de l'état actif dans la barre mobile
+            // Mise à jour de l'état actif dans la barre mobile tiroir
             document.querySelectorAll('.mob-dom-btn').forEach(b => b.classList.remove('active'));
             const mobBtn = document.getElementById('mob-act-' + domain);
             if (mobBtn) mobBtn.classList.add('active');
+
+            // Mise à jour de l'état actif dans la Bottom Navigation Bar mobile
+            document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+            const mobNavBtn = document.getElementById('mobnav-' + domain);
+            if (mobNavBtn) mobNavBtn.classList.add('active');
+
+            // Fermeture auto de l'arbre sur mobile si ouvert
+            if (window.innerWidth < 768) {
+                toggleMobileTree(false);
+            }
 
             // Titre contextuel de l'arborescence
             const titleEl = document.getElementById("tree-section-title");

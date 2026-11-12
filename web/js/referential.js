@@ -9,6 +9,10 @@ let currentRefSection = 'establishments';
         async function loadRefSection(section) {
             currentRefSection = section;
             renderTreeForDomain(currentDomain);
+
+            if (window.innerWidth < 768) {
+                toggleMobileTree(false);
+            }
             
             document.getElementById("bc-root").innerText = "RÉFÉRENTIEL";
             document.getElementById("bc-sec").innerText = "Pharmacopée";
@@ -49,11 +53,11 @@ let currentRefSection = 'establishments';
                     <tr>
                         <th style="width: 90px;">Statut MIPH</th>
                         <th>Raison Sociale</th>
-                        <th>Statut Juridique</th>
-                        <th>N° Agrément MIPH</th>
+                        <th class="col-hide-md">Statut Juridique</th>
+                        <th class="col-hide-sm">N° Agrément MIPH</th>
                         <th>Pharmacien DT (1.A.7)</th>
-                        <th>Décision Nominative</th>
-                        <th>Wilaya</th>
+                        <th class="col-hide-lg">Décision Nominative</th>
+                        <th class="col-hide-sm">Wilaya</th>
                     </tr>
                 `;
                 if (items.length === 0) {
@@ -63,15 +67,19 @@ let currentRefSection = 'establishments';
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
                     if (idx === selectedRefIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
+                    tr.onclick = () => {
+                        selectedRefIndex = idx;
+                        renderRefTable(section, items);
+                        if (window.innerWidth < 1400) togglePreviewPane(true);
+                    };
                     tr.innerHTML = `
                         <td><span class="status-tag status-ok">AGRÉÉ MIPH</span></td>
                         <td style="font-weight:600; color:var(--text-main);">${item.name_fr}</td>
-                        <td>${item.legal_status || 'SPA'}</td>
-                        <td style="font-family:monospace; color:var(--accent-blue);">${item.miph_license_number || '-'}</td>
+                        <td class="col-hide-md">${item.legal_status || 'SPA'}</td>
+                        <td class="col-hide-sm" style="font-family:monospace; color:var(--accent-blue);">${item.miph_license_number || '-'}</td>
                         <td style="font-weight:600;">${item.technical_director_name}</td>
-                        <td style="font-family:monospace; color:var(--text-muted);">${item.technical_director_decision_ref || '-'}</td>
-                        <td>${item.wilaya || '-'}</td>
+                        <td class="col-hide-lg" style="font-family:monospace; color:var(--text-muted);">${item.technical_director_decision_ref || '-'}</td>
+                        <td class="col-hide-sm">${item.wilaya || '-'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -80,11 +88,11 @@ let currentRefSection = 'establishments';
                     <tr>
                         <th style="width: 90px;">Statut BPF</th>
                         <th>Site de Fabrication / Contrôle</th>
-                        <th>Rôle Réglementaire (1.H.8)</th>
+                        <th class="col-hide-sm">Rôle Réglementaire (1.H.8)</th>
                         <th>Pays</th>
-                        <th>Licence ML</th>
-                        <th>Certificat BPF/GMP</th>
-                        <th>Autorité Émettrice</th>
+                        <th class="col-hide-lg">Licence ML</th>
+                        <th class="col-hide-md">Certificat BPF/GMP</th>
+                        <th class="col-hide-lg">Autorité Émettrice</th>
                     </tr>
                 `;
                 if (items.length === 0) {
@@ -94,15 +102,19 @@ let currentRefSection = 'establishments';
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
                     if (idx === selectedRefIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
+                    tr.onclick = () => {
+                        selectedRefIndex = idx;
+                        renderRefTable(section, items);
+                        if (window.innerWidth < 1400) togglePreviewPane(true);
+                    };
                     tr.innerHTML = `
                         <td><span class="status-tag status-ok">CONFORME BPF</span></td>
                         <td style="font-weight:600; color:var(--text-main);">${item.site_name_fr}</td>
-                        <td><span style="background:var(--badge-bg); padding:2px 6px; border-radius:3px; font-weight:600; font-size:10px;">${item.site_role}</span></td>
+                        <td class="col-hide-sm"><span style="background:var(--badge-bg); padding:2px 6px; border-radius:3px; font-weight:600; font-size:10px;">${item.site_role}</span></td>
                         <td style="font-weight:700;">${item.country_code}</td>
-                        <td style="font-family:monospace;">${item.manufacturing_license_number || '-'}</td>
-                        <td style="font-family:monospace; color:var(--accent-emerald);">${item.gmp_certificate_number || '-'}</td>
-                        <td>${item.gmp_issuing_authority || '-'}</td>
+                        <td class="col-hide-lg" style="font-family:monospace;">${item.manufacturing_license_number || '-'}</td>
+                        <td class="col-hide-md" style="font-family:monospace; color:var(--accent-emerald);">${item.gmp_certificate_number || '-'}</td>
+                        <td class="col-hide-lg">${item.gmp_issuing_authority || '-'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -112,10 +124,10 @@ let currentRefSection = 'establishments';
                         <th style="width: 120px;">Typologie ANPP</th>
                         <th>Spécialité Commerciale</th>
                         <th>DCI (Substance Active)</th>
-                        <th>Forme Galénique</th>
+                        <th class="col-hide-sm">Forme Galénique</th>
                         <th>Dosage</th>
-                        <th>Dossier Économique</th>
-                        <th>Code ATC</th>
+                        <th class="col-hide-lg">Dossier Économique</th>
+                        <th class="col-hide-md">Code ATC</th>
                     </tr>
                 `;
                 if (items.length === 0) {
@@ -125,7 +137,11 @@ let currentRefSection = 'establishments';
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
                     if (idx === selectedRefIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
+                    tr.onclick = () => {
+                        selectedRefIndex = idx;
+                        renderRefTable(section, items);
+                        if (window.innerWidth < 1400) togglePreviewPane(true);
+                    };
                     let tagClass = "status-ok";
                     let tagLabel = "GÉNÉRIQUE LOCAL";
                     if (item.origin_type === 'princeps') {
@@ -140,10 +156,10 @@ let currentRefSection = 'establishments';
                         <td><span class="status-tag ${tagClass}">${tagLabel}</span></td>
                         <td style="font-weight:600; color:var(--text-main);">${item.brand_name_fr}</td>
                         <td style="color:var(--accent-blue);">${item.dci_fr}</td>
-                        <td>${item.pharmaceutical_form_fr}</td>
+                        <td class="col-hide-sm">${item.pharmaceutical_form_fr}</td>
                         <td style="font-weight:600;">${item.dosage_fr}</td>
-                        <td style="font-family:monospace; font-size:11px;">${ecoLabel}</td>
-                        <td style="font-family:monospace; color:var(--text-dim);">${item.atc_code || '-'}</td>
+                        <td class="col-hide-lg" style="font-family:monospace; font-size:11px;">${ecoLabel}</td>
+                        <td class="col-hide-md" style="font-family:monospace; color:var(--text-dim);">${item.atc_code || '-'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -152,10 +168,10 @@ let currentRefSection = 'establishments';
                     <tr>
                         <th style="width: 80px;">Classe DM</th>
                         <th>Nom Commercial du DM</th>
-                        <th>Référence Fabricant</th>
-                        <th>Règle Arrêté 10/05/2021</th>
-                        <th>Stérile</th>
-                        <th>Usage Unique</th>
+                        <th class="col-hide-sm">Référence Fabricant</th>
+                        <th class="col-hide-lg">Règle Arrêté 10/05/2021</th>
+                        <th class="col-hide-md">Stérile</th>
+                        <th class="col-hide-md">Usage Unique</th>
                         <th>Statut Homolog.</th>
                     </tr>
                 `;
@@ -166,14 +182,18 @@ let currentRefSection = 'establishments';
                 items.forEach((item, idx) => {
                     const tr = document.createElement("tr");
                     if (idx === selectedRefIndex) tr.classList.add("selected");
-                    tr.onclick = () => { selectedRefIndex = idx; renderRefTable(section, items); };
+                    tr.onclick = () => {
+                        selectedRefIndex = idx;
+                        renderRefTable(section, items);
+                        if (window.innerWidth < 1400) togglePreviewPane(true);
+                    };
                     tr.innerHTML = `
                         <td><span class="status-tag status-ok">CLASSE ${item.dm_class}</span></td>
                         <td style="font-weight:600; color:var(--text-main);">${item.commercial_name_fr}</td>
-                        <td style="font-family:monospace; color:var(--text-muted);">${item.manufacturer_reference}</td>
-                        <td style="font-size:11px;">${item.classification_rule || '-'}</td>
-                        <td>${item.is_sterile ? '✓ Oui' : 'Non'}</td>
-                        <td>${item.is_single_use ? '✓ Oui' : 'Non'}</td>
+                        <td class="col-hide-sm" style="font-family:monospace; color:var(--text-muted);">${item.manufacturer_reference}</td>
+                        <td class="col-hide-lg" style="font-size:11px;">${item.classification_rule || '-'}</td>
+                        <td class="col-hide-md">${item.is_sterile ? '✓ Oui' : 'Non'}</td>
+                        <td class="col-hide-md">${item.is_single_use ? '✓ Oui' : 'Non'}</td>
                         <td><span style="color:var(--accent-emerald); font-weight:600;">EN COURS</span></td>
                     `;
                     tbody.appendChild(tr);

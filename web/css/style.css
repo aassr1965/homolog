@@ -650,7 +650,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             width: 520px;
-            max-width: 95%;
+            max-width: min(520px, calc(100vw - 24px));
             box-shadow: 0 20px 45px rgba(0,0,0,0.45);
             overflow: hidden;
             z-index: 100001;
@@ -664,8 +664,8 @@
             from { opacity: 0; transform: scale(0.97); }
             to { opacity: 1; transform: scale(1); }
         }
-        .modal-lg { width: 780px; }
-        .modal-xl { width: 980px; }
+        .modal-lg { width: 780px; max-width: min(780px, calc(100vw - 24px)); }
+        .modal-xl { width: 980px; max-width: min(980px, calc(100vw - 24px)); }
         .modal-header {
             padding: 12px 16px;
             background: var(--bg-header);
@@ -1246,7 +1246,10 @@
             border-color: var(--accent-blue);
         }
 
-        /* Responsive Breakpoints & Backdrops */
+        /* ==========================================================================
+           SYSTÈME RESPONSIVE MULTI-PALIERS & UX MOBILE PHARMACEUTIQUE (Jalon 1.6+)
+           ========================================================================== */
+
         .preview-backdrop, .tree-backdrop {
             display: none;
         }
@@ -1256,16 +1259,38 @@
             padding: 2px 8px;
         }
 
+        /* 1. Classes de Priorité de Colonnes pour Tableaux */
+        @media (max-width: 1400px) {
+            .col-hide-xl { display: none !important; }
+        }
         @media (max-width: 1200px) {
+            .col-hide-lg { display: none !important; }
+        }
+        @media (max-width: 992px) {
+            .col-hide-md { display: none !important; }
+        }
+        @media (max-width: 768px) {
+            .col-hide-sm { display: none !important; }
+        }
+        @media (max-width: 640px) {
+            .col-hide-xs { display: none !important; }
+        }
+
+        /* 2. Palier Laptop & Grand Écran Compact (<= 1400px) */
+        @media (max-width: 1400px) {
+            .address-bar-wrapper { max-width: 380px; }
+            #txt-app-title { display: none; }
+
+            /* Volet d'Aperçu en Slide-over Drawer fluide dès 1400px pour libérer le tableau central */
             .pane-preview {
                 position: fixed;
                 right: 0;
                 top: 44px;
                 bottom: 24px;
-                width: 460px;
-                max-width: 92vw;
-                z-index: 100;
-                box-shadow: -4px 0 25px rgba(0, 0, 0, 0.35);
+                width: 440px;
+                max-width: 90vw;
+                z-index: 150;
+                box-shadow: -6px 0 30px rgba(0, 0, 0, 0.4);
                 border-left: 1px solid var(--border-color);
                 transform: translateX(100%);
                 transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1279,35 +1304,146 @@
                 inset: 0;
                 background: rgba(15, 23, 42, 0.45);
                 backdrop-filter: blur(2px);
-                z-index: 99;
+                z-index: 140;
             }
             .preview-backdrop.active {
                 display: block;
             }
             #splitter-right { display: none !important; }
+
+            /* Ajustements Activity bar et Tree pane */
+            .activity-bar { width: 68px; }
+            .act-btn { width: 60px; height: 50px; }
+            .act-label { font-size: 8.5px; max-width: 60px; }
+            .pane-tree { width: 280px; }
         }
 
+        /* 3. Palier Laptop Moyen & Grand Format Tablette (<= 1200px) */
+        @media (max-width: 1200px) {
+            .address-bar-wrapper { max-width: 280px; }
+            #txt-focus-mode, #theme-text, #txt-goto-btn { display: none; }
+            .btn-pill kbd { display: none; }
+            .search-input { width: 140px; }
+            .pane-tree { width: 260px; }
+        }
+
+        /* 4. Palier Tablette Standard (<= 992px) */
         @media (max-width: 992px) {
-            .address-bar-wrapper { max-width: 320px; }
-            #txt-focus-mode, #txt-goto-btn, #theme-text { display: none; }
+            .activity-bar {
+                width: 56px;
+                padding: 6px 0;
+            }
+            .act-btn {
+                width: 48px;
+                height: 44px;
+            }
+            .act-icon {
+                font-size: 18px;
+            }
+            .act-label {
+                display: none; /* Icônes seules sur tablette */
+            }
+            .pane-tree { width: 240px; }
+            .address-bar-wrapper { max-width: 200px; }
+            .search-input { width: 120px; }
+
+            /* Réduction texte bouton alertes */
+            #txt-urgent-alerts { display: none; }
+            .btn-urgent::after {
+                content: " 2";
+                font-weight: 800;
+            }
+            #user-badge {
+                max-width: 75px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
+            }
             .btn-pill { padding: 4px 8px; }
         }
 
+        /* 5. Palier Smartphone & Petite Tablette (<= 768px) */
         @media (max-width: 768px) {
-            .mobile-menu-btn { display: inline-flex; }
-            .activity-bar { display: none; }
-            .mobile-domain-switcher { display: flex; }
+            /* En-tête mobile ultra-propre et non débordant */
+            header {
+                height: 48px;
+                padding: 0 8px;
+                gap: 6px;
+            }
+            .mobile-menu-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 34px;
+                height: 34px;
+                font-size: 17px;
+                padding: 0;
+                border-radius: 6px;
+                flex-shrink: 0;
+            }
+            .brand-section {
+                gap: 6px;
+            }
+            .brand-caducee-icon {
+                width: 24px;
+                height: 24px;
+            }
+            .brand-badge {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+            #txt-app-title { display: none; }
+            .address-bar-wrapper { display: none; }
+            .search-input { display: none; }
+            #btn-focus-mode { display: none; }
+
+            .header-actions {
+                gap: 5px;
+                margin-left: auto;
+            }
+            .header-actions .btn-pill:not(#theme-btn):not(.btn-urgent):not(#user-menu-btn) {
+                display: none;
+            }
+            #theme-btn {
+                padding: 4px 7px;
+                height: 32px;
+            }
+            .btn-urgent {
+                padding: 4px 8px;
+                height: 32px;
+            }
+            #user-menu-btn {
+                padding: 4px 7px;
+                height: 32px;
+            }
+            #user-badge { display: none; }
+
+            /* Activity bar masquée sur mobile (remplacée par la Bottom Navigation Bar) */
+            .activity-bar {
+                display: none !important;
+            }
+            .mobile-domain-switcher {
+                display: none !important;
+            }
+            #splitter-left, #splitter-right {
+                display: none !important;
+            }
+
+            /* Volet Arborescence en tiroir coulissant */
             .pane-tree {
                 position: fixed;
                 left: 0;
-                top: 44px;
-                bottom: 24px;
-                width: 320px;
-                max-width: 88vw;
-                z-index: 110;
-                box-shadow: 4px 0 25px rgba(0, 0, 0, 0.35);
+                top: 48px;
+                bottom: 56px;
+                width: 300px;
+                max-width: 86vw;
+                z-index: 950;
+                box-shadow: 6px 0 30px rgba(0, 0, 0, 0.45);
                 transform: translateX(-100%);
                 transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                border-right: 1px solid var(--border-color);
             }
             .pane-tree.drawer-open {
                 transform: translateX(0);
@@ -1318,45 +1454,222 @@
                 inset: 0;
                 background: rgba(15, 23, 42, 0.45);
                 backdrop-filter: blur(2px);
-                z-index: 109;
+                z-index: 940;
             }
             .tree-backdrop.active {
                 display: block;
             }
-            #splitter-left { display: none !important; }
-            .pane-preview { width: 100vw; max-width: 100vw; }
-            .search-input { display: none; }
-            .address-bar-wrapper { max-width: 180px; }
-            .quick-status-pills { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
-            #txt-app-title { display: none; }
-            #user-badge {
-                max-width: 85px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                display: inline-block;
-                vertical-align: middle;
+
+            /* Volet de prévisualisation plein écran coulissant */
+            .pane-preview {
+                top: 48px;
+                bottom: 56px;
+                width: 100vw;
+                max-width: 100vw;
+                z-index: 960;
+                border-left: none;
             }
-            .footer-right span:not(:last-child) { display: none; }
-            .footer-left span:not(#status-counts) { display: none; }
+
+            /* Espace de travail adapté avec réserve pour la Bottom Navigation Bar */
+            .workspace {
+                height: calc(100vh - 48px - 56px);
+                max-height: calc(100vh - 48px - 56px);
+                overflow: hidden;
+            }
+
+            /* Footer masqué sur mobile au profit de la barre basse */
+            footer {
+                display: none !important;
+            }
+
+            /* Table sans min-width rigide pour éviter le scroll forcé */
+            table {
+                min-width: 100% !important;
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px 6px;
+            }
+
+            /* Barre d'outils avec défilement horizontal fluide */
+            .toolbar {
+                overflow-x: auto;
+                flex-wrap: nowrap !important;
+                -webkit-overflow-scrolling: touch;
+                padding: 6px 8px;
+                gap: 6px;
+                scrollbar-width: none;
+            }
+            .toolbar::-webkit-scrollbar {
+                display: none;
+            }
+            .toolbar .btn-pill {
+                white-space: nowrap;
+                flex-shrink: 0;
+                height: 32px;
+                font-size: 11.5px;
+            }
+            #dossier-progress {
+                display: none;
+            }
+            .quick-status-pills {
+                overflow-x: auto;
+                max-width: 100%;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap !important;
+                padding: 4px 0;
+            }
+
+            /* Modales adaptées en Bottom Sheets natives */
+            .modal-overlay {
+                align-items: flex-end !important;
+                padding: 0 !important;
+            }
+            .modal, .modal-lg, .modal-xl {
+                width: 100% !important;
+                max-width: 100vw !important;
+                border-radius: 16px 16px 0 0 !important;
+                max-height: 88vh !important;
+                margin: 0 !important;
+                animation: sheetSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            @keyframes sheetSlideUp {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+            .modal-header {
+                position: relative;
+                padding-top: 18px;
+            }
+            .modal-header::before {
+                content: "";
+                position: absolute;
+                top: 6px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 36px;
+                height: 4px;
+                border-radius: 2px;
+                background: var(--border-color);
+                opacity: 0.7;
+            }
+            .modal-footer {
+                flex-direction: column-reverse;
+                gap: 8px;
+            }
+            .modal-footer button {
+                width: 100%;
+                height: 42px;
+                justify-content: center;
+                font-size: 13px;
+                border-radius: 6px;
+            }
         }
 
+        /* 6. Palier Écrans Compacts (<= 640px) */
         @media (max-width: 640px) {
             .table-quick-filter-bar {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 6px;
             }
             .search-box-checklist {
                 max-width: 100%;
                 width: 100%;
             }
-            .toolbar {
-                padding: 4px 6px;
-                gap: 4px;
-            }
             #tb-btn-export {
                 display: none;
             }
+            .login-card {
+                width: 100%;
+                border-radius: 8px;
+            }
+            .login-screen {
+                padding: 12px;
+                justify-content: flex-start;
+                overflow-y: auto;
+            }
+        }
+
+        /* 7. Barre de Navigation Inférieure Mobile (Bottom Navigation Bar) */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: var(--bg-header);
+            border-top: 1px solid var(--border-color);
+            z-index: 900;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-nav {
+                display: flex;
+            }
+        }
+
+        .mob-nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            padding: 4px 2px;
+            transition: all 0.15s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mob-nav-btn:hover, .mob-nav-btn.active {
+            color: var(--accent-blue);
+        }
+
+        .mob-nav-btn.active::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 20%;
+            right: 20%;
+            height: 3px;
+            background: var(--accent-blue);
+            border-radius: 0 0 3px 3px;
+        }
+
+        .mob-nav-icon {
+            font-size: 19px;
+            line-height: 1.1;
+        }
+
+        .mob-nav-label {
+            font-size: 9.5px;
+            margin-top: 2px;
+            letter-spacing: -0.2px;
+        }
+
+        .mob-nav-badge {
+            position: absolute;
+            top: 4px;
+            right: calc(50% - 18px);
+            background: var(--accent-amber);
+            color: white;
+            font-size: 8px;
+            font-weight: 800;
+            padding: 0 4px;
+            border-radius: 6px;
+            line-height: 1.2;
         }
 
         /* Écran de Connexion Nominative */
@@ -1469,4 +1782,3 @@
             display: none;
         }
         html[data-theme="dark"] .login-error-banner { color: #fca5a5; }
-    </style>

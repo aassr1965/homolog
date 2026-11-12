@@ -182,6 +182,10 @@
             document.getElementById("bc-prod").innerText = path ? (path.split('/')[0] || "TOUS") : "TOUS";
             document.getElementById("bc-mod").innerText = name || "Tous les dossiers";
 
+            if (window.innerWidth < 768) {
+                toggleMobileTree(false);
+            }
+
             loadGEDDocuments(path, currentGEDStatusFilter);
         }
 
@@ -261,13 +265,13 @@
 
             thead.innerHTML = `
                 <tr>
-                    <th style="width: 110px;">Statut BPF</th>
+                    <th style="width: 105px;">Statut BPF</th>
                     <th>Code &amp; Titre de la Pièce</th>
-                    <th>Dossier Taxonomie</th>
-                    <th style="width: 70px;">Version</th>
-                    <th style="width: 120px;">Verrouillage</th>
-                    <th>Validation DT</th>
-                    <th>Stockage CAS (SHA-256)</th>
+                    <th class="col-hide-sm">Dossier Taxonomie</th>
+                    <th style="width: 65px;">Version</th>
+                    <th class="col-hide-sm" style="width: 110px;">Verrouillage</th>
+                    <th class="col-hide-md">Validation DT</th>
+                    <th class="col-hide-lg">Stockage CAS (SHA-256)</th>
                     <th style="width: 130px; text-align:right;">Actions</th>
                 </tr>
             `;
@@ -286,6 +290,7 @@
                 if (doc.id === selectedGEDDocId) tr.classList.add("selected");
                 tr.onclick = (e) => {
                     selectGEDDocument(doc.id);
+                    if (window.innerWidth < 1400) togglePreviewPane(true);
                 };
 
                 const v = doc.latest_version;
@@ -313,11 +318,11 @@
                         <div style="font-weight:600; color:var(--text-main);">${doc.title_fr}</div>
                         <div style="font-size:10px; color:var(--accent-blue); font-family:monospace;">${doc.document_code}</div>
                     </td>
-                    <td style="font-size:11px; color:var(--text-muted);">${folderShort}</td>
+                    <td class="col-hide-sm" style="font-size:11px; color:var(--text-muted);">${folderShort}</td>
                     <td><strong style="color:var(--accent-emerald);">${doc.current_version}</strong></td>
-                    <td>${lockBadge}</td>
-                    <td>${dtBadge}</td>
-                    <td>
+                    <td class="col-hide-sm">${lockBadge}</td>
+                    <td class="col-hide-md">${dtBadge}</td>
+                    <td class="col-hide-lg">
                         <div style="font-family:monospace; font-size:10px; color:var(--text-dim);" title="${sha}">${sha.substring(0, 16)}...</div>
                         <div style="font-size:10px; color:var(--text-muted);">${sizeKB}</div>
                     </td>

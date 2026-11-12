@@ -337,6 +337,10 @@
             expandedDossierTreeIds.add(id);
             renderDossiersTree();
 
+            if (window.innerWidth < 768) {
+                toggleMobileTree(false);
+            }
+
             try {
                 const res = await fetch(`/api/v1/dossiers/${id}`);
                 if (!res.ok) throw new Error("HTTP " + res.status);
@@ -597,8 +601,8 @@
                     <table id="doc-table">
                         <thead id="table-head">
                             <tr>
-                                <th style="width: 75px;">Module</th>
-                                <th style="width: 80px;">Exigence</th>
+                                <th class="col-hide-xs" style="width: 75px;">Module</th>
+                                <th class="col-hide-sm" style="width: 80px;">Exigence</th>
                                 <th style="width: 90px;">Statut</th>
                                 <th>Code &amp; Intitulé Réglementaire (Guide ANPP)</th>
                                 <th>Document GED Rattaché (Coffre-Fort BPF)</th>
@@ -771,8 +775,8 @@
                         }
 
                         tr.innerHTML = `
-                            <td style="font-weight:800; color:var(--text-dim); font-size:11.5px; font-family:monospace; white-space:nowrap;">${modLabel}</td>
-                            <td style="white-space:nowrap;">${reqBadge}</td>
+                            <td class="col-hide-xs" style="font-weight:800; color:var(--text-dim); font-size:11.5px; font-family:monospace; white-space:nowrap;">${modLabel}</td>
+                            <td class="col-hide-sm" style="white-space:nowrap;">${reqBadge}</td>
                             <td style="white-space:nowrap;">${statusBadge}</td>
                             <td style="min-width:240px;">
                                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -802,8 +806,9 @@
         function selectDossierItem(itemId) {
             selectedDossierItemId = itemId;
             document.querySelectorAll('#doc-tbody tr').forEach(tr => tr.classList.remove('selected'));
-            if (event && event.currentTarget) {
+            if (typeof event !== 'undefined' && event && event.currentTarget) {
                 event.currentTarget.classList.add('selected');
+                if (window.innerWidth < 1400) togglePreviewPane(true);
             }
 
             if (!currentDossierDetail) return;

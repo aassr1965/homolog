@@ -269,11 +269,11 @@
                         <tr>
                             <th style="width: 80px;">Statut</th>
                             <th>Nom de la pièce</th>
-                            <th>Code Référence</th>
+                            <th class="col-hide-sm">Code Référence</th>
                             <th style="width: 70px;">Version</th>
                             <th>Échéance</th>
-                            <th>Validation DT</th>
-                            <th>Empreinte SHA-256</th>
+                            <th class="col-hide-md">Validation DT</th>
+                            <th class="col-hide-lg">Empreinte SHA-256</th>
                         </tr>
                     </thead>
                     <tbody id="doc-tbody">
@@ -303,9 +303,8 @@
         <!-- Backdrop pour le slide-over du volet d'aperçu sur tablettes/laptops -->
         <div class="preview-backdrop" id="preview-backdrop" onclick="togglePreviewPane(false)"></div>
     </div>
-    </div>
 
-    <!-- Status Bar Footer -->
+    <!-- Status Bar Footer (Desktop & Grand Écran) -->
     <footer>
         <div class="footer-left">
             <span>Prêt</span>
@@ -321,6 +320,35 @@
             <span>Heure UTC : <span id="clock-utc">12:00:00</span></span>
         </div>
     </footer>
+
+    <!-- Mobile Bottom Navigation Bar (Barre tactile fixe en bas pour mobile/tablette) -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+        <button class="mob-nav-btn active" id="mobnav-ref" onclick="switchDomainModule('ref')" title="Référentiel">
+            <span class="mob-nav-icon">🏢</span>
+            <span class="mob-nav-label">Réf</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-ctd" onclick="switchDomainModule('ctd')" title="Dossiers CTD">
+            <span class="mob-nav-icon">📋</span>
+            <span class="mob-nav-label">CTD</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-variations" onclick="switchDomainModule('variations')" title="Variations Post-AMM">
+            <span class="mob-nav-icon">🔄</span>
+            <span class="mob-nav-label">Variations</span>
+            <span class="mob-nav-badge">12</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-dm" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">
+            <span class="mob-nav-icon">💉</span>
+            <span class="mob-nav-label">DM</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-ged" onclick="switchDomainModule('ged')" title="GED BPF">
+            <span class="mob-nav-icon">📁</span>
+            <span class="mob-nav-label">GED</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-tree" onclick="toggleMobileTree()" title="Arborescence">
+            <span class="mob-nav-icon">🌳</span>
+            <span class="mob-nav-label">Arbre</span>
+        </button>
+    </nav>
     </div> <!-- Fin screen-app -->
 
     <!-- Modal Signature Électronique Directeur Technique (21 CFR Part 11) -->
