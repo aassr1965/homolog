@@ -25,8 +25,8 @@ gantt
     Référentiel Produits & Établissements ANPP (1.3) :done, p1_3, 2026-11-11, 1d
     Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :done, p1_4, after p1_3, 4d
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :done, p1_5, after p1_4, 4d
-    UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):active, p1_6, after p1_5, 4d
-    Studio Compléments & Assistant Soumission ANPP (1.7) :p1_7, after p1_6, 3d
+    UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):done, p1_6, after p1_5, 4d
+    Studio Compléments & Assistant Soumission ANPP (1.7) :active, p1_7, after p1_6, 3d
     Packaging Docker & Archive .homolog (1.8)        :p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
     Redevances, Devises & Justificatifs Bancaires(2.1):p2_1, after p1_8, 3d
@@ -159,16 +159,23 @@ gantt
 - [x] Liaison dynamique GED ↔ Checklist CTD/DM avec calcul du pourcentage de complétude en temps réel.
 - [x] **Verrouillage légal strict :** Interdiction de passage au statut *« Validé interne / Prêt pour dépôt ANPP »* si complétude < 100% ou absence de signature électronique légale du Pharmacien Directeur Technique.
 
-### Jalon 1.6 : Interface Web Haute Densité 'Pharma Explorer' (3 Volets & RTL FR/AR)
-- [ ] Architecture frontend TypeScript / Tailwind CSS / Lucide Icons embarquée via `//go:embed` (zéro serveur Node.js en production).
-- [ ] Layout 'Pharma Explorer' à 3 volets façon Windows Explorer Pro :
-  - **Volet gauche (Arbre de navigation) :** Navigation hiérarchique dépliable (les 5 modules CTD, rubriques 1.A/1.H/1.M/1.P, chapitres DM ou branches GED) avec badges compacts de complétude (ex: `(4/4)` en vert, `(2/5)` en rouge).
-  - **Zone centrale (Vue détaillée) :** Tableau haute densité (lignes compactes de 32px, 25-30 documents visibles sans scroll), colonnes triables, filtrage instantané.
-  - **Volet droit (Volet de prévisualisation - Alt+P) :** Prévisualisation PDF.js instantanée avec métadonnées d'intégrité SHA-256, date de versement, version, bouton d'action de signature électronique légale PDT et téléchargement avec certificat d'intégrité.
-- [ ] Barre d'adresse fil d'Ariane navigable (`📁 Dossiers > ENR-2026-0042 > Module 1 > 1.P`).
-- [ ] Barre d'état inférieure : Nombre d'éléments, pourcentage de complétude globale avec alerte bloquante si incomplète, et jauge d'espace de stockage consommé / quota.
-- [ ] Intégration des polices locales `Cairo` (Arabe) et `Inter` (Français) sans aucun appel CDN externe.
-- [ ] Bascule bilingue dynamique LTR ↔ RTL (`dir="rtl"`) avec inversion symétrique des 3 volets.
+### Jalon 1.6 : Interface Web Haute Densité 'Pharma Explorer' (3 Volets, Responsive & Thème Clair)
+- [x] Architecture frontend embarquée via `//go:embed` (zéro serveur Node.js ni CDN externe en production).
+- [x] Layout 'Pharma Explorer' à 3 volets façon Windows Explorer Pro avec splitters redimensionnables à la souris et mémorisation :
+  - **Volet gauche (Tree Explorer) :** Navigation hiérarchique dépliable (les 5 modules CTD, rubriques 1.A/1.H/1.M/1.P, chapitres DM ou branches GED) avec chevrons `▶ / ▼`, badges de procédure et compteurs de complétude dynamiques (ex: `(9/9)`, `(0/28)`).
+  - **Zone centrale (Vue détaillée haute densité) :** Tableau compact (lignes de 32px), groupement par sous-module sous forme d'accordéons pliables/dépliables avec ratios de complétude, champ de recherche instantanée en temps réel et barre de pills de filtrage rapide (`Tous`, `🔴 Manquants`, `🟢 Rattachés`, `⚠️ Obligatoires [E]`).
+  - **Volet droit (Volet d'aperçu contextuel - Alt+P) à double onglet intelligent :**
+    - Onglet `📄 Aperçu Pièce GED` : cartouche cryptographique d'intégrité CAS SHA-256, statut de validation, horodatage UTC, métadonnées BPF et bouton de téléchargement du fichier original.
+    - Onglet `📋 Fiche ANPP` : fiche légale officielle issue du Guide CTD ANPP Juillet 2025, texte bilingue, niveau d'exigence (`[E]`, `[F]`, `[P]`) et traçabilité 21 CFR Part 11.
+- [x] Mode Plein Écran « 🎯 Focus » permettant d'escamoter instantanément les volets latéraux pour maximiser l'espace du tableau de checklist.
+- [x] Thème Clair Pharmaceutique activé par défaut (fond blanc pur/gris perle, bleu marine réglementaire) avec bascule instantanée Mode Sombre.
+- [x] Architecture Responsive à 3 paliers opérationnelle :
+  - Desktop (≥ 1200px) : 3 volets avec splitters ajustables.
+  - Laptop / Tablette (768px - 1199px) : 2 volets fixes et volet droit d'aperçu en tiroir latéral coulissant (*slide-over* avec backdrop).
+  - Mobile (< 768px) : Menu hamburger ☰, volet gauche en *drawer* coulissant, tableau adapté et volet d'aperçu escamotable.
+- [x] Interface 100% en Français institutionnel avec préservation des textes juridiques bilingues FR/AR dans les fiches réglementaires ANPP.
+- [x] Barre d'adresse fil d'Ariane navigable (`📁 DOSSIERS_ANPP > NI > DOS-2026-AMOX-NI > Amoxicilline 500mg`).
+- [x] Barre d'état inférieure et indicateurs KPI de complétude avec jauges colorimétriques ALCOA+.
 
 ### Jalon 1.7 : Studio de Compléments ANPP, Assistant de Soumission E-Services & Veille RDV
 - [ ] **Gestion des Compléments et Notifications ANPP :**
