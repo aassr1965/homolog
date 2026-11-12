@@ -141,9 +141,9 @@
                     
                     let prodName = "Produit non lié";
                     if (d.medicine && d.medicine.brand_name_fr) {
-                        prodName = d.medicine.brand_name_fr;
+                        prodName = escapeHTML(d.medicine.brand_name_fr);
                     } else if (d.medical_device && d.medical_device.commercial_name_fr) {
-                        prodName = d.medical_device.commercial_name_fr;
+                        prodName = escapeHTML(d.medical_device.commercial_name_fr);
                     }
 
                     const pct = d.completeness_percent || 0;
@@ -159,8 +159,8 @@
                                 <div class="tree-dossier-toprow">
                                     <div class="tree-dossier-code">
                                         <span onclick="toggleDossierTreeItem(event, '${d.id}')" style="cursor:pointer; display:inline-block; width:14px; text-align:center; color:var(--text-dim);" title="${isExp ? 'Replier l\'arbre' : 'Déplier l\'arbre'}">${isExp ? '▼' : '▶'}</span>
-                                        <span class="${pBadgeClass}">${d.procedure_code}</span>
-                                        <span>${d.dossier_code}</span>
+                                        <span class="${pBadgeClass}">${escapeHTML(d.procedure_code)}</span>
+                                        <span>${escapeHTML(d.dossier_code)}</span>
                                     </div>
                                     ${statusLabel}
                                 </div>
@@ -450,11 +450,11 @@
             let isMedicine = dossier.product_type === 'medicament';
 
             if (dossier.medicine) {
-                prodName = dossier.medicine.brand_name_fr;
-                prodSub = `DCI: <strong>${dossier.medicine.dci_fr || 'N/A'}</strong> | Dosage: <strong>${dossier.medicine.dosage_fr || ''}</strong> | Forme: <strong>${dossier.medicine.pharmaceutical_form_fr || ''}</strong>`;
+                prodName = escapeHTML(dossier.medicine.brand_name_fr);
+                prodSub = `DCI: <strong>${escapeHTML(dossier.medicine.dci_fr || 'N/A')}</strong> | Dosage: <strong>${escapeHTML(dossier.medicine.dosage_fr || '')}</strong> | Forme: <strong>${escapeHTML(dossier.medicine.pharmaceutical_form_fr || '')}</strong>`;
             } else if (dossier.medical_device) {
-                prodName = dossier.medical_device.commercial_name_fr;
-                prodSub = `Classe: <strong>Classe ${dossier.medical_device.dm_class}</strong> | Stérile: <strong>${dossier.medical_device.is_sterile ? 'Oui (ISO 11135)' : 'Non'}</strong> | Réf: <strong>${dossier.medical_device.manufacturer_reference || ''}</strong>`;
+                prodName = escapeHTML(dossier.medical_device.commercial_name_fr);
+                prodSub = `Classe: <strong>Classe ${escapeHTML(dossier.medical_device.dm_class)}</strong> | Stérile: <strong>${dossier.medical_device.is_sterile ? 'Oui (ISO 11135)' : 'Non'}</strong> | Réf: <strong>${escapeHTML(dossier.medical_device.manufacturer_reference || '')}</strong>`;
             }
 
             const pCode = (dossier.procedure_code || 'NI').toLowerCase();
@@ -537,9 +537,9 @@
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; flex-wrap:wrap; gap:12px;">
                         <div>
                             <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-                                <span class="${pBadgeClass}" style="font-size:11px; padding:3px 8px;">${dossier.procedure_code}</span>
-                                <span style="font-family:monospace; font-size:15px; font-weight:700; color:var(--text-main);">${dossier.dossier_code}</span>
-                                <span style="font-size:12px; color:var(--text-dim);">(Réf : ${dossier.internal_reference || 'N/A'})</span>
+                                <span class="${pBadgeClass}" style="font-size:11px; padding:3px 8px;">${escapeHTML(dossier.procedure_code)}</span>
+                                <span style="font-family:monospace; font-size:15px; font-weight:700; color:var(--text-main);">${escapeHTML(dossier.dossier_code)}</span>
+                                <span style="font-size:12px; color:var(--text-dim);">(Réf : ${escapeHTML(dossier.internal_reference || 'N/A')})</span>
                                 ${formatDossierStatusBadge(dossier.status)}
                             </div>
                             <div style="font-size:13px; font-weight:600; color:var(--accent-blue); margin-bottom:2px;">
@@ -581,9 +581,9 @@
                     ${dossier.deposit_receipt_ref ? `
                         <div style="margin-top:6px; background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.3); border-radius:4px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center; font-size:11px;">
                             <div style="color:var(--accent-blue); font-weight:600;">
-                                🏛️ Récépissé Dépôt ANPP : <code style="color:var(--text-main);">${dossier.deposit_receipt_ref}</code> (${dossier.deposit_receipt_date ? dossier.deposit_receipt_date.substring(0, 10) : ''})
+                                🏛️ Récépissé Dépôt ANPP : <code style="color:var(--text-main);">${escapeHTML(dossier.deposit_receipt_ref)}</code> (${dossier.deposit_receipt_date ? escapeHTML(dossier.deposit_receipt_date.substring(0, 10)) : ''})
                             </div>
-                            ${dossier.anpp_official_reference ? `<div style="font-size:10px; color:var(--text-dim);">N° Dossier ANPP : <strong>${dossier.anpp_official_reference}</strong></div>` : ''}
+                            ${dossier.anpp_official_reference ? `<div style="font-size:10px; color:var(--text-dim);">N° Dossier ANPP : <strong>${escapeHTML(dossier.anpp_official_reference)}</strong></div>` : ''}
                         </div>
                     ` : ''}
                 </div>
@@ -737,8 +737,8 @@
                                 <div style="display:flex; align-items:center; gap:6px;">
                                     <span style="font-size:13px;">📄</span>
                                     <div>
-                                        <div style="font-weight:700; color:var(--accent-blue); font-size:11.5px;">${it.ged_document.title_fr}</div>
-                                        <div style="font-family:monospace; font-size:10.5px; font-weight:600; color:var(--text-dim);">${it.ged_document.document_code || ''} (${it.ged_document.current_version})</div>
+                                        <div style="font-weight:700; color:var(--accent-blue); font-size:11.5px;">${escapeHTML(it.ged_document.title_fr)}</div>
+                                        <div style="font-family:monospace; font-size:10.5px; font-weight:600; color:var(--text-dim);">${escapeHTML(it.ged_document.document_code || '')} (${escapeHTML(it.ged_document.current_version)})</div>
                                     </div>
                                 </div>
                             `;
@@ -776,11 +776,11 @@
                             <td style="white-space:nowrap;">${statusBadge}</td>
                             <td style="min-width:240px;">
                                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                    <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">${it.item_code}</span>
-                                    <span style="font-weight:700; color:var(--text-main); font-size:12px;">${it.title_fr}</span>
+                                    <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">${escapeHTML(it.item_code)}</span>
+                                    <span style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHTML(it.title_fr)}</span>
                                 </div>
-                                ${it.title_ar ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${it.title_ar}</div>` : ''}
-                                ${it.description_fr ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${it.description_fr}</div>` : ''}
+                                ${it.title_ar ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
+                                ${it.description_fr ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${escapeHTML(it.description_fr)}</div>` : ''}
                             </td>
                             <td style="min-width:180px;">${gedInfo}</td>
                             <td style="text-align:center; white-space:nowrap;">${actionsHTML}</td>
@@ -850,20 +850,20 @@
                     preview.innerHTML = `
                         <div class="pdf-sim-page">
                             <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
-                                <span>📄 Pièce GED Certifiée — [${item.item_code}]</span>
+                                <span>📄 Pièce GED Certifiée — [${escapeHTML(item.item_code)}]</span>
                                 <span class="status-tag status-ok">COFFRE-FORT SÉCURISÉ</span>
                             </div>
 
                             <div style="margin-top:10px; margin-bottom:12px;">
                                 <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">
-                                    ${doc.title_fr}
+                                    ${escapeHTML(doc.title_fr)}
                                 </div>
                                 <div style="display:flex; gap:8px; align-items:center; font-family:monospace; font-size:11px; font-weight:700; color:var(--accent-blue);">
-                                    <span>Code : ${doc.document_code || 'N/A'}</span>
+                                    <span>Code : ${escapeHTML(doc.document_code || 'N/A')}</span>
                                     <span>•</span>
-                                    <span>Version : ${doc.current_version || 'v1.0'}</span>
+                                    <span>Version : ${escapeHTML(doc.current_version || 'v1.0')}</span>
                                     <span>•</span>
-                                    <span>Statut : ${doc.status || 'validé'}</span>
+                                    <span>Statut : ${escapeHTML(doc.status || 'validé')}</span>
                                 </div>
                             </div>
 
@@ -873,10 +873,10 @@
                                     Empreinte Cryptographique d'Origine (CAS SHA-256) :
                                 </div>
                                 <div style="font-family:monospace; font-size:10.5px; font-weight:700; color:#064e3b; background:#ecfdf5; padding:6px 8px; border-radius:4px; word-break:break-all; border:1.5px solid #6ee7b7;">
-                                    ${doc.content_hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}
+                                    ${escapeHTML(doc.content_hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')}
                                 </div>
                                 <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; color:var(--text-main); font-weight:600;">
-                                    <span>Emplacement : <code style="background:#e2e8f0; padding:1px 4px; border-radius:3px;">${doc.taxonomy_path || 'GED/CTD'}</code></span>
+                                    <span>Emplacement : <code style="background:#e2e8f0; padding:1px 4px; border-radius:3px;">${escapeHTML(doc.taxonomy_path || 'GED/CTD')}</code></span>
                                     <span>Taille : <strong>${formatFileSize(doc.file_size_bytes || 245000)}</strong></span>
                                 </div>
                             </div>
@@ -932,16 +932,16 @@
                 preview.innerHTML = `
                     <div class="pdf-sim-page">
                         <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
-                            <span>Exigence ANPP — [${item.item_code}]</span>
+                            <span>Exigence ANPP — [${escapeHTML(item.item_code)}]</span>
                             <span class="badge-req-e">${reqDesc.startsWith('Exigé') ? '[E] OBLIGATOIRE' : (reqDesc.startsWith('Facultatif') ? '[F] FACULTATIF' : '[P] PARTIEL')}</span>
                         </div>
                         <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-top:10px; margin-bottom:4px;">
-                            ${item.title_fr}
+                            ${escapeHTML(item.title_fr)}
                         </div>
-                        ${item.title_ar ? `<div style="font-size:12px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-bottom:8px;" dir="rtl">${item.title_ar}</div>` : ''}
+                        ${item.title_ar ? `<div style="font-size:12px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-bottom:8px;" dir="rtl">${escapeHTML(item.title_ar)}</div>` : ''}
                         
                         <div style="font-size:11.5px; color:var(--text-main); font-weight:500; line-height:1.5; margin-bottom:12px; background:var(--bg-surface); padding:10px; border-radius:4px; border:1.5px solid var(--border-color); border-left:4px solid var(--accent-blue);">
-                            ${item.description_fr || 'Exigence documentaire selon le Guide CTD ANPP Juillet 2025.'}
+                            ${escapeHTML(item.description_fr || 'Exigence documentaire selon le Guide CTD ANPP Juillet 2025.')}
                         </div>
 
                         <div style="margin-bottom:12px;">
@@ -958,7 +958,7 @@
                             <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">État de rattachement dans le dossier :</div>
                             ${item.ged_document ? `
                                 <div style="background:#dcfce7; border:1.5px solid #4ade80; border-radius:4px; padding:8px 10px; font-size:11.5px; color:#14532d; font-weight:700;">
-                                    ✓ Pièce liée : <strong>${item.ged_document.title_fr}</strong> (${item.ged_document.current_version})
+                                    ✓ Pièce liée : <strong>${escapeHTML(item.ged_document.title_fr)}</strong> (${escapeHTML(item.ged_document.current_version)})
                                 </div>
                             ` : `
                                 <div style="background:#fee2e2; border:1.5px solid #f87171; border-radius:4px; padding:8px 10px; font-size:11.5px; color:#7f1d1d; font-weight:700; display:flex; justify-content:space-between; align-items:center;">
@@ -974,7 +974,7 @@
 
                         ${item.validation_notes ? `
                             <div style="background:rgba(3,105,161,0.08); border:1.5px solid rgba(3,105,161,0.3); border-radius:4px; padding:8px; font-size:11.5px; color:var(--text-main); margin-bottom:12px; font-weight:500;">
-                                <strong>Notes de conformité réglementaire :</strong> ${item.validation_notes}
+                                <strong>Notes de conformité réglementaire :</strong> ${escapeHTML(item.validation_notes)}
                             </div>
                         ` : ''}
 
