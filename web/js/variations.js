@@ -51,6 +51,9 @@ let selectedVarIndex = 0;
 
 
         function renderVariationsTable() {
+            if (window.innerWidth < 768) {
+                toggleMobileTree(false);
+            }
             const thead = document.getElementById("table-head");
             const tbody = document.getElementById("doc-tbody");
             tbody.innerHTML = "";
@@ -60,9 +63,9 @@ let selectedVarIndex = 0;
                     <th style="width: 80px;">Classification</th>
                     <th>N° Item &amp; Intitulé de la Variation (LD-DEPP07)</th>
                     <th>Spécialité / Produit</th>
-                    <th>DCI</th>
-                    <th>Date Dépôt</th>
-                    <th>Pièces Régionales (3.2.R)</th>
+                    <th class="col-hide-md">DCI</th>
+                    <th class="col-hide-sm">Date Dépôt</th>
+                    <th class="col-hide-lg">Pièces Régionales (3.2.R)</th>
                     <th>Statut ANPP</th>
                 </tr>
             `;
@@ -70,14 +73,18 @@ let selectedVarIndex = 0;
             mockVariations.forEach((v, idx) => {
                 const tr = document.createElement("tr");
                 if (idx === selectedVarIndex) tr.classList.add("selected");
-                tr.onclick = () => { selectedVarIndex = idx; renderVariationsTable(); };
+                tr.onclick = () => {
+                    selectedVarIndex = idx;
+                    renderVariationsTable();
+                    if (window.innerWidth < 1400) togglePreviewPane(true);
+                };
                 tr.innerHTML = `
                     <td><span class="status-tag ${v.categoryClass}">${v.category}</span></td>
                     <td style="font-weight:600; color:var(--text-main);"><code style="color:var(--accent-blue);">${v.item}</code> ${v.label}</td>
                     <td style="font-weight:600;">${v.product}</td>
-                    <td style="color:var(--text-muted);">${v.dci}</td>
-                    <td style="font-family:monospace; color:var(--text-dim);">${v.submissionDate}</td>
-                    <td style="font-size:11px;">${v.docsCount}</td>
+                    <td class="col-hide-md" style="color:var(--text-muted);">${v.dci}</td>
+                    <td class="col-hide-sm" style="font-family:monospace; color:var(--text-dim);">${v.submissionDate}</td>
+                    <td class="col-hide-lg" style="font-size:11px;">${v.docsCount}</td>
                     <td><span class="status-tag ${v.statusClass}">${v.status}</span></td>
                 `;
                 tbody.appendChild(tr);
