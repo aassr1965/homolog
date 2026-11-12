@@ -117,6 +117,11 @@ func main() {
 		w.Write(content)
 	})
 
+	// Favicon pour éviter toute erreur 404 du navigateur
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	// Servir les assets statiques embarqués (css, js)
 	staticFS := http.FileServer(http.FS(web.Files))
 	r.Handle("/css/*", staticFS)
