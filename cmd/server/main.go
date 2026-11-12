@@ -117,6 +117,11 @@ func main() {
 		w.Write(content)
 	})
 
+	// Servir les assets statiques embarqués (css, js)
+	staticFS := http.FileServer(http.FS(web.Files))
+	r.Handle("/css/*", staticFS)
+	r.Handle("/js/*", staticFS)
+
 	// Routes de diagnostic et d'état de santé
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
