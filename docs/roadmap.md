@@ -70,19 +70,24 @@ gantt
     - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
       *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
     - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
-- [ ] **Mise en conformité PSSI & Matrice RBAC Granulaire (Sections 7.1 & 7.2 du Cahier des Charges) :**
+- [ ] **Mise en conformité PSSI, RBAC Dynamique & Console Dédiée (Sections 6.3, 7.1 & 7.2 du CDC) :**
   - [x] Définir les 9 profils utilisateurs stricts dans le domaine métier (`internal/domain/models.go`).
-  - [ ] Implémenter le middleware de contrôle d'accès granulaire `RequirePermission(perm)` couvrant les 14 permissions unitaires (Section 7.2 du CDC).
-  - [ ] **Blocage Hermétique des Routes API Backend (Défense en Profondeur) :**
-    - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte dans `audit_logs` (IP, UserID, URI sollicitée, méthode HTTP).
-    - Filtre **Zero-Trust administrateurs techniques** bloquant formellement tout téléchargement ou affichage de documents pharmaceutiques pour l'admin système et l'admin éditeur (`/api/v1/ged/documents/{id}/file`, `/api/v1/ged/versions/{id}/download`).
-    - Verrouillage exclusif des routes sensibles : signature légale PDT (`/sign-pdt`), export eCTD E-TASJIL (`/export-submission-package`), données de prix 1.H.4/1.H.5/1.A.4, et gestion des comptes (`/users/*`).
+  - [ ] **Modèle de Données PostgreSQL Dynamique (Migration `000004_rbac_dynamic_permissions.up.sql`) :**
+    - Tables `roles`, `permissions`, `role_permissions`, `user_permissions`.
+    - Pré-remplissage des 14 permissions unitaires et de la matrice par défaut des 9 rôles sans perturber les données existantes.
+  - [ ] **Moteur RBAC Backend Go & Garde-fous BPF Inviolables :**
+    - Service `RBACService` et middleware `RequirePermission(perm)`.
+    - Garde-fous réglementaires inviolables en code Go : exercice du visa PDT réservé exclusivement au DT titulaire de la décision ministérielle (1.A.7), filtre Zero-Trust bloquant le téléchargement de documents pour les admins techniques, et non-auto-approbation SoD par pièce (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
+    - Système de cache mémoire à invalidation instantanée par versioning de permissions (`permissions_version`) pour répercussion immédiate sur sessions actives.
+    - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte automatique dans `audit_logs` (IP, UserID, URI sollicitée, méthode HTTP).
+  - [ ] **Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :**
+    - Interface autonome dédiée pour l'Administrateur de Laboratoire (gestion collaborateurs, matrice interactive des permissions dynamiques, rattachement PDT 1.A.7, sites de fabrication 1.H.8, surveillance audit trail, quotas de stockage CAS).
+    - Commutateur d'espace Workspace Switcher pour les profils disposant d'un double mandat.
   - [ ] **Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :**
-    - Route Guards frontend interceptant les accès directs non autorisés par URL avec redirection et écran 403 institutionnel.
-    - Moteur de rendu conditionnel masquant les composants non autorisés (bouton signature PDT, menus admin, volets de prix, audit trail).
-    - Arborescence filtrée et cloisonnée en mode *Guest* pour les **Consultants Externes** (affichage exclusif des dossiers assignés).
+    - Route Guards frontend interceptant les accès directs non autorisés par URL avec redirection et écran institutionnel sécurisé 403 Pharma.
+    - Moteur de rendu conditionnel masquant les composants non autorisés (bouton signature PDT, menus admin, volets de prix 1.H.4/5, audit trail).
+    - Arborescence filtrée et cloisonnée en mode *Guest* pour les **Consultants Externes** (affichage exclusif des dossiers assignés et révocation automatique à échéance).
     - Gestion ergonomique des actions de workflow désactivées avec infobulles contextuelles explicatives (*Disabled + Tooltip*).
-  - [ ] Implémenter le garde-fou applicatif de **Séparation des Fonctions (*Segregation of Duties - SoD*)** interdisant formellement l'auto-approbation d'une pièce par son propre rédacteur (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
   - [ ] Développer et valider la suite de tests unitaires et d'intégration RBAC/SoD/Route Guards (`rbac_test.go`, `sod_test.go`, `routes_test.go`).
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Conforme Guide ANPP 2025)
