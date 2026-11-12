@@ -1566,8 +1566,8 @@
             }
         }
 
-        /* 6. Palier Écrans Smartphone (<= 680px) : Mode Fiches / Cards Automatique */
-        @media (max-width: 680px) {
+        /* 6. Palier Écrans Smartphone & Écrans Compacts (<= 768px) : Mode Fiches / Cards Automatique */
+        @media (max-width: 768px) {
             .table-quick-filter-bar {
                 flex-direction: column;
                 align-items: stretch;
@@ -1596,7 +1596,11 @@
                 padding: 4px 2px !important;
             }
 
-            /* 1. Masquage de l'en-tête rigide */
+            /* 1. Masquage TOTAL de tout en-tête de tableau */
+            thead,
+            #table-head,
+            th,
+            table thead,
             #doc-table thead,
             .table-container table thead {
                 display: none !important;
