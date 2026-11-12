@@ -119,11 +119,18 @@ func main() {
 
 	// Favicon Caducée officiel Sanad Pharma
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		ico, err := web.Files.ReadFile("img/favicon-caducee.svg")
+		ico, err := web.Files.ReadFile("favicon.ico")
+		if err == nil {
+			w.Header().Set("Content-Type", "image/x-icon")
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Write(ico)
+			return
+		}
+		svgIco, err := web.Files.ReadFile("img/favicon-caducee.svg")
 		if err == nil {
 			w.Header().Set("Content-Type", "image/svg+xml")
-			w.Header().Set("Cache-Control", "public, max-age=86400")
-			w.Write(ico)
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Write(svgIco)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
