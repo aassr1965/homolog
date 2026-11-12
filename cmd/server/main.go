@@ -138,8 +138,16 @@ func main() {
 
 	// Servir les assets statiques embarqués (css, js, img)
 	staticFS := http.FileServer(http.FS(web.Files))
-	r.Handle("/css/*", staticFS)
-	r.Handle("/js/*", staticFS)
+	noCacheWrapper := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
+			h.ServeHTTP(w, r)
+		})
+	}
+	r.Handle("/css/*", noCacheWrapper(staticFS))
+	r.Handle("/js/*", noCacheWrapper(staticFS))
 	r.Handle("/img/*", staticFS)
 
 	// Routes de diagnostic et d'état de santé
