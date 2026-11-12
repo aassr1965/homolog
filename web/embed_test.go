@@ -18,6 +18,8 @@ func TestEmbeddedFiles(t *testing.T) {
 		"js/dossiers.js",
 		"img/caducee.svg",
 		"img/favicon-caducee.svg",
+		"img/favicon.png",
+		"favicon.ico",
 	}
 
 	for _, file := range requiredFiles {
