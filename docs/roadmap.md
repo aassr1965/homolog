@@ -29,15 +29,16 @@ gantt
     Studio Compléments & Assistant Soumission ANPP (1.7) :active, p1_7, after p1_6, 3d
     Packaging Docker & Archive .homolog (1.8)        :p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
-    Redevances, Devises & Justificatifs Bancaires(2.1):p2_1, after p1_8, 3d
-    Moteur Variations ANPP (Mmin/Mmod/Mmaj)(2.2)     :p2_2, after p2_1, 4d
-    Espace Consultants Externes Cloisonné (2.3)      :p2_3, after p2_2, 2d
-    Régularisation DM Décret 20-324 (2.4)            :p2_4, after p2_3, 3d
-    Recherche Plein Texte FTS Bilingue FR/AR (2.5)   :p2_5, after p2_4, 3d
-    Console Super-Admin Éditeur Cloud SaaS (2.6)     :p2_6, after p2_5, 3d
-    Mises à Jour Réglementaires Hors-Ligne .pkg (2.7):p2_7, after p2_6, 3d
+    Atelier Élaboration & Workflow BPF Maker-Checker (2.1):p2_1, after p1_8, 4d
+    Redevances, Devises & Justificatifs Bancaires(2.2):p2_2, after p2_1, 3d
+    Moteur Variations ANPP (Mmin/Mmod/Mmaj)(2.3)     :p2_3, after p2_2, 4d
+    Espace Consultants Externes Cloisonné (2.4)      :p2_4, after p2_3, 2d
+    Régularisation DM Décret 20-324 (2.5)            :p2_5, after p2_4, 3d
+    Recherche Plein Texte FTS Bilingue FR/AR (2.6)   :p2_6, after p2_5, 3d
+    Console Super-Admin Éditeur Cloud SaaS (2.7)     :p2_7, after p2_6, 3d
+    Mises à Jour Réglementaires Hors-Ligne .pkg (2.8):p2_8, after p2_7, 3d
     section Phase 3 : Extensions
-    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_7, 5d
+    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_8, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
     Passerelle Officielle API ANPP                   :p3_3, after p3_2, 4d
 ```
@@ -207,14 +208,44 @@ gantt
 ---
 
 ## Phase 2 : Complétude, Moteur de Variations ANPP & Efficacité (Priorité S)
-> **Objectif stratégique :** Intégrer le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, la recherche plein texte et le multi-tenant SaaS.
+> **Objectif stratégique :** Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), les modèles maîtres ANPP/ICH, le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, la recherche plein texte et le multi-tenant SaaS.
 
-### Jalon 2.1 : Suivi des Redevances Réglementaires & Devises
+### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver)
+- [ ] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
+  - Matrice d'affectation métier selon l'expertise (Section 7.3 du Cahier des Charges) :
+    - *Affaires Réglementaires (RA)* : Module 1 complet, notices patient bilingues FR/AR (1.P.2), résumés des caractéristiques (RCP 1.P.1), maquettes, bordereaux BV1/BV2, lettres d'engagements (1.P.8, 1.P.9, 1.H.10) et dossiers de variations (LD-DEPP07/V01).
+    - *Contrôle Qualité (CQ) & Stabilités* : Spécifications analytiques SA/PF (3.2.S.4, 3.2.P.5.1), protocoles et rapports de validation des méthodes d'analyse selon ICH Q2(R1) (3.2.P.5.3), bulletins d'analyse libératoires CoA (1.P.4, 1.P.5), et protocoles/rapports d'études de stabilité sous conditions climatiques Zone IVb (3.2.P.8).
+    - *Recherche & Développement (R&D) / Galénique* : Justification de la formulation et développement pharmaceutique (3.2.P.2), profils de dissolution comparatifs ($f_1$, $f_2$) pour *Biowaiver* (1.M.P.3), et Résumé Global de la Qualité (QOS Module 2.3).
+    - *Production Industrielle & Ingénierie* : Formules de fabrication unitaire et par lot (3.2.P.3.2), procédés et contrôles en cours IPC (3.2.P.3.3), protocoles et rapports de validation de procédé sur 3 lots industriels (3.2.P.3.5 / 1.P.8).
+    - *Assurance Qualité (AQ)* : Rôle de relecture indépendante (*Checker*), procédures opératoires (SOP/POS), revue annuelle de la qualité (PQR), audits BPF et gestion des CAPA.
+    - *Partenaires Externes (Tiers)* : Dépôt sécurisé des ASMF/DMF Substance Active (3.2.S) par les fabricants d'API et rapports d'essais cliniques/bioéquivalence (Module 5) par les CROs.
+  - Assignation des sections CTD/DM à des contributeurs désignés avec dates butoirs et notifications automatiques de suivi.
+- [ ] **Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :**
+  - Cycle de vie : `À Rédiger` ➔ `En Cours` ➔ `En Revue Qualité/Checker` ➔ `Prêt pour Visa DT` ➔ `Approuvé & Scellé`.
+  - Mécanisme de verrouillage collaboratif (**Check-out / Check-in**) évitant les conflits d'édition simultanée.
+  - Gestion granulaire du versionnage : révisions de travail mineures incrémentales (`v0.1`, `v0.2`, `v0.3`...) jusqu'à la révision majeure officielle scellée (`v1.0`) par le PDT.
+  - Circuit de revue par les pairs / AQ (*Checker*) avec annotations, demandes d'ajustements motivées et journal d'audit complet.
+- [ ] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
+  - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
+  - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).
+- [ ] **Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic :**
+  - Moteur de génération automatique instantanée de documents officiels au format PDF/A prêt pour visa PDT :
+    - Lettre d'engagement de validation sur 3 premiers lots industriels de fabrication locale (1.P.8).
+    - Lettre d'engagement de suivi de stabilité continue post-commercialisation en Zone IVb (1.P.9).
+    - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
+    - Bordereaux de versement officiels BV1 (Initial / DM) et BV2 (Variations / Renouvellements) avec calcul des redevances en DZD ou devises.
+    - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
+- [ ] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
+  - Tableau de bord de pilotage temps réel : vue matricielle d'avancement par module CTD et par département rédacteur, alertes sur retards et goulots d'étranglement.
+  - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
+  - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
+
+### Jalon 2.2 : Suivi des Redevances Réglementaires & Devises
 - [ ] Barèmes configurables des redevances ANPP selon la procédure (**NI, RI, MI, NF, RF, MF**) et la classe de produit.
 - [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
 
-### Jalon 2.2 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
+### Jalon 2.3 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
 - [ ] **Implémentation du référentiel officiel algérien des variations :**
   - **Mmin (Modification Mineure) :** Impact minime ou nul.
   - **Mmod (Modification Modérée) :** Impact potentiel sur qualité, sécurité, efficacité.
@@ -248,28 +279,28 @@ gantt
   - Création d'une soumission groupée pour un même produit combinant plusieurs modifications interdépendantes.
   - Calcul du niveau de criticité global du groupe (alignement sur la modification la plus sévère du groupe).
 
-### Jalon 2.3 : Espace Sécurisé pour Consultants Externes
+### Jalon 2.4 : Espace Sécurisé pour Consultants Externes
 - [ ] Cloisonnement étanche : accès restreint exclusivement aux seuls dossiers CTD/DM explicitement assignés.
 - [ ] Zéro accès à la GED transverse ou aux autres produits du laboratoire.
 - [ ] Date d'expiration de contrat automatique révoquant les accès à l'échéance.
 - [ ] Journalisation et marquage d'audit renforcé sur chaque action de consultation ou dépôt par un consultant.
 
-### Jalon 2.4 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)
+### Jalon 2.5 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)
 - [ ] Inventaire des DM déjà mis sur le marché sans décision d'homologation.
 - [ ] Checklist spécifique de régularisation selon l'arrêté du 10 mai 2021.
 - [ ] Tableau de suivi des mesures transitoires et des échéances de dépôt de régularisation.
 
-### Jalon 2.5 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
+### Jalon 2.6 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
 - [ ] Indexation textuelle automatique des documents PDF, Word (.docx) et Excel (.xlsx) déposés en GED.
 - [ ] Moteur de recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant les requêtes en français et en arabe.
 - [ ] Surlignage dynamique des termes trouvés directement dans la vue tableau et le volet de prévisualisation.
 
-### Jalon 2.6 : Console Super-Admin Éditeur (Mode Cloud SaaS)
+### Jalon 2.7 : Console Super-Admin Éditeur (Mode Cloud SaaS)
 - [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances.
 - [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.homolog.dz`).
 - [ ] Gestion des quotas de stockage par laboratoire et suivi de consommation.
 
-### Jalon 2.7 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
+### Jalon 2.8 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
 - [ ] Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).
 - [ ] Déploiement sans redémarrage des nouveaux modèles de checklists CTD ou fiches de variations émises par l'ANPP.
 - [ ] Vue comparative (Diff) entre le modèle de dossier actuel et le nouveau modèle avant application validée par l'administrateur.
