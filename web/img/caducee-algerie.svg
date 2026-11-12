@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none">
+  <!-- Caducée Pharmaceutique Algérien Officiel (Croissant Vert, Coupe d'Hygie Verte, Serpent Rouge) -->
+
+  <!-- 1. Le Croissant Vert Algérien (Crescent) sur la gauche -->
+  <path d="M 52 3 
+           C 25 3, 3 24, 3 50 
+           C 3 76, 25 97, 52 97 
+           C 40 93, 26 84, 18 73 
+           C 10 62, 10 38, 18 27 
+           C 26 16, 40 7, 52 3 Z" 
+        fill="#00a651" />
+
+  <!-- 2. La Coupe d'Hygie Verte au centre -->
+  <g fill="#00a651">
+    <!-- Base du calice -->
+    <path d="M 27 91 C 32 89, 44 88, 52 88 C 60 88, 72 89, 77 91 C 78 91.5, 76 93, 73 93 L 31 93 C 28 93, 26 91.5, 27 91 Z" />
+    <!-- Tige du calice -->
+    <path d="M 50.5 54 L 50.5 89 L 53.5 89 L 53.5 54 Z" />
+    <!-- Corps évasé de la coupe (forme triangulaire à rebord droit) -->
+    <path d="M 22 43 L 82 43 C 78 47, 68 56, 54 57 L 50 57 C 36 56, 26 47, 22 43 Z" />
+  </g>
+
+  <!-- 3. Le Serpent Rouge d'Épidaure -->
+  <!-- Enroulement double autour du pied du calice et élévation au-dessus de la coupe -->
+  <g fill="#e52421" stroke="#e52421" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Queue enroulée en bas sous le pied -->
+    <path d="M 59 86 C 54 87, 46 86, 44 82 C 42 78, 48 76, 52 75 C 57 74, 62 76, 61 80 C 60 83, 55 84, 52 84" 
+          stroke-width="5" fill="none" />
+    
+    <!-- Première boucle autour de la tige (forme de 8 / S rouge) -->
+    <path d="M 44 80 C 40 76, 42 66, 48 64 C 54 62, 62 65, 62 71 C 62 77, 54 80, 48 79" 
+          stroke-width="5" fill="none" />
+    
+    <!-- Deuxième boucle montant et traversant le bol de la coupe vers la droite -->
+    <path d="M 52 75 C 57 74, 64 68, 64 58 C 64 48, 58 43, 52 38 C 47 34, 44 26, 45 20" 
+          stroke-width="5.5" fill="none" />
+    
+    <!-- Grand arc supérieur au-dessus de la coupe (courbure vers la gauche puis retour) -->
+    <path d="M 45 20 C 46 13, 50 8, 57 8 C 64 8, 67 14, 64 21 C 63 23, 61 24, 60 25" 
+          stroke-width="5" fill="none" />
+
+    <!-- Tête du serpent rouge (forme de losange/ovale stylisée tournée vers la coupe) -->
+    <path d="M 60 25 C 61 23, 63 21, 65 23 C 67 25, 66 29, 63 32 C 60 30, 59 27, 60 25 Z" 
+          fill="#e52421" stroke="none" />
+    
+    <!-- Oeil du serpent -->
+    <circle cx="63.5" cy="25.5" r="1.2" fill="#ffffff" stroke="none" />
+
+    <!-- Langue bifide du serpent vers la coupe -->
+    <path d="M 64 31 L 66 35 M 64 31 L 63 35" stroke-width="1.2" stroke="#e52421" />
+  </g>
+</svg>

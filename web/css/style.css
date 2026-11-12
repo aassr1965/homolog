@@ -119,25 +119,24 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 26px;
-            height: 26px;
-            background: linear-gradient(135deg, #059669, #0284c7);
-            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            background: #ffffff;
             border-radius: 6px;
-            padding: 3px;
-            box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+            padding: 2px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(0, 166, 81, 0.25);
             flex-shrink: 0;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .brand-section:hover .brand-caducee-icon {
-            transform: scale(1.08) rotate(-4deg);
-            box-shadow: 0 3px 8px rgba(2, 132, 199, 0.45);
+            transform: scale(1.1) rotate(-3deg);
+            box-shadow: 0 3px 8px rgba(0, 166, 81, 0.35);
         }
         .explorer-caducee-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent-emerald);
             flex-shrink: 0;
             vertical-align: middle;
         }
