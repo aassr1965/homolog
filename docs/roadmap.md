@@ -57,20 +57,17 @@ gantt
 - [x] Valider la suite de tests unitaires du stockage CAS (`storage_test.go`)
 
 ### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11)
-- [x] Implémenter le hachage sécurisé des mots de passe avec **Argon2id** et politique de complexité (min. 12 car., minuscules, majuscules, chiffres, caractères spéciaux)
-- [x] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** avec table de sessions PostgreSQL pour révocation instantanée
-- [x] Développer le second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés)
-- [x] Mettre en place le verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 essais = 15 min de blocage)
-- [x] Implémenter la matrice des **9 profils d'utilisateurs stricts** (Section 7.1 du Cahier des Charges) :
-  1. *Super-Administrateur Éditeur* (Mode Cloud SaaS - provisioning & quotas, aucun accès aux données pharmaceutiques).
-  2. *Administrateur Système Local* (Mode On-Premise - maintenance, sauvegardes, aucun accès aux documents).
-  3. *Administrateur de Laboratoire* (Gestion des comptes et affectations internes).
-  4. *Responsable Affaires Réglementaires* (Création, coordination des dossiers CTD/DM et suivi des soumissions ANPP).
-  5. *Pharmacien Directeur Technique (PDT)* (Seul titulaire du pouvoir légal d'approbation et signature électronique bloquante).
-  6. *Contributeur Qualité / BPF* (Gestion des SOP, revues qualité, certificats BPF et audits).
-  7. *Contributeur R&D / Production* (Dépôt des formules cadres, dossiers de validation 3.2.P.3.5 et stabilités).
-  8. *Consultant Externe* (Accès restreint et cloisonné aux seuls dossiers assignés avec date d'expiration contractuelle).
-  9. *Auditeur / Inspecteur* (Consultation en lecture seule avec accès au journal d'audit trail immuable).
+- [x] Formaliser et implémenter la **Politique de Sécurité du Système d'Information Pharmaceutique (PSSI)** :
+  - **Principe Zero-Trust administrateurs techniques :** Interdiction absolue de consultation, de visualisation et de téléchargement des documents pharmaceutiques et secrets de fabrication pour les rôles *Super-Administrateur Éditeur* et *Administrateur Système Local* (CDC Section 7.1).
+  - Hachage cryptographique des mots de passe avec **Argon2id** (mémoire 64 Mo, 3 itérations) et politique de complexité (min. 12 car., minuscules, majuscules, chiffres, caractères spéciaux).
+  - Gestion des sessions par **Cookies HttpOnly sécurisés** (SameSite=Strict, HTTPS) avec table de sessions PostgreSQL pour révocation instantanée.
+  - Verrouillage automatique de session sur inactivité (**Idle timeout 15 min BPF**) et protection anti-brute force (5 essais infructueux = 15 min de blocage).
+  - Second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés).
+- [x] Implémenter la **Matrice RBAC Granulaire des 9 Rôles Stricts et 14 Permissions** (Section 7.2 du Cahier des Charges) :
+  - Middleware de contrôle d'accès (`RequireRole`, `RequirePermission`).
+  - Règle de **Séparation des Fonctions (*Segregation of Duties - SoD*)** : interdiction formelle de l'auto-approbation (rejet automatique si un utilisateur tente d'agir comme *Checker* ou *Approver* sur un document dont il est l'auteur *Maker*).
+  - Cloisonnement hermétique des **Consultants Externes** en mode *Guest* temporaire (accès restreint aux seuls dossiers assignés, zéro accès à la GED transverse, révocation automatique à échéance).
+  - Profil **Auditeur / Inspecteur** en lecture seule stricte avec accès privilégié au journal d'audit immuable.
 - [x] Créer le flux de **re-authentification pour signature électronique légale du PDT** :
   - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
     *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
@@ -212,7 +209,7 @@ gantt
 
 ### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver)
 - [ ] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
-  - Matrice d'affectation métier selon l'expertise (Section 7.3 du Cahier des Charges) :
+  - Matrice d'affectation métier selon l'expertise (Section 7.4 du Cahier des Charges) :
     - *Affaires Réglementaires (RA)* : Module 1 complet, notices patient bilingues FR/AR (1.P.2), résumés des caractéristiques (RCP 1.P.1), maquettes, bordereaux BV1/BV2, lettres d'engagements (1.P.8, 1.P.9, 1.H.10) et dossiers de variations (LD-DEPP07/V01).
     - *Contrôle Qualité (CQ) & Stabilités* : Spécifications analytiques SA/PF (3.2.S.4, 3.2.P.5.1), protocoles et rapports de validation des méthodes d'analyse selon ICH Q2(R1) (3.2.P.5.3), bulletins d'analyse libératoires CoA (1.P.4, 1.P.5), et protocoles/rapports d'études de stabilité sous conditions climatiques Zone IVb (3.2.P.8).
     - *Recherche & Développement (R&D) / Galénique* : Justification de la formulation et développement pharmaceutique (3.2.P.2), profils de dissolution comparatifs ($f_1$, $f_2$) pour *Biowaiver* (1.M.P.3), et Résumé Global de la Qualité (QOS Module 2.3).
