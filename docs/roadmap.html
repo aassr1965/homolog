@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Feuille de Route Stratégique (Roadmap) - Homolog</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 12mm 14mm 14mm 14mm;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            line-height: 1.42;
+            font-size: 8.8pt;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Page de garde */
+        .cover-page {
+            page-break-after: always;
+            height: 98vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 25px 25px 25px;
+            background: linear-gradient(145deg, #091e36 0%, #0f2b48 50%, #063c5a 100%);
+            color: #ffffff;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::after {
+            content: "";
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle, rgba(13, 148, 136, 0.28) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background-color: rgba(13, 148, 136, 0.3);
+            border: 1px solid #14b8a6;
+            color: #5eead4;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 7.5pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .cover-title {
+            font-size: 32pt;
+            font-weight: 800;
+            line-height: 1.05;
+            margin: 0 0 12px 0;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-title-sub {
+            font-size: 15pt;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 12px;
+            letter-spacing: -0.2px;
+        }
+
+        .cover-subtitle {
+            font-size: 10.5pt;
+            font-weight: 400;
+            color: #cbd5e1;
+            line-height: 1.45;
+            margin: 0 0 22px 0;
+            max-width: 620px;
+        }
+
+        .cover-divider {
+            width: 85px;
+            height: 4px;
+            background: linear-gradient(90deg, #0d9488, #38bdf8);
+            border-radius: 2px;
+            margin-bottom: 22px;
+        }
+
+        .cover-highlights {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .cover-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 10px 12px;
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+        }
+
+        .cover-card-label {
+            font-size: 6.8pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .cover-card-value {
+            font-size: 13pt;
+            font-weight: 800;
+            color: #38bdf8;
+            line-height: 1.15;
+        }
+
+        .cover-card-desc {
+            font-size: 7.2pt;
+            color: #cbd5e1;
+            margin-top: 1px;
+        }
+
+        .cover-ref-box {
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            font-size: 8pt;
+            color: #cbd5e1;
+            line-height: 1.45;
+        }
+
+        .cover-ref-box strong {
+            color: #5eead4;
+        }
+
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 7.8pt;
+            color: #94a3b8;
+        }
+
+        .cover-footer strong {
+            color: #ffffff;
+        }
+
+        /* En-tête de page */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.5px solid #0d9488;
+            padding-bottom: 3px;
+            margin-bottom: 10px;
+            font-size: 7.5pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .page-header strong {
+            color: #0f2942;
+        }
+
+        /* Pied de page */
+        .page-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 4px;
+            margin-top: 12px;
+            font-size: 7pt;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            color: #0f2942;
+            font-size: 13pt;
+            font-weight: 800;
+            margin: 10px 0 8px 0;
+            padding-bottom: 3px;
+            border-bottom: 2px solid #e2e8f0;
+            page-break-after: avoid;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h2 {
+            color: #0d9488;
+            font-size: 10pt;
+            font-weight: 700;
+            margin: 10px 0 6px 0;
+            page-break-after: avoid;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Badges de Statut */
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 7pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            line-height: 1.25;
+        }
+        .badge-done {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+        .badge-progress {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #7dd3fc;
+        }
+        .badge-planned {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+        .badge-anpp {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        /* Cartes de Jalons */
+        .milestone-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            page-break-inside: avoid;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border-left: 4px solid #64748b;
+        }
+
+        .milestone-card.done {
+            border-left-color: #10b981;
+            background: #fafdfb;
+        }
+
+        .milestone-card.progress {
+            border-left-color: #0284c7;
+            background: #f8fbfe;
+        }
+
+        .milestone-card.planned {
+            border-left-color: #94a3b8;
+        }
+
+        .milestone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            border-bottom: 1px dashed #e2e8f0;
+            padding-bottom: 4px;
+        }
+
+        .milestone-title {
+            font-size: 9.2pt;
+            font-weight: 700;
+            color: #0f2942;
+        }
+
+        .milestone-items {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .milestone-item {
+            font-size: 8.2pt;
+            color: #334155;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: flex-start;
+            line-height: 1.35;
+        }
+
+        .check-icon {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            margin-right: 6px;
+            margin-top: 1px;
+            flex-shrink: 0;
+            text-align: center;
+            line-height: 13px;
+            font-size: 7.5pt;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+
+        .check-icon.checked {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+
+        .check-icon.unchecked {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Grille KPI */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 8px 0 12px 0;
+            page-break-inside: avoid;
+        }
+
+        .kpi-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-top: 3px solid #0d9488;
+            border-radius: 5px;
+            padding: 6px 8px;
+            text-align: center;
+        }
+
+        .kpi-card.green { border-top-color: #10b981; }
+        .kpi-card.blue { border-top-color: #0284c7; }
+        .kpi-card.amber { border-top-color: #f59e0b; }
+        .kpi-card.purple { border-top-color: #8b5cf6; }
+
+        .kpi-label {
+            font-size: 6.8pt;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            margin-bottom: 1px;
+        }
+
+        .kpi-value {
+            font-size: 12pt;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
+        }
+
+        .kpi-sub {
+            font-size: 6.8pt;
+            color: #059669;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        /* Gantt Visuel SVG */
+        .gantt-box {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0 14px 0;
+            page-break-inside: avoid;
+        }
+
+        .gantt-title {
+            font-size: 8.5pt;
+            font-weight: 700;
+            color: #0f2942;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin: 8px 0 10px 0;
+            page-break-inside: avoid;
+        }
+
+        th {
+            background-color: #0f2942;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 5px 7px;
+            text-align: left;
+            border: 1px solid #1e3a5f;
+            font-size: 7.4pt;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        td {
+            padding: 5px 7px;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            line-height: 1.35;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .callout {
+            background-color: #f0fdf4;
+            border-left: 3.5px solid #16a34a;
+            padding: 7px 10px;
+            margin: 8px 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 8.2pt;
+            page-break-inside: avoid;
+        }
+
+        .callout.info {
+            background-color: #f0f9ff;
+            border-left-color: #0284c7;
+        }
+
+        .callout.amber {
+            background-color: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+            font-size: 8.5pt;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        .sign-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+            page-break-inside: avoid;
+        }
+
+        .sign-box {
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            padding: 8px;
+            background: #fafafa;
+            font-size: 7.8pt;
+        }
+
+        .sign-role {
+            font-weight: 700;
+            color: #0f2942;
+            margin-bottom: 3px;
+            font-size: 8.2pt;
+        }
+
+        .sign-space {
+            height: 40px;
+            border-bottom: 1px dashed #94a3b8;
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== PAGE 1 : PAGE DE GARDE ==================== -->
+    <div class="cover-page">
+        <div>
+            <div class="cover-badge">Document Officiel de Gouvernance & Déploiement</div>
+            <div class="cover-title">HOMOLOG</div>
+            <div class="cover-title-sub">FEUILLE DE ROUTE STRATÉGIQUE (ROADMAP)</div>
+            <div class="cover-subtitle">
+                Plateforme collaborative de gestion de l'enregistrement des médicaments (CTD ANPP 2025), de l'homologation des dispositifs médicaux et GED pharmaceutique BPF / ALCOA+ en Algérie.
+            </div>
+            <div class="cover-divider"></div>
+
+            <div class="cover-highlights">
+                <div class="cover-card">
+                    <div class="cover-card-label">Structure Projet</div>
+                    <div class="cover-card-value">3 Phases</div>
+                    <div class="cover-card-desc">Socle, Complétude, Ext.</div>
+                </div>
+                <div class="cover-card">
+                    <div class="cover-card-label">Jalons Stratégiques</div>
+                    <div class="cover-card-value">18 Jalons</div>
+                    <div class="cover-card-desc">6 Réalisés / 1 En cours</div>
+                </div>
+                <div class="cover-card">
+                    <div class="cover-card-label">Gouvernance BPF</div>
+                    <div class="cover-card-value">9 Profils</div>
+                    <div class="cover-card-desc">Audit Trail 21 CFR 11</div>
+                </div>
+                <div class="cover-card">
+                    <div class="cover-card-label">Architecture</div>
+                    <div class="cover-card-value">Hybride</div>
+                    <div class="cover-card-desc">On-Premise & Cloud SaaS</div>
+                </div>
+            </div>
+
+            <div class="cover-ref-box">
+                <strong>Référentiels réglementaires officiels algériens intégrés :</strong><br>
+                • <strong>Guide CTD ANPP (Version 01 - 31/07/2025) :</strong> Structure standardisée Modules 1 à 5 (Procédures NI, RI, MI, NF, RF, MF).<br>
+                • <strong>Ligne Directrice Variations LD-DEPP07/V01 (22/04/2026) :</strong> 34 rubriques Mmin/Mmod/Mmaj, reclassement et Grouping (Arrêté 07/11/2021).<br>
+                • <strong>Dispositifs Médicaux :</strong> Décret exécutif n° 20-324 et Arrêté ministériel du 10 mai 2021 (Homologation & Régularisation).<br>
+                • <strong>Télé-Procédures ANPP :</strong> Articulation avec les portails <em>E-TASJIL</em> (`etasjil.anpp.dz`), <em>RDV PP</em>, <em>RDV DM</em> et <em>État Déclaratif</em>.
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>
+                <div><strong>Portée :</strong> Industrie Pharmaceutique & Établissements de Dispositifs Médicaux</div>
+                <div><strong>Sécurité & Conformité :</strong> 21 CFR Part 11 | BPF Algérie / Annexe 11 PIC/S | Chiffrement SHA-256 CAS</div>
+            </div>
+            <div style="text-align: right;">
+                <div><strong>Édition :</strong> Version 1.1 Validée</div>
+                <div><strong>Date :</strong> Novembre 2026</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 2 : SYNTHÈSE & PLANNING GANTT ==================== -->
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Vue d'Ensemble & Planning Gantt</span>
+    </div>
+
+    <h1>
+        <span>1. Vue d'Ensemble & Cadre Stratégique</span>
+        <span class="badge badge-done">Spécifications 100% Validées</span>
+    </h1>
+
+    <div class="kpi-grid">
+        <div class="kpi-card green">
+            <div class="kpi-label">Phase 1 (Socle & GED)</div>
+            <div class="kpi-value">75 %</div>
+            <div class="kpi-sub">6 / 8 Jalons complétés</div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-label">Phase 2 (Variations ANPP)</div>
+            <div class="kpi-value">100 %</div>
+            <div class="kpi-sub">Modélisée & Spécifiée</div>
+        </div>
+        <div class="kpi-card amber">
+            <div class="kpi-label">Phase 3 (Extensions M2M)</div>
+            <div class="kpi-value">Prête</div>
+            <div class="kpi-sub">Connecteur API-Ready</div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-label">Tests Automatisés</div>
+            <div class="kpi-value">> 85 %</div>
+            <div class="kpi-sub">Audit, Auth, CAS validés</div>
+        </div>
+    </div>
+
+    <h2>Planning de Déploiement et d'Implémentation (Gantt Visuel)</h2>
+
+    <div class="gantt-box">
+        <div class="gantt-title">
+            <span>Chronologie d'Exécution des 18 Jalons</span>
+            <span style="font-size: 7.2pt; color: #64748b; font-weight: normal;">Novembre 2026 - T1 2027</span>
+        </div>
+        <svg viewBox="0 0 760 160" width="100%" height="160" style="font-family: inherit;">
+            <rect x="0" y="0" width="760" height="160" fill="#f8fafc" rx="4"/>
+            <line x1="190" y1="0" x2="190" y2="160" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="380" y1="0" x2="380" y2="160" stroke="#e2e8f0" stroke-width="1"/>
+            <line x1="570" y1="0" x2="570" y2="160" stroke="#e2e8f0" stroke-width="1"/>
+
+            <text x="95" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">NOVEMBRE 2026 (SOCLE)</text>
+            <text x="285" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">DÉCEMBRE 2026 (EXPANSION)</text>
+            <text x="475" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">JANVIER 2027 (VARIATIONS)</text>
+            <text x="665" y="15" fill="#0f2942" font-size="8" font-weight="700" text-anchor="middle">FÉVRIER 2027 (ÉCOSYSTÈME)</text>
+
+            <!-- Lignes Phase 1 -->
+            <text x="10" y="36" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 1 : SOCLE & GED</text>
+            <rect x="10" y="42" width="175" height="15" rx="3" fill="#10b981"/>
+            <text x="97" y="52" fill="#ffffff" font-size="7" font-weight="700" text-anchor="middle">Jalons 1.1 à 1.6 (Complétés)</text>
+
+            <rect x="190" y="42" width="70" height="15" rx="3" fill="#0284c7"/>
+            <text x="225" y="52" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">1.7 (En cours)</text>
+
+            <rect x="265" y="42" width="55" height="15" rx="3" fill="#94a3b8"/>
+            <text x="292" y="52" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">1.8 (Docker)</text>
+
+            <!-- Lignes Phase 2 -->
+            <text x="10" y="76" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 2 : VARIATIONS ANPP</text>
+            <rect x="325" y="82" width="90" height="15" rx="3" fill="#38bdf8"/>
+            <text x="370" y="92" fill="#0f2942" font-size="6.8" font-weight="700" text-anchor="middle">2.1 & 2.2 Variations</text>
+
+            <rect x="420" y="82" width="80" height="15" rx="3" fill="#38bdf8"/>
+            <text x="460" y="92" fill="#0f2942" font-size="6.8" font-weight="700" text-anchor="middle">2.3 & 2.4 Régul. DM</text>
+
+            <rect x="505" y="82" width="60" height="15" rx="3" fill="#38bdf8"/>
+            <text x="535" y="92" fill="#0f2942" font-size="6.8" font-weight="700" text-anchor="middle">2.5-2.7 SaaS</text>
+
+            <!-- Lignes Phase 3 -->
+            <text x="10" y="116" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 3 : EXTENSIONS M2M</text>
+            <rect x="575" y="122" width="55" height="15" rx="3" fill="#818cf8"/>
+            <text x="602" y="132" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">3.1 Vigilance</text>
+
+            <rect x="635" y="122" width="55" height="15" rx="3" fill="#818cf8"/>
+            <text x="662" y="132" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">3.2 SSO/iCal</text>
+
+            <rect x="695" y="122" width="55" height="15" rx="3" fill="#f59e0b"/>
+            <text x="722" y="132" fill="#ffffff" font-size="6.8" font-weight="700" text-anchor="middle">3.3 API ANPP</text>
+
+            <!-- Légende -->
+            <circle cx="15" cy="150" r="3.5" fill="#10b981"/>
+            <text x="22" y="153" fill="#475569" font-size="7">Jalon Réalisé</text>
+
+            <circle cx="105" cy="150" r="3.5" fill="#0284c7"/>
+            <text x="112" y="153" fill="#475569" font-size="7">Jalon En cours</text>
+
+            <circle cx="205" cy="150" r="3.5" fill="#38bdf8"/>
+            <text x="212" y="153" fill="#475569" font-size="7">Phase 2 Planifiée</text>
+
+            <circle cx="315" cy="150" r="3.5" fill="#818cf8"/>
+            <text x="322" y="153" fill="#475569" font-size="7">Phase 3 Planifiée</text>
+
+            <circle cx="425" cy="150" r="3.5" fill="#f59e0b"/>
+            <text x="432" y="153" fill="#475569" font-size="7">Guichet M2M ANPP</text>
+        </svg>
+    </div>
+
+    <h2>Tableau de Synthèse des 3 Phases</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Phase</th>
+                <th style="width: 25%;">Objectif Stratégique</th>
+                <th style="width: 35%;">Périmètre Métier & Réglementaire</th>
+                <th style="width: 12%;">Statut</th>
+                <th style="width: 13%;">Priorité</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Phase 1</strong><br>Socle & GED</td>
+                <td>Disposer d'une plateforme opérationnelle de bout en bout pour monter, signer et réviser un dossier CTD/DM.</td>
+                <td>Base PostgreSQL, 2FA TOTP, 9 rôles 21 CFR 11, Référentiel ANPP 2025, GED ALCOA+, Pharma Explorer 3 volets, E-Services.</td>
+                <td><span class="badge badge-done">75% Réalisé</span></td>
+                <td><span class="badge badge-anpp">Priorité M (Must)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Phase 2</strong><br>Variations ANPP</td>
+                <td>Maîtrise complète du cycle de vie post-enregistrement et efficacité opérationnelle accrue.</td>
+                <td>Moteur 34 variations LD-DEPP07/V01 (Mmin/Mmod/Mmaj), escalade, Grouping, régularisation DM, FTS PostgreSQL, SaaS.</td>
+                <td><span class="badge badge-progress">Spécifiée</span></td>
+                <td><span class="badge badge-progress">Priorité S (Should)</span></td>
+            </tr>
+            <tr>
+                <td><strong>Phase 3</strong><br>Extensions M2M</td>
+                <td>Surveillance post-marché, interconnexions d'entreprise et interopérabilité directe ANPP.</td>
+                <td>Matériovigilance, Pharmacovigilance, SSO d'entreprise SAML/LDAP, iCal, télétransmission directe M2M E-TASJIL.</td>
+                <td><span class="badge badge-planned">Cadrée</span></td>
+                <td><span class="badge badge-planned">Priorité C (Could)</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 2 / 8</span>
+    </div>
+
+    <!-- ==================== PAGE 3 : PHASE 1 (JALONS 1.1 À 1.3) ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Phase 1 : Socle Fondateur & Gouvernance BPF</span>
+    </div>
+
+    <h1>
+        <span>2. Phase 1 : Socle Fondateur & GED Pharmaceutique</span>
+        <span class="badge badge-done">Priorité M (Must Have)</span>
+    </h1>
+
+    <div class="callout info">
+        <div class="callout-title">Objectif Stratégique de la Phase 1</div>
+        Permettre à un laboratoire ou opérateur de créer un produit (Princeps, Générique importé ou local), monter un dossier d'enregistrement CTD conforme au Guide ANPP 2025 (procédures NI, RI, MI, NF, RF, MF) ou d'homologation DM, déposer et signer électroniquement des pièces en GED BPF, et générer les bordereaux officiels BV1/BV2 pour les télé-procédures ANPP.
+    </div>
+
+    <!-- Jalon 1.1 -->
+    <div class="milestone-card done">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.1 : Infrastructure, Base PostgreSQL & CAS Dédupliqué</span>
+            <span class="badge badge-done">Complété ✅</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Arborescence Go modulaire (`cmd/server`, `internal/{api,domain,ged,storage,audit}`).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Pool de connexions PostgreSQL 16+ asynchrone via `jackc/pgx/v5` avec migrations automatisées.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Driver de stockage CAS (Content Addressable Storage) avec hachage cryptographique SHA-256 et déduplication physique des binaires.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Configuration hybride par variables d'environnement (`DEPLOYMENT_MODE=on-premise` ou `saas`).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Validation complète des tests unitaires du stockage CAS (`storage_test.go`).</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 1.2 -->
+    <div class="milestone-card done">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, 9 Rôles & Audit Trail (21 CFR Part 11)</span>
+            <span class="badge badge-done">Complété ✅</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Hachage sécurisé des mots de passe avec <strong>Argon2id</strong> et politique stricte de complexité (min. 12 car.).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Sessions sécurisées par Cookies HttpOnly, SameSite=Strict et table de révocation instantanée en base PostgreSQL.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Second facteur <strong>TOTP (RFC 6238) 100% hors-ligne</strong> (Google/Microsoft Authenticator) + 10 codes de secours chiffrés.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 échecs = 15 min).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Matrice des <strong>9 profils d'utilisateurs stricts</strong> (Super-Admin, Admin Système, Admin Labo, Affaires Réglementaires, Pharmacien DT, Qualité BPF, R&D/Prod, Consultant, Auditeur).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Signature électronique solennelle du Pharmacien Directeur Technique (PDT)</strong> avec déclaration légale sur l'honneur, re-authentification 2FA, horodatage UTC et scellement d'intégrité SHA-256.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Journal d'audit trail immuable (`audit_logs`) strictement *append-only* (triggers SQL interdisant `UPDATE` et `DELETE`).</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 1.3 -->
+    <div class="milestone-card done">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.3 : Référentiel Établissements & Produits (Guide ANPP Juillet 2025)</span>
+            <span class="badge badge-done">Complété ✅</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Modèle Établissements : agréments MIPH, coordonnées du Pharmacien Directeur Technique (1.A.7), décision ministérielle nominative.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Modèle Sites de Fabrication (1.H.8) : synthèse SA, formulation PF, conditionnement primaire/secondaire, contrôle analytique, licences ML et certificats BPF/GMP avec échéances.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Modèle Médicaments (Typologie ANPP 2025) : DCI, forme galénique, dosage, voie, classe ATC OMS, origine (Princeps, Générique importé, Générique local).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Données SA/API : monographies Ph. Eur., CEP EDQM (1.M.S.3 / 3.2.S.3) avec lettre d'accès, DMF/DPSA, polymorphisme et granulométrie.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Données économiques réglementaires : structure de prix PCSU pour fabrication locale (1.H.4) et attestation prix FOB visée Chambre de Commerce + Benchmark pour l'import (1.H.5).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Modèle Dispositifs Médicaux : classes I, IIa, IIb, III, DMDIV, stérilité, usage unique selon le décret exécutif n° 20-324 et l'arrêté du 10 mai 2021.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Support natif des champs bilingues Français / Arabe (`name_fr`, `name_ar`, `inn_fr`, `inn_ar`).</li>
+        </ul>
+    </div>
+
+    <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 3 / 8</span>
+    </div>
+
+    <!-- ==================== PAGE 4 : PHASE 1 (JALONS 1.4 À 1.6) ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Phase 1 : GED BPF, Moteur CTD & Pharma Explorer</span>
+    </div>
+
+    <!-- Jalon 1.4 -->
+    <div class="milestone-card done">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.4 : Coffre-Fort GED Pharmaceutique (Standard BPF / ALCOA+)</span>
+            <span class="badge badge-done">Complété ✅</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Arborescence standardisée préconfigurée en <strong>5 branches maîtresses normalisées</strong> :<br>
+            • `01_Affaires_Reglementaires` (Agréments, Décisions DE/Homologation, CTD de référence, notices, correspondances ANPP)<br>
+            • `02_Assurance_Qualite_BPF` (Manuel Qualité, SOP, certificats BPF/GMP/ISO, rapports d'audit, CAPA/Déviations)<br>
+            • `03_Developpement_Production` (Formules maîtresse, méthodes de contrôle, stabilités Zone IVa/IVb, dossiers DM)<br>
+            • `04_Vigilance_Post_Market` (PSUR, fiches d'effets indésirables, matériovigilance, rappels de lots)<br>
+            • `05_Contrats_Tiers` (Quality Agreements QTA, contrats de façonnage, certificats CEP/DMF fournisseurs)</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Cycle de vie documentaire BPF (*Brouillon* → *En revue* → *En approbation* → *En vigueur* → *Obsolète*).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Versionnement strict (`v0.1`, `v1.0`, `v2.0`) avec saisie obligatoire du motif de révision et traçabilité.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Mécanisme de verrouillage exclusif (Check-out / Check-in) pour prévenir les conflits de modification.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Téléversement résilient par morceaux (Chunked Upload 5 Mo) avec déduplication physique CAS SHA-256.</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 1.5 -->
+    <div class="milestone-card done">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.5 : Moteur de Dossiers ANPP & Checklists Dynamiques (Guide CTD Juillet 2025)</span>
+            <span class="badge badge-done">Complété ✅</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Générateur dynamique de dossiers selon les <strong>6 codes officiels ANPP</strong> : `NI` (Initial Importé), `RI` (Renouvellement Importé), `MI` (Modification Importé), `NF` (Initial Fabrication Locale), `RF` (Renouvellement Local), `MF` (Modification Locale).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Nomenclature intégrale du Module 1 Algérie</strong> : sous-modules `1.A` (Demandeur & Agréments), `1.H` (Titulaire, CPP, Prix FOB & Benchmark), `1.M` (Fabricants, BPF, Bioéquivalence), `1.P` (Informations produit, maquettes couleurs 100%, lots de validation, engagement de non-commercialisation 1.P.8, engagement stabilité Zone IVa/IVb 1.P.9).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Matrice des Modules 2 à 5</strong> : exhaustivité pour Princeps (`E` sur l'ensemble), intégration des résumés pour Génériques, Module 4 facultatif (`F`), Module 5 focalisé sur la Bioéquivalence (`P` - intervalle 80-125% sur Cmax/AUC) et justification d'exonération Biowaiver.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Questionnaire dynamique pour <strong>Dispositifs Médicaux</strong> selon le décret exécutif n° 20-324 et l'arrêté du 10 mai 2021.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Liaison dynamique GED ↔ Checklist CTD/DM avec calcul de complétude en temps réel.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Verrouillage légal bloquant</strong> : interdiction de passage au statut *« Validé / Prêt pour dépôt ANPP »* si complétude < 100% ou absence de visa électronique du PDT.</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 1.6 -->
+    <div class="milestone-card done">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.6 : Interface Haute Densité 'Pharma Explorer' (3 Volets & Responsive)</span>
+            <span class="badge badge-done">Complété ✅</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Architecture embarquée `//go:embed` ultra-rapide (zéro serveur Node.js ni dépendance CDN en production).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Volet gauche (Tree Explorer)</strong> : navigation hiérarchique dépliable (les 5 modules CTD, rubriques 1.A/1.H/1.M/1.P, branches GED) avec chevrons `▶ / ▼`, badges de procédure et compteurs dynamiques.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Zone centrale (Tableau haute densité)</strong> : lignes compactes de 32px, accordéons pliables avec ratios de complétude, recherche instantanée et pills de filtrage rapide (`Tous`, `🔴 Manquants`, `🟢 Rattachés`, `⚠️ Obligatoires [E]`).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Volet droit contextuel (Alt+P) à double onglet</strong> :<br>
+            • Onglet <em>📄 Aperçu Pièce GED</em> : cartouche cryptographique CAS SHA-256, statut BPF, horodatage UTC et téléchargement.<br>
+            • Onglet <em>📋 Fiche ANPP</em> : texte officiel du Guide CTD 2025, texte bilingue, niveau d'exigence (`[E]`, `[F]`, `[P]`) et traçabilité 21 CFR Part 11.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Mode Plein Écran « 🎯 Focus » escamotant les volets pour un confort maximal de revue réglementaire.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Thème Clair Pharmaceutique par défaut + Mode Sombre, 100% en Français avec préservation des mentions bilingues FR/AR.</li>
+        </ul>
+    </div>
+
+    <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 4 / 8</span>
+    </div>
+
+    <!-- ==================== PAGE 5 : PHASE 1 (JALONS 1.7 & 1.8) ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Phase 1 : Assistant Soumission E-Services & Packaging</span>
+    </div>
+
+    <!-- Jalon 1.7 -->
+    <div class="milestone-card progress">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.7 : Studio Compléments ANPP, Assistant Soumission E-Services & Veille RDV</span>
+            <span class="badge badge-progress">En Cours d'Implémentation 🚀</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Cartographie des e-services ANPP : <em>E-TASJIL</em> (`etasjil.anpp.dz`), <em>RDV PP</em> (`rdvpp.anpp.dz`), <em>RDV DM</em> (`rdvdm.anpp.dz`), <em>État Déclaratif</em>.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Génération automatique des bordereaux officiels ANPP</strong> : production directe des bordereaux de versement <strong>BV1</strong> (enregistrement initial / homologation) et <strong>BV2</strong> (modifications / renouvellements) au format Word/Excel/PDF scellé avec calcul automatique des redevances en DZD et devises.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Production automatique du <strong>Formulaire officiel d'homologation DM</strong> (Décret 20-324 / Arrêté 10 mai 2021) et des <strong>Récépissés de dépôt</strong> pré-remplis avec données demandeur et DT.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Production de l'<strong>Attestation formelle de non-modification des autres sections</strong> selon le canevas officiel LD-DEPP07/V01.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Export du Submission Package pour E-TASJIL</strong> : arborescence eCTD normalisée, index PDF scellé et fiche récapitulative de saisie pour copier-coller instantané sans erreur.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Veille calendaire et alertes automatiques RDV</strong> : notifications proactives mardi 09h50 (DM) et mercredi 09h50 (PP) avant ouverture des guichets de réservation + module Fast-Fill sécurisé.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Audit de conformité pré-dépôt bloquant</strong> : interdiction d'exportation si pièces manquantes, certificat expiré ou absence de signature électronique légale du PDT (21 CFR Part 11).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Studio de compléments ANPP</strong> : découpage des courriers officiels en sous-tâches unitaires avec compte à rebours légal multi-niveaux (J-180, J-90, J-30, J-7).</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 1.8 -->
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 1.8 : Packaging Docker, Déploiement & Archive de Réversibilité .homolog</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Fichier `docker-compose.yml` durci de production (PostgreSQL 16 alpine + conteneur binaire Go statique).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Script d'assistant de premier démarrage (Setup Wizard pour configuration du labo et du premier compte DT).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Module d'export / import de l'archive universelle chiffrée `.homolog` (dump base + blobs GED dédupliqués + manifestes SHA-256).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Validation de la réversibilité absolue (sauvegarde SaaS → restauration On-Premise 100% fonctionnelle sans perte).</li>
+        </ul>
+    </div>
+
+    <div class="callout amber">
+        <div class="callout-title">Point d'Étape Phase 1</div>
+        Avec 6 jalons complétés sur 8 et le Jalon 1.7 en phase active de finalisation, le socle de la plateforme <strong>Homolog</strong> garantit déjà la couverture intégrale du processus d'enregistrement et d'homologation selon les directives ANPP 2025.
+    </div>
+
+    <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 5 / 8</span>
+    </div>
+
+    <!-- ==================== PAGE 6 : PHASE 2 (VARIATIONS ANPP) ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Phase 2 : Complétude & Moteur de Variations ANPP</span>
+    </div>
+
+    <h1>
+        <span>3. Phase 2 : Variations ANPP & Efficacité Opérationnelle</span>
+        <span class="badge badge-progress">Priorité S (Should Have)</span>
+    </h1>
+
+    <div class="callout">
+        <div class="callout-title">Objectif Stratégique de la Phase 2</div>
+        Intégrer le moteur expert de modifications post-enregistrement selon la ligne directrice officielle algérienne <strong>LD-DEPP07/V01 (Avril 2026)</strong>, la gestion des redevances, la régularisation des dispositifs médicaux, la recherche plein texte et le multi-tenant Cloud SaaS.
+    </div>
+
+    <!-- Jalon 2.1 -->
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.1 : Suivi des Redevances Réglementaires & Devises</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Barèmes configurables des redevances ANPP selon la procédure (`NI, RI, MI, NF, RF, MF`) et la classe de produit.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 2.2 -->
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.2 : Moteur Expert de Variations ANPP (Ligne Directrice LD-DEPP07/V01)</span>
+            <span class="badge badge-anpp">Réglementaire Majeur</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Nomenclature algérienne stricte</strong> : classification en <strong>Mmin</strong> (Mineure), <strong>Mmod</strong> (Modérée), <strong>Mmaj</strong> (Majeure) en remplacement des terminologies Type IA/IB/II obsolètes.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Catalogue interactif des 34 rubriques officielles de modifications</strong> :<br>
+            • Rubriques administratives 1 à 5 (nom commercial, dénomination SA/excipients, code ATC, détenteur, suppression de sites).<br>
+            • Rubriques CEP et préqualification API 6.a et 6.b.<br>
+            • Rubriques Substance Active 3.2.S (7 à 16 : sites API, bloc synthèse, procédé, taille de lot, contrôles, spécifications, stockage).<br>
+            • Rubriques Produit Fini 3.2.P (17 à 34 : colorants, composition, sites de fabrication PF, taille de lot, procédé, stabilité).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Algorithme d'escalade dynamique</strong> : évaluation des conditions à remplir et reclassement automatique (Mmin → Mmod/Mmaj) dès qu'une condition n'est pas satisfaite, avec recalcul des pièces justificatives.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Générateur du Dossier de Variation ANPP</strong> : production automatique du Tableau comparatif standardisé (*État actuel approuvé vs Situation proposée*) et de l'Attestation formelle de non-modification des autres sections.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Module de Regroupement de Modifications (*Grouping* - Art. 09 Arrêté 07/11/2021)</strong> : constitution d'une soumission groupée avec alignement sur le niveau de criticité le plus sévère du groupe.</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 2.3 -->
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.3 : Espace Sécurisé pour Consultants Externes</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Cloisonnement étanche : accès restreint exclusivement aux seuls dossiers CTD/DM explicitement assignés.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Zéro visibilité sur la GED transverse, la liste des autres médicaments ou les autres clients du laboratoire.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Révocation automatique des accès à la date d'échéance contractuelle et traçabilité renforcée dans l'audit trail.</li>
+        </ul>
+    </div>
+
+    <!-- Jalon 2.4 -->
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.4 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Module d'inventaire des DM déjà commercialisés en Algérie sans décision d'homologation formelle.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Checklist spécifique de régularisation selon l'arrêté du 10 mai 2021 avec suivi des mesures transitoires légales.</li>
+        </ul>
+    </div>
+
+    <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 6 / 8</span>
+    </div>
+
+    <!-- ==================== PAGE 7 : PHASE 2 (SUITE) & PHASE 3 ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Phase 2 (Suite) & Phase 3 : Extensions M2M</span>
+    </div>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.5 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Indexation textuelle automatique en tâche de fond des PDF, Word (.docx) et Excel (.xlsx) versés en GED.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant nativement les requêtes en français et en arabe.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Surlignage dynamique des termes trouvés dans la vue tableau et le volet de prévisualisation contextuel.</li>
+        </ul>
+    </div>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.6 : Console Super-Admin Éditeur (Mode Cloud SaaS)</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Interface d'administration multi-laboratoires avec provisioning en 1 clic d'un schéma PostgreSQL dédié et sous-domaine isolé.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Gestion des quotas de stockage par laboratoire, statistiques d'usage et surveillance de l'intégrité du parc.</li>
+        </ul>
+    </div>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.7 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Déploiement sans redémarrage des nouveaux canevas CTD ou fiches de modifications publiés par l'ANPP avec vue comparative (Diff).</li>
+        </ul>
+    </div>
+
+    <!-- ==================== PHASE 3 ==================== -->
+    <h1>
+        <span>4. Phase 3 : Extensions & Écosystème M2M</span>
+        <span class="badge badge-planned">Priorité C (Could Have)</span>
+    </h1>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 3.1 : Registre de Vigilance Post-Marché</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Pharmacovigilance : suivi des PSUR, déclarations d'effets indésirables, fiches de notification officielles ANPP.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Matériovigilance DM : signalements d'incidents et fiches d'alerte selon les exigences du Ministère de l'Industrie Pharmaceutique.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Gestion des enquêtes de lots et suivi des procédures de rappel/retrait ordonnées par l'ANPP ou initiées par le laboratoire.</li>
+        </ul>
+    </div>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 3.2 : Intégrations d'Entreprise SSO & Calendrier</span>
+            <span class="badge badge-planned">Planifié</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Authentification unique SSO d'entreprise (SAML 2.0 / OpenID Connect) et synchronisation d'annuaire LDAP / Active Directory.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Flux de calendrier réglementaire iCal (synchronisation Outlook/Google Calendar des dates d'échéance ANPP et des renouvellements).</li>
+        </ul>
+    </div>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 3.3 : Passerelle Officielle API ANPP (Télétransmission Directe M2M)</span>
+            <span class="badge badge-anpp">Guichet M2M</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Connecteur d'interopérabilité API (`internal/anpp`) dès publication des spécifications de télétransmission par l'ANPP.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Télétransmission automatisée sécurisée des paquets de soumission CTD scellés avec accusé de réception cryptographique.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Homolog.</li>
+        </ul>
+    </div>
+
+    <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 7 / 8</span>
+    </div>
+
+    <!-- ==================== PAGE 8 : VALIDATION & GOUVERNANCE ==================== -->
+    <div class="page-break"></div>
+    <div class="page-header">
+        <span>HOMOLOG • Feuille de Route Stratégique</span>
+        <span>Validation Officielle & Métriques de Gouvernance</span>
+    </div>
+
+    <h1>5. Guide d'Avancement & Métriques de Gouvernance</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Indicateur Clé (KPI)</th>
+                <th style="width: 25%;">Cible Réglementaire</th>
+                <th style="width: 25%;">État Actuel</th>
+                <th style="width: 25%;">Conformité Démontrée</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Spécifications Fonctionnelles</strong></td>
+                <td>100 % validées</td>
+                <td><strong>100 %</strong> (CDC v1.0 & Addendum 9)</td>
+                <td><span class="badge badge-done">Conforme Guide CTD 2025 ✅</span></td>
+            </tr>
+            <tr>
+                <td><strong>Jalons Phase 1 Complétés</strong></td>
+                <td>8 / 8 Jalons</td>
+                <td><strong>6 / 8 Jalons</strong> (1.1 à 1.6 réalisés)</td>
+                <td><span class="badge badge-done">Jalon 1.7 en cours (75%) ✅</span></td>
+            </tr>
+            <tr>
+                <td><strong>Couverture Tests Unitaires</strong></td>
+                <td>> 80 % sur le domaine métier</td>
+                <td><strong>> 85 %</strong> (CAS, Auth, Produits)</td>
+                <td><span class="badge badge-done">Argon2id, TOTP, BPF validés ✅</span></td>
+            </tr>
+            <tr>
+                <td><strong>Conformité BPF / ALCOA+</strong></td>
+                <td>Audit Trail & GED immuables</td>
+                <td><strong>Implémentée</strong> (Triggers immuabilité)</td>
+                <td><span class="badge badge-done">Scellement SHA-256 certifié ✅</span></td>
+            </tr>
+            <tr>
+                <td><strong>Nomenclature Variations</strong></td>
+                <td>Conforme LD-DEPP07/V01</td>
+                <td><strong>Modélisée</strong> (34 rubriques officielles)</td>
+                <td><span class="badge badge-done">Reclassement & Grouping prêts ✅</span></td>
+            </tr>
+            <tr>
+                <td><strong>Articulation Télé-Services ANPP</strong></td>
+                <td>Submission Package & Veille RDV</td>
+                <td><strong>Spécifiée</strong> (BV1/BV2 & E-TASJIL)</td>
+                <td><span class="badge badge-progress">Architecture API-Ready 🚀</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout">
+        <div class="callout-title">Engagement Qualité & Souveraineté Numérique</div>
+        La présente feuille de route garantit une transition fluide vers la conformité totale aux exigences 2025/2026 de l'Agence Nationale des Produits Pharmaceutiques (ANPP). En combinant la rigueur pharmaceutique (ALCOA+, 21 CFR Part 11, BPF) et la flexibilité hybride (intranet hors-ligne ou cloud souverain), la plateforme **Homolog** sécurise le patrimoine informationnel et accélère significativement les délais de mise sur le marché des médicaments et dispositifs médicaux en Algérie.
+    </div>
+
+    <div class="sign-grid">
+        <div class="sign-box">
+            <div class="sign-role">Responsable Affaires Réglementaires</div>
+            <div class="sign-space"></div>
+            <div>Date : ____ / ____ / 2026</div>
+            <div>Visa & Cachet :</div>
+        </div>
+        <div class="sign-box">
+            <div class="sign-role">Pharmacien Directeur Technique (PDT)</div>
+            <div class="sign-space"></div>
+            <div>Date : ____ / ____ / 2026</div>
+            <div>Signature Solennelle & Cachet :</div>
+        </div>
+        <div class="sign-box">
+            <div class="sign-role">Direction Générale / Éditeur</div>
+            <div class="sign-space"></div>
+            <div>Date : ____ / ____ / 2026</div>
+            <div>Approbation & Date d'Effet :</div>
+        </div>
+    </div>
+
+    <div class="page-footer" style="margin-top: 25px;">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 8 / 8</span>
+    </div>
+
+</body>
+</html>
