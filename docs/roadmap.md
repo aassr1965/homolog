@@ -21,7 +21,7 @@ gantt
     dateFormat  YYYY-MM-DD
     section Phase 1 : Socle & GED
     Infra, Base PostgreSQL & CAS Dédupliqué (1.1)    :done, p1_1, 2026-11-10, 1d
-    Auth 2FA, 8 Rôles & Audit Trail Immuable (1.2)   :done, p1_2, 2026-11-10, 1d
+    Auth 2FA, PSSI, RBAC 14 Perms & SoD (1.2)        :active, p1_2, 2026-11-10, 4d
     Référentiel Produits & Établissements ANPP (1.3) :done, p1_3, 2026-11-11, 1d
     Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :done, p1_4, after p1_3, 4d
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :done, p1_5, after p1_4, 4d
@@ -56,25 +56,27 @@ gantt
 - [x] Mettre en place le `StorageProvider` (Driver CAS local sur disque chiffré avec hachage SHA-256 et déduplication physique)
 - [x] Valider la suite de tests unitaires du stockage CAS (`storage_test.go`)
 
-### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11)
-- [x] Formaliser et implémenter la **Politique de Sécurité du Système d'Information Pharmaceutique (PSSI)** :
-  - **Principe Zero-Trust administrateurs techniques :** Interdiction absolue de consultation, de visualisation et de téléchargement des documents pharmaceutiques et secrets de fabrication pour les rôles *Super-Administrateur Éditeur* et *Administrateur Système Local* (CDC Section 7.1).
-  - Hachage cryptographique des mots de passe avec **Argon2id** (mémoire 64 Mo, 3 itérations) et politique de complexité (min. 12 car., minuscules, majuscules, chiffres, caractères spéciaux).
-  - Gestion des sessions par **Cookies HttpOnly sécurisés** (SameSite=Strict, HTTPS) avec table de sessions PostgreSQL pour révocation instantanée.
-  - Verrouillage automatique de session sur inactivité (**Idle timeout 15 min BPF**) et protection anti-brute force (5 essais infructueux = 15 min de blocage).
-  - Second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés).
-- [x] Implémenter la **Matrice RBAC Granulaire des 9 Rôles Stricts et 14 Permissions** (Section 7.2 du Cahier des Charges) :
-  - Middleware de contrôle d'accès (`RequireRole`, `RequirePermission`).
-  - Règle de **Séparation des Fonctions (*Segregation of Duties - SoD*)** : interdiction formelle de l'auto-approbation (rejet automatique si un utilisateur tente d'agir comme *Checker* ou *Approver* sur un document dont il est l'auteur *Maker*).
-  - Cloisonnement hermétique des **Consultants Externes** en mode *Guest* temporaire (accès restreint aux seuls dossiers assignés, zéro accès à la GED transverse, révocation automatique à échéance).
-  - Profil **Auditeur / Inspecteur** en lecture seule stricte avec accès privilégié au journal d'audit immuable.
-- [x] Créer le flux de **re-authentification pour signature électronique légale du PDT** :
-  - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
-    *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
-  - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
-- [x] Créer la table `audit_logs` strictement *append-only* (triggers SQL PostgreSQL interdisant `UPDATE` et `DELETE`)
-- [x] Logger automatiquement toutes les actions sensibles (connexion, consultation, téléchargement, approbation, signature, modification de rôle)
-- [x] Valider les suites de tests unitaires d'authentification (`password_test.go`, `totp_test.go`, `auth_handler_test.go`)
+### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11) — *[En cours d'extension RBAC / SoD]*
+- [x] **Socle d'authentification et gestion des sessions BPF :**
+  - [x] Implémenter le hachage sécurisé des mots de passe avec **Argon2id** (mémoire 64 Mo, 3 itérations) et politique de complexité (min. 12 car., minuscules, majuscules, chiffres, caractères spéciaux).
+  - [x] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** (SameSite=Strict, HTTPS) avec table de sessions PostgreSQL pour révocation instantanée.
+  - [x] Développer le second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés).
+  - [x] Mettre en place le verrouillage automatique de session sur inactivité (**Idle timeout 15 min BPF**) et protection anti-brute force (5 essais = 15 min de blocage).
+  - [x] Valider les suites de tests unitaires d'authentification (`password_test.go`, `totp_test.go`, `auth_handler_test.go`).
+- [x] **Intégrité ALCOA+, Piste d'audit & Signature légale PDT :**
+  - [x] Créer la table `audit_logs` strictement *append-only* (triggers SQL PostgreSQL interdisant `UPDATE` et `DELETE`).
+  - [x] Logger automatiquement toutes les actions sensibles (connexion, consultation, téléchargement, approbation, signature, modification de rôle).
+  - [x] Créer le flux de **re-authentification pour signature électronique légale du PDT** :
+    - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
+      *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
+    - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
+- [ ] **Mise en conformité PSSI & Matrice RBAC Granulaire (Sections 7.1 & 7.2 du Cahier des Charges) :**
+  - [x] Définir les 9 profils utilisateurs stricts dans le domaine métier (`internal/domain/models.go`).
+  - [ ] Implémenter le middleware de contrôle d'accès granulaire `RequirePermission(perm)` couvrant les 14 permissions unitaires (Section 7.2 du CDC).
+  - [ ] Appliquer le filtre **Zero-Trust administrateurs techniques** bloquant formellement tout téléchargement ou visualisation de documents pharmaceutiques pour l'admin système et l'admin éditeur (restitution HTTP 403 Forbidden).
+  - [ ] Implémenter le garde-fou applicatif de **Séparation des Fonctions (*Segregation of Duties - SoD*)** interdisant formellement l'auto-approbation d'une pièce par son propre rédacteur (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
+  - [ ] Implémenter le cloisonnement étanche des **Consultants Externes** en mode *Guest* temporaire (accès restreint au seul dossier assigné, expiration automatique).
+  - [ ] Développer et valider la suite de tests unitaires et d'intégration RBAC/SoD (`rbac_test.go`, `sod_test.go`).
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Conforme Guide ANPP 2025)
 - [x] **Modèle et tables PostgreSQL pour les Établissements :**
@@ -333,7 +335,7 @@ gantt
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
 | **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0) | Aligné Guide CTD ANPP 2025 & LD Modifications 2026 ✅ |
-| **Jalons Phase 1 complétés** | 8 / 8 jalons | 4 / 8 jalons complétés (Jalons 1.1, 1.2, 1.3 & 1.4 ✅) | Jalon 1.5 (Moteur Dossiers ANPP CTD 2025) en préparation |
+| **Jalons Phase 1 complétés** | 8 / 8 jalons | 5 / 8 jalons complétés (Jalons 1.1, 1.3, 1.4, 1.5 & 1.6 ✅) \| Jalon 1.2 réouvert (extension RBAC/SoD) \| Jalon 1.7 actif | Jalon 1.2 en cours de mise en conformité RBAC/SoD ; Jalon 1.7 (Studio Compléments) actif |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth & Produits validés (100%) | Argon2id, TOTP, Sessions, CAS & Modèles ANPP conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
