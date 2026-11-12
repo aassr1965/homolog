@@ -19,6 +19,8 @@ func TestEmbeddedFiles(t *testing.T) {
 		"img/caducee.svg",
 		"img/favicon-caducee.svg",
 		"img/favicon.png",
+		"img/caducee-algerie.png",
+		"img/caducee-algerie.svg",
 		"favicon.ico",
 	}
 
