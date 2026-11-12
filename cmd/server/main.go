@@ -52,6 +52,7 @@ func main() {
 	var authHandler *api.AuthHandler
 	var pharmaHandler *api.PharmaHandler
 	var gedHandler *api.GEDHandler
+	var dossierHandler *api.DossierHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -68,6 +69,9 @@ func main() {
 		// Initialisation des documents modèles du Coffre-Fort GED (Jalon 1.4)
 		api.SeedInitialGEDDocuments(ctx, db.Pool, storageProvider, cfg.OnPremOrgSlug)
 
+		// Initialisation des dossiers réglementaires ANPP de démonstration (Jalon 1.5)
+		api.SeedInitialDossiers(ctx, db.Pool, cfg.OnPremOrgSlug)
+
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService)
@@ -77,6 +81,9 @@ func main() {
 
 		gedRepo := repository.NewGEDRepository(db.Pool)
 		gedHandler = api.NewGEDHandler(gedRepo, storageProvider, auditService, db.Pool)
+
+		dossierRepo := repository.NewDossierRepository(db.Pool)
+		dossierHandler = api.NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditService, db.Pool)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -193,6 +200,18 @@ func main() {
 
 				// Signature électronique officielle du Pharmacien Directeur Technique (PDT)
 				protected.Post("/api/v1/ged/documents/{id}/sign-dt", gedHandler.SignDocumentDT)
+			}
+
+			// Moteur de Dossiers ANPP & Checklists Dynamiques (Jalon 1.5 - Guide CTD Juillet 2025)
+			if dossierHandler != nil {
+				protected.Get("/api/v1/dossiers", dossierHandler.ListDossiers)
+				protected.Post("/api/v1/dossiers", dossierHandler.CreateDossier)
+				protected.Get("/api/v1/dossiers/{id}", dossierHandler.GetDossier)
+				protected.Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
+				protected.Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
+				protected.Post("/api/v1/dossiers/{id}/items/{itemId}/status", dossierHandler.UpdateItemStatus)
+				protected.Post("/api/v1/dossiers/{id}/sign-pdt", dossierHandler.SignPDT)
+				protected.Post("/api/v1/dossiers/{id}/status", dossierHandler.UpdateDossierStatus)
 			}
 		})
 	}
