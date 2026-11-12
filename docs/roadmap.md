@@ -73,10 +73,17 @@ gantt
 - [ ] **Mise en conformité PSSI & Matrice RBAC Granulaire (Sections 7.1 & 7.2 du Cahier des Charges) :**
   - [x] Définir les 9 profils utilisateurs stricts dans le domaine métier (`internal/domain/models.go`).
   - [ ] Implémenter le middleware de contrôle d'accès granulaire `RequirePermission(perm)` couvrant les 14 permissions unitaires (Section 7.2 du CDC).
-  - [ ] Appliquer le filtre **Zero-Trust administrateurs techniques** bloquant formellement tout téléchargement ou visualisation de documents pharmaceutiques pour l'admin système et l'admin éditeur (restitution HTTP 403 Forbidden).
+  - [ ] **Blocage Hermétique des Routes API Backend (Défense en Profondeur) :**
+    - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte dans `audit_logs` (IP, UserID, URI sollicitée, méthode HTTP).
+    - Filtre **Zero-Trust administrateurs techniques** bloquant formellement tout téléchargement ou affichage de documents pharmaceutiques pour l'admin système et l'admin éditeur (`/api/v1/ged/documents/{id}/file`, `/api/v1/ged/versions/{id}/download`).
+    - Verrouillage exclusif des routes sensibles : signature légale PDT (`/sign-pdt`), export eCTD E-TASJIL (`/export-submission-package`), données de prix 1.H.4/1.H.5/1.A.4, et gestion des comptes (`/users/*`).
+  - [ ] **Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :**
+    - Route Guards frontend interceptant les accès directs non autorisés par URL avec redirection et écran 403 institutionnel.
+    - Moteur de rendu conditionnel masquant les composants non autorisés (bouton signature PDT, menus admin, volets de prix, audit trail).
+    - Arborescence filtrée et cloisonnée en mode *Guest* pour les **Consultants Externes** (affichage exclusif des dossiers assignés).
+    - Gestion ergonomique des actions de workflow désactivées avec infobulles contextuelles explicatives (*Disabled + Tooltip*).
   - [ ] Implémenter le garde-fou applicatif de **Séparation des Fonctions (*Segregation of Duties - SoD*)** interdisant formellement l'auto-approbation d'une pièce par son propre rédacteur (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
-  - [ ] Implémenter le cloisonnement étanche des **Consultants Externes** en mode *Guest* temporaire (accès restreint au seul dossier assigné, expiration automatique).
-  - [ ] Développer et valider la suite de tests unitaires et d'intégration RBAC/SoD (`rbac_test.go`, `sod_test.go`).
+  - [ ] Développer et valider la suite de tests unitaires et d'intégration RBAC/SoD/Route Guards (`rbac_test.go`, `sod_test.go`, `routes_test.go`).
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Conforme Guide ANPP 2025)
 - [x] **Modèle et tables PostgreSQL pour les Établissements :**
