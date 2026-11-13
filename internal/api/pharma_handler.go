@@ -288,6 +288,60 @@ func (h *PharmaHandler) GetManufacturingSite(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, site)
 }
 
+// UpdateManufacturingSite met à jour un site intervenant existant
+func (h *PharmaHandler) UpdateManufacturingSite(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant invalide")
+		return
+	}
+
+	var site domain.ManufacturingSite
+	if err := json.NewDecoder(r.Body).Decode(&site); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	site.ID = id
+	site.OrganizationID = user.OrganizationID
+
+	if err := h.repo.UpdateManufacturingSite(r.Context(), &site); err != nil {
+		if err == repository.ErrNotFound {
+			writeJSONError(w, http.StatusNotFound, "Site de fabrication non trouvé")
+			return
+		}
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Audit trail 21 CFR Part 11
+	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+		OrganizationID: user.OrganizationID,
+		UserID:         &user.UserID,
+		UserEmail:      user.Email,
+		UserRole:       user.Role,
+		Action:         "MANUFACTURING_SITE_UPDATE",
+		EntityType:     "manufacturing_site",
+		EntityID:       site.ID.String(),
+		Details: map[string]any{
+			"site_name_fr": site.SiteNameFR,
+			"country_code": site.CountryCode,
+			"site_role":    string(site.SiteRole),
+		},
+		IPAddress: getClientIP(r),
+		UserAgent: r.UserAgent(),
+	})
+
+	writeJSON(w, http.StatusOK, site)
+}
+
 // ============================================================================
 // MÉDICAMENTS (Guide CTD Juillet 2025)
 // ============================================================================

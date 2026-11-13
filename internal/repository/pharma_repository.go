@@ -256,6 +256,36 @@ func (r *PharmaRepository) GetManufacturingSiteByID(ctx context.Context, orgID, 
 	return &s, nil
 }
 
+func (r *PharmaRepository) UpdateManufacturingSite(ctx context.Context, s *domain.ManufacturingSite) error {
+	if err := s.Validate(); err != nil {
+		return err
+	}
+	s.UpdatedAt = time.Now().UTC()
+	query := `
+		UPDATE manufacturing_sites SET
+			establishment_id = $3, site_name_fr = $4, site_name_ar = $5,
+			country_code = $6, address = $7, site_role = $8,
+			manufacturing_license_number = $9, gmp_certificate_number = $10,
+			gmp_grant_date = $11, gmp_expiry_date = $12, gmp_issuing_authority = $13,
+			is_active = $14, updated_at = $15
+		WHERE organization_id = $1 AND id = $2
+	`
+	ct, err := r.pool.Exec(ctx, query,
+		s.OrganizationID, s.ID, s.EstablishmentID, s.SiteNameFR, s.SiteNameAR,
+		s.CountryCode, s.Address, s.SiteRole,
+		s.ManufacturingLicenseNumber, s.GMPCertificateNumber,
+		s.GMPGrantDate, s.GMPExpiryDate, s.GMPIssuingAuthority,
+		s.IsActive, s.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (r *PharmaRepository) ListManufacturingSites(ctx context.Context, orgID uuid.UUID, roleFilter string, limit, offset int) ([]domain.ManufacturingSite, int, error) {
 	if limit <= 0 {
 		limit = 50
