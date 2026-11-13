@@ -62,29 +62,40 @@
 
                 <!-- Sélecteur rapide de comptes pour tests & démonstration -->
                 <div class="demo-accounts-box">
-                    <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase;">
-                        ⚡ Comptes nominatifs d'habilitation pré-configurés :
+                    <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; margin-bottom:4px;">
+                        ⚡ Comptes de test & Matrice des 9 Rôles BPF (Homolog2026!Dev) :
                     </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('dt@sanadpharma.dz', 'P@ssw0rdPharma2026!')">
-                        <div>
-                            <strong>💊 Dr. Amine K.</strong>
-                            <div style="color:var(--text-dim); font-size:10px;">Directeur Technique (Agrément MIPH)</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; max-height:180px; overflow-y:auto;">
+                        <div class="demo-btn" onclick="fillDemoAccount('pdt@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>💊 Dr. Yacine</strong><div style="color:var(--text-dim); font-size:9px;">Directeur Technique (1.A.7)</div></div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">dt@sanadpharma.dz</span>
-                    </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('admin@sanadpharma.dz', 'Admin@Pharma2026!')">
-                        <div>
-                            <strong>🏢 Karim M.</strong>
-                            <div style="color:var(--text-dim); font-size:10px;">Administrateur Laboratoire</div>
+                        <div class="demo-btn" onclick="fillDemoAccount('admin.lab@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>🏢 Karim M.</strong><div style="color:var(--text-dim); font-size:9px;">Admin Laboratoire</div></div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">admin@sanadpharma.dz</span>
-                    </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('reg@sanadpharma.dz', 'Reg@Pharma2026!')">
-                        <div>
-                            <strong>📋 Sarah B.</strong>
-                            <div style="color:var(--text-dim); font-size:10px;">Affaires Réglementaires</div>
+                        <div class="demo-btn" onclick="fillDemoAccount('ra.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>📋 Sarah B.</strong><div style="color:var(--text-dim); font-size:9px;">Manager Affaires Réglem.</div></div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">reg@sanadpharma.dz</span>
+                        <div class="demo-btn" onclick="fillDemoAccount('ra.assoc@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>📝 Sofiane H.</strong><div style="color:var(--text-dim); font-size:9px;">Chargé Réglementaire (Maker)</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('qa.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>🔍 Nadir T.</strong><div style="color:var(--text-dim); font-size:9px;">Manager Assurance Qualité</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('qc.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>🔬 Leila M.</strong><div style="color:var(--text-dim); font-size:9px;">Contrôle Qualité & Stabilité</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('prod.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>⚙️ Omar B.</strong><div style="color:var(--text-dim); font-size:9px;">Production & Validation Procédé</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('consultant.ext@cro.com', 'Homolog2026!Dev')">
+                            <div><strong>🤝 David M.</strong><div style="color:var(--text-dim); font-size:9px;">Consultant Externe CRO</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('auditeur.insp@anpp.dz', 'Homolog2026!Dev')">
+                            <div><strong>🛡️ Inspecteur ANPP</strong><div style="color:var(--text-dim); font-size:9px;">Auditeur Qualité / PSSI</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('admin.sys@cloud.dz', 'Homolog2026!Dev')">
+                            <div><strong>💻 Ahmed Z.</strong><div style="color:var(--text-dim); font-size:9px;">Admin Système (Zero-Trust)</div></div>
+                        </div>
                     </div>
                 </div>
 
@@ -165,6 +176,24 @@
                     🚨 <span id="txt-urgent-alerts">2 Échéances (J &lt; 30j)</span>
                 </button>
 
+                <!-- Sélecteur Rapide de Rôles pour le Développement (Jalon 1.2) -->
+                <div id="dev-role-switcher-container" style="display:flex; align-items:center; gap:6px; background:rgba(2,132,199,0.08); padding:3px 8px; border-radius:6px; border:1px dashed #0284c7;">
+                    <span style="font-size:11px; font-weight:700; color:#0284c7;">🧪 Rôle Dev :</span>
+                    <select id="dev-role-select" onchange="devSwitchRole(this.value)" style="font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:2px 6px; cursor:pointer;" title="Basculez instantanément de rôle pour tester les habilitations et masquages">
+                        <option value="pdt@pharma.dz">💊 Dr. Yacine (Pharmacien DT - 1.A.7)</option>
+                        <option value="admin.lab@pharma.dz">🏢 Karim M. (Admin Labo)</option>
+                        <option value="ra.lead@pharma.dz">📋 Sarah B. (Manager Affaires Réglem.)</option>
+                        <option value="ra.assoc@pharma.dz">📝 Sofiane H. (Chargé Affaires Réglem.)</option>
+                        <option value="qa.lead@pharma.dz">🔍 Nadir T. (Manager Assurance Qualité)</option>
+                        <option value="qc.lead@pharma.dz">🔬 Leila M. (Contrôle Qualité & Stabilités)</option>
+                        <option value="prod.lead@pharma.dz">⚙️ Omar B. (Production & Validation)</option>
+                        <option value="consultant.ext@cro.com">🤝 David M. (Consultant Externe CRO)</option>
+                        <option value="auditeur.insp@anpp.dz">🛡️ Inspecteur ANPP (Auditeur Qualité)</option>
+                        <option value="admin.sys@cloud.dz">💻 Ahmed Z. (Admin Système - Zero-Trust)</option>
+                        <option value="super.admin@homolog.dz">🌐 SuperAdmin Éditeur SaaS</option>
+                    </select>
+                </div>
+
                 <!-- Menu Utilisateur Connecté & Déconnexion -->
                 <div style="position: relative;">
                     <button class="btn-pill" id="user-menu-btn" onclick="toggleUserDropdown(event)" style="border-color:#0284c7; color:#0284c7;" title="Menu utilisateur et session">
@@ -177,7 +206,7 @@
                             <div id="u-drop-role" style="font-size:11px; color:var(--accent-emerald); font-weight:600; margin-top:3px;">Directeur Technique (BPF)</div>
                             <div id="u-drop-org" style="font-size:10px; color:var(--text-dim); margin-top:2px;">Laboratoire Pharmaceutique National</div>
                         </div>
-                        <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openAuditModal(); toggleUserDropdown();">
+                        <button class="addr-item" data-perm="AUDIT_VIEW" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openAuditModal(); toggleUserDropdown();">
                             🛡️ Consulter l'Audit Trail immuable
                         </button>
                         <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px; color:#ef4444;" onclick="executeLogout()">
@@ -195,31 +224,35 @@
 
         <!-- Activity Bar Latérale Gauche (Univers Métier Pharma) -->
         <div class="activity-bar">
-            <button class="act-btn active" id="act-ref" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique (MIPH, Sites, Produits)">
+            <button class="act-btn active" id="act-ref" data-perm="REF_VIEW" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique (MIPH, Sites, Produits)">
                 <span class="act-icon">🏢</span>
                 <span class="act-label" id="lbl-act-ref">Référentiel</span>
             </button>
-            <button class="act-btn" id="act-ctd" onclick="switchDomainModule('ctd')" title="Dossiers d'Enregistrement ANPP (Modules CTD 1 à 5)">
+            <button class="act-btn" id="act-ctd" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('ctd')" title="Dossiers d'Enregistrement ANPP (Modules CTD 1 à 5)">
                 <span class="act-icon">📋</span>
                 <span class="act-label" id="lbl-act-ctd">Dossiers CTD</span>
             </button>
-            <button class="act-btn" id="act-variations" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (12 Items ANPP)">
+            <button class="act-btn" id="act-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (12 Items ANPP)">
                 <span class="act-icon">🔄</span>
                 <span class="act-label" id="lbl-act-var">Variations</span>
                 <span class="act-badge">12</span>
             </button>
-            <button class="act-btn" id="act-dm" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
+            <button class="act-btn" id="act-dm" data-perm="REF_VIEW" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
                 <span class="act-icon">💉</span>
                 <span class="act-label" id="lbl-act-dm">Dispositifs DM</span>
             </button>
-            <button class="act-btn" id="act-ged" onclick="switchDomainModule('ged')" title="GED BPF & Assurance Qualité (01_ à 05_)">
+            <button class="act-btn" id="act-ged" data-perm="DOC_READ" onclick="switchDomainModule('ged')" title="GED BPF & Assurance Qualité (01_ à 05_)">
                 <span class="act-icon">📁</span>
                 <span class="act-label" id="lbl-act-ged">GED BPF</span>
+            </button>
+            <button class="act-btn" id="act-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Console Dédiée Administration Labo & Matrice RBAC (USER_MANAGE)">
+                <span class="act-icon">⚙️</span>
+                <span class="act-label" id="lbl-act-admin">Admin Lab</span>
             </button>
 
             <div class="act-spacer"></div>
 
-            <button class="act-btn" onclick="openAuditModal()" title="Piste d'Audit Trail Immuable (21 CFR Part 11)">
+            <button class="act-btn" data-perm="AUDIT_VIEW" onclick="openAuditModal()" title="Piste d'Audit Trail Immuable (21 CFR Part 11)">
                 <span class="act-icon">🛡️</span>
                 <span class="act-label" id="lbl-act-audit">Audit Trail</span>
             </button>
@@ -234,6 +267,7 @@
                 <button class="mob-dom-btn" id="mob-act-variations" onclick="switchDomainModule('variations')" title="Variations Post-AMM">🔄 Variations</button>
                 <button class="mob-dom-btn" id="mob-act-dm" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">💉 DM</button>
                 <button class="mob-dom-btn" id="mob-act-ged" onclick="switchDomainModule('ged')" title="GED BPF">📁 GED</button>
+                <button class="mob-dom-btn" id="mob-act-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration Labo">⚙️ Admin</button>
             </div>
 
             <div class="tree-header">
@@ -343,6 +377,10 @@
         <button class="mob-nav-btn" id="mobnav-ged" onclick="switchDomainModule('ged')" title="GED BPF">
             <span class="mob-nav-icon">📁</span>
             <span class="mob-nav-label">GED</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration">
+            <span class="mob-nav-icon">⚙️</span>
+            <span class="mob-nav-label">Admin</span>
         </button>
         <button class="mob-nav-btn" id="mobnav-tree" onclick="toggleMobileTree()" title="Arborescence">
             <span class="mob-nav-icon">🌳</span>
@@ -1201,11 +1239,12 @@
 
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.12.3"></script>
-    <script src="/js/auth.js?v=2026.11.12.3"></script>
-    <script src="/js/referential.js?v=2026.11.12.3"></script>
-    <script src="/js/variations.js?v=2026.11.12.3"></script>
-    <script src="/js/ged.js?v=2026.11.12.3"></script>
-    <script src="/js/dossiers.js?v=2026.11.12.3"></script>
+    <script src="/js/app.js?v=2026.11.13.1"></script>
+    <script src="/js/auth.js?v=2026.11.13.1"></script>
+    <script src="/js/admin.js?v=2026.11.13.1"></script>
+    <script src="/js/referential.js?v=2026.11.13.1"></script>
+    <script src="/js/variations.js?v=2026.11.13.1"></script>
+    <script src="/js/ged.js?v=2026.11.13.1"></script>
+    <script src="/js/dossiers.js?v=2026.11.13.1"></script>
 </body>
 </html>

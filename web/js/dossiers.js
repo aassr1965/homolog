@@ -1227,6 +1227,22 @@
         }
 
         function openSignPDTModal() {
+            if (typeof hasPermission === 'function' && !hasPermission('DOC_APPROVE_PDT')) {
+                showNotifyModal(
+                    "Accès Refusé (Exclusivité 1.A.7)",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-red); font-weight:700;">
+                            🚫 Visa réservé exclusivement au Pharmacien Directeur Technique
+                        </div>
+                        <div style="font-size:11px; color:var(--text-main);">
+                            Conformément à l'Arrêté ministériel du 10 décembre 2020 et au Décret 21-82, seul le Pharmacien DT titulaire de la décision nominative MIPH (1.A.7) peut apposer la signature d'approbation d'AMM.
+                        </div>
+                    </div>`,
+                    "💊",
+                    "Fermer"
+                );
+                return;
+            }
             if (!currentDossierDetail) return;
             if (currentDossierDetail.pdt_signed_at) {
                 showNotifyModal("Dossier Déjà Signé", "Ce dossier a déjà reçu le visa officiel du Pharmacien Directeur Technique.", "ℹ️");

@@ -413,6 +413,29 @@ func (h *GEDHandler) DownloadVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Garde-fou BPF Zero-Trust : Interdiction d'accès aux fichiers pour administrateurs techniques
+	if user.Role == string(domain.RoleAdminSystemeLocal) || user.Role == string(domain.RoleSuperAdminEditeur) {
+		if h.auditService != nil {
+			_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+				OrganizationID: user.OrganizationID,
+				UserID:         &user.UserID,
+				UserEmail:      user.Email,
+				UserRole:       user.Role,
+				Action:         "AUDIT_SECURITY_ZEROTRUST_BLOCKED",
+				EntityType:     "DOCUMENT_CONFIDENTIAL",
+				EntityID:       docID.String(),
+				IPAddress:      getClientIP(r),
+				UserAgent:      r.UserAgent(),
+				Details: map[string]any{
+					"reason": "Règle Zero-Trust : Les administrateurs techniques n'ont pas accès aux données de santé et pièces pharmaceutiques",
+					"role":   user.Role,
+				},
+			})
+		}
+		writeJSONError(w, http.StatusForbidden, "Accès Zero-Trust refusé : Les administrateurs techniques n'ont pas accès au contenu des pièces pharmaceutiques")
+		return
+	}
+
 	versionIDStr := r.URL.Query().Get("version_id")
 	var v *domain.GEDVersionDetail
 
@@ -629,9 +652,9 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Seul le PDT ou l'Admin de labo a ce pouvoir légal
-	if user.Role != string(domain.RoleDirecteurTechnique) && user.Role != string(domain.RoleAdminLaboratoire) {
-		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique est habilité à sceller légalement ce document")
+	// Seul le Pharmacien Directeur Technique titulaire de la décision 1.A.7 a ce pouvoir légal
+	if user.Role != string(domain.RoleDirecteurTechnique) {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire de la décision ministérielle (1.A.7) est habilité à apposer ce visa légal")
 		return
 	}
 
@@ -690,6 +713,29 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 	v, err := h.repo.GetVersionByID(r.Context(), versionID)
 	if err != nil {
 		writeJSONError(w, http.StatusNotFound, "Version introuvable")
+		return
+	}
+
+	// Garde-fou BPF SoD : Auto-approbation formellement interdite (Maker != Approver)
+	if v.AuthorID != nil && *v.AuthorID == user.UserID {
+		if h.auditService != nil {
+			_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+				OrganizationID: user.OrganizationID,
+				UserID:         &user.UserID,
+				UserEmail:      user.Email,
+				UserRole:       user.Role,
+				Action:         "AUDIT_SECURITY_SOD_BLOCKED",
+				EntityType:     "GED_DOCUMENT",
+				EntityID:       docID.String(),
+				IPAddress:      getClientIP(r),
+				UserAgent:      r.UserAgent(),
+				Details: map[string]any{
+					"reason":     "Tentative d'auto-approbation BPF (SoD) : Le Pharmacien Directeur Technique est également l'auteur/rédacteur de cette version",
+					"version_id": versionID.String(),
+				},
+			})
+		}
+		writeJSONError(w, http.StatusForbidden, "ALERTE BPF / SoD : Auto-approbation interdite. Le Pharmacien Directeur Technique ne peut pas approuver un document dont il est lui-même le rédacteur (Maker) sans visa intermédiaire indépendant (Checker).")
 		return
 	}
 

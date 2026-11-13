@@ -434,10 +434,9 @@ func (h *DossierHandler) SignPDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Vérification de rôle : Directeur Technique ou Pharmacien Responsable ou Admin
-	normRole := strings.ToLower(user.Role)
-	if normRole != "pharmacien_responsable" && normRole != "admin" && normRole != "directeur_technique" {
-		writeJSONError(w, http.StatusForbidden, "Action réservée exclusivement au Pharmacien Directeur Technique (PDT) ou Responsable")
+	// Vérification de rôle : Exclusivement réservé au Pharmacien Directeur Technique (PDT - 1.A.7)
+	if user.Role != string(domain.RoleDirecteurTechnique) {
+		writeJSONError(w, http.StatusForbidden, "Le visa légal et le scellement réglementaire du dossier sont réservés exclusivement au Pharmacien Directeur Technique titulaire de la décision ministérielle (1.A.7)")
 		return
 	}
 
