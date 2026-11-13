@@ -1237,6 +1237,107 @@
         </div>
     </div>
 
+    <!-- Modal Gestion Équipe & Habilitations Secret (Need-to-Know & Confidentialité Industrielle) -->
+    <div class="modal-overlay" id="modal-dossier-members" onclick="if(event.target === this) closeModal('modal-dossier-members')">
+        <div class="modal modal-lg" style="width: 720px; max-width: 95vw;">
+            <div class="modal-header">
+                <div>
+                    <span style="font-size:18px; margin-right:8px;">👥</span>
+                    <strong style="color:var(--text-main); font-size:14px;">Équipe Affectée &amp; Habilitations Secret</strong>
+                    <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;" id="dossier-members-subtitle">
+                        Cloisonnement granulaire par dossier — Principe du "Besoin d'en connaître" (Need-to-Know)
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-dossier-members')">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
+                <!-- Tableau des membres actifs -->
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-weight:700; font-size:12px; color:var(--text-main);">Collaborateurs &amp; Experts Habilités sur ce dossier :</span>
+                        <span id="dossier-members-count" class="status-tag status-ok">0 habilité(s)</span>
+                    </div>
+                    <div style="max-height: 220px; overflow-y:auto; border:1px solid var(--border-color); border-radius:6px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                            <thead style="background:var(--bg-surface); position:sticky; top:0;">
+                                <tr style="border-bottom:1.5px solid var(--border-color); text-align:left; color:var(--text-muted);">
+                                    <th style="padding:6px 10px;">Collaborateur / Expert</th>
+                                    <th style="padding:6px 10px;">Rôle Dossier</th>
+                                    <th style="padding:6px 10px; text-align:center;">Secret Commercial</th>
+                                    <th style="padding:6px 10px; text-align:center;">Secret Industriel</th>
+                                    <th style="padding:6px 10px;">Échéance</th>
+                                    <th style="padding:6px 10px; text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dossier-members-tbody">
+                                <tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Formulaire d'affectation pour les gestionnaires -->
+                <div id="form-assign-member-container" style="background:var(--bg-surface); border:1.5px solid var(--border-color); border-radius:6px; padding:12px;">
+                    <div style="font-size:11.5px; font-weight:800; color:var(--accent-blue); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <span>➕</span><span>Affecter un Nouveau Collaborateur ou Expert CRO</span>
+                    </div>
+                    <form id="form-assign-member" onsubmit="event.preventDefault(); executeAssignMember();">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Sélectionner le Collaborateur * :</label>
+                                <select id="assign-user-select" required style="width:100%; padding:6px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11.5px;">
+                                    <option value="">-- Choisir un utilisateur --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Rôle dans ce Dossier * :</label>
+                                <select id="assign-role-in-dossier" required style="width:100%; padding:6px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11.5px;">
+                                    <option value="contributeur_qa">Contributeur Qualité BPF (Modules 1 &amp; 3)</option>
+                                    <option value="contributeur_rd">Contributeur R&amp;D / Galénique (Module 3)</option>
+                                    <option value="consultant_cro">Expert Consultant CRO (Module 5 BE)</option>
+                                    <option value="lead_ra">Chef de Projet Réglementaire Adjoint</option>
+                                    <option value="auditeur">Auditeur Qualité Interne</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Date d'Expiration du Mandat (Optionnel) :</label>
+                                <input type="date" id="assign-expires-at" style="width:100%; padding:5px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Notes de Mission / Dérogation :</label>
+                                <input type="text" id="assign-notes" placeholder="ex: Mandat BE étude bioéquivalence 90 jours" style="width:100%; padding:5px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11px;">
+                            </div>
+                        </div>
+
+                        <!-- Habilitations de sécurité spécifiques -->
+                        <div style="display:flex; gap:16px; align-items:center; background:rgba(0,0,0,0.02); padding:8px 10px; border-radius:4px; border:1px dashed var(--border-color); margin-bottom:10px;">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="assign-can-financials">
+                                <span style="font-weight:700; color:var(--accent-red);">🔴 Lever le Secret Commercial (1.A.4, 1.H.4, 1.H.5)</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="assign-can-industrial" checked>
+                                <span style="font-weight:700; color:#7e22ce;">🟣 Autoriser le Secret Industriel (3.2.S, 3.2.P)</span>
+                            </label>
+                        </div>
+
+                        <div style="text-align:right;">
+                            <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:5px 12px; font-size:11px;">
+                                🛡️ Valider l'Habilitation &amp; l'Affectation ➔
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-pill" onclick="closeModal('modal-dossier-members')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.13.1"></script>

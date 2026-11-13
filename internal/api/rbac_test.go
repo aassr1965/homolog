@@ -202,3 +202,84 @@ func TestConsultantCloisonnement_TransverseGEDForbidden(t *testing.T) {
 		t.Fatalf("Statut attendu HTTP 403 Forbidden pour consultant sur taxonomie GED, obtenu: %d", rrTaxo.Code)
 	}
 }
+
+func TestSecretClassificationMasking(t *testing.T) {
+	// 1. Pour QA Lead (contributeur interne non-direction) : Secret Commercial masqué, secret industriel visible
+	dossierQA := &domain.Dossier{
+		ID: uuid.New(),
+		Items: []domain.ChecklistItem{
+			{ItemCode: "1.A.4", SecurityClassification: domain.ClassificationSecretCommercial, TitleFR: "Quittance bancaire 100,000 DZD"},
+			{ItemCode: "1.H.4", SecurityClassification: domain.ClassificationSecretCommercial, TitleFR: "Structure de prix PCSU / FOB"},
+			{ItemCode: "3.2.S.1", SubModule: "3.2.S", SecurityClassification: domain.ClassificationSecretIndustriel, TitleFR: "Synthèse chimique ASMF"},
+		},
+	}
+
+	userQA := &auth.SessionUser{
+		Role: string(domain.RoleContributeurQualiteBPF),
+	}
+
+	isDirectorOrRA := userQA.Role == string(domain.RoleDirecteurTechnique) || userQA.Role == string(domain.RoleResponsableAffairesReg)
+	canViewFinancials := isDirectorOrRA
+	canViewIndustrial := userQA.Role != string(domain.RoleConsultantExterne)
+
+	for i := range dossierQA.Items {
+		secClass := dossierQA.Items[i].SecurityClassification
+		code := dossierQA.Items[i].ItemCode
+		subMod := dossierQA.Items[i].SubModule
+
+		if (secClass == domain.ClassificationSecretCommercial || code == "1.A.4" || code == "1.H.4" || code == "1.H.5") && !canViewFinancials {
+			dossierQA.Items[i].TitleFR = "[SECRET COMMERCIAL] Données financières confidentielles réservées à la direction"
+		}
+		if (secClass == domain.ClassificationSecretIndustriel || subMod == "3.2.S" || subMod == "3.2.P") && !canViewIndustrial {
+			dossierQA.Items[i].TitleFR = "[SECRET INDUSTRIEL] Synthèse et procédé de fabrication réservés aux équipes internes"
+		}
+	}
+
+	if dossierQA.Items[0].TitleFR != "[SECRET COMMERCIAL] Données financières confidentielles réservées à la direction" {
+		t.Errorf("1.A.4 devrait être masqué pour QA")
+	}
+	if dossierQA.Items[2].TitleFR != "Synthèse chimique ASMF" {
+		t.Errorf("3.2.S.1 devrait rester visible pour le QA interne")
+	}
+
+	// 2. Pour Consultant CRO externe : Secret Commercial ET Secret Industriel masqués
+	dossierCRO := &domain.Dossier{
+		ID: uuid.New(),
+		Items: []domain.ChecklistItem{
+			{ItemCode: "1.A.4", SecurityClassification: domain.ClassificationSecretCommercial, TitleFR: "Quittance bancaire 100,000 DZD"},
+			{ItemCode: "3.2.S.1", SubModule: "3.2.S", SecurityClassification: domain.ClassificationSecretIndustriel, TitleFR: "Synthèse chimique ASMF"},
+			{ItemCode: "5.3.1.2", SubModule: "5.3.1", SecurityClassification: domain.ClassificationStandard, TitleFR: "Étude de bioéquivalence in vivo"},
+		},
+	}
+
+	userCRO := &auth.SessionUser{
+		Role: string(domain.RoleConsultantExterne),
+	}
+
+	isDirectorOrRA = userCRO.Role == string(domain.RoleDirecteurTechnique) || userCRO.Role == string(domain.RoleResponsableAffairesReg)
+	canViewFinancials = isDirectorOrRA
+	canViewIndustrial = userCRO.Role != string(domain.RoleConsultantExterne)
+
+	for i := range dossierCRO.Items {
+		secClass := dossierCRO.Items[i].SecurityClassification
+		code := dossierCRO.Items[i].ItemCode
+		subMod := dossierCRO.Items[i].SubModule
+
+		if (secClass == domain.ClassificationSecretCommercial || code == "1.A.4" || code == "1.H.4" || code == "1.H.5") && !canViewFinancials {
+			dossierCRO.Items[i].TitleFR = "[SECRET COMMERCIAL] Données financières confidentielles réservées à la direction"
+		}
+		if (secClass == domain.ClassificationSecretIndustriel || subMod == "3.2.S" || subMod == "3.2.P") && !canViewIndustrial {
+			dossierCRO.Items[i].TitleFR = "[SECRET INDUSTRIEL] Synthèse et procédé de fabrication réservés aux équipes internes"
+		}
+	}
+
+	if dossierCRO.Items[0].TitleFR != "[SECRET COMMERCIAL] Données financières confidentielles réservées à la direction" {
+		t.Errorf("1.A.4 devrait être masqué pour CRO")
+	}
+	if dossierCRO.Items[1].TitleFR != "[SECRET INDUSTRIEL] Synthèse et procédé de fabrication réservés aux équipes internes" {
+		t.Errorf("3.2.S.1 devrait être masqué pour le CRO externe")
+	}
+	if dossierCRO.Items[2].TitleFR != "Étude de bioéquivalence in vivo" {
+		t.Errorf("5.3.1.2 devrait rester visible pour le CRO")
+	}
+}
