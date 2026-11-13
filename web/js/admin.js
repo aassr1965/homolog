@@ -295,6 +295,12 @@ function renderAdminUserPreview(user) {
             </div>
         ` : ''}
 
+        ${user.role === 'consultant_externe' ? `
+            <div style="background:rgba(2, 132, 199, 0.1); border:1px solid #0284c7; border-radius:4px; padding:10px; font-size:11px; color:var(--text-main); margin-bottom:12px;">
+                <strong>🤝 Accès Tiers Cloisonné (CRO / Expert) :</strong> Ce compte invité ne possède aucun accès transverse (GED et Référentiel masqués). Il est strictement confiné au dossier d'enregistrement assigné par la table <code>dossier_consultants</code> avec masquage automatique des rubriques de prix et données financières (1.A.4, 1.H.4, 1.H.5).
+            </div>
+        ` : ''}
+
         <div class="meta-box">
             <div style="font-size:11px; font-weight:700; color:var(--text-main); margin-bottom:6px;">
                 Détail des 14 Habilitations Unitaires RBAC
@@ -345,6 +351,7 @@ function renderAdminMatrixTable() {
         const rolePerms = new Set(role.permissions || []);
         const isPDT = role.id === 'directeur_technique';
         const isZeroTrust = role.id === 'admin_systeme_local' || role.id === 'super_admin_editeur';
+        const isConsultantRole = role.id === 'consultant_externe';
 
         let cellsHtml = '';
         permsList.forEach(p => {
@@ -357,6 +364,8 @@ function renderAdminMatrixTable() {
                 }
             } else if (p.code === 'DOC_READ' && isZeroTrust) {
                 cellsHtml += `<td style="text-align:center; background:rgba(239,68,68,0.1);"><span style="color:var(--accent-red); font-weight:700; font-size:9px;" title="Bloqué par Zero-Trust">🚫 ZT</span></td>`;
+            } else if (isConsultantRole && p.code === 'DOSSIER_VIEW') {
+                cellsHtml += `<td style="text-align:center; background:rgba(2,132,199,0.1);"><span style="color:var(--accent-blue); font-weight:700; font-size:9px;" title="Cloisonné au seul dossier assigné">✓ Dossier</span></td>`;
             } else {
                 if (has) {
                     cellsHtml += `<td style="text-align:center;"><span style="color:var(--accent-emerald); font-weight:700;">✓</span></td>`;

@@ -92,8 +92,10 @@ const mockAuditTrail = [
                     return isArabic ? 'مراقبة الجودة والاستقرار' : 'CQ & Stabilités';
                 case 'responsable_production':
                     return isArabic ? 'مسؤول الإنتاج والتأهيل' : 'Production & Validation';
+                case 'consultant_externe':
                 case 'consultant_cro_externe':
-                    return isArabic ? 'مستشار خارجي CRO' : 'Consultant Externe CRO';
+                    return isArabic ? 'مستشار خارجي (نطاق مخصص)' : 'Consultant Externe (CRO - Cloisonné)';
+                case 'auditeur_inspecteur':
                 case 'auditeur_qualite_anpp':
                     return isArabic ? 'مدقق الجودة / ANPP' : 'Auditeur Qualité ANPP';
                 case 'admin_systeme_local':
@@ -213,6 +215,30 @@ const mockAuditTrail = [
             if (btnDepositANPP) {
                 btnDepositANPP.style.display = hasPermission('DOSSIER_SUBMIT') ? '' : 'none';
             }
+
+            // Garde-Fou Cloisonnement Tiers / Consultant Externe (CDC Section 7.2.2) :
+            const isConsultant = hasRole('consultant_externe', 'consultant_cro_externe');
+            if (isConsultant) {
+                // Masquer tous les univers transverses (Référentiel, GED, Variations, DM, Admin, Audit)
+                ['act-ref', 'act-variations', 'act-dm', 'act-ged', 'act-admin', 'act-audit'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                ['mob-act-ref', 'mob-act-variations', 'mob-act-dm', 'mob-act-ged', 'mob-act-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                ['mobnav-ref', 'mobnav-variations', 'mobnav-dm', 'mobnav-ged', 'mobnav-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+
+                // Masquage des actions réservées dans les barres d'outils
+                const btnNewD = document.getElementById('tb-btn-new-dossier');
+                if (btnNewD) btnNewD.style.display = 'none';
+                const btnExp = document.getElementById('tb-btn-export');
+                if (btnExp) btnExp.style.display = 'none';
+            }
         }
 
         function showAppView(user, org) {
@@ -235,8 +261,11 @@ const mockAuditTrail = [
             applyPermissionsUI();
 
             // Vérification de sécurité de routage : Si le domaine actif est interdit, basculer vers un univers autorisé
+            const isConsultant = hasRole('consultant_externe', 'consultant_cro_externe');
             let targetDomain = currentDomain || 'ref';
-            if (targetDomain === 'admin' && !hasPermission('USER_MANAGE')) {
+            if (isConsultant) {
+                targetDomain = 'ctd';
+            } else if (targetDomain === 'admin' && !hasPermission('USER_MANAGE')) {
                 targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'ged');
             } else if (targetDomain === 'ged' && !hasPermission('DOC_READ')) {
                 targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'admin');

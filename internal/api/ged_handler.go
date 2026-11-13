@@ -48,6 +48,12 @@ func (h *GEDHandler) GetTaxonomy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cloisonnement strict : Les consultants externes n'ont pas accès à la GED transverse d'entreprise (CDC 7.2.2)
+	if user.Role == string(domain.RoleConsultantExterne) {
+		writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Les consultants externes n'ont pas accès à la GED transverse de l'entreprise (CDC Section 7.2.2)")
+		return
+	}
+
 	branches, err := h.repo.GetTaxonomyWithCounts(r.Context(), user.OrganizationID)
 	if err != nil {
 		log.Printf("[ERREUR] GetTaxonomy: %v", err)
@@ -66,6 +72,12 @@ func (h *GEDHandler) ListDocuments(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
 	if user == nil {
 		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	// Cloisonnement strict : Les consultants externes n'ont pas accès à la GED transverse d'entreprise (CDC 7.2.2)
+	if user.Role == string(domain.RoleConsultantExterne) {
+		writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Les consultants externes n'ont pas accès à la GED transverse de l'entreprise (CDC Section 7.2.2)")
 		return
 	}
 
@@ -434,6 +446,26 @@ func (h *GEDHandler) DownloadVersion(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSONError(w, http.StatusForbidden, "Accès Zero-Trust refusé : Les administrateurs techniques n'ont pas accès au contenu des pièces pharmaceutiques")
 		return
+	}
+
+	// Garde-fou BPF Cloisonnement Consultant Externe : Vérification d'assignation au dossier
+	if user.Role == string(domain.RoleConsultantExterne) && h.pool != nil {
+		var isAssigned bool
+		checkQuery := `
+			SELECT EXISTS(
+				SELECT 1 
+				FROM dossier_checklist_items dci
+				JOIN dossier_consultants dc ON dc.dossier_id = dci.dossier_id
+				WHERE dci.attached_ged_document_id = $1 
+				  AND dc.user_id = $2 
+				  AND (dc.expires_at IS NULL OR dc.expires_at > CURRENT_TIMESTAMP)
+			)
+		`
+		_ = h.pool.QueryRow(r.Context(), checkQuery, docID, user.UserID).Scan(&isAssigned)
+		if !isAssigned {
+			writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Ce document ne fait pas partie de votre périmètre contractuel assigné (CDC Section 7.2.2)")
+			return
+		}
 	}
 
 	versionIDStr := r.URL.Query().Get("version_id")

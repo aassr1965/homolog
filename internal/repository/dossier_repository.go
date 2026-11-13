@@ -288,8 +288,8 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 	return &d, nil
 }
 
-// ListDossiers liste tous les dossiers d'une organisation avec filtres optionnels
-func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, procFilter string, statusFilter string) ([]domain.Dossier, error) {
+// ListDossiers liste tous les dossiers d'une organisation avec filtres optionnels et cloisonnement consultant
+func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, consultantUserID *uuid.UUID, procFilter string, statusFilter string) ([]domain.Dossier, error) {
 	baseQuery := `
 		SELECT
 			d.id, d.organization_id, d.medicine_id, d.medical_device_id, d.product_type,
@@ -310,6 +310,12 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, p
 
 	args := []interface{}{orgID}
 	argIdx := 2
+
+	if consultantUserID != nil {
+		baseQuery += fmt.Sprintf(" AND d.id IN (SELECT dossier_id FROM dossier_consultants WHERE user_id = $%d AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP))", argIdx)
+		args = append(args, *consultantUserID)
+		argIdx++
+	}
 
 	if strings.TrimSpace(procFilter) != "" {
 		baseQuery += fmt.Sprintf(" AND d.procedure_code = $%d", argIdx)

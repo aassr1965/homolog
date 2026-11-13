@@ -169,3 +169,36 @@ func TestSessionUser_HasPermission(t *testing.T) {
 		t.Error("HasPermission sur utilisateur nil devrait être faux")
 	}
 }
+
+func TestConsultantCloisonnement_TransverseGEDForbidden(t *testing.T) {
+	orgID := uuid.New()
+	userID := uuid.New()
+
+	sessionUser := &auth.SessionUser{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Email:          "consultant.ext@cro.com",
+		Role:           string(domain.RoleConsultantExterne),
+		Permissions:    []string{string(domain.PermDossierView), string(domain.PermDocDraftMaker)},
+	}
+
+	gedHandler := &GEDHandler{}
+
+	req := httptest.NewRequest("GET", "/api/v1/ged/documents", nil)
+	ctx := context.WithValue(req.Context(), UserContextKey, sessionUser)
+	rr := httptest.NewRecorder()
+
+	gedHandler.ListDocuments(rr, req.WithContext(ctx))
+
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("Statut attendu HTTP 403 Forbidden pour consultant sur GED transverse, obtenu: %d", rr.Code)
+	}
+
+	reqTaxo := httptest.NewRequest("GET", "/api/v1/ged/taxonomy", nil)
+	rrTaxo := httptest.NewRecorder()
+	gedHandler.GetTaxonomy(rrTaxo, reqTaxo.WithContext(ctx))
+
+	if rrTaxo.Code != http.StatusForbidden {
+		t.Fatalf("Statut attendu HTTP 403 Forbidden pour consultant sur taxonomie GED, obtenu: %d", rrTaxo.Code)
+	}
+}
