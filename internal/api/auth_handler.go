@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"homolog/internal/audit"
 	"homolog/internal/auth"
+	"homolog/internal/config"
 	"homolog/internal/domain"
 )
 
@@ -20,14 +21,20 @@ type AuthHandler struct {
 	pool           *pgxpool.Pool
 	sessionManager *auth.SessionManager
 	auditService   *audit.Service
+	cfg            *config.Config
 }
 
 // NewAuthHandler instancie le handler
-func NewAuthHandler(pool *pgxpool.Pool, sm *auth.SessionManager, auditService *audit.Service) *AuthHandler {
+func NewAuthHandler(pool *pgxpool.Pool, sm *auth.SessionManager, auditService *audit.Service, cfg ...*config.Config) *AuthHandler {
+	var c *config.Config
+	if len(cfg) > 0 {
+		c = cfg[0]
+	}
 	return &AuthHandler{
 		pool:           pool,
 		sessionManager: sm,
 		auditService:   auditService,
+		cfg:            c,
 	}
 }
 
@@ -181,7 +188,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  now.Add(8 * time.Hour),
 		MaxAge:   8 * 3600,
 		HttpOnly: true,
-		Secure:   false, // Passer à true en HTTPS
+		Secure:   DetermineCookieSecure(r, h.cfg),
 		SameSite: http.SameSiteStrictMode,
 	})
 
@@ -221,6 +228,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			"slug": orgSlug,
 			"name": orgName,
 		},
+		"dev_switcher_enabled": h.cfg == nil || h.cfg.DevSwitcherEnabled(),
 	})
 }
 
@@ -242,6 +250,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   DetermineCookieSecure(r, h.cfg),
 		SameSite: http.SameSiteStrictMode,
 	})
 
@@ -280,6 +289,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 			"slug": user.OrganizationSlug,
 			"name": user.OrganizationName,
 		},
+		"dev_switcher_enabled": h.cfg == nil || h.cfg.DevSwitcherEnabled(),
 	})
 }
 

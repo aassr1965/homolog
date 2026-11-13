@@ -32,6 +32,10 @@ const mockAuditTrail = [
                     const data = await res.json();
                     currentUser = data.user;
                     currentOrg = data.organization;
+                    if (data.dev_switcher_enabled === false) {
+                        const switcher = document.getElementById("dev-role-switcher-container");
+                        if (switcher) switcher.style.display = "none";
+                    }
                     showAppView(currentUser, currentOrg);
                 } else {
                     showLoginView();
@@ -116,6 +120,26 @@ const mockAuditTrail = [
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
                 });
+
+                if (res.status === 404) {
+                    showNotifyModal(
+                        "Fonctionnalité Verrouillée",
+                        `<div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="color:var(--accent-red); font-weight:700;">
+                                🛡️ Commutateur strictement désactivé en environnement de production
+                            </div>
+                            <div style="font-size:11px; color:var(--text-main);">
+                                Conformément aux principes d'intégrité ALCOA+ et aux exigences 21 CFR Part 11, la bascule de session sans mot de passe n'est pas autorisée sur ce serveur.
+                            </div>
+                        </div>`,
+                        "🛡️",
+                        "Compris"
+                    );
+                    const switcher = document.getElementById("dev-role-switcher-container");
+                    if (switcher) switcher.style.display = "none";
+                    return;
+                }
+
                 const data = await res.json();
                 if (res.ok) {
                     currentUser = data.user;
@@ -311,6 +335,10 @@ const mockAuditTrail = [
                         btn.disabled = false;
                         btn.innerText = "Valider le code 2FA ➔";
                         return;
+                    }
+                    if (data.dev_switcher_enabled === false) {
+                        const switcher = document.getElementById("dev-role-switcher-container");
+                        if (switcher) switcher.style.display = "none";
                     }
                     showAppView(data.user, data.organization);
                     btn.disabled = false;

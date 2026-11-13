@@ -82,7 +82,7 @@ gantt
     - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte automatique dans `audit_logs` (`AUDIT_SECURITY_403_BLOCKED`).
   - [x] **Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :**
     - Interface autonome dédiée pour l'Administrateur de Laboratoire (`web/js/admin.js`, gestion collaborateurs, modification interactive de rôle, matrice dynamique des 14 permissions unitaires, 4 politiques visuelles de garde-fous BPF/PSSI, export CSV certifié).
-    - Commutateur de test instantané **Dev Role Switcher** dans la barre supérieure (`POST /api/v1/auth/dev-switch`).
+    - Commutateur de test instantané **Dev Role Switcher** dans la barre supérieure (`POST /api/v1/auth/dev-switch`, verrouillé strictement et désactivé en production `APP_ENV=production`, cookies avec attribut `Secure` dynamique TLS/proxy).
   - [x] **Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :**
     - Route Guards frontend interceptant les accès directs non autorisés par domaine avec popups sécurisées d'interdiction.
     - Moteur de rendu conditionnel masquant les composants non autorisés (`data-perm`, `data-perm-any`, bouton signature PDT, console admin, boutons téléchargement Zero-Trust).

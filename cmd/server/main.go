@@ -76,8 +76,8 @@ func main() {
 
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
-		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService)
-		adminHandler = api.NewAdminHandler(db.Pool, sessionManager, auditService)
+		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService, cfg)
+		adminHandler = api.NewAdminHandler(db.Pool, sessionManager, auditService, cfg)
 
 		pharmaRepo := repository.NewPharmaRepository(db.Pool)
 		pharmaHandler = api.NewPharmaHandler(pharmaRepo, auditService)
@@ -174,8 +174,8 @@ func main() {
 		if db == nil {
 			dbStatus = "disconnected"
 		}
-		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","database":"%s","time_utc":"%s","version":"0.7.0"}`,
-			cfg.DeploymentMode, dbStatus, time.Now().UTC().Format(time.RFC3339))
+		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","environment":"%s","dev_switcher_enabled":%t,"database":"%s","time_utc":"%s","version":"0.7.0"}`,
+			cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), dbStatus, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(jsonResp))
 	})
 
@@ -185,12 +185,14 @@ func main() {
 			"app": "Sanad Pharma",
 			"version": "0.7.0",
 			"deployment_mode": "%s",
+			"environment": "%s",
+			"dev_switcher_enabled": %t,
 			"org_slug": "%s",
 			"org_name": "%s",
 			"idle_timeout_min": %d,
 			"max_upload_bytes": %d,
 			"timestamp_utc": "%s"
-		}`, cfg.DeploymentMode, cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
+		}`, cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(resp))
 	})
 
@@ -200,7 +202,8 @@ func main() {
 		r.Post("/api/v1/auth/logout", authHandler.Logout)
 
 		// Role Switcher de développement (Environnement non-production / Dev rapide)
-		if adminHandler != nil {
+		// Strictement gardé : ne s'enregistre que si cfg.DevSwitcherEnabled() est vrai (désactivé d'office en production)
+		if adminHandler != nil && cfg.DevSwitcherEnabled() {
 			r.Post("/api/v1/auth/dev-switch", adminHandler.DevSwitchRole)
 		}
 
