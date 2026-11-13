@@ -448,23 +448,76 @@ func (h *GEDHandler) DownloadVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Garde-fou BPF Cloisonnement Consultant Externe : Vérification d'assignation au dossier
-	if user.Role == string(domain.RoleConsultantExterne) && h.pool != nil {
-		var isAssigned bool
-		checkQuery := `
-			SELECT EXISTS(
-				SELECT 1 
-				FROM dossier_checklist_items dci
-				JOIN dossier_consultants dc ON dc.dossier_id = dci.dossier_id
-				WHERE dci.attached_ged_document_id = $1 
-				  AND dc.user_id = $2 
-				  AND (dc.expires_at IS NULL OR dc.expires_at > CURRENT_TIMESTAMP)
-			)
+	// Protection Secret Commercial, Secret Industriel et Cloisonnement "Besoin d'en connaître" (Need-to-Know)
+	if h.pool != nil {
+		var secClass string
+		var itemCode string
+		checkSecQuery := `
+			SELECT COALESCE(dci.security_classification, 'STANDARD'), dci.item_code
+			FROM dossier_checklist_items dci
+			WHERE dci.ged_document_id = $1
+			LIMIT 1
 		`
-		_ = h.pool.QueryRow(r.Context(), checkQuery, docID, user.UserID).Scan(&isAssigned)
-		if !isAssigned {
-			writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Ce document ne fait pas partie de votre périmètre contractuel assigné (CDC Section 7.2.2)")
-			return
+		_ = h.pool.QueryRow(r.Context(), checkSecQuery, docID).Scan(&secClass, &itemCode)
+
+		// 1. Secret commercial : Seul le PDT ou RA (ou habilitation can_view_financials) peut télécharger
+		if secClass == "SECRET_COMMERCIAL" || itemCode == "1.A.4" || itemCode == "1.H.4" || itemCode == "1.H.5" {
+			isDirectorOrRA := user.Role == string(domain.RoleDirecteurTechnique) || user.Role == string(domain.RoleResponsableAffairesReg)
+			if !isDirectorOrRA {
+				var canFin bool
+				_ = h.pool.QueryRow(r.Context(), `
+					SELECT EXISTS(
+						SELECT 1 FROM dossier_checklist_items dci
+						JOIN dossier_assignments da ON da.dossier_id = dci.dossier_id
+						WHERE dci.ged_document_id = $1 AND da.user_id = $2 AND da.can_view_financials = TRUE
+					)
+				`, docID, user.UserID).Scan(&canFin)
+				if !canFin {
+					writeJSONError(w, http.StatusForbidden, "Accès refusé : Document classifié SECRET COMMERCIAL réservé à la direction du laboratoire (Section 7.2.2)")
+					return
+				}
+			}
+		}
+
+		// 2. Secret Industriel : Prestataire externe interdit sauf habilitation can_view_industrial_secret
+		if secClass == "SECRET_INDUSTRIEL" && user.Role == string(domain.RoleConsultantExterne) {
+			var canInd bool
+			_ = h.pool.QueryRow(r.Context(), `
+				SELECT EXISTS(
+					SELECT 1 FROM dossier_checklist_items dci
+					JOIN dossier_assignments da ON da.dossier_id = dci.dossier_id
+					WHERE dci.ged_document_id = $1 AND da.user_id = $2 AND da.can_view_industrial_secret = TRUE
+				)
+			`, docID, user.UserID).Scan(&canInd)
+			if !canInd {
+				writeJSONError(w, http.StatusForbidden, "Accès refusé : Document classifié SECRET INDUSTRIEL réservé aux équipes internes du laboratoire (Section 7.2.2)")
+				return
+			}
+		}
+
+		// 3. Cloisonnement par affectation : Contributeurs opérationnels & consultants
+		isOperational := user.Role == string(domain.RoleConsultantExterne) ||
+			user.Role == string(domain.RoleContributeurQualiteBPF) ||
+			user.Role == string(domain.RoleContributeurRDProd)
+
+		if isOperational {
+			var isAssigned bool
+			checkAssignedQuery := `
+				SELECT EXISTS(
+					SELECT 1 FROM dossier_checklist_items dci
+					WHERE dci.ged_document_id = $1
+					  AND (
+						dci.dossier_id IN (SELECT dossier_id FROM dossier_assignments WHERE user_id = $2 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP))
+						OR
+						dci.dossier_id IN (SELECT dossier_id FROM dossier_consultants WHERE user_id = $2 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP))
+					  )
+				)
+			`
+			_ = h.pool.QueryRow(r.Context(), checkAssignedQuery, docID, user.UserID).Scan(&isAssigned)
+			if !isAssigned {
+				writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Cette pièce n'appartient à aucun dossier auquel vous êtes affecté (Principe du Secret & Besoin d'en connaître)")
+				return
+			}
 		}
 	}
 

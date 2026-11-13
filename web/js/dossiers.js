@@ -731,8 +731,13 @@
                         if (it.id === selectedDossierItemId) tr.classList.add("selected");
                         tr.onclick = () => selectDossierItem(it.id);
 
-                        const isConsultant = typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe');
-                        const isFinancialSecret = isConsultant && (it.item_code === '1.A.4' || it.item_code === '1.H.4' || it.item_code === '1.H.5');
+                        const rawTitle = it.title_fr || '';
+                        const isMaskedCommercial = rawTitle.startsWith('[SECRET COMMERCIAL]') || rawTitle.startsWith('[CONFIDENTIEL]');
+                        const isMaskedIndustrial = rawTitle.startsWith('[SECRET INDUSTRIEL]');
+                        const isMasked = isMaskedCommercial || isMaskedIndustrial;
+
+                        const isCommercialClassified = it.security_classification === 'SECRET_COMMERCIAL' || ['1.A.4', '1.H.4', '1.H.5'].includes(it.item_code);
+                        const isIndustrialClassified = it.security_classification === 'SECRET_INDUSTRIEL' || ['3.2.S', '3.2.P'].includes(it.sub_module);
 
                         let reqBadge = `<span class="badge-req-e">[E] Exigé</span>`;
                         if (it.requirement_level === 'F') reqBadge = `<span class="badge-req-f">[F] Facultatif</span>`;
@@ -740,8 +745,10 @@
                         else if (it.requirement_level === 'NA') reqBadge = `<span class="badge-req-na">[NA] Non Appl.</span>`;
 
                         let statusBadge = '<span class="status-tag status-rej">MANQUANT</span>';
-                        if (isFinancialSecret) {
-                            statusBadge = '<span class="status-tag" style="background:rgba(239,68,68,0.1); color:var(--accent-red); font-weight:700;">🔒 CONFIDENTIEL</span>';
+                        if (isMaskedCommercial) {
+                            statusBadge = '<span class="status-tag" style="background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid #f87171; font-weight:700;">🔒 SECRET COMMERCIAL</span>';
+                        } else if (isMaskedIndustrial) {
+                            statusBadge = '<span class="status-tag" style="background:rgba(147,51,234,0.12); color:#7e22ce; border:1px solid #c084fc; font-weight:700;">🛡️ SECRET INDUSTRIEL</span>';
                         } else if (it.status === 'rattache') statusBadge = '<span class="status-tag status-rev">RATTACHÉ</span>';
                         else if (it.status === 'valide_qualite') statusBadge = '<span class="status-tag status-ok">VALIDÉ QUALITÉ</span>';
                         else if (it.status === 'approuve_dt') statusBadge = '<span class="status-tag" style="background:rgba(147,51,234,0.15); color:#7e22ce; border:1.5px solid #c084fc; font-weight:800;">APPROUVÉ PDT</span>';
@@ -750,8 +757,8 @@
                         if (it.module_number === 0) modLabel = `DM`;
 
                         let gedInfo = `<span style="color:var(--text-dim); font-size:11px; font-weight:600; font-style:italic;">— Non rattaché —</span>`;
-                        if (isFinancialSecret) {
-                            gedInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Donnée financière masquée</span>`;
+                        if (isMasked) {
+                            gedInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Donnée masquée (Secret protégé)</span>`;
                         } else if (it.ged_document) {
                             gedInfo = `
                                 <div style="display:flex; align-items:center; gap:6px;">
@@ -767,8 +774,8 @@
                         let actionsHTML = '';
                         const isLocked = currentDossierDetail && currentDossierDetail.is_locked_for_deposit;
 
-                        if (isFinancialSecret) {
-                            actionsHTML = `<span style="color:var(--text-dim); font-size:10px; font-style:italic;">Accès restreint</span>`;
+                        if (isMasked) {
+                            actionsHTML = `<span style="color:var(--text-dim); font-size:10px; font-style:italic;">🔒 Accès réservé</span>`;
                         } else if (!it.ged_document_id) {
                             actionsHTML = `
                                 <button class="btn-pill" style="height:24px; padding:2px 8px; font-size:10.5px; font-weight:700; background:var(--accent-blue); color:white; border:none;" 
@@ -785,15 +792,24 @@
                                     </button>
                                     <button class="btn-pill" style="height:24px; padding:2px 6px; font-size:10.5px; font-weight:700; color:var(--accent-red); background:#fff5f5; border-color:#fca5a5;" title="Détacher" 
                                             onclick="event.stopPropagation(); executeDetachGED('${it.id}', '${it.item_code}')"
-                                            ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                             ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
                                         ✕
                                     </button>
                                 </div>
                             `;
                         }
 
-                        const displayTitleFR = isFinancialSecret ? '[CONFIDENTIEL] Données financières réservées à la direction du laboratoire' : escapeHTML(it.title_fr);
-                        const displayDescFR = isFinancialSecret ? 'Section masquée conformément à la politique de confidentialité industrielle du laboratoire (CDC Section 7.2.2).' : escapeHTML(it.description_fr || '');
+                        let securityPill = '';
+                        if (!isMasked) {
+                            if (isCommercialClassified) {
+                                securityPill = `<span style="font-size:9.5px; background:rgba(239,68,68,0.08); color:#dc2626; border:1px solid rgba(239,68,68,0.3); padding:1px 5px; border-radius:3px; font-weight:700;">🔴 Secret Commercial</span>`;
+                            } else if (isIndustrialClassified) {
+                                securityPill = `<span style="font-size:9.5px; background:rgba(147,51,234,0.08); color:#7e22ce; border:1px solid rgba(147,51,234,0.3); padding:1px 5px; border-radius:3px; font-weight:700;">🟣 Secret Industriel</span>`;
+                            }
+                        }
+
+                        const displayTitleFR = escapeHTML(it.title_fr);
+                        const displayDescFR = escapeHTML(it.description_fr || '');
 
                         tr.innerHTML = `
                             <td class="col-hide-xs" style="font-weight:800; color:var(--text-dim); font-size:11.5px; font-family:monospace; white-space:nowrap;">${modLabel}</td>
@@ -803,8 +819,9 @@
                                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                     <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">${escapeHTML(it.item_code)}</span>
                                     <span style="font-weight:700; color:var(--text-main); font-size:12px;">${displayTitleFR}</span>
+                                    ${securityPill}
                                 </div>
-                                ${(!isFinancialSecret && it.title_ar) ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
+                                ${(!isMasked && it.title_ar) ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
                                 ${displayDescFR ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${displayDescFR}</div>` : ''}
                             </td>
                             <td style="min-width:180px;">${gedInfo}</td>
@@ -862,9 +879,11 @@
             const preview = document.getElementById("preview-body");
             if (!preview) return;
 
-            const isConsultant = typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe');
-            const isFinancialSecret = isConsultant && (item.item_code === '1.A.4' || item.item_code === '1.H.4' || item.item_code === '1.H.5');
-            if (isFinancialSecret) {
+            const rawTitle = item.title_fr || '';
+            const isMaskedCommercial = rawTitle.startsWith('[SECRET COMMERCIAL]') || rawTitle.startsWith('[CONFIDENTIEL]');
+            const isMaskedIndustrial = rawTitle.startsWith('[SECRET INDUSTRIEL]');
+
+            if (isMaskedCommercial) {
                 preview.innerHTML = `
                     <div class="pdf-sim-page">
                         <div style="text-align:center; padding:35px 20px;">
@@ -873,10 +892,30 @@
                                 DONNÉES FINANCIÈRES &amp; PRIX CONFIDENTIELLES
                             </div>
                             <div style="font-size:11px; color:var(--text-main); line-height:1.6; max-width:400px; margin:0 auto;">
-                                Conformément aux règles de protection du secret d'affaires pharmaceutique (Cahier des Charges Section 7.2.2), cette section (PCSU, FOB, Benchmark, Redevances bancaires) est strictement masquée pour les consultants externes et prestataires CRO.
+                                Conformément aux règles de protection du secret d'affaires pharmaceutique (Cahier des Charges Section 7.2.2), cette section (PCSU, FOB, Benchmark, Redevances bancaires) est strictement masquée pour votre profil.
                             </div>
                             <div style="margin-top:16px; font-size:10px; color:var(--text-dim); background:rgba(239,68,68,0.08); padding:6px 12px; border-radius:4px; display:inline-block; border:1px solid rgba(239,68,68,0.2);">
-                                Règle PSSI : Accès réservé aux Affaires Réglementaires et au Pharmacien DT
+                                Règle PSSI : Accès réservé aux Affaires Réglementaires et au Pharmacien Directeur Technique
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (isMaskedIndustrial) {
+                preview.innerHTML = `
+                    <div class="pdf-sim-page">
+                        <div style="text-align:center; padding:35px 20px;">
+                            <div style="font-size:36px; margin-bottom:12px;">🛡️</div>
+                            <div style="font-size:13px; font-weight:800; color:#7e22ce; margin-bottom:8px;">
+                                SECRET INDUSTRIEL &amp; PROCÉDÉ BREVETÉ DU FABRICANT
+                            </div>
+                            <div style="font-size:11px; color:var(--text-main); line-height:1.6; max-width:400px; margin:0 auto;">
+                                Conformément aux règles de protection de la propriété intellectuelle industrielle (Cahier des Charges Section 7.2.2), les voies de synthèse chimique (ASMF / DMF) et les procédés de fabrication brevetés sont réservés aux équipes internes du laboratoire.
+                            </div>
+                            <div style="margin-top:16px; font-size:10px; color:var(--text-dim); background:rgba(147,51,234,0.08); padding:6px 12px; border-radius:4px; display:inline-block; border:1px solid rgba(147,51,234,0.2);">
+                                Règle PSSI : Accès restreint aux prestataires externes non habilités
                             </div>
                         </div>
                     </div>
@@ -1422,5 +1461,214 @@
                         </button>
                     </div>
                 `;
+            }
+        }
+
+        // ========================================================================
+        // GESTION DE L'ÉQUIPE & HABILITATIONS SECRET DU DOSSIER (Need-to-Know)
+        // ========================================================================
+
+        async function openDossierMembersModal() {
+            if (!selectedDossierId) {
+                showNotifyModal("Aucun dossier sélectionné", "Veuillez d'abord sélectionner un dossier CTD dans l'arborescence.", "ℹ️");
+                return;
+            }
+
+            const modal = document.getElementById("modal-dossier-members");
+            if (!modal) return;
+            modal.classList.add("open");
+
+            const subtitle = document.getElementById("dossier-members-subtitle");
+            if (subtitle && currentDossierDetail) {
+                subtitle.innerHTML = `Dossier : <strong style="color:var(--accent-blue); font-family:monospace;">${escapeHTML(currentDossierDetail.dossier_code)}</strong> (${escapeHTML(currentDossierDetail.internal_reference)}) — Need-to-Know BPF`;
+            }
+
+            // Vérifier si l'utilisateur courant peut affecter (Directeur Technique, RA ou Admin Labo)
+            const canManage = typeof hasRole === 'function' && (
+                hasRole('directeur_technique') || 
+                hasRole('responsable_affaires_reglementaires') || 
+                hasRole('admin_laboratoire')
+            );
+
+            const formContainer = document.getElementById("form-assign-member-container");
+            if (formContainer) {
+                formContainer.style.display = canManage ? 'block' : 'none';
+            }
+
+            await loadDossierMembers();
+            if (canManage) {
+                await loadAssignableUsers();
+            }
+        }
+
+        async function loadDossierMembers() {
+            const tbody = document.getElementById("dossier-members-tbody");
+            const countBadge = document.getElementById("dossier-members-count");
+            if (!tbody) return;
+
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement de l'équipe...</td></tr>`;
+
+            try {
+                const res = await fetch(`/api/v1/dossiers/${selectedDossierId}/members`);
+                if (!res.ok) {
+                    throw new Error("Impossible de charger les membres");
+                }
+                const data = await res.json();
+                const members = data.members || [];
+
+                if (countBadge) {
+                    countBadge.textContent = `${members.length} habilité(s)`;
+                }
+
+                if (members.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted); font-style:italic;">Aucun collaborateur opérationnel affecté à ce dossier. Seule la direction (PDT, RA Lead) a accès par défaut.</td></tr>`;
+                    return;
+                }
+
+                const canManage = typeof hasRole === 'function' && (
+                    hasRole('directeur_technique') || 
+                    hasRole('responsable_affaires_reglementaires') || 
+                    hasRole('admin_laboratoire')
+                );
+
+                tbody.innerHTML = members.map(m => {
+                    const roleLabel = formatRoleInDossier(m.role_in_dossier);
+                    const finBadge = m.can_view_financials 
+                        ? `<span class="status-tag" style="background:#fee2e2; color:#b91c1c; border:1px solid #f87171; font-weight:700;">LEVÉ (Visible)</span>`
+                        : `<span class="status-tag status-rej">MASQUÉ 🔒</span>`;
+
+                    const indBadge = m.can_view_industrial_secret 
+                        ? `<span class="status-tag" style="background:#f3e8ff; color:#7e22ce; border:1px solid #c084fc; font-weight:700;">AUTORISÉ 🛡️</span>`
+                        : `<span class="status-tag status-rej">MASQUÉ 🔒</span>`;
+
+                    let expiryText = `<span style="color:var(--text-dim); font-size:11px;">Permanent</span>`;
+                    if (m.expires_at) {
+                        const d = new Date(m.expires_at);
+                        expiryText = `<span style="font-family:monospace; font-size:11px; color:var(--accent-amber); font-weight:600;">${d.toISOString().split('T')[0]}</span>`;
+                    }
+
+                    const actionBtn = canManage ? `
+                        <button class="btn-pill" style="height:22px; padding:1px 6px; font-size:10px; color:var(--accent-red); background:#fff5f5; border-color:#fca5a5;" 
+                                onclick="executeRemoveMember('${m.user_id}')" title="Révoquer l'accès">
+                            Révoquer ✕
+                        </button>
+                    ` : `—`;
+
+                    return `
+                        <tr style="border-bottom:1px solid var(--border-color);">
+                            <td style="padding:6px 10px;">
+                                <div style="font-weight:700; color:var(--text-main);">${escapeHTML(m.user_first_name || '')} ${escapeHTML(m.user_last_name || '')}</div>
+                                <div style="font-family:monospace; font-size:10.5px; color:var(--accent-blue);">${escapeHTML(m.user_email || '')}</div>
+                            </td>
+                            <td style="padding:6px 10px; font-weight:600; color:var(--text-main); font-size:11px;">${roleLabel}</td>
+                            <td style="padding:6px 10px; text-align:center;">${finBadge}</td>
+                            <td style="padding:6px 10px; text-align:center;">${indBadge}</td>
+                            <td style="padding:6px 10px;">${expiryText}</td>
+                            <td style="padding:6px 10px; text-align:center;">${actionBtn}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:var(--accent-red);">Erreur: ${escapeHTML(e.message)}</td></tr>`;
+            }
+        }
+
+        function formatRoleInDossier(roleCode) {
+            const map = {
+                'contributeur_qa': '🛡️ Qualité BPF (M1/M3)',
+                'contributeur_rd': '🔬 R&D / Galénique (M3)',
+                'consultant_cro': '🤝 Expert CRO Tiers',
+                'lead_ra': '📋 Chef Projet RA Adjoint',
+                'auditeur': '🔍 Auditeur Qualité'
+            };
+            return map[roleCode] || escapeHTML(roleCode || 'Contributeur');
+        }
+
+        async function loadAssignableUsers() {
+            const select = document.getElementById("assign-user-select");
+            if (!select) return;
+
+            try {
+                const res = await fetch('/api/v1/admin/users');
+                if (!res.ok) return;
+                const data = await res.json();
+                const users = data.users || [];
+
+                select.innerHTML = '<option value="">-- Choisir un collaborateur --</option>' + users.map(u => {
+                    return `<option value="${u.id}">${escapeHTML(u.first_name)} ${escapeHTML(u.last_name)} (${escapeHTML(u.email)} - ${escapeHTML(u.role)})</option>`;
+                }).join('');
+            } catch(e) {
+                console.error("loadAssignableUsers", e);
+            }
+        }
+
+        async function executeAssignMember() {
+            if (!selectedDossierId) return;
+
+            const userSelect = document.getElementById("assign-user-select");
+            const roleSelect = document.getElementById("assign-role-in-dossier");
+            const expInput = document.getElementById("assign-expires-at");
+            const notesInput = document.getElementById("assign-notes");
+            const canFinCheck = document.getElementById("assign-can-financials");
+            const canIndCheck = document.getElementById("assign-can-industrial");
+
+            if (!userSelect || !userSelect.value) {
+                showNotifyModal("Validation", "Veuillez sélectionner un utilisateur à affecter.", "⚠️");
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/dossiers/${selectedDossierId}/members`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userSelect.value,
+                        role_in_dossier: roleSelect.value,
+                        can_view_financials: canFinCheck ? canFinCheck.checked : false,
+                        can_view_industrial_secret: canIndCheck ? canIndCheck.checked : true,
+                        expires_at: expInput && expInput.value ? expInput.value : null,
+                        notes: notesInput && notesInput.value ? notesInput.value : null
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Échec de l'affectation");
+                }
+
+                showNotifyModal("Habilitation Enregistrée", "Le collaborateur a été affecté au dossier avec ses prérogatives de secret.", "🛡️");
+                // Reset form
+                userSelect.value = '';
+                if (expInput) expInput.value = '';
+                if (notesInput) notesInput.value = '';
+
+                await loadDossierMembers();
+            } catch(e) {
+                showNotifyModal("Erreur Affectation", e.message, "⚠️");
+            }
+        }
+
+        async function executeRemoveMember(userId) {
+            if (!selectedDossierId || !userId) return;
+
+            if (!confirm("Confirmez-vous la révocation immédiate des accès de ce collaborateur sur ce dossier ?")) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/dossiers/${selectedDossierId}/members/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Révocation impossible");
+                }
+
+                showNotifyModal("Accès Révoqué", "L'affectation et les habilitations ont été supprimées avec succès.", "✅");
+                await loadDossierMembers();
+            } catch(e) {
+                showNotifyModal("Erreur Révocation", e.message, "⚠️");
             }
         }
