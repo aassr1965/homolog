@@ -236,6 +236,7 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/manufacturing-sites", pharmaHandler.ListManufacturingSites)
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/manufacturing-sites", pharmaHandler.CreateManufacturingSite)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/manufacturing-sites/{id}", pharmaHandler.GetManufacturingSite)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/manufacturing-sites/{id}", pharmaHandler.UpdateManufacturingSite)
 
 				// Médicaments (Princeps, Générique importé, Générique local)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medicines", pharmaHandler.ListMedicines)
