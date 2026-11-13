@@ -643,7 +643,7 @@
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:16px;">🏢</span>
-                    <span>Enregistrement d'un Établissement Pharmaceutique (MIPH / Décret 20-325)</span>
+                    <span id="modal-est-title">Enregistrement d'un Établissement Pharmaceutique (MIPH / Décret 20-325)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-new-est')">✕</button>
             </div>
@@ -700,7 +700,7 @@
                     </div>
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:10px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-est')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer l'Établissement (Base SQL)</button>
+                        <button type="submit" id="modal-est-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer l'Établissement (Base SQL)</button>
                     </div>
                 </form>
             </div>
@@ -713,7 +713,7 @@
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:16px;">🏭</span>
-                    <span>Enregistrement d'un Site Intervenant (ANPP 1.H.8 &amp; 1.M)</span>
+                    <span id="modal-site-title">Enregistrement d'un Site Intervenant (ANPP 1.H.8 &amp; 1.M)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-new-site')">✕</button>
             </div>
@@ -784,7 +784,7 @@
 
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-site')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Site (Base SQL)</button>
+                        <button type="submit" id="modal-site-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Site (Base SQL)</button>
                     </div>
                 </form>
             </div>
