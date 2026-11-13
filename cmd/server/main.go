@@ -120,6 +120,20 @@ func main() {
 		w.Write(content)
 	})
 
+	// Présentation Commerciale Haute Fidélité (Pitch Deck 10 Diapositives)
+	r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+		content, err := web.Files.ReadFile("presentation.html")
+		if err != nil {
+			http.Error(w, "Support de présentation introuvable", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(content)
+	})
+	r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/presentation", http.StatusMovedPermanently)
+	})
+
 	// Favicon Caducée officiel Sanad Pharma
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		ico, err := web.Files.ReadFile("favicon.ico")
