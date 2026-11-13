@@ -301,6 +301,16 @@
         let currentDomain = 'ref';
 
         function switchDomainModule(domain) {
+            // Contrôle d'habilitation préventif côté UI (Jalon 1.2)
+            if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE')) {
+                showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas de la permission <code>USER_MANAGE</code> pour accéder à la Console d'Administration.", "🚫", "Fermer");
+                return;
+            }
+            if (domain === 'ged' && typeof hasPermission === 'function' && !hasPermission('DOC_READ')) {
+                showNotifyModal("Accès Refusé (Zero-Trust)", "Votre profil technique est assujetti aux règles Zero-Trust et ne dispose pas de l'habilitation <code>DOC_READ</code>.", "🚫", "Fermer");
+                return;
+            }
+
             currentDomain = domain;
             
             // Mise à jour de l'état actif dans l'Activity Bar
@@ -340,6 +350,9 @@
                 } else if (domain === 'ged') {
                     icon = "📁";
                     text = isArabic ? "التوثيق الصيدلاني BPF" : "GED Pharmaceutique & BPF";
+                } else if (domain === 'admin') {
+                    icon = "⚙️";
+                    text = isArabic ? "إدارة المخبر والمصفوفة" : "Administration Labo & Matrice RBAC";
                 }
                 titleEl.innerHTML = `<span>${icon}</span> <span>${text}</span>`;
             }
@@ -372,6 +385,19 @@
                 currentGEDTaxonomyPath = '';
                 loadGEDTaxonomy();
                 loadGEDDocuments();
+            } else if (domain === 'admin') {
+                document.getElementById("bc-root").innerText = "ADMINISTRATION";
+                document.getElementById("bc-sec").innerText = "Habilitations_RBAC";
+                document.getElementById("bc-prod").innerText = "Collaborateurs & Matrice";
+                document.getElementById("bc-mod").innerText = "Conformité PSSI & BPF";
+                if (typeof loadAdminSection === 'function') {
+                    loadAdminSection(currentAdminSection || 'users');
+                }
+            }
+
+            // Réapplication dynamique des permissions UI sur les nouveaux boutons injectés
+            if (typeof applyPermissionsUI === 'function') {
+                applyPermissionsUI();
             }
         }
 
@@ -439,6 +465,17 @@
                         Coffre-Fort CAS : <strong style="color:var(--accent-emerald);">Stockage Immuable SHA-256</strong>
                     </div>
                 `;
+            } else if (domain === 'admin') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewUserModal()">➕ Inviter Collaborateur</button>
+                    <button class="btn-pill" onclick="loadAdminSection(currentAdminSection)">🔄 Actualiser</button>
+                    <button class="btn-pill" onclick="exportRBACMatrixCSV()">📊 Exporter Matrice des Droits</button>
+                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        PSSI Labo : <strong style="color:var(--accent-emerald);">Contrôle d'Accès ALCOA+ & SoD</strong>
+                    </div>
+                `;
             }
         }
 
@@ -501,6 +538,28 @@
                 `;
             } else if (domain === 'ged') {
                 renderGEDTree();
+            } else if (domain === 'admin') {
+                if (typeof renderAdminTree === 'function') {
+                    renderAdminTree();
+                } else {
+                    container.innerHTML = `
+                        <div class="tree-node ${currentAdminSection === 'users' ? 'selected' : ''}" onclick="loadAdminSection('users')">
+                            <span class="chevron">👥</span>
+                            <span>Collaborateurs & Rôles</span>
+                            <span class="count-badge ok">Actifs</span>
+                        </div>
+                        <div class="tree-node ${currentAdminSection === 'matrix' ? 'selected' : ''}" onclick="loadAdminSection('matrix')">
+                            <span class="chevron">🔐</span>
+                            <span>Matrice des 14 Permissions</span>
+                            <span class="count-badge ok">Tableau BPF</span>
+                        </div>
+                        <div class="tree-node ${currentAdminSection === 'policies' ? 'selected' : ''}" onclick="loadAdminSection('policies')">
+                            <span class="chevron">🛡️</span>
+                            <span>Règles SoD & Zero-Trust</span>
+                            <span class="count-badge req">Guardrails</span>
+                        </div>
+                    `;
+                }
             }
         }
 

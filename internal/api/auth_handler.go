@@ -191,16 +191,30 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		"has_2fa":     totpEnabled,
 	})
 
+	// 9. Chargement des permissions effectives de l'utilisateur
+	sessionUser, _ := h.sessionManager.ValidateSession(r.Context(), token)
+	var userPerms []string
+	var permVersion int = 1
+	if sessionUser != nil {
+		userPerms = sessionUser.Permissions
+		permVersion = sessionUser.PermissionsVersion
+	} else {
+		userPerms = []string{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status": "ok",
 		"user": map[string]any{
-			"id":         userID,
-			"email":      email,
-			"first_name": firstName,
-			"last_name":  lastName,
-			"role":       role,
-			"has_2fa":    totpEnabled,
+			"id":                    userID,
+			"email":                 email,
+			"first_name":            firstName,
+			"last_name":             lastName,
+			"role":                  role,
+			"permissions":           userPerms,
+			"permissions_version":   permVersion,
+			"is_technical_director": role == string(domain.RoleDirecteurTechnique),
+			"has_2fa":               totpEnabled,
 		},
 		"organization": map[string]any{
 			"id":   orgID,
@@ -235,7 +249,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]any{"status": "ok", "message": "Déconnexion réussie"})
 }
 
-// Me retourne le profil de l'utilisateur authentifié
+// Me retourne le profil de l'utilisateur authentifié avec ses permissions dynamiques
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
 	if user == nil {
@@ -243,15 +257,23 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	perms := user.Permissions
+	if perms == nil {
+		perms = []string{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"user": map[string]any{
-			"id":         user.UserID,
-			"email":      user.Email,
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"role":       user.Role,
-			"has_2fa":    user.TOTPEnabled,
+			"id":                    user.UserID,
+			"email":                 user.Email,
+			"first_name":            user.FirstName,
+			"last_name":             user.LastName,
+			"role":                  user.Role,
+			"permissions":           perms,
+			"permissions_version":   user.PermissionsVersion,
+			"is_technical_director": user.Role == string(domain.RoleDirecteurTechnique),
+			"has_2fa":               user.TOTPEnabled,
 		},
 		"organization": map[string]any{
 			"id":   user.OrganizationID,

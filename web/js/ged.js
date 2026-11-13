@@ -327,13 +327,13 @@
                         <div style="font-size:10px; color:var(--text-muted);">${sizeKB}</div>
                     </td>
                     <td style="text-align:right;">
-                        <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); downloadGEDVersion('${doc.id}', '${v ? v.id : ''}')" title="Télécharger le fichier physique">📥</button>
+                        <button class="btn-pill btn-zero-trust-pharma-doc" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); downloadGEDVersion('${doc.id}', '${v ? v.id : ''}')" title="Télécharger le fichier physique">📥</button>
                         <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); openGEDVersionsModal('${doc.id}')" title="Historique & Check-in">📜</button>
                         ${doc.is_locked ? 
                             `<button class="btn-pill" style="padding:2px 6px; font-size:10px; color:var(--accent-red);" onclick="selectGEDDocument('${doc.id}'); handleCancelCheckOutGED('${doc.id}')" title="Annuler le verrouillage">🔓</button>` :
                             `<button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); handleCheckOutGED('${doc.id}')" title="Verrouiller pour édition (Check-out)">🔒</button>`
                         }
-                        ${(doc.status === 'en_approbation_dt' || (v && !v.is_signed_dt)) ?
+                        ${((doc.status === 'en_approbation_dt' || (v && !v.is_signed_dt)) && (typeof hasPermission !== 'function' || hasPermission('DOC_APPROVE_PDT'))) ?
                             `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${doc.id}'); openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')" title="Signer électroniquement (PDT)">✍️</button>` : ''
                         }
                     </td>
@@ -402,11 +402,11 @@
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:6px; margin-top:12px;">
-                    <button class="btn-pill" style="width:100%; background:var(--accent-blue); color:white; border:none;" onclick="downloadGEDVersion('${doc.id}', '${v ? v.id : ''}')">📥 Télécharger la Pièce (CAS)</button>
+                    <button class="btn-pill btn-zero-trust-pharma-doc" style="width:100%; background:var(--accent-blue); color:white; border:none;" onclick="downloadGEDVersion('${doc.id}', '${v ? v.id : ''}')">📥 Télécharger la Pièce (CAS)</button>
                     <button class="btn-pill" style="width:100%;" onclick="openGEDVersionsModal('${doc.id}')">📜 Consulter les Versions &amp; Check-in</button>
                     ${doc.status === 'brouillon' ? `<button class="btn-pill" style="width:100%;" onclick="handleStatusChangeGED('${doc.id}', 'en_revue')">🔄 Soumettre pour Revue</button>` : ''}
                     ${doc.status === 'en_revue' ? `<button class="btn-pill" style="width:100%;" onclick="handleStatusChangeGED('${doc.id}', 'en_approbation_dt')">📤 Transmettre pour Approbation PDT</button>` : ''}
-                    ${doc.status === 'en_approbation_dt' ? `<button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none;" onclick="openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')">✍️ Signer et Mettre en Vigueur (PDT)</button>` : ''}
+                    ${doc.status === 'en_approbation_dt' && (typeof hasPermission !== 'function' || hasPermission('DOC_APPROVE_PDT')) ? `<button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none;" onclick="openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')">✍️ Signer et Mettre en Vigueur (PDT)</button>` : ''}
                 </div>
             `;
         }
@@ -611,6 +611,24 @@
         }
 
         function openSignGEDDTModal(docID, versionID, docCode, title, sha) {
+            // Guardrail client : Vérifier la permission DOC_APPROVE_PDT
+            if (typeof hasPermission === 'function' && !hasPermission('DOC_APPROVE_PDT')) {
+                showNotifyModal(
+                    "Accès Refusé (Exclusivité 1.A.7)",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-red); font-weight:700;">
+                            🚫 Visa réservé exclusivement au Pharmacien Directeur Technique
+                        </div>
+                        <div style="font-size:11px; color:var(--text-main);">
+                            Conformément à l'Arrêté ministériel du 10 décembre 2020 et au Décret 21-82, seul le Pharmacien DT titulaire de la décision nominative MIPH (1.A.7) peut apposer la signature d'approbation légale.
+                        </div>
+                    </div>`,
+                    "💊",
+                    "Fermer"
+                );
+                return;
+            }
+
             selectGEDDocument(docID);
             document.getElementById('sign-ged-doc-id').value = docID;
             document.getElementById('sign-ged-version-id').value = versionID;
@@ -663,6 +681,24 @@
         }
 
         function downloadGEDVersion(docID, versionID) {
+            // Guardrail client : Zero-Trust IT isolation pour les profils techniques
+            if (typeof hasRole === 'function' && hasRole('admin_systeme_local', 'super_admin_editeur')) {
+                showNotifyModal(
+                    "Accès Refusé (PSSI Zero-Trust)",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-red); font-weight:700;">
+                            🚫 Téléchargement interdit pour les profils techniques IT
+                        </div>
+                        <div style="font-size:11px; color:var(--text-main);">
+                            En vertu des règles de gouvernance Zero-Trust et de la protection des secrets industriels de formulation pharmaceutique, les comptes administrateurs système ne peuvent télécharger aucune pièce confidentielle.
+                        </div>
+                    </div>`,
+                    "🛡️",
+                    "Compris"
+                );
+                return;
+            }
+
             let url = `/api/v1/ged/documents/${docID}/download`;
             if (versionID) url += `?version_id=${encodeURIComponent(versionID)}`;
             window.open(url, '_blank');

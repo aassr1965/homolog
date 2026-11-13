@@ -31,11 +31,26 @@ type SessionUser struct {
 	FirstName           string
 	LastName            string
 	Role                string
+	Permissions         []string
+	PermissionsVersion  int
 	TOTPEnabled         bool
 	FailedLoginAttempts int
 	LockedUntil         *time.Time
 	OrganizationSlug    string
 	OrganizationName    string
+}
+
+// HasPermission vérifie si l'utilisateur possède une permission spécifique
+func (u *SessionUser) HasPermission(perm string) bool {
+	if u == nil {
+		return false
+	}
+	for _, p := range u.Permissions {
+		if p == perm {
+			return true
+		}
+	}
+	return false
 }
 
 // SessionManager gère le cycle de vie des sessions en base PostgreSQL
@@ -96,6 +111,7 @@ func (sm *SessionManager) ValidateSession(ctx context.Context, rawToken string) 
 			s.id, s.user_id, s.expires_at, s.last_activity_at,
 			u.organization_id, u.email, u.first_name, u.last_name, u.role, 
 			u.totp_enabled, u.failed_login_attempts, u.locked_until, u.is_active,
+			COALESCE(u.permissions_version, 1),
 			o.slug, o.legal_name
 		FROM sessions s
 		JOIN users u ON s.user_id = u.id
@@ -117,6 +133,7 @@ func (sm *SessionManager) ValidateSession(ctx context.Context, rawToken string) 
 		failedAttempts int
 		lockedUntil    *time.Time
 		isActive       bool
+		permVersion    int
 		orgSlug        string
 		orgName        string
 	)
@@ -125,6 +142,7 @@ func (sm *SessionManager) ValidateSession(ctx context.Context, rawToken string) 
 		&sessionID, &userID, &expiresAt, &lastActivityAt,
 		&orgID, &email, &firstName, &lastName, &role,
 		&totpEnabled, &failedAttempts, &lockedUntil, &isActive,
+		&permVersion,
 		&orgSlug, &orgName,
 	)
 	if err != nil {
@@ -160,6 +178,9 @@ func (sm *SessionManager) ValidateSession(ctx context.Context, rawToken string) 
 	// 5. Mise à jour de la dernière activité
 	_, _ = sm.pool.Exec(ctx, "UPDATE sessions SET last_activity_at = $1 WHERE id = $2", now, sessionID)
 
+	// 6. Chargement des permissions effectives (Rôle + Surcharges)
+	perms := sm.loadEffectivePermissions(ctx, userID, role)
+
 	return &SessionUser{
 		SessionID:           sessionID,
 		UserID:              userID,
@@ -168,12 +189,42 @@ func (sm *SessionManager) ValidateSession(ctx context.Context, rawToken string) 
 		FirstName:           firstName,
 		LastName:            lastName,
 		Role:                role,
+		Permissions:         perms,
+		PermissionsVersion:  permVersion,
 		TOTPEnabled:         totpEnabled,
 		FailedLoginAttempts: failedAttempts,
 		LockedUntil:         lockedUntil,
 		OrganizationSlug:    orgSlug,
 		OrganizationName:    orgName,
 	}, nil
+}
+
+// loadEffectivePermissions calcule les permissions d'un utilisateur selon son rôle et ses surcharges
+func (sm *SessionManager) loadEffectivePermissions(ctx context.Context, userID uuid.UUID, role string) []string {
+	query := `
+		SELECT permission_id FROM role_permissions WHERE role_id = $1
+		UNION
+		SELECT permission_id FROM user_permissions WHERE user_id = $2 AND granted = TRUE
+		EXCEPT
+		SELECT permission_id FROM user_permissions WHERE user_id = $2 AND granted = FALSE
+	`
+	rows, err := sm.pool.Query(ctx, query, role, userID)
+	if err != nil {
+		return []string{}
+	}
+	defer rows.Close()
+
+	var perms []string
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err == nil {
+			perms = append(perms, p)
+		}
+	}
+	if perms == nil {
+		perms = []string{}
+	}
+	return perms
 }
 
 // RevokeSession supprime une session unique (déconnexion)
