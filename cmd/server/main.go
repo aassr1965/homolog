@@ -117,6 +117,39 @@ func main() {
 		w.Write(content)
 	})
 
+	// Favicon Caducée officiel Sanad Pharma
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		ico, err := web.Files.ReadFile("favicon.ico")
+		if err == nil {
+			w.Header().Set("Content-Type", "image/x-icon")
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Write(ico)
+			return
+		}
+		svgIco, err := web.Files.ReadFile("img/favicon-caducee.svg")
+		if err == nil {
+			w.Header().Set("Content-Type", "image/svg+xml")
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Write(svgIco)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	// Servir les assets statiques embarqués (css, js, img)
+	staticFS := http.FileServer(http.FS(web.Files))
+	noCacheWrapper := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
+			h.ServeHTTP(w, r)
+		})
+	}
+	r.Handle("/css/*", noCacheWrapper(staticFS))
+	r.Handle("/js/*", noCacheWrapper(staticFS))
+	r.Handle("/img/*", staticFS)
+
 	// Routes de diagnostic et d'état de santé
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
