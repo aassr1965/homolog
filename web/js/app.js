@@ -299,6 +299,7 @@
         }
 
         let currentDomain = 'ref';
+        var currentRefSection = 'establishments';
 
         function switchDomainModule(domain) {
             // Contrôle d'habilitation préventif côté UI (Jalon 1.2 & CDC 7.2.2)
