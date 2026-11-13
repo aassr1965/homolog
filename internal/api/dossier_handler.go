@@ -44,7 +44,7 @@ func NewDossierHandler(
 	}
 }
 
-// ListDossiers retourne tous les dossiers réglementaires de l'organisation
+// ListDossiers retourne tous les dossiers réglementaires de l'organisation (avec cloisonnement pour les consultants)
 func (h *DossierHandler) ListDossiers(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
 	if user == nil {
@@ -55,7 +55,12 @@ func (h *DossierHandler) ListDossiers(w http.ResponseWriter, r *http.Request) {
 	procFilter := r.URL.Query().Get("procedure_code")
 	statusFilter := r.URL.Query().Get("status")
 
-	dossiers, err := h.repo.ListDossiers(r.Context(), user.OrganizationID, procFilter, statusFilter)
+	var consultantID *uuid.UUID
+	if user.Role == string(domain.RoleConsultantExterne) {
+		consultantID = &user.UserID
+	}
+
+	dossiers, err := h.repo.ListDossiers(r.Context(), user.OrganizationID, consultantID, procFilter, statusFilter)
 	if err != nil {
 		log.Printf("[ERROR] ListDossiers: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les dossiers")
@@ -87,6 +92,22 @@ func (h *DossierHandler) GetDossier(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cloisonnement strict pour les consultants externes (CDC Section 7.2.2 / 7.2.3)
+	if user.Role == string(domain.RoleConsultantExterne) && h.pool != nil {
+		var isAssigned bool
+		checkQuery := `
+			SELECT EXISTS(
+				SELECT 1 FROM dossier_consultants
+				WHERE dossier_id = $1 AND user_id = $2 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+			)
+		`
+		_ = h.pool.QueryRow(r.Context(), checkQuery, dossierID, user.UserID).Scan(&isAssigned)
+		if !isAssigned {
+			writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Ce dossier n'est pas assigné à votre compte consultant CRO ou votre mandat est expiré (CDC Section 7.2.2)")
+			return
+		}
+	}
+
 	dossier, err := h.repo.GetDossierByID(r.Context(), user.OrganizationID, dossierID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
@@ -96,6 +117,19 @@ func (h *DossierHandler) GetDossier(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ERROR] GetDossierByID %s: %v", dossierID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger le dossier")
 		return
+	}
+
+	// Masquage des données financières et de prix pour les profils non autorisés (CDC Section 7.2.2)
+	if user.Role == string(domain.RoleConsultantExterne) && dossier != nil {
+		for i := range dossier.Items {
+			code := dossier.Items[i].ItemCode
+			if code == "1.A.4" || code == "1.H.4" || code == "1.H.5" {
+				dossier.Items[i].TitleFR = "[CONFIDENTIEL] Données financières réservées à la direction du laboratoire"
+				dossier.Items[i].DescriptionFR = "Section masquée conformément à la politique de confidentialité industrielle du laboratoire (CDC Section 7.2.2)."
+				dossier.Items[i].GEDDocumentID = nil
+				dossier.Items[i].GEDDocument = nil
+			}
+		}
 	}
 
 	writeJSON(w, http.StatusOK, dossier)

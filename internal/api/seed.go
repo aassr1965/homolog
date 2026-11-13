@@ -177,6 +177,9 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 				return err
 			}
 			log.Printf("[Init] Compte créé : %s (%s) - Rôle: %s", u.Email, u.FirstName+" "+u.LastName, u.Role)
+		} else {
+			// S'assurer que le rôle correspond au seed
+			_, _ = pool.Exec(ctx, "UPDATE users SET role = $1 WHERE organization_id = $2 AND email = $3 AND role != $1", string(u.Role), orgID, u.Email)
 		}
 	}
 

@@ -114,11 +114,20 @@
             const container = document.getElementById("tree-root");
             if (!container) return;
 
+            const isConsultant = typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe');
+
             let html = `
                 <div style="padding:10px; border-bottom:1px solid var(--border-color); display:flex; flex-direction:column; gap:8px;">
-                    <button class="btn-pill" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:600;" onclick="openNewDossierModal()">
-                        ➕ Nouveau Dossier ANPP
-                    </button>
+                    ${isConsultant ? `
+                        <div style="background:rgba(2,132,199,0.08); border:1px solid #0284c7; border-radius:4px; padding:6px 8px; font-size:10px; color:#0369a1; line-height:1.4;">
+                            <strong>🤝 Accès Invité Cloisonné (CRO) :</strong><br>
+                            Seul le dossier d'expertise contractuellement assigné est affiché ci-dessous (CDC Section 7.2.2).
+                        </div>
+                    ` : `
+                        <button class="btn-pill" data-perm="DOSSIER_EDIT" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:600;" onclick="openNewDossierModal()">
+                            ➕ Nouveau Dossier ANPP
+                        </button>
+                    `}
                     <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch;">
                         <button class="btn-pill ${currentDossierFilterProc === '' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('')">Tous (${currentDossiers.length})</button>
                         <button class="btn-pill ${currentDossierFilterProc === 'NI' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('NI')">NI</button>
@@ -722,13 +731,18 @@
                         if (it.id === selectedDossierItemId) tr.classList.add("selected");
                         tr.onclick = () => selectDossierItem(it.id);
 
+                        const isConsultant = typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe');
+                        const isFinancialSecret = isConsultant && (it.item_code === '1.A.4' || it.item_code === '1.H.4' || it.item_code === '1.H.5');
+
                         let reqBadge = `<span class="badge-req-e">[E] Exigé</span>`;
                         if (it.requirement_level === 'F') reqBadge = `<span class="badge-req-f">[F] Facultatif</span>`;
                         else if (it.requirement_level === 'P') reqBadge = `<span class="badge-req-p">[P] Partiel</span>`;
                         else if (it.requirement_level === 'NA') reqBadge = `<span class="badge-req-na">[NA] Non Appl.</span>`;
 
                         let statusBadge = '<span class="status-tag status-rej">MANQUANT</span>';
-                        if (it.status === 'rattache') statusBadge = '<span class="status-tag status-rev">RATTACHÉ</span>';
+                        if (isFinancialSecret) {
+                            statusBadge = '<span class="status-tag" style="background:rgba(239,68,68,0.1); color:var(--accent-red); font-weight:700;">🔒 CONFIDENTIEL</span>';
+                        } else if (it.status === 'rattache') statusBadge = '<span class="status-tag status-rev">RATTACHÉ</span>';
                         else if (it.status === 'valide_qualite') statusBadge = '<span class="status-tag status-ok">VALIDÉ QUALITÉ</span>';
                         else if (it.status === 'approuve_dt') statusBadge = '<span class="status-tag" style="background:rgba(147,51,234,0.15); color:#7e22ce; border:1.5px solid #c084fc; font-weight:800;">APPROUVÉ PDT</span>';
 
@@ -736,7 +750,9 @@
                         if (it.module_number === 0) modLabel = `DM`;
 
                         let gedInfo = `<span style="color:var(--text-dim); font-size:11px; font-weight:600; font-style:italic;">— Non rattaché —</span>`;
-                        if (it.ged_document) {
+                        if (isFinancialSecret) {
+                            gedInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Donnée financière masquée</span>`;
+                        } else if (it.ged_document) {
                             gedInfo = `
                                 <div style="display:flex; align-items:center; gap:6px;">
                                     <span style="font-size:13px;">📄</span>
@@ -751,7 +767,9 @@
                         let actionsHTML = '';
                         const isLocked = currentDossierDetail && currentDossierDetail.is_locked_for_deposit;
 
-                        if (!it.ged_document_id) {
+                        if (isFinancialSecret) {
+                            actionsHTML = `<span style="color:var(--text-dim); font-size:10px; font-style:italic;">Accès restreint</span>`;
+                        } else if (!it.ged_document_id) {
                             actionsHTML = `
                                 <button class="btn-pill" style="height:24px; padding:2px 8px; font-size:10.5px; font-weight:700; background:var(--accent-blue); color:white; border:none;" 
                                         onclick="event.stopPropagation(); openAttachGEDModal('${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}', '${it.requirement_level}')"
@@ -774,6 +792,9 @@
                             `;
                         }
 
+                        const displayTitleFR = isFinancialSecret ? '[CONFIDENTIEL] Données financières réservées à la direction du laboratoire' : escapeHTML(it.title_fr);
+                        const displayDescFR = isFinancialSecret ? 'Section masquée conformément à la politique de confidentialité industrielle du laboratoire (CDC Section 7.2.2).' : escapeHTML(it.description_fr || '');
+
                         tr.innerHTML = `
                             <td class="col-hide-xs" style="font-weight:800; color:var(--text-dim); font-size:11.5px; font-family:monospace; white-space:nowrap;">${modLabel}</td>
                             <td class="col-hide-sm" style="white-space:nowrap;">${reqBadge}</td>
@@ -781,10 +802,10 @@
                             <td style="min-width:240px;">
                                 <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                     <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">${escapeHTML(it.item_code)}</span>
-                                    <span style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHTML(it.title_fr)}</span>
+                                    <span style="font-weight:700; color:var(--text-main); font-size:12px;">${displayTitleFR}</span>
                                 </div>
-                                ${it.title_ar ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
-                                ${it.description_fr ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${escapeHTML(it.description_fr)}</div>` : ''}
+                                ${(!isFinancialSecret && it.title_ar) ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
+                                ${displayDescFR ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${displayDescFR}</div>` : ''}
                             </td>
                             <td style="min-width:180px;">${gedInfo}</td>
                             <td style="text-align:center; white-space:nowrap;">${actionsHTML}</td>
@@ -840,6 +861,28 @@
         function renderDossierItemPreview(item) {
             const preview = document.getElementById("preview-body");
             if (!preview) return;
+
+            const isConsultant = typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe');
+            const isFinancialSecret = isConsultant && (item.item_code === '1.A.4' || item.item_code === '1.H.4' || item.item_code === '1.H.5');
+            if (isFinancialSecret) {
+                preview.innerHTML = `
+                    <div class="pdf-sim-page">
+                        <div style="text-align:center; padding:35px 20px;">
+                            <div style="font-size:36px; margin-bottom:12px;">🔒</div>
+                            <div style="font-size:13px; font-weight:800; color:var(--accent-red); margin-bottom:8px;">
+                                DONNÉES FINANCIÈRES &amp; PRIX CONFIDENTIELLES
+                            </div>
+                            <div style="font-size:11px; color:var(--text-main); line-height:1.6; max-width:400px; margin:0 auto;">
+                                Conformément aux règles de protection du secret d'affaires pharmaceutique (Cahier des Charges Section 7.2.2), cette section (PCSU, FOB, Benchmark, Redevances bancaires) est strictement masquée pour les consultants externes et prestataires CRO.
+                            </div>
+                            <div style="margin-top:16px; font-size:10px; color:var(--text-dim); background:rgba(239,68,68,0.08); padding:6px 12px; border-radius:4px; display:inline-block; border:1px solid rgba(239,68,68,0.2);">
+                                Règle PSSI : Accès réservé aux Affaires Réglementaires et au Pharmacien DT
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
 
             let reqDesc = "Exigence obligatoire pour le dépôt ANPP.";
             if (item.requirement_level === 'E') reqDesc = "Exigé [E] : La pièce doit être obligatoirement présente dans le dossier sous peine de rejet d'irrecevabilité.";
