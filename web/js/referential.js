@@ -314,16 +314,74 @@ let currentRefSection = 'establishments';
         }
 
 
+        async function populateEstablishmentsDropdown() {
+            const select = document.getElementById("site-est-id");
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Aucun / Site Tiers Extérieur ou Façonnier --</option>';
+            try {
+                const res = await fetch('/api/v1/establishments');
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = data.establishments || data.items || [];
+                    list.forEach(est => {
+                        const opt = document.createElement("option");
+                        opt.value = est.id;
+                        opt.textContent = `${est.name_fr} (${est.miph_license_number || 'Agréé'})`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch(e) {}
+        }
+
         function openNewPharmaModal() {
             closeAllModals();
             if (currentRefSection === 'establishments') {
                 document.getElementById("modal-new-est").classList.add("open");
+            } else if (currentRefSection === 'sites') {
+                populateEstablishmentsDropdown();
+                document.getElementById("modal-new-site").classList.add("open");
             } else if (currentRefSection === 'medicines') {
                 document.getElementById("modal-new-med").classList.add("open");
             } else if (currentRefSection === 'devices') {
                 document.getElementById("modal-new-dm").classList.add("open");
             } else {
                 document.getElementById("modal-new-est").classList.add("open");
+            }
+        }
+
+        async function handleCreateManufacturingSite(e) {
+            if (e) e.preventDefault();
+            const estVal = document.getElementById("site-est-id").value;
+            const payload = {
+                site_name_fr: document.getElementById("site-name-fr").value.trim(),
+                country_code: document.getElementById("site-country-code").value.trim().toUpperCase(),
+                site_role: document.getElementById("site-role").value,
+                establishment_id: estVal ? estVal : null,
+                manufacturing_license_number: document.getElementById("site-ml-number").value.trim(),
+                gmp_certificate_number: document.getElementById("site-gmp-number").value.trim(),
+                gmp_issuing_authority: document.getElementById("site-gmp-authority").value.trim(),
+                gmp_grant_date: document.getElementById("site-gmp-grant").value ? new Date(document.getElementById("site-gmp-grant").value).toISOString() : null,
+                gmp_expiry_date: document.getElementById("site-gmp-expiry").value ? new Date(document.getElementById("site-gmp-expiry").value).toISOString() : null,
+                address: document.getElementById("site-address").value.trim(),
+                is_active: true
+            };
+
+            try {
+                const res = await fetch('/api/v1/manufacturing-sites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    closeModal('modal-new-site');
+                    showNotifyModal("Site Enregistré", "Le site de fabrication / contrôle a été inscrit au référentiel ANPP avec succès.", "🏭");
+                    loadRefSection('sites');
+                } else {
+                    const err = await res.json();
+                    showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
+                }
+            } catch(err) {
+                showNotifyModal("Erreur Réseau", err.message, "⚠️");
             }
         }
 
