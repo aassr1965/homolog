@@ -17,6 +17,9 @@ const (
 
 // Config holds all configuration values for the Homolog platform
 type Config struct {
+	Environment          string // "development", "staging", "production"
+	EnableDevSwitcher    bool   // Guard for development role switcher (disabled in production)
+	CookieSecure         bool   // Enforce Secure attribute on session cookies
 	DeploymentMode       DeploymentMode
 	Port                 int
 	DatabaseURL          string
@@ -43,6 +46,23 @@ type Config struct {
 func Load() *Config {
 	loadDotEnv(".env")
 
+	env := getEnv("APP_ENV", getEnv("ENVIRONMENT", "development"))
+	isProd := strings.ToLower(env) == "production" || strings.ToLower(env) == "prod"
+
+	// Dev Switcher is strictly forbidden in production; in non-prod it is true by default unless ENABLE_DEV_SWITCHER=false
+	devSwitcherDefault := "true"
+	if isProd {
+		devSwitcherDefault = "false"
+	}
+	enableDevSwitch := getEnv("ENABLE_DEV_SWITCHER", devSwitcherDefault) == "true" && !isProd
+
+	// Cookie Secure is true by default in production; can also be forced via COOKIE_SECURE=true
+	cookieSecureDefault := "false"
+	if isProd {
+		cookieSecureDefault = "true"
+	}
+	cookieSecure := getEnv("COOKIE_SECURE", cookieSecureDefault) == "true"
+
 	mode := DeploymentMode(getEnv("DEPLOYMENT_MODE", string(ModeOnPremise)))
 	if mode != ModeSaaS {
 		mode = ModeOnPremise
@@ -56,6 +76,9 @@ func Load() *Config {
 	smtpPort, _ := strconv.Atoi(getEnv("SMTP_PORT", "587"))
 
 	return &Config{
+		Environment:          env,
+		EnableDevSwitcher:    enableDevSwitch,
+		CookieSecure:         cookieSecure,
 		DeploymentMode:       mode,
 		Port:                 port,
 		DatabaseURL:          getEnv("DATABASE_URL", "postgres://homolog:homolog_secret_2026@localhost:5434/homolog?sslmode=disable"),
@@ -75,6 +98,30 @@ func Load() *Config {
 		OnPremOrgSlug: getEnv("ONPREM_ORG_SLUG", "laboratoire-principal"),
 		OnPremOrgName: getEnv("ONPREM_ORG_NAME", "Laboratoire Pharmaceutique National"),
 	}
+}
+
+// IsProduction returns true if the environment is configured as production
+func (c *Config) IsProduction() bool {
+	if c == nil {
+		return false
+	}
+	env := strings.ToLower(strings.TrimSpace(c.Environment))
+	return env == "production" || env == "prod"
+}
+
+// DevSwitcherEnabled returns true only in non-production environments when explicitly enabled
+func (c *Config) DevSwitcherEnabled() bool {
+	if c == nil {
+		appEnv := strings.ToLower(os.Getenv("APP_ENV"))
+		if appEnv == "production" || appEnv == "prod" {
+			return false
+		}
+		if os.Getenv("ENABLE_DEV_SWITCHER") == "false" {
+			return false
+		}
+		return true
+	}
+	return !c.IsProduction() && c.EnableDevSwitcher
 }
 
 func getEnv(key, fallback string) string {

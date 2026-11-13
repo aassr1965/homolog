@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"homolog/internal/audit"
 	"homolog/internal/auth"
+	"homolog/internal/config"
 	"homolog/internal/domain"
 )
 
@@ -20,14 +22,20 @@ type AdminHandler struct {
 	pool           *pgxpool.Pool
 	sessionManager *auth.SessionManager
 	auditService   *audit.Service
+	cfg            *config.Config
 }
 
 // NewAdminHandler instancie le handler d'administration
-func NewAdminHandler(pool *pgxpool.Pool, sm *auth.SessionManager, auditService *audit.Service) *AdminHandler {
+func NewAdminHandler(pool *pgxpool.Pool, sm *auth.SessionManager, auditService *audit.Service, cfg ...*config.Config) *AdminHandler {
+	var c *config.Config
+	if len(cfg) > 0 {
+		c = cfg[0]
+	}
 	return &AdminHandler{
 		pool:           pool,
 		sessionManager: sm,
 		auditService:   auditService,
+		cfg:            c,
 	}
 }
 
@@ -226,8 +234,15 @@ func (h *AdminHandler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DevSwitchRole permet de basculer instantanément de profil en mode développement sans mot de passe
+// DevSwitchRole permet de basculer instantanément de profil en mode développement sans mot de passe.
+// Strictement verrouillé et interdit en environnement de production (CodeRabbit PR #5 review).
 func (h *AdminHandler) DevSwitchRole(w http.ResponseWriter, r *http.Request) {
+	// Guard défense en profondeur : vérification de l'environnement
+	if (h.cfg != nil && !h.cfg.DevSwitcherEnabled()) || strings.ToLower(os.Getenv("APP_ENV")) == "production" || strings.ToLower(os.Getenv("ENVIRONMENT")) == "production" {
+		writeJSONError(w, http.StatusNotFound, "Endpoint désactivé en environnement de production")
+		return
+	}
+
 	var req struct {
 		Email string `json:"email"`
 	}
@@ -283,7 +298,7 @@ func (h *AdminHandler) DevSwitchRole(w http.ResponseWriter, r *http.Request) {
 		Expires:  now.Add(8 * time.Hour),
 		MaxAge:   8 * 3600,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   DetermineCookieSecure(r, h.cfg),
 		SameSite: http.SameSiteStrictMode,
 	})
 
