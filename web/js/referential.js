@@ -6,40 +6,73 @@ let currentRefSection = 'establishments';
         let currentRefList = [];
         let selectedRefIndex = 0;
 
-        async function loadRefSection(section) {
-            currentRefSection = section;
-            renderTreeForDomain(currentDomain);
+        function resetStandardTableContainer() {
+            const container = document.querySelector('.table-container');
+            if (!container) return;
+            const table = document.getElementById("doc-table");
+            const tbody = document.getElementById("doc-tbody");
+            const thead = document.getElementById("table-head");
+            // Si la table de base est absente ou polluée par une vue complexe (ex: CTD KPIs)
+            if (!table || !tbody || !thead || container.querySelector('.kpi-dossier-bar') || container.querySelector('.tabs-bar')) {
+                container.innerHTML = `
+                    <table id="doc-table">
+                        <thead id="table-head"></thead>
+                        <tbody id="doc-tbody">
+                            <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement depuis PostgreSQL...</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
 
-            if (window.innerWidth < 768) {
+        async function loadRefSection(section) {
+            currentRefSection = section || currentRefSection || 'establishments';
+            resetStandardTableContainer();
+
+            if (typeof renderTreeForDomain === 'function' && typeof currentDomain !== 'undefined') {
+                renderTreeForDomain(currentDomain);
+            }
+
+            if (window.innerWidth < 768 && typeof toggleMobileTree === 'function') {
                 toggleMobileTree(false);
             }
             
-            document.getElementById("bc-root").innerText = "RÉFÉRENTIEL";
-            document.getElementById("bc-sec").innerText = "Pharmacopée";
-            document.getElementById("bc-prod").innerText = section.toUpperCase();
-            document.getElementById("bc-mod").innerText = "Catalogue National";
+            const bcRoot = document.getElementById("bc-root");
+            const bcSec = document.getElementById("bc-sec");
+            const bcProd = document.getElementById("bc-prod");
+            const bcMod = document.getElementById("bc-mod");
+            if (bcRoot) bcRoot.innerText = "RÉFÉRENTIEL";
+            if (bcSec) bcSec.innerText = "Pharmacopée";
+            if (bcProd) bcProd.innerText = currentRefSection.toUpperCase();
+            if (bcMod) bcMod.innerText = "Catalogue National";
 
             const tbody = document.getElementById("doc-tbody");
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement depuis PostgreSQL...</td></tr>`;
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement depuis PostgreSQL...</td></tr>`;
+            }
 
             let url = '/api/v1/establishments';
-            if (section === 'sites') url = '/api/v1/manufacturing-sites';
-            else if (section === 'medicines') url = '/api/v1/medicines';
-            else if (section === 'devices') url = '/api/v1/medical-devices';
+            if (currentRefSection === 'sites') url = '/api/v1/manufacturing-sites';
+            else if (currentRefSection === 'medicines') url = '/api/v1/medicines';
+            else if (currentRefSection === 'devices') url = '/api/v1/medical-devices';
 
             try {
                 const res = await fetch(url);
                 if (res.status === 401) {
-                    handleAuthExpired();
+                    if (typeof handleAuthExpired === 'function') handleAuthExpired();
                     return;
                 }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
                 currentRefList = (data.items || data.establishments || data.sites || data.medicines || data.devices || []);
                 selectedRefIndex = 0;
-                renderRefTable(section, currentRefList);
+                renderRefTable(currentRefSection, currentRefList);
             } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--accent-red);">Impossible de charger : ${e.message}</td></tr>`;
+                console.error("[Referential] Erreur chargement :", e);
+                const tb = document.getElementById("doc-tbody");
+                if (tb) {
+                    tb.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--accent-red);">Impossible de charger : ${e.message}</td></tr>`;
+                }
             }
         }
 
