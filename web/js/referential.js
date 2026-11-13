@@ -523,18 +523,6 @@ let currentRefSection = 'establishments';
                 showNotifyModal("Erreur Réseau", err.message, "⚠️");
             }
         }
-                if (res.ok) {
-                    closeModal('modal-new-est');
-                    showNotifyModal("Établissement Enregistré", "L'établissement pharmaceutique a été inscrit en base PostgreSQL et son agrément MIPH a été validé.", "🏢");
-                    loadRefSection('establishments');
-                } else {
-                    const err = await res.json();
-                    showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
-                }
-            } catch(err) {
-                showNotifyModal("Erreur Réseau", err.message, "⚠️");
-            }
-        }
 
         async function handleCreateMedicine(e) {
             if (e) e.preventDefault();
