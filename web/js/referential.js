@@ -239,6 +239,12 @@ let currentRefSection = 'establishments';
                         <div class="meta-row"><span class="meta-label">Téléphone :</span><span class="meta-val">${item.phone || '-'}</span></div>
                         <div class="meta-row"><span class="meta-label">Email :</span><span class="meta-val">${item.email || '-'}</span></div>
                     </div>
+
+                    <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border-color);">
+                        <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none; width:100%; justify-content:center; padding:7px 12px; font-weight:600;" onclick="openEditEstablishmentModal()">
+                            ✏️ Mettre à jour l'Établissement (Agrément / PDT)
+                        </button>
+                    </div>
                 `;
             } else if (section === 'sites') {
                 preview.innerHTML = `
@@ -257,6 +263,12 @@ let currentRefSection = 'establishments';
                             Autorité émettrice : ${item.gmp_issuing_authority || 'ANPP'}<br>
                             Licence de fabrication (ML) : ${item.manufacturing_license_number || '-'}
                         </div>
+                    </div>
+
+                    <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border-color);">
+                        <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none; width:100%; justify-content:center; padding:7px 12px; font-weight:600;" onclick="openEditManufacturingSiteModal()">
+                            ✏️ Mettre à jour le Site (Certificat GMP / Licence ML)
+                        </button>
                     </div>
                 `;
             } else if (section === 'medicines') {
@@ -311,10 +323,17 @@ let currentRefSection = 'establishments';
                     </div>
                 `;
             }
+
+            if (typeof applyPermissionsUI === 'function') {
+                applyPermissionsUI();
+            }
         }
 
 
-        async function populateEstablishmentsDropdown() {
+        let editingEstID = null;
+        let editingSiteID = null;
+
+        async function populateEstablishmentsDropdown(selectedID) {
             const select = document.getElementById("site-est-id");
             if (!select) return;
             select.innerHTML = '<option value="">-- Aucun / Site Tiers Extérieur ou Façonnier --</option>';
@@ -327,6 +346,9 @@ let currentRefSection = 'establishments';
                         const opt = document.createElement("option");
                         opt.value = est.id;
                         opt.textContent = `${est.name_fr} (${est.miph_license_number || 'Agréé'})`;
+                        if (selectedID && est.id === selectedID) {
+                            opt.selected = true;
+                        }
                         select.appendChild(opt);
                     });
                 }
@@ -336,8 +358,20 @@ let currentRefSection = 'establishments';
         function openNewPharmaModal() {
             closeAllModals();
             if (currentRefSection === 'establishments') {
+                editingEstID = null;
+                document.getElementById("form-new-est").reset();
+                const title = document.getElementById("modal-est-title");
+                if (title) title.innerText = "Enregistrement d'un Établissement Pharmaceutique (MIPH / Décret 20-325)";
+                const btn = document.getElementById("modal-est-submit-btn");
+                if (btn) btn.innerText = "Enregistrer l'Établissement (Base SQL)";
                 document.getElementById("modal-new-est").classList.add("open");
             } else if (currentRefSection === 'sites') {
+                editingSiteID = null;
+                document.getElementById("form-new-site").reset();
+                const title = document.getElementById("modal-site-title");
+                if (title) title.innerText = "Enregistrement d'un Site Intervenant (ANPP 1.H.8 & 1.M)";
+                const btn = document.getElementById("modal-site-submit-btn");
+                if (btn) btn.innerText = "Enregistrer le Site (Base SQL)";
                 populateEstablishmentsDropdown();
                 document.getElementById("modal-new-site").classList.add("open");
             } else if (currentRefSection === 'medicines') {
@@ -347,6 +381,49 @@ let currentRefSection = 'establishments';
             } else {
                 document.getElementById("modal-new-est").classList.add("open");
             }
+        }
+
+        function openEditEstablishmentModal() {
+            const item = currentRefList[selectedRefIndex];
+            if (!item) return;
+            closeAllModals();
+            editingEstID = item.id;
+            document.getElementById("est-name-fr").value = item.name_fr || '';
+            document.getElementById("est-legal-status").value = item.legal_status || 'SPA';
+            document.getElementById("est-license-number").value = item.miph_license_number || '';
+            document.getElementById("est-license-date").value = item.miph_license_grant_date ? item.miph_license_grant_date.slice(0, 10) : '';
+            document.getElementById("est-dt-name").value = item.technical_director_name || '';
+            document.getElementById("est-decision-ref").value = item.technical_director_decision_ref || '';
+            document.getElementById("est-wilaya").value = item.wilaya || 'Alger';
+            document.getElementById("est-phone").value = item.phone || '';
+            document.getElementById("est-email").value = item.email || '';
+            const title = document.getElementById("modal-est-title");
+            if (title) title.innerText = "Mise à jour de l'Établissement Pharmaceutique";
+            const btn = document.getElementById("modal-est-submit-btn");
+            if (btn) btn.innerText = "Enregistrer les Modifications (Base SQL)";
+            document.getElementById("modal-new-est").classList.add("open");
+        }
+
+        function openEditManufacturingSiteModal() {
+            const item = currentRefList[selectedRefIndex];
+            if (!item) return;
+            closeAllModals();
+            editingSiteID = item.id;
+            document.getElementById("site-name-fr").value = item.site_name_fr || '';
+            document.getElementById("site-country-code").value = item.country_code || 'DZ';
+            document.getElementById("site-role").value = item.site_role || 'formulateur_pf';
+            document.getElementById("site-ml-number").value = item.manufacturing_license_number || '';
+            document.getElementById("site-gmp-number").value = item.gmp_certificate_number || '';
+            document.getElementById("site-gmp-authority").value = item.gmp_issuing_authority || 'ANPP';
+            document.getElementById("site-gmp-grant").value = item.gmp_grant_date ? item.gmp_grant_date.slice(0, 10) : '';
+            document.getElementById("site-gmp-expiry").value = item.gmp_expiry_date ? item.gmp_expiry_date.slice(0, 10) : '';
+            document.getElementById("site-address").value = item.address || '';
+            populateEstablishmentsDropdown(item.establishment_id);
+            const title = document.getElementById("modal-site-title");
+            if (title) title.innerText = "Mise à jour du Site Intervenant (1.H.8 & 1.M)";
+            const btn = document.getElementById("modal-site-submit-btn");
+            if (btn) btn.innerText = "Enregistrer les Modifications (Base SQL)";
+            document.getElementById("modal-new-site").classList.add("open");
         }
 
         async function handleCreateManufacturingSite(e) {
@@ -366,15 +443,21 @@ let currentRefSection = 'establishments';
                 is_active: true
             };
 
+            const isEdit = !!editingSiteID;
+            const url = isEdit ? `/api/v1/manufacturing-sites/${editingSiteID}` : '/api/v1/manufacturing-sites';
+            const method = isEdit ? 'PUT' : 'POST';
+
             try {
-                const res = await fetch('/api/v1/manufacturing-sites', {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     closeModal('modal-new-site');
-                    showNotifyModal("Site Enregistré", "Le site de fabrication / contrôle a été inscrit au référentiel ANPP avec succès.", "🏭");
+                    const msg = isEdit ? "Le site de fabrication a été mis à jour avec succès." : "Le site de fabrication / contrôle a été inscrit au référentiel ANPP avec succès.";
+                    showNotifyModal(isEdit ? "Site Mis à Jour" : "Site Enregistré", msg, "🏭");
+                    editingSiteID = null;
                     loadRefSection('sites');
                 } else {
                     const err = await res.json();
@@ -415,12 +498,31 @@ let currentRefSection = 'establishments';
                 email: document.getElementById("est-email").value.trim(),
                 is_active: true
             };
+
+            const isEdit = !!editingEstID;
+            const url = isEdit ? `/api/v1/establishments/${editingEstID}` : '/api/v1/establishments';
+            const method = isEdit ? 'PUT' : 'POST';
+
             try {
-                const res = await fetch('/api/v1/establishments', {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                if (res.ok) {
+                    closeModal('modal-new-est');
+                    const msg = isEdit ? "L'établissement a été mis à jour avec succès dans PostgreSQL." : "L'établissement pharmaceutique a été inscrit en base PostgreSQL et son agrément MIPH a été validé.";
+                    showNotifyModal(isEdit ? "Établissement Mis à Jour" : "Établissement Enregistré", msg, "🏢");
+                    editingEstID = null;
+                    loadRefSection('establishments');
+                } else {
+                    const err = await res.json();
+                    showNotifyModal("Erreur d'Enregistrement", err.error || "Échec de validation", "⚠️");
+                }
+            } catch(err) {
+                showNotifyModal("Erreur Réseau", err.message, "⚠️");
+            }
+        }
                 if (res.ok) {
                     closeModal('modal-new-est');
                     showNotifyModal("Établissement Enregistré", "L'établissement pharmaceutique a été inscrit en base PostgreSQL et son agrément MIPH a été validé.", "🏢");
