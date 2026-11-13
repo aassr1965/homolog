@@ -2,7 +2,7 @@
 // RÉFÉRENTIEL PHARMACEUTIQUE (Jalon 1.3 - Établissements, Sites, Produits ANPP)
 // ============================================================================
 
-let currentRefSection = 'establishments';
+var currentRefSection = window.currentRefSection || 'establishments';
         let currentRefList = [];
         let selectedRefIndex = 0;
 
