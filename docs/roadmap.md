@@ -21,23 +21,24 @@ gantt
     dateFormat  YYYY-MM-DD
     section Phase 1 : Socle & GED
     Infra, Base PostgreSQL & CAS Dédupliqué (1.1)    :done, p1_1, 2026-11-10, 1d
-    Auth 2FA, 8 Rôles & Audit Trail Immuable (1.2)   :done, p1_2, 2026-11-10, 1d
+    Auth 2FA, PSSI, RBAC 14 Perms & SoD (1.2)        :active, p1_2, 2026-11-10, 4d
     Référentiel Produits & Établissements ANPP (1.3) :done, p1_3, 2026-11-11, 1d
     Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :done, p1_4, after p1_3, 4d
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :done, p1_5, after p1_4, 4d
-    UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):active, p1_6, after p1_5, 4d
-    Studio Compléments & Assistant Soumission ANPP (1.7) :p1_7, after p1_6, 3d
+    UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):done, p1_6, after p1_5, 4d
+    Studio Compléments & Assistant Soumission ANPP (1.7) :active, p1_7, after p1_6, 3d
     Packaging Docker & Archive .homolog (1.8)        :p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
-    Redevances, Devises & Justificatifs Bancaires(2.1):p2_1, after p1_8, 3d
-    Moteur Variations ANPP (Mmin/Mmod/Mmaj)(2.2)     :p2_2, after p2_1, 4d
-    Espace Consultants Externes Cloisonné (2.3)      :p2_3, after p2_2, 2d
-    Régularisation DM Décret 20-324 (2.4)            :p2_4, after p2_3, 3d
-    Recherche Plein Texte FTS Bilingue FR/AR (2.5)   :p2_5, after p2_4, 3d
-    Console Super-Admin Éditeur Cloud SaaS (2.6)     :p2_6, after p2_5, 3d
-    Mises à Jour Réglementaires Hors-Ligne .pkg (2.7):p2_7, after p2_6, 3d
+    Atelier Élaboration & Workflow BPF Maker-Checker (2.1):p2_1, after p1_8, 4d
+    Redevances, Devises & Justificatifs Bancaires(2.2):p2_2, after p2_1, 3d
+    Moteur Variations ANPP (Mmin/Mmod/Mmaj)(2.3)     :p2_3, after p2_2, 4d
+    Espace Consultants Externes Cloisonné (2.4)      :p2_4, after p2_3, 2d
+    Régularisation DM Décret 20-324 (2.5)            :p2_5, after p2_4, 3d
+    Recherche Plein Texte FTS Bilingue FR/AR (2.6)   :p2_6, after p2_5, 3d
+    Console Super-Admin Éditeur Cloud SaaS (2.7)     :p2_7, after p2_6, 3d
+    Mises à Jour Réglementaires Hors-Ligne .pkg (2.8):p2_8, after p2_7, 3d
     section Phase 3 : Extensions
-    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_7, 5d
+    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_8, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
     Passerelle Officielle API ANPP                   :p3_3, after p3_2, 4d
 ```
@@ -55,28 +56,39 @@ gantt
 - [x] Mettre en place le `StorageProvider` (Driver CAS local sur disque chiffré avec hachage SHA-256 et déduplication physique)
 - [x] Valider la suite de tests unitaires du stockage CAS (`storage_test.go`)
 
-### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11)
-- [x] Implémenter le hachage sécurisé des mots de passe avec **Argon2id** et politique de complexité (min. 12 car., minuscules, majuscules, chiffres, caractères spéciaux)
-- [x] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** avec table de sessions PostgreSQL pour révocation instantanée
-- [x] Développer le second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés)
-- [x] Mettre en place le verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 essais = 15 min de blocage)
-- [x] Implémenter la matrice des **9 profils d'utilisateurs stricts** (Section 7.1 du Cahier des Charges) :
-  1. *Super-Administrateur Éditeur* (Mode Cloud SaaS - provisioning & quotas, aucun accès aux données pharmaceutiques).
-  2. *Administrateur Système Local* (Mode On-Premise - maintenance, sauvegardes, aucun accès aux documents).
-  3. *Administrateur de Laboratoire* (Gestion des comptes et affectations internes).
-  4. *Responsable Affaires Réglementaires* (Création, coordination des dossiers CTD/DM et suivi des soumissions ANPP).
-  5. *Pharmacien Directeur Technique (PDT)* (Seul titulaire du pouvoir légal d'approbation et signature électronique bloquante).
-  6. *Contributeur Qualité / BPF* (Gestion des SOP, revues qualité, certificats BPF et audits).
-  7. *Contributeur R&D / Production* (Dépôt des formules cadres, dossiers de validation 3.2.P.3.5 et stabilités).
-  8. *Consultant Externe* (Accès restreint et cloisonné aux seuls dossiers assignés avec date d'expiration contractuelle).
-  9. *Auditeur / Inspecteur* (Consultation en lecture seule avec accès au journal d'audit trail immuable).
-- [x] Créer le flux de **re-authentification pour signature électronique légale du PDT** :
-  - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
-    *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
-  - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
-- [x] Créer la table `audit_logs` strictement *append-only* (triggers SQL PostgreSQL interdisant `UPDATE` et `DELETE`)
-- [x] Logger automatiquement toutes les actions sensibles (connexion, consultation, téléchargement, approbation, signature, modification de rôle)
-- [x] Valider les suites de tests unitaires d'authentification (`password_test.go`, `totp_test.go`, `auth_handler_test.go`)
+### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11) — *[En cours d'extension RBAC / SoD]*
+- [x] **Socle d'authentification et gestion des sessions BPF :**
+  - [x] Implémenter le hachage sécurisé des mots de passe avec **Argon2id** (mémoire 64 Mo, 3 itérations) et politique de complexité (min. 12 car., minuscules, majuscules, chiffres, caractères spéciaux).
+  - [x] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** (SameSite=Strict, HTTPS) avec table de sessions PostgreSQL pour révocation instantanée.
+  - [x] Développer le second facteur **TOTP (RFC 6238)** 100% hors-ligne (QR code local, Google/Microsoft Authenticator, 10 codes de secours chiffrés).
+  - [x] Mettre en place le verrouillage automatique de session sur inactivité (**Idle timeout 15 min BPF**) et protection anti-brute force (5 essais = 15 min de blocage).
+  - [x] Valider les suites de tests unitaires d'authentification (`password_test.go`, `totp_test.go`, `auth_handler_test.go`).
+- [x] **Intégrité ALCOA+, Piste d'audit & Signature légale PDT :**
+  - [x] Créer la table `audit_logs` strictement *append-only* (triggers SQL PostgreSQL interdisant `UPDATE` et `DELETE`).
+  - [x] Logger automatiquement toutes les actions sensibles (connexion, consultation, téléchargement, approbation, signature, modification de rôle).
+  - [x] Créer le flux de **re-authentification pour signature électronique légale du PDT** :
+    - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
+      *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
+    - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
+- [ ] **Mise en conformité PSSI, RBAC Dynamique & Console Dédiée (Sections 6.3, 7.1 & 7.2 du CDC) :**
+  - [x] Définir les 9 profils utilisateurs stricts dans le domaine métier (`internal/domain/models.go`).
+  - [ ] **Modèle de Données PostgreSQL Dynamique (Migration `000004_rbac_dynamic_permissions.up.sql`) :**
+    - Tables `roles`, `permissions`, `role_permissions`, `user_permissions`.
+    - Pré-remplissage des 14 permissions unitaires et de la matrice par défaut des 9 rôles sans perturber les données existantes.
+  - [ ] **Moteur RBAC Backend Go & Garde-fous BPF Inviolables :**
+    - Service `RBACService` et middleware `RequirePermission(perm)`.
+    - Garde-fous réglementaires inviolables en code Go : exercice du visa PDT réservé exclusivement au DT titulaire de la décision ministérielle (1.A.7), filtre Zero-Trust bloquant le téléchargement de documents pour les admins techniques, et non-auto-approbation SoD par pièce (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
+    - Système de cache mémoire à invalidation instantanée par versioning de permissions (`permissions_version`) pour répercussion immédiate sur sessions actives.
+    - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte automatique dans `audit_logs` (IP, UserID, URI sollicitée, méthode HTTP).
+  - [ ] **Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :**
+    - Interface autonome dédiée pour l'Administrateur de Laboratoire (gestion collaborateurs, matrice interactive des permissions dynamiques, rattachement PDT 1.A.7, sites de fabrication 1.H.8, surveillance audit trail, quotas de stockage CAS).
+    - Commutateur d'espace Workspace Switcher pour les profils disposant d'un double mandat.
+  - [ ] **Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :**
+    - Route Guards frontend interceptant les accès directs non autorisés par URL avec redirection et écran institutionnel sécurisé 403 Pharma.
+    - Moteur de rendu conditionnel masquant les composants non autorisés (bouton signature PDT, menus admin, volets de prix 1.H.4/5, audit trail).
+    - Arborescence filtrée et cloisonnée en mode *Guest* pour les **Consultants Externes** (affichage exclusif des dossiers assignés et révocation automatique à échéance).
+    - Gestion ergonomique des actions de workflow désactivées avec infobulles contextuelles explicatives (*Disabled + Tooltip*).
+  - [ ] Développer et valider la suite de tests unitaires et d'intégration RBAC/SoD/Route Guards (`rbac_test.go`, `sod_test.go`, `routes_test.go`).
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Conforme Guide ANPP 2025)
 - [x] **Modèle et tables PostgreSQL pour les Établissements :**
@@ -159,16 +171,23 @@ gantt
 - [x] Liaison dynamique GED ↔ Checklist CTD/DM avec calcul du pourcentage de complétude en temps réel.
 - [x] **Verrouillage légal strict :** Interdiction de passage au statut *« Validé interne / Prêt pour dépôt ANPP »* si complétude < 100% ou absence de signature électronique légale du Pharmacien Directeur Technique.
 
-### Jalon 1.6 : Interface Web Haute Densité 'Pharma Explorer' (3 Volets & RTL FR/AR)
-- [ ] Architecture frontend TypeScript / Tailwind CSS / Lucide Icons embarquée via `//go:embed` (zéro serveur Node.js en production).
-- [ ] Layout 'Pharma Explorer' à 3 volets façon Windows Explorer Pro :
-  - **Volet gauche (Arbre de navigation) :** Navigation hiérarchique dépliable (les 5 modules CTD, rubriques 1.A/1.H/1.M/1.P, chapitres DM ou branches GED) avec badges compacts de complétude (ex: `(4/4)` en vert, `(2/5)` en rouge).
-  - **Zone centrale (Vue détaillée) :** Tableau haute densité (lignes compactes de 32px, 25-30 documents visibles sans scroll), colonnes triables, filtrage instantané.
-  - **Volet droit (Volet de prévisualisation - Alt+P) :** Prévisualisation PDF.js instantanée avec métadonnées d'intégrité SHA-256, date de versement, version, bouton d'action de signature électronique légale PDT et téléchargement avec certificat d'intégrité.
-- [ ] Barre d'adresse fil d'Ariane navigable (`📁 Dossiers > ENR-2026-0042 > Module 1 > 1.P`).
-- [ ] Barre d'état inférieure : Nombre d'éléments, pourcentage de complétude globale avec alerte bloquante si incomplète, et jauge d'espace de stockage consommé / quota.
-- [ ] Intégration des polices locales `Cairo` (Arabe) et `Inter` (Français) sans aucun appel CDN externe.
-- [ ] Bascule bilingue dynamique LTR ↔ RTL (`dir="rtl"`) avec inversion symétrique des 3 volets.
+### Jalon 1.6 : Interface Web Haute Densité 'Pharma Explorer' (3 Volets, Responsive & Thème Clair)
+- [x] Architecture frontend embarquée via `//go:embed` (zéro serveur Node.js ni CDN externe en production).
+- [x] Layout 'Pharma Explorer' à 3 volets façon Windows Explorer Pro avec splitters redimensionnables à la souris et mémorisation :
+  - **Volet gauche (Tree Explorer) :** Navigation hiérarchique dépliable (les 5 modules CTD, rubriques 1.A/1.H/1.M/1.P, chapitres DM ou branches GED) avec chevrons `▶ / ▼`, badges de procédure et compteurs de complétude dynamiques (ex: `(9/9)`, `(0/28)`).
+  - **Zone centrale (Vue détaillée haute densité) :** Tableau compact (lignes de 32px), groupement par sous-module sous forme d'accordéons pliables/dépliables avec ratios de complétude, champ de recherche instantanée en temps réel et barre de pills de filtrage rapide (`Tous`, `🔴 Manquants`, `🟢 Rattachés`, `⚠️ Obligatoires [E]`).
+  - **Volet droit (Volet d'aperçu contextuel - Alt+P) à double onglet intelligent :**
+    - Onglet `📄 Aperçu Pièce GED` : cartouche cryptographique d'intégrité CAS SHA-256, statut de validation, horodatage UTC, métadonnées BPF et bouton de téléchargement du fichier original.
+    - Onglet `📋 Fiche ANPP` : fiche légale officielle issue du Guide CTD ANPP Juillet 2025, texte bilingue, niveau d'exigence (`[E]`, `[F]`, `[P]`) et traçabilité 21 CFR Part 11.
+- [x] Mode Plein Écran « 🎯 Focus » permettant d'escamoter instantanément les volets latéraux pour maximiser l'espace du tableau de checklist.
+- [x] Thème Clair Pharmaceutique activé par défaut (fond blanc pur/gris perle, bleu marine réglementaire) avec bascule instantanée Mode Sombre.
+- [x] Architecture Responsive à 3 paliers opérationnelle :
+  - Desktop (≥ 1200px) : 3 volets avec splitters ajustables.
+  - Laptop / Tablette (768px - 1199px) : 2 volets fixes et volet droit d'aperçu en tiroir latéral coulissant (*slide-over* avec backdrop).
+  - Mobile (< 768px) : Menu hamburger ☰, volet gauche en *drawer* coulissant, tableau adapté et volet d'aperçu escamotable.
+- [x] Interface 100% en Français institutionnel avec préservation des textes juridiques bilingues FR/AR dans les fiches réglementaires ANPP.
+- [x] Barre d'adresse fil d'Ariane navigable (`📁 DOSSIERS_ANPP > NI > DOS-2026-AMOX-NI > Amoxicilline 500mg`).
+- [x] Barre d'état inférieure et indicateurs KPI de complétude avec jauges colorimétriques ALCOA+.
 
 ### Jalon 1.7 : Studio de Compléments ANPP, Assistant de Soumission E-Services & Veille RDV
 - [ ] **Gestion des Compléments et Notifications ANPP :**
@@ -200,14 +219,49 @@ gantt
 ---
 
 ## Phase 2 : Complétude, Moteur de Variations ANPP & Efficacité (Priorité S)
-> **Objectif stratégique :** Intégrer le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, la recherche plein texte et le multi-tenant SaaS.
+> **Objectif stratégique :** Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), les modèles maîtres ANPP/ICH, le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, la recherche plein texte et le multi-tenant SaaS.
 
-### Jalon 2.1 : Suivi des Redevances Réglementaires & Devises
+### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver)
+- [ ] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
+  - Matrice d'affectation métier selon l'expertise (Section 7.4 du Cahier des Charges) :
+    - *Affaires Réglementaires (RA)* : Module 1 complet, notices patient bilingues FR/AR (1.P.2), résumés des caractéristiques (RCP 1.P.1), maquettes, bordereaux BV1/BV2, lettres d'engagements (1.P.8, 1.P.9, 1.H.10) et dossiers de variations (LD-DEPP07/V01).
+    - *Contrôle Qualité (CQ) & Stabilités* : Spécifications analytiques SA/PF (3.2.S.4, 3.2.P.5.1), protocoles et rapports de validation des méthodes d'analyse selon ICH Q2(R1) (3.2.P.5.3), bulletins d'analyse libératoires CoA (1.P.4, 1.P.5), et protocoles/rapports d'études de stabilité sous conditions climatiques Zone IVb (3.2.P.8).
+    - *Recherche & Développement (R&D) / Galénique* : Justification de la formulation et développement pharmaceutique (3.2.P.2), profils de dissolution comparatifs ($f_1$, $f_2$) pour *Biowaiver* (1.M.P.3), et Résumé Global de la Qualité (QOS Module 2.3).
+    - *Production Industrielle & Ingénierie* : Formules de fabrication unitaire et par lot (3.2.P.3.2), procédés et contrôles en cours IPC (3.2.P.3.3), protocoles et rapports de validation de procédé sur 3 lots industriels (3.2.P.3.5 / 1.P.8).
+    - *Assurance Qualité (AQ)* : Rôle de relecture indépendante (*Checker*), procédures opératoires (SOP/POS), revue annuelle de la qualité (PQR), audits BPF et gestion des CAPA.
+    - *Partenaires Externes (Tiers)* : Dépôt sécurisé des ASMF/DMF Substance Active (3.2.S) par les fabricants d'API et rapports d'essais cliniques/bioéquivalence (Module 5) par les CROs.
+  - Assignation des sections CTD/DM à des contributeurs désignés avec dates butoirs et notifications automatiques de suivi.
+- [ ] **Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :**
+  - Cycle de vie : `À Rédiger` ➔ `En Cours` ➔ `En Revue Qualité/Checker` ➔ `Prêt pour Visa DT` ➔ `Approuvé & Scellé`.
+  - Mécanisme de verrouillage collaboratif (**Check-out / Check-in**) évitant les conflits d'édition simultanée.
+  - Gestion granulaire du versionnage : révisions de travail mineures incrémentales (`v0.1`, `v0.2`, `v0.3`...) jusqu'à la révision majeure officielle scellée (`v1.0`) par le PDT.
+  - Circuit de revue par les pairs / AQ (*Checker*) avec annotations, demandes d'ajustements motivées et journal d'audit complet.
+- [ ] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
+  - Modélisation du graphe orienté acyclique (DAG) des dépendances techniques et réglementaires CTD/DM en 5 phases successives (Matières & Méthodes ➔ Lots pilotes & CoA ➔ Stabilités Zone IVb & Bioéquivalence ➔ QOS & Notice/RCP ➔ Engagements & Visa PDT).
+  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé).
+  - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
+  - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
+- [ ] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
+  - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
+  - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).
+- [ ] **Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic :**
+  - Moteur de génération automatique instantanée de documents officiels au format PDF/A prêt pour visa PDT :
+    - Lettre d'engagement de validation sur 3 premiers lots industriels de fabrication locale (1.P.8).
+    - Lettre d'engagement de suivi de stabilité continue post-commercialisation en Zone IVb (1.P.9).
+    - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
+    - Bordereaux de versement officiels BV1 (Initial / DM) et BV2 (Variations / Renouvellements) avec calcul des redevances en DZD ou devises.
+    - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
+- [ ] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
+  - Tableau de bord de pilotage temps réel : vue matricielle d'avancement par module CTD et par département rédacteur, alertes sur retards et goulots d'étranglement.
+  - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
+  - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
+
+### Jalon 2.2 : Suivi des Redevances Réglementaires & Devises
 - [ ] Barèmes configurables des redevances ANPP selon la procédure (**NI, RI, MI, NF, RF, MF**) et la classe de produit.
 - [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
 
-### Jalon 2.2 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
+### Jalon 2.3 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
 - [ ] **Implémentation du référentiel officiel algérien des variations :**
   - **Mmin (Modification Mineure) :** Impact minime ou nul.
   - **Mmod (Modification Modérée) :** Impact potentiel sur qualité, sécurité, efficacité.
@@ -241,28 +295,28 @@ gantt
   - Création d'une soumission groupée pour un même produit combinant plusieurs modifications interdépendantes.
   - Calcul du niveau de criticité global du groupe (alignement sur la modification la plus sévère du groupe).
 
-### Jalon 2.3 : Espace Sécurisé pour Consultants Externes
+### Jalon 2.4 : Espace Sécurisé pour Consultants Externes
 - [ ] Cloisonnement étanche : accès restreint exclusivement aux seuls dossiers CTD/DM explicitement assignés.
 - [ ] Zéro accès à la GED transverse ou aux autres produits du laboratoire.
 - [ ] Date d'expiration de contrat automatique révoquant les accès à l'échéance.
 - [ ] Journalisation et marquage d'audit renforcé sur chaque action de consultation ou dépôt par un consultant.
 
-### Jalon 2.4 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)
+### Jalon 2.5 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)
 - [ ] Inventaire des DM déjà mis sur le marché sans décision d'homologation.
 - [ ] Checklist spécifique de régularisation selon l'arrêté du 10 mai 2021.
 - [ ] Tableau de suivi des mesures transitoires et des échéances de dépôt de régularisation.
 
-### Jalon 2.5 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
+### Jalon 2.6 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
 - [ ] Indexation textuelle automatique des documents PDF, Word (.docx) et Excel (.xlsx) déposés en GED.
 - [ ] Moteur de recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant les requêtes en français et en arabe.
 - [ ] Surlignage dynamique des termes trouvés directement dans la vue tableau et le volet de prévisualisation.
 
-### Jalon 2.6 : Console Super-Admin Éditeur (Mode Cloud SaaS)
+### Jalon 2.7 : Console Super-Admin Éditeur (Mode Cloud SaaS)
 - [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances.
 - [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.homolog.dz`).
 - [ ] Gestion des quotas de stockage par laboratoire et suivi de consommation.
 
-### Jalon 2.7 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
+### Jalon 2.8 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
 - [ ] Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).
 - [ ] Déploiement sans redémarrage des nouveaux modèles de checklists CTD ou fiches de variations émises par l'ANPP.
 - [ ] Vue comparative (Diff) entre le modèle de dossier actuel et le nouveau modèle avant application validée par l'administrateur.
@@ -293,7 +347,7 @@ gantt
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
 | **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0) | Aligné Guide CTD ANPP 2025 & LD Modifications 2026 ✅ |
-| **Jalons Phase 1 complétés** | 8 / 8 jalons | 4 / 8 jalons complétés (Jalons 1.1, 1.2, 1.3 & 1.4 ✅) | Jalon 1.5 (Moteur Dossiers ANPP CTD 2025) en préparation |
+| **Jalons Phase 1 complétés** | 8 / 8 jalons | 5 / 8 jalons complétés (Jalons 1.1, 1.3, 1.4, 1.5 & 1.6 ✅) \| Jalon 1.2 réouvert (extension RBAC/SoD) \| Jalon 1.7 actif | Jalon 1.2 en cours de mise en conformité RBAC/SoD ; Jalon 1.7 (Studio Compléments) actif |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth & Produits validés (100%) | Argon2id, TOTP, Sessions, CAS & Modèles ANPP conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |

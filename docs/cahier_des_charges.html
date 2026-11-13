@@ -1,0 +1,2805 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Cahier des Charges Fonctionnel & Technique - Homolog</title>
+    <style>
+    
+        @page {
+            size: A4;
+            margin: 12mm 14mm 14mm 14mm;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            line-height: 1.45;
+            font-size: 8.6pt;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Supprimer les barres HR qui génèrent des glyphes */
+        hr {
+            display: none !important;
+        }
+
+        /* Page de garde */
+        .cover-page {
+            page-break-after: always;
+            break-after: page;
+            height: 96vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 30px 30px 30px;
+            background: linear-gradient(145deg, #091e36 0%, #0c2d4d 50%, #064060 100%);
+            color: #ffffff;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-page::after {
+            content: "";
+            position: absolute;
+            top: -120px;
+            right: -120px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(13, 148, 136, 0.25) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background-color: rgba(13, 148, 136, 0.3);
+            border: 1px solid #14b8a6;
+            color: #5eead4;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 7.8pt;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+        }
+
+        .cover-title {
+            font-size: 28pt;
+            font-weight: 800;
+            line-height: 1.1;
+            margin: 0 0 15px 0;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 13pt;
+            font-weight: 600;
+            color: #38bdf8;
+            margin-bottom: 20px;
+            line-height: 1.35;
+        }
+
+        .cover-desc {
+            font-size: 9pt;
+            color: #cbd5e1;
+            max-width: 650px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: auto;
+        }
+
+        .cover-meta-item {
+            font-size: 7.5pt;
+        }
+
+        .cover-meta-label {
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            font-size: 6.8pt;
+            margin-bottom: 3px;
+        }
+
+        .cover-meta-val {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* En-tête et pied de page */
+        .page-header {
+            font-size: 6.8pt;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .page-footer {
+            font-size: 6.8pt;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 4px;
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            letter-spacing: 0.3px;
+        }
+
+        .page-break {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        /* Titres */
+        h1 {
+            color: #091e36;
+            font-size: 14.5pt;
+            font-weight: 800;
+            border-bottom: 2px solid #0284c7;
+            padding-bottom: 4px;
+            margin: 16px 0 10px 0;
+            page-break-after: avoid;
+            break-after: avoid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h2 {
+            color: #0f2942;
+            font-size: 11.2pt;
+            font-weight: 700;
+            border-left: 3.5px solid #0d9488;
+            padding-left: 8px;
+            margin: 14px 0 8px 0;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h3 {
+            color: #1e293b;
+            font-size: 9.6pt;
+            font-weight: 700;
+            margin: 12px 0 6px 0;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        h4 {
+            color: #334155;
+            font-size: 8.6pt;
+            font-weight: 700;
+            margin: 10px 0 4px 0;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        p {
+            margin: 0 0 6px 0;
+            orphans: 3;
+            widows: 3;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin: 0 0 8px 0;
+            padding-left: 18px;
+        }
+
+        li {
+            margin-bottom: 3px;
+            orphans: 3;
+            widows: 3;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        strong {
+            color: #0f172a;
+        }
+
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7.6pt;
+            margin: 8px 0 12px 0;
+            page-break-inside: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        th {
+            background-color: #091e36;
+            color: #ffffff;
+            font-weight: 700;
+            text-align: left;
+            padding: 5px 7px;
+            border: 1px solid #091e36;
+            font-size: 7.2pt;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        td {
+            padding: 4px 6.5px;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: top;
+            line-height: 1.35;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Callout & Cards */
+        .callout {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #16a34a;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 10px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            font-size: 8.2pt;
+        }
+
+        .callout.info {
+            background-color: #f0f9ff;
+            border-color: #bae6fd;
+            border-left-color: #0284c7;
+        }
+
+        .callout.amber {
+            background-color: #fffbeb;
+            border-color: #fde68a;
+            border-left-color: #d97706;
+        }
+
+        .callout.danger {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+            border-left-color: #dc2626;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            font-size: 8.5pt;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            color: #0f172a;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 6.8pt;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .badge-done { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .badge-progress { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+        .badge-planned { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .badge-anpp { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .badge-tech { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+
+        /* Diagram containers */
+        .diagram-container {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 12px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .diagram-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1.5px solid #e2e8f0;
+            font-weight: 700;
+            font-size: 8.5pt;
+            color: #091e36;
+        }
+
+        /* Code snippets */
+        pre {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+            font-size: 7.2pt;
+            overflow-x: auto;
+            margin: 8px 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            line-height: 1.35;
+        }
+
+        code {
+            font-family: 'Cascadia Code', Consolas, monospace;
+            font-size: 7.6pt;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 1px 3px;
+            border-radius: 2px;
+            border: 1px solid #e2e8f0;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+        }
+
+        /* Sign-off grid */
+        .sign-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .sign-box {
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 10px;
+            background: #f8fafc;
+            font-size: 7.5pt;
+        }
+
+        .sign-role {
+            font-weight: 700;
+            color: #091e36;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-size: 7pt;
+        }
+
+        .sign-space {
+            height: 48px;
+            border-bottom: 1px dashed #94a3b8;
+            margin-bottom: 6px;
+        }
+    
+    </style>
+</head>
+<body>
+
+
+    <div class="cover-page">
+        <div>
+            <div class="cover-badge">Cahier des Charges Fonctionnel & Technique • Version 1.0</div>
+            <div class="cover-title">HOMOLOG</div>
+            <div class="cover-subtitle">Plateforme Collaborative de Gestion de l'Enregistrement des Médicaments, de l'Homologation des Dispositifs Médicaux et GED Pharmaceutique en Algérie</div>
+            <div class="cover-desc">
+                Spécifications fonctionnelles, techniques et réglementaires exhaustives harmonisées avec le <strong>Guide CTD ANPP (Juillet 2025)</strong>, la <strong>Ligne Directrice des Modifications LD-DEPP07/V01 (Avril 2026)</strong>, les décrets exécutifs 20-324 / 20-325, l'arrêté du 10 mai 2021 (DM) et l'arrêté du 7 novembre 2021 (Grouping). Standard de conformité <strong>21 CFR Part 11</strong> et <strong>ALCOA+</strong>.
+            </div>
+        </div>
+
+        <div class="cover-meta-grid">
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Autorité Réglementaire de Référence</div>
+                <div class="cover-meta-val">Agence Nationale des Produits Pharmaceutiques (ANPP)</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Cadre Juridique Algérien</div>
+                <div class="cover-meta-val">Décrets 20-324, 20-325, Arrêtés 10/05/2021 & 07/11/2021</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Architecture Technologique</div>
+                <div class="cover-meta-val">Go 1.26+ | PostgreSQL 16+ | CAS SHA-256 | Mode Hybride</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Intégrité & Sécurité BPF</div>
+                <div class="cover-meta-val">21 CFR Part 11, TOTP Hors-Ligne, RBAC 14 Perms, SoD Stricte</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Date d'Effet & Version</div>
+                <div class="cover-meta-val">Novembre 2026 • v1.0 Validée & Scellée</div>
+            </div>
+            <div class="cover-meta-item">
+                <div class="cover-meta-label">Gouvernance Documentaire</div>
+                <div class="cover-meta-val">Pharmacien Directeur Technique (PDT) & Affaires Réglementaires</div>
+            </div>
+        </div>
+    </div>
+    
+
+
+    <div class="page-header">
+        <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+        <span>SOMMAIRE GÉNÉRAL EXÉCUTIF</span>
+    </div>
+
+    <h1>Sommaire Général Exécutif</h1>
+
+    <div class="callout info">
+        <div class="callout-title">Structure du Référentiel</div>
+        Le présent document constitue le référentiel contractuel et réglementaire exhaustif pour la conception, l'implémentation et la validation pharmaceutique (GAMP 5 / BPF) de la plateforme **Homolog**. Il détaille les 10 domaines d'exigences couvrant l'ensemble du cycle de vie des produits de santé en Algérie.
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 8%;">Chap.</th>
+                <th style="width: 44%;">Titre de la Section</th>
+                <th style="width: 33%;">Portée Réglementaire & Technique</th>
+                <th style="width: 15%;">Diagrammes Clés</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1</strong></td>
+                <td><strong>Contexte, Cadre Juridique et Objectifs Stratégiques</strong></td>
+                <td>Décrets 20-324/325, souveraineté numérique, mode hybride (On-Prem / SaaS).</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td><strong>2</strong></td>
+                <td><strong>Typologie des Procédures et Matrice CTD ANPP</strong></td>
+                <td>Les 6 parcours officiels (NI, RI, MI, NF, RF, MF), matrice 5 modules CTD.</td>
+                <td>Matrice CTD 2025</td>
+            </tr>
+            <tr>
+                <td><strong>3</strong></td>
+                <td><strong>Spécification Exhaustive du Module 1 (Algérie)</strong></td>
+                <td>Sous-modules 1.A (Applicant), 1.H (Holder/Prix), 1.M (Sites/BE), 1.P (Notices/Stabilités).</td>
+                <td>Nomenclature M1</td>
+            </tr>
+            <tr>
+                <td><strong>4</strong></td>
+                <td><strong>Modules Techniques CTD 2, 3, 4 et 5</strong></td>
+                <td>Stabilités Zone IVb (30°C / 75% RH min 6 mois), bioéquivalence in vivo CRO.</td>
+                <td>Exigences Zone IVb</td>
+            </tr>
+            <tr>
+                <td><strong>5</strong></td>
+                <td><strong>Moteur Intelligent des Modifications (LD-DEPP07/V01)</strong></td>
+                <td>34 rubriques Mmin/Mmod/Mmaj, escalade dynamique, Grouping Art. 09, 12 pièces.</td>
+                <td><strong>Arbre Décisionnel</strong></td>
+            </tr>
+            <tr>
+                <td><strong>6</strong></td>
+                <td><strong>Architecture Technique et Ergonomie "Pharma Explorer"</strong></td>
+                <td>Stack native Go/PostgreSQL, ergonomie 3 volets, Console Admin Labo autonome.</td>
+                <td><strong>Double Console UI</strong></td>
+            </tr>
+            <tr>
+                <td><strong>7</strong></td>
+                <td><strong>Sécurité, Rôles et Conformité 21 CFR Part 11 / BPF</strong></td>
+                <td>PSSI, 14 permissions RBAC, SoD anti auto-approbation, Atelier collaboratif Maker-Checker.</td>
+                <td><strong>PSSI, Workflow, PERT</strong></td>
+            </tr>
+            <tr>
+                <td><strong>8</strong></td>
+                <td><strong>Taxonomie du Coffre-Fort GED Pharmaceutique</strong></td>
+                <td>Arborescence normalisée en 5 branches maîtresses standard BPF / ALCOA+.</td>
+                <td>Taxonomie GED</td>
+            </tr>
+            <tr>
+                <td><strong>9</strong></td>
+                <td><strong>Module Submission Assistant & E-Services Gateway</strong></td>
+                <td>Télé-services E-TASJIL, RDV PP/DM, bordereaux BV1/BV2, export 1-clic.</td>
+                <td>Connecteur M2M</td>
+            </tr>
+            <tr>
+                <td><strong>10</strong></td>
+                <td><strong>Conclusion et Approbation Formelle</strong></td>
+                <td>Engagement d'immuabilité, scellement cryptographique et visa légal PDT.</td>
+                <td>Sign-off Officiel</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout amber">
+        <div class="callout-title">Normes & Bonnes Pratiques Pharmaceutiques Applicables</div>
+        Toutes les spécifications du présent cahier des charges sont conformes aux référentiels <strong>GAMP 5 (Good Automated Manufacturing Practice)</strong>, <strong>ICH (International Council for Harmonisation)</strong> Q1A(R2), Q2(R1), Q3A/B, Q6A, et aux règles de gouvernance des données <strong>ALCOA+ (Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available)</strong>.
+    </div>
+
+    <div class="page-footer">
+        <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
+        <span>Page 2</span>
+    </div>
+    
+
+
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 1 : 1. Contexte, Cadre Juridique et Objectifs Str</span>
+        </div>
+        <h2>1. Contexte, Cadre Juridique et Objectifs Stratégiques</h2>
+<h3>1.1 Contexte Réglementaire Algérien</h3>
+<p>En Algérie, la mise sur le marché d'un médicament à usage de la médecine humaine est soumise à l'obtention d'une <strong>Décision d'Enregistrement (DE)</strong>, délivrée après évaluation technique, pharmaceutique, biologique, préclinique et clinique par la <strong>Direction de l'Enregistrement des Produits Pharmaceutiques de l'Agence Nationale des Produits Pharmaceutiques (ANPP/DEPP)</strong>. De même, les dispositifs médicaux (DM) et dispositifs médicaux de diagnostic in vitro (DMDIV) sont assujettis à une <strong>Décision d'Homologation</strong>.</p>
+<p>Deux textes fondamentaux publiés par l'ANPP structurent l'ensemble du cycle de vie des médicaments :<br />
+1. <strong>Le Guide CTD ANPP (Juillet 2025) :</strong> Instaure l'exigence du format CTD (Common Technical Document - Modules 1 à 5) pour toute soumission d'enregistrement initial, de renouvellement quinquennal et de variation, en formalisant les exigences spécifiques pour les produits princeps (innovateurs), génériques importés et génériques fabriqués localement.<br />
+2. <strong>La Ligne Directrice des Modifications LD-DEPP07/V01 (Avril 2026) :</strong> Établit la nomenclature algérienne des modifications post-enregistrement en trois classes rigoureuses : <strong>Modification Mineure (Mmin)</strong>, <strong>Modification Modérée (Mmod)</strong> et <strong>Modification Majeure (Mmaj)</strong>, rompant définitivement avec les terminologies étrangères obsolètes (Types IA/IB/II européens). Elle formalise également le principe de reclassement automatique en cas de non-respect d'une condition et la possibilité de regroupement de modifications (<em>Grouping</em>, article 09 de l'arrêté du 07/11/2021).</p>
+<h3>1.2 Objectifs de la Plateforme "Homolog"</h3>
+<ul>
+<li><strong>Centraliser et piloter le cycle de vie complet 360°</strong> de tous les dossiers d'enregistrement de médicaments et d'homologation de DM au sein d'une instance unique.</li>
+<li><strong>Assurer la conformité native au format CTD ANPP 2025</strong> : instancier automatiquement les checklists et arborescences selon le type de produit (Princeps, Générique importé, Générique local) et le type de procédure (<strong>NI</strong>, <strong>RI</strong>, <strong>MI</strong>, <strong>NF</strong>, <strong>RF</strong>, <strong>MF</strong>).</li>
+<li><strong>Intégrer un Coffre-Fort GED Pharmaceutique (Standard BPF / ALCOA+)</strong> garantissant l'intégrité, la gestion des versions (mineures/majeures), les circuits d'approbation et la signature électronique légale du Directeur Technique.</li>
+<li><strong>Intégrer un Atelier d'Élaboration Documentaire et Workflow Multi-Rôles BPF (Maker-Checker-Approver)</strong> : dépasser la simple collecte passive de fichiers existants en fournissant un environnement collaboratif de rédaction technique décentralisée (Affaires Réglementaires, Contrôle Qualité, R&amp;D, Production, Assurance Qualité, Partenaires externes). Le Pharmacien Directeur Technique n'étant pas le rédacteur unique mais le garant légal et pénal exclusif (Approver - Décret exécutif 20-325), la plateforme orchestre la chaîne complète : Rédaction (<em>Maker</em>) ➔ Revue Qualité/Pair (<em>Checker</em>) ➔ Visa Légal Scellé (<em>Approver</em>), adossée à une bibliothèque de modèles maîtres conformes ICH/ANPP et à un générateur automatique de formulaires/engagements réglementaires en 1 clic.</li>
+<li><strong>Intégrer un Moteur Intelligent de Variations (LD-DEPP07/V01)</strong> : détecter l'impact d'une modification documentaire, qualifier le type de modification (Mmin, Mmod, Mmaj) parmi les 34 rubriques réglementaires, vérifier les conditions, exécuter le reclassement dynamique et générer automatiquement le dossier complet de modification (avec tableau comparatif <em>État actuel vs Proposé</em> et attestation de non-modification des autres sections).</li>
+<li><strong>Anticiper les échéances critiques et péremptions</strong> : renouvellements quinquennaux à J-180/J-90, réponses aux compléments ANPP avec compte à rebours légal, expiration des certificats BPF, CEP et licences d'exploitation.</li>
+<li><strong>Automatiser et sécuriser l'articulation avec les télé-procédures ANPP (Module ANPP Submission Assistant)</strong> : génération automatique des bordereaux officiels (BV1/BV2, récépissés, formulaires d'homologation DM), export du Submission Package prêt pour le portail E-TASJIL (<code>etasjil.anpp.dz</code>), calendrier intelligent d'ouverture des créneaux de RDV (<code>rdvpp.anpp.dz</code> / <code>rdvdm.anpp.dz</code>), et architecture API-Ready pour future télétransmission directe.</li>
+<li><strong>Garantir la souveraineté numérique et la flexibilité hybride</strong> : déployable en mode On-Premise 100 % hors-ligne (en intranet sécurisé de laboratoire) ou en mode Cloud SaaS souverain multi-tenant avec réversibilité absolue via l'archive chiffrée <code>.homolog</code>.</li>
+<li><strong>Offrir une ergonomie "Pharma Explorer" haute densité</strong> : navigation 3 volets inspirée de Windows Explorer Pro, affichage compact (32px par ligne), volet de prévisualisation PDF instantané et bilinguisme intégral FR/AR avec support RTL natif.</li>
+</ul>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 1 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 2 : 2. Typologie des Procédures et Matrice CTD AN</span>
+        </div>
+        <h2>2. Typologie des Procédures et Matrice CTD ANPP (Guide Juillet 2025)</h2>
+<h3>2.1 Les 6 Parcours Officiels de Soumission</h3>
+<p>La plateforme distingue nativement les six codes de procédure définis par l'ANPP :</p>
+<table>
+<thead>
+<tr>
+<th>Code ANPP</th>
+<th>Intitulé officiel de la procédure</th>
+<th>Portée</th>
+<th>Périmètre documentaire principal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NI</strong></td>
+<td><strong>Enregistrement Initial d’un produit Importé</strong></td>
+<td>Médicaments fabriqués à l'étranger importés en Algérie</td>
+<td>Dossier CTD complet + CPP + Prix FOB Chambre Commerce + Benchmark</td>
+</tr>
+<tr>
+<td><strong>RI</strong></td>
+<td><strong>Renouvellement de la DE d'un produit Importé</strong></td>
+<td>Renouvellement quinquennal d'un produit importé</td>
+<td>Module 1 actualisé + Déclaration de non-modification + BPF/CPP à jour</td>
+</tr>
+<tr>
+<td><strong>MI</strong></td>
+<td><strong>Modification d’un produit Importé</strong></td>
+<td>Variations administratives ou qualitatives</td>
+<td>Dossier de modification ciblé + Approbation pays d'origine + Sections CTD modifiées</td>
+</tr>
+<tr>
+<td><strong>NF</strong></td>
+<td><strong>Enregistrement Initial d’un produit Fabriqué localement</strong></td>
+<td>Médicaments produits sur un site industriel national</td>
+<td>CTD complet + Structure de prix PCSU + Dossiers lots validation + Non-commercialisation</td>
+</tr>
+<tr>
+<td><strong>RF</strong></td>
+<td><strong>Renouvellement de la DE d’un produit Fabriqué localement</strong></td>
+<td>Renouvellement quinquennal production locale</td>
+<td>Module 1 + Déclaration de non-modification + BPF national + Revue qualité produit</td>
+</tr>
+<tr>
+<td><strong>MF</strong></td>
+<td><strong>Modification d’un produit Fabriqué localement</strong></td>
+<td>Variations administratives ou techniques locales</td>
+<td>Dossier de variation ciblé + Données comparatives de lots/stabilité + Sections CTD</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 Structure des 5 Modules CTD selon le Type d'Origine</h3>
+<p>Conformément au tableau récapitulatif officiel de l'ANPP :</p>
+<pre><code>                                 ┌──────────────────────────────────────────────────────────┐
+                                 │                STRUCTURE GLOBALE CTD ANPP                │
+                                 └────────────────────────────┬─────────────────────────────┘
+                                                              │
+                     ┌────────────────────────────────────────┴────────────────────────────────────────┐
+                     ▼                                                                                 ▼
+     ┌───────────────────────────────┐                                                 ┌───────────────────────────────┐
+     │       PRODUIT PRINCEPS        │                                                 │       PRODUIT GÉNÉRIQUE       │
+     │      (Médicament Innovant)    │                                                 │    (Importé ou Localisé)      │
+     ├───────────────────────────────┤                                                 ├───────────────────────────────┤
+     │ Module 1 : Administratif [E]  │                                                 │ Module 1 : Administratif [E]  │
+     │ Module 2 : Résumés [E]        │                                                 │ Module 2 : Incorporé (3, 4, 5)│
+     │ Module 3 : Qualité [E]        │                                                 │ Module 3 : Qualité [E]        │
+     │ Module 4 : Non Clinique [E]   │                                                 │ Module 4 : Facultatif [F]     │
+     │ Module 5 : Clinique [E]       │                                                 │ Module 5 : Bioéquivalence [P] │
+     └───────────────────────────────┘                                                 └───────────────────────────────┘
+     [E] = Exigé obligatoirement      [F] = Facultatif (ANPP peut exiger à tout moment)   [P] = Partiellement requis (BE/BA)
+</code></pre>
+<ul>
+<li><strong>Règle Princeps :</strong> Modules 1, 2, 3, 4 et 5 obligatoirement exigés (<code>E</code>).</li>
+<li><strong>Règle Générique :</strong></li>
+<li><strong>Module 1 :</strong> Exigé (<code>E</code>) dans son intégralité selon les exigences algériennes.</li>
+<li><strong>Module 2 :</strong> Non requis sous forme de classeurs isolés 2.1 à 2.7 ; les résumés et synthèses sont directement incorporés dans les modules 3, 4 et 5.</li>
+<li><strong>Module 3 :</strong> Exigé (<code>E</code>) à l'identique d'un princeps (Substance Active 3.2.S, Produit Fini 3.2.P, Documentation régionale 3.2.R).</li>
+<li><strong>Module 4 :</strong> Facultatif (<code>F</code>) : non requis lors de la soumission initiale, mais l'ANPP se réserve formellement le droit d'exiger des données de toxicité ou pharmacologie si des impuretés nouvelles ou des excipients nouveaux apparaissent.</li>
+<li><strong>Module 5 :</strong> Partiellement requis (<code>P</code>) : focalisé impérativement sur la démonstration de la bioéquivalence (5.3.1.2) ou son exonération légitime (<em>Biowaiver</em> justifié en 1.M.P.3), les méthodes bioanalytiques humaines (5.3.1.4), et la tolérance clinique.</li>
+</ul>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 2 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 3 : 3. Spécification Exhaustive du Module 1 (Spéc</span>
+        </div>
+        <h2>3. Spécification Exhaustive du Module 1 (Spécificités ANPP Algérie)</h2>
+<p>Le Module 1 est découpé en quatre sous-sections normalisées (<code>1.A</code>, <code>1.H</code>, <code>1.M</code>, <code>1.P</code>). Chaque pièce possède un identifiant strict, un titre légal et des conditions d'exigibilité selon le vecteur de soumission (NI, RI, MI, NF, RF, MF) :</p>
+<h3>3.1 Sous-Module 1.A : APPLICANT (Demandeur &amp; Établissement)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Règles métier de validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.A.1</strong></td>
+<td>Récépissé de dépôt du dossier</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Document scanné avec numéro d'enregistrement ANPP et horodatage</td>
+</tr>
+<tr>
+<td><strong>1.A.2</strong></td>
+<td>Courrier de demande officiel</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>À en-tête du laboratoire, signé par le Pharmacien Directeur Technique</td>
+</tr>
+<tr>
+<td><strong>1.A.3</strong></td>
+<td>Formulaire de demande parafé, daté, signé et cacheté par le PDT</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Formulaire officiel ANPP, paraphes sur chaque page, signature et cachet DT</td>
+</tr>
+<tr>
+<td><strong>1.A.4</strong></td>
+<td>Bordereau de versement + document bancaire / quittance ou autres + Attestation de taux de change si applicable</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Preuve de paiement des redevances réglementaires, attestation de change Banque d'Algérie si devises</td>
+</tr>
+<tr>
+<td><strong>1.A.5</strong></td>
+<td>Copie de la réponse à la demande de pré-soumission (+ copie justificatif de paiement + BV)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td>Obligatoire pour NI, MI, NF, MF. Accord formel de pré-soumission de l'ANPP</td>
+</tr>
+<tr>
+<td><strong>1.A.6</strong></td>
+<td>Agrément d'exploitation / Fabrication / Sous-traitance</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Agrément en cours de validité délivré par le Ministère de l'Industrie Pharmaceutique</td>
+</tr>
+<tr>
+<td><strong>1.A.7</strong></td>
+<td>Décision d'exercice du Pharmacien Directeur Technique (PDT)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Décision ministérielle nominative nommant le DT responsable</td>
+</tr>
+<tr>
+<td><strong>1.A.8</strong></td>
+<td>Copie des Contrats (exploitation, façonnage, sous-traitance et tout autre accord qualité)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Contrats liant le demandeur aux différents sites et détenteurs</td>
+</tr>
+<tr>
+<td><strong>1.A.9</strong></td>
+<td>Copie(s) de la DE, des approbations et des accusés des anciens dépôts (récépissés, notifications, paiements antérieurs)</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Historique complet indispensable pour les renouvellements et variations</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 Sous-Module 1.H : HOLDER (Détenteur de la Décision d'Enregistrement)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Règles métier de validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.H.1</strong></td>
+<td>Courrier de demande du détenteur</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Courrier officiel autorisant le demandeur local à déposer</td>
+</tr>
+<tr>
+<td><strong>1.H.2</strong></td>
+<td>Autorisation de Mise sur le Marché (original ou copie certifiée conforme)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>AMM délivrée dans le pays d'origine par l'autorité compétente</td>
+</tr>
+<tr>
+<td><strong>1.H.3</strong></td>
+<td>Certificat de Produit Pharmaceutique (CPP - Modèle OMS)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>CPP légalisé/apostillé conforme au modèle de certification OMS</td>
+</tr>
+<tr>
+<td><strong>1.H.4</strong></td>
+<td>Structure de prix (PCSU Fabrication) / Attestation de prix FOB Algérie visée Chambre de Commerce</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Structure PCSU (Prix de Revient/Sortie Usine) pour le local (NF/RF/MF) ; Attestation FOB visée pour l'import (NI/RI/MI)</td>
+</tr>
+<tr>
+<td><strong>1.H.5</strong></td>
+<td>Dossier BENCHMARK de prix international</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td>Comparatif de prix dans les pays de référence (obligatoire pour importations)</td>
+</tr>
+<tr>
+<td><strong>1.H.6</strong></td>
+<td>Approbation de la variation par le pays d'origine</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td>Preuve que la modification est approuvée dans le pays d'origine (ou justification)</td>
+</tr>
+<tr>
+<td><strong>1.H.7</strong></td>
+<td>Descriptif de la mise à jour signé</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td>Document de synthèse expliquant le rationnel technico-réglementaire</td>
+</tr>
+<tr>
+<td><strong>1.H.8</strong></td>
+<td>Liste des sites intervenants dans la fabrication des substances actives et du produit fini (signée et visée)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Cartographie exhaustive des sites (SA, intermédiaires, PF, conditionnement, contrôle)</td>
+</tr>
+<tr>
+<td><strong>1.H.9</strong></td>
+<td>Déclaration de similarité</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td>Attestation certifiant la similarité de composition et procédé</td>
+</tr>
+<tr>
+<td><strong>1.H.10</strong></td>
+<td>Déclaration de non-modification</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td>Attestation formelle certifiant qu'aucune modification non autorisée n'a été opérée</td>
+</tr>
+<tr>
+<td><strong>1.H.11</strong></td>
+<td>Accord du détenteur actuel sur le transfert de la DE</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td>Requis si la variation implique un transfert de titulaire de la DE</td>
+</tr>
+<tr>
+<td><strong>1.H.12</strong></td>
+<td>Attestation de déclaration de la date d’implémentation de la variation dans le pays d’origine</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td>Engagement sur la date de bascule industrielle dans le pays d'origine</td>
+</tr>
+</tbody>
+</table>
+<h3>3.3 Sous-Module 1.M : MANUFACTURERS (Fabricants SA et Produit Fini)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th>Cible</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Exigences techniques clés</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.M.S.1</strong></td>
+<td>Agrément(s) du/des site(s) de fabrication SA (Manufacturing License)</td>
+<td>API / SA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Licence de fabrication officielle de l'usine d'API</td>
+</tr>
+<tr>
+<td><strong>1.M.S.2</strong></td>
+<td>Certificat(s) BPF/GMP de conformité aux Bonnes Pratiques de Fabrication de la SA</td>
+<td>API / SA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Certificat GMP valide émis par autorité compétente</td>
+</tr>
+<tr>
+<td><strong>1.M.S.3</strong></td>
+<td>Lettre d’accès / Certificate of Suitability (CEP)</td>
+<td>API / SA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>CEP EDQM valide avec déclaration d'accès nominative au nom du fabricant du FPP</td>
+</tr>
+<tr>
+<td><strong>1.M.P.1</strong></td>
+<td>Agrément d’ouverture d'établissement pharmaceutique (ML)</td>
+<td>FPP (PF)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Licence d'établissement pour le fabricant du produit fini</td>
+</tr>
+<tr>
+<td><strong>1.M.P.2</strong></td>
+<td>Certificat(s) de conformité BPF/GMP du produit fini</td>
+<td>FPP (PF)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Certificat BPF valide pour toutes les étapes de fabrication et conditionnement</td>
+</tr>
+<tr>
+<td><strong>1.M.P.3</strong></td>
+<td>Étude de bioéquivalence OU justificatif d’exonération de l'étude (Biowaiver)</td>
+<td>FPP (PF)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td>Rapport clinique BE in vivo ou justification scientifique robuste (BCS classe I/III)</td>
+</tr>
+</tbody>
+</table>
+<h3>3.4 Sous-Module 1.P : PRODUCT INFORMATION (Informations sur le Produit &amp; Contrôle)</h3>
+<table>
+<thead>
+<tr>
+<th>Réf. ANPP</th>
+<th>Désignation de l'exigence documentaire</th>
+<th style="text-align: center;">NI</th>
+<th style="text-align: center;">RI</th>
+<th style="text-align: center;">MI</th>
+<th style="text-align: center;">NF</th>
+<th style="text-align: center;">RF</th>
+<th style="text-align: center;">MF</th>
+<th>Règles métier et contraintes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1.P.1</strong></td>
+<td><strong>Textes officiels pays d'origine :</strong><br>• 1.P.1.1 RCP d'origine<br>• 1.P.1.2 Notice d'origine<br>• 1.P.1.3 Étiquette d'origine</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Documents approuvés dans le pays exportateur ou de référence</td>
+</tr>
+<tr>
+<td><strong>1.P.2</strong></td>
+<td><strong>Modèle Algérie (visé obligatoirement par le PDT) :</strong><br>• 1.P.2.1 RCP Modèle Algérie<br>• 1.P.2.2 Notice Modèle Algérie (Bilingue FR/AR)<br>• 1.P.2.3 Étiquette Modèle Algérie<br>• 1.P.2.4 Maquette Modèle Algérie (Conditionnement primaire &amp; secondaire)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Textes conformes à la réglementation algérienne (notamment arabe obligatoire), maquettes en couleurs à échelle 100%, visées par le DT</td>
+</tr>
+<tr>
+<td><strong>1.P.3</strong></td>
+<td>Échantillons du produit fini</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td>Enregistrement de la remise physique au laboratoire de contrôle de l'ANPP</td>
+</tr>
+<tr>
+<td><strong>1.P.4</strong></td>
+<td>Bulletin d'analyse de la substance active (avec granulométrie et polymorphisme) et son recontrôle</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>CoA du fabricant SA + bulletin de recontrôle complet par le fabricant du produit fini</td>
+</tr>
+<tr>
+<td><strong>1.P.5</strong></td>
+<td>Bulletin d’analyse du produit fini (et bulletin du prémix le cas échéant)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Certificat d'analyse libératoire complet conforme aux spécifications</td>
+</tr>
+<tr>
+<td><strong>1.P.6</strong></td>
+<td>Attestation de correspondance entre les lots</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Traçabilité entre le lot soumis, le lot de bioéquivalence et les lots de stabilité</td>
+</tr>
+<tr>
+<td><strong>1.P.7</strong></td>
+<td>Certificat de libération de lot (précisant la libération pays d'origine / pays tiers)</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">E</td>
+<td>Certificat officiel de libération par la personne qualifiée (QP/DT)</td>
+</tr>
+<tr>
+<td><strong>1.P.8</strong></td>
+<td>Lettre d’engagement de non-commercialisation des lots de validation</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td><strong>Spécifique Fabrication Locale (NF/MF) :</strong> Engagement formel signé du DT à ne pas commercialiser les lots industriels de validation avant l'obtention de la DE</td>
+</tr>
+<tr>
+<td><strong>1.P.9</strong></td>
+<td>Lettre d’engagement du demandeur à compléter les résultats des études de stabilité du PF</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">E</td>
+<td><strong>Spécifique Fabrication Locale (NF/MF) :</strong> Engagement à poursuivre les stabilités en temps réel (Zone IVa/IVb) et transmettre les résultats à l'ANPP</td>
+</tr>
+</tbody>
+</table>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 3 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 4 : 4. Modules Techniques CTD 2, 3, 4 et 5 (Exige</span>
+        </div>
+        <h2>4. Modules Techniques CTD 2, 3, 4 et 5 (Exigences et Spécificités Régionales)</h2>
+<h3>4.1 Module 3 : Qualité Pharmaceutique, Chimique et Biologique</h3>
+<p>Le Module 3 est obligatoire (<code>E</code>) pour toutes les catégories (Princeps, Génériques importés, Génériques locaux). Le système intègre des contrôles stricts sur les éléments critiques imposés par l'ANPP :<br />
+1. <strong>Partie 3.2.S (Substance Active) :</strong><br />
+   - Acceptabilité formelle du <strong>CEP (Certificat de conformité à la Pharmacopée Européenne)</strong> : la présence d'un CEP valide avec sa déclaration d'accès et ses annexes allège la documentation technique requise tout en garantissant la conformité analytique.<br />
+   - Contrôle obligatoire du <strong>polymorphisme cristallin</strong> et de la <strong>granulométrie</strong> (taille des particules) en 3.2.S.1.3 et 3.2.S.4.<br />
+2. <strong>Partie 3.2.P (Produit Fini) :</strong><br />
+   - <strong>Exigence spécifique fabrication locale (3.2.P.3.5) :</strong> Dépôt obligatoire des dossiers complets de fabrication et de conditionnement des <strong>lots industriels de validation</strong> exécutés sur le site national.<br />
+   - Spécifications complètes à libération et à péremption (3.2.P.5.1).<br />
+3. <strong>Partie 3.2.R (Informations Régionales Algériennes) :</strong><br />
+   - <code>3.2.R.1.1</code> : Exécution des documents de production (Master Batch Records exécutés).<br />
+   - <code>3.2.R.1.2</code> : Documents de production principaux (Formules cadres de fabrication et conditionnement).<br />
+   - <code>3.2.R.2</code> : Procédures analytiques et informations de validation sur site.</p>
+<h3>4.2 Module 5 : Données Cliniques et Bioéquivalence</h3>
+<p>Pour les médicaments génériques (importés et locaux), le moteur de checklist conditionne la recevabilité du dossier aux exigences suivantes :<br />
+- <strong>5.3.1.2 Étude comparative de Biodisponibilité (BA) et Bioéquivalence (BE) :</strong> Rapport complet de l'étude clinique in vivo démontrant la bioéquivalence du produit candidat vis-à-vis du produit princeps de référence (intervalle de confiance 90 % compris entre 80,00 % et 125,00 % sur C_{max} et AUC).<br />
+- <strong>5.3.1.4 Méthodes bioanalytiques et analytiques :</strong> Validation complète selon les lignes directrices internationales (BPL/GCP).<br />
+- <strong>Justification d'exonération (Biowaiver) :</strong> En cas d'absence d'étude in vivo, rattachement obligatoire d'un dossier justificatif complet en 1.M.P.3 et 5.3.1.2 (profils de dissolution comparatifs multipoints à pH 1.2, 4.5, 6.8 et classification biopharmaceutique BCS).</p>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 4 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 5 : 5. Moteur Intelligent des Modifications (Lign</span>
+        </div>
+        <h2>5. Moteur Intelligent des Modifications (Ligne Directrice ANPP LD-DEPP07/V01)</h2>
+<h3>5.1 Cadre Conceptuel et Règle d'Escalade Dynamique</h3>
+<div class="diagram-container">
+    <div class="diagram-title">
+        <span>Arbre Décisionnel des Variations ANPP : Évaluation des Conditions & Escalade Dynamique</span>
+        <span class="badge-tech">Ligne Directrice LD-DEPP07/V01 & Grouping (Arrêté du 07/11/2021)</span>
+    </div>
+    <svg viewBox="0 0 760 320" width="100%" height="320" style="font-family: inherit;">
+        <defs>
+            <marker id="var-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#0284c7"/>
+            </marker>
+            <marker id="esc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#dc2626"/>
+            </marker>
+            <marker id="ok-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#10b981"/>
+            </marker>
+        </defs>
+
+        <rect x="0" y="0" width="760" height="320" fill="#f8fafc" rx="6" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- ÉTAPE 1 : SÉLECTION DE LA RUBRIQUE -->
+        <g transform="translate(15, 20)">
+            <rect x="0" y="0" width="140" height="120" rx="4" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+            <rect x="0" y="0" width="140" height="22" rx="4" fill="#0284c7"/>
+            <text x="70" y="15" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">1. SÉLECTION RUBRIQUE</text>
+            <text x="10" y="38" font-size="6.8" font-weight="700" fill="#0f172a">Catalogue des 34 Rubriques :</text>
+            <text x="10" y="52" font-size="6.2" fill="#475569">• Admin (1 à 5)</text>
+            <text x="10" y="65" font-size="6.2" fill="#475569">• CEP / API (6.a, 6.b)</text>
+            <text x="10" y="78" font-size="6.2" fill="#475569">• SA 3.2.S (7 à 16)</text>
+            <text x="10" y="91" font-size="6.2" fill="#475569">• PF 3.2.P (17 à 34)</text>
+            <rect x="10" y="98" width="120" height="16" rx="2" fill="#e0f2fe"/>
+            <text x="70" y="109" font-size="6" font-weight="700" fill="#0369a1" text-anchor="middle">Ex: 20.c Nouveau Site PF</text>
+        </g>
+
+        <!-- Flèche 1 -> 2 -->
+        <path d="M 155 80 L 190 80" stroke="#0284c7" stroke-width="2" marker-end="url(#var-arrow)"/>
+
+        <!-- ÉTAPE 2 : ÉVALUATION DES CONDITIONS OBLIGATOIRES -->
+        <g transform="translate(195, 20)">
+            <rect x="0" y="0" width="170" height="120" rx="4" fill="#ffffff" stroke="#d97706" stroke-width="1.5"/>
+            <rect x="0" y="0" width="170" height="22" rx="4" fill="#d97706"/>
+            <text x="85" y="15" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">2. QUESTIONNAIRE CONDITIONS</text>
+            <text x="10" y="38" font-size="6.5" font-weight="700" fill="#78350f">Critères LD-DEPP07/V01 :</text>
+            <text x="10" y="52" font-size="6.2" fill="#475569">☑ Certificat BPF valide pour le site</text>
+            <text x="10" y="65" font-size="6.2" fill="#475569">☑ Même procédé et contrôles validés</text>
+            <text x="10" y="78" font-size="6.2" fill="#475569">☑ Spécifications PF inchangées</text>
+            <text x="10" y="91" font-size="6.2" fill="#475569">☑ Stabilités comparatives conformes</text>
+            <rect x="10" y="98" width="150" height="16" rx="2" fill="#fef3c7"/>
+            <text x="85" y="109" font-size="6" font-weight="700" fill="#b45309" text-anchor="middle">Contrôle Booléen Strict</text>
+        </g>
+
+        <!-- Branche OUI : Maintien Classe Initiale -->
+        <path d="M 365 60 L 420 60" stroke="#10b981" stroke-width="2" marker-end="url(#ok-arrow)"/>
+        <text x="390" y="52" font-size="7" font-weight="800" fill="#059669">TOUTES OUI</text>
+
+        <!-- Boîte OUI -->
+        <g transform="translate(425, 20)">
+            <rect x="0" y="0" width="140" height="80" rx="4" fill="#ecfdf5" stroke="#10b981" stroke-width="1.8"/>
+            <rect x="0" y="0" width="140" height="20" rx="3" fill="#059669"/>
+            <text x="70" y="14" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">CLASSE MAINTENUE</text>
+            <text x="70" y="35" font-size="8" font-weight="800" fill="#065f46" text-anchor="middle">Mmin ou Mmod</text>
+            <text x="10" y="50" font-size="6" fill="#047857">• Droits redevance standard</text>
+            <text x="10" y="62" font-size="6" fill="#047857">• Pièces justificatives usuelles</text>
+            <text x="10" y="74" font-size="6" fill="#047857">• Traitement direct ANPP</text>
+        </g>
+
+        <!-- Branche NON : ESCALADE DYNAMIQUE AUTOMATIQUE (ROUGE) -->
+        <path d="M 280 140 L 280 200 L 420 200" stroke="#dc2626" stroke-width="2.5" marker-end="url(#esc-arrow)"/>
+        <rect x="295" y="185" width="115" height="16" rx="2" fill="#fee2e2" stroke="#f87171" stroke-width="1"/>
+        <text x="352" y="196" font-size="6.5" font-weight="800" fill="#b91c1c" text-anchor="middle">AU MOINS 1 ÉCHEC ✖</text>
+
+        <!-- Boîte Escalade -->
+        <g transform="translate(425, 160)">
+            <rect x="0" y="0" width="140" height="85" rx="4" fill="#fff1f2" stroke="#dc2626" stroke-width="2"/>
+            <rect x="0" y="0" width="140" height="20" rx="3" fill="#dc2626"/>
+            <text x="70" y="14" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">ESCALADE DYNAMIQUE</text>
+            <text x="70" y="35" font-size="8" font-weight="800" fill="#991b1b" text-anchor="middle">Mmin ➔ Mmod ➔ Mmaj</text>
+            <text x="10" y="50" font-size="6" font-weight="600" fill="#991b1b">• Redevance réévaluée BV2</text>
+            <text x="10" y="62" font-size="6" font-weight="600" fill="#991b1b">• Exigence Stabilités Zone IVb</text>
+            <text x="10" y="74" font-size="6" font-weight="600" fill="#991b1b">• Éventuelle Bioéquivalence in vivo</text>
+        </g>
+
+        <!-- ÉTAPE 4 : GROUPING (ARTICLE 09 ARRÊTÉ 07/11/2021) & SORTIE DES 12 PIÈCES -->
+        <g transform="translate(585, 20)">
+            <rect x="0" y="0" width="160" height="280" rx="5" fill="#ffffff" stroke="#6366f1" stroke-width="1.8"/>
+            <rect x="0" y="0" width="160" height="24" rx="4" fill="#4f46e5"/>
+            <text x="80" y="16" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">SORTIE DOSSIER ANPP</text>
+
+            <rect x="8" y="32" width="144" height="42" rx="3" fill="#eef2ff" stroke="#c7d2fe" stroke-width="0.8"/>
+            <text x="80" y="44" font-size="6.8" font-weight="700" fill="#3730a3" text-anchor="middle">MODULE GROUPING (Art. 09)</text>
+            <text x="12" y="56" font-size="6" fill="#4338ca">• Multi-modifications interdép.</text>
+            <text x="12" y="68" font-size="6" fill="#4338ca">• Alignement sévérité max</text>
+
+            <text x="10" y="88" font-size="6.8" font-weight="700" fill="#0f172a">Génération des 12 Pièces :</text>
+            <text x="10" y="102" font-size="5.8" fill="#475569">1. Lettre de demande officielle DT</text>
+            <text x="10" y="114" font-size="5.8" font-weight="700" fill="#0369a1">2. Tableau Comparatif Av/Ap</text>
+            <text x="10" y="126" font-size="5.8" fill="#475569">3. Justificatif technico-réglem.</text>
+            <text x="10" y="138" font-size="5.8" fill="#475569">4. Bordereau BV2 + Quittance</text>
+            <text x="10" y="150" font-size="5.8" fill="#475569">5. Sections CTD révisées (diff)</text>
+            <text x="10" y="162" font-size="5.8" fill="#475569">6. Liste sites 1.H.8 actualisée</text>
+            <text x="10" y="174" font-size="5.8" font-weight="700" fill="#0369a1">7. Attestation Non-Modif Autres</text>
+            <text x="10" y="186" font-size="5.8" fill="#475569">8. Copie DE en vigueur</text>
+            <text x="10" y="198" font-size="5.8" fill="#475569">9. Accusés dépôts en cours</text>
+            <text x="10" y="210" font-size="5.8" fill="#475569">10. Approbation pays origine</text>
+            <text x="10" y="222" font-size="5.8" fill="#475569">11. Licences sites & BPF valides</text>
+            <text x="10" y="234" font-size="5.8" fill="#475569">12. Notice FR/AR & RCP visés DT</text>
+
+            <rect x="8" y="244" width="144" height="26" rx="3" fill="#10b981"/>
+            <text x="80" y="260" font-size="6.8" font-weight="800" fill="#ffffff" text-anchor="middle">SOUMISSION E-TASJIL</text>
+        </g>
+
+        <!-- Lignes vers Sortie -->
+        <path d="M 565 60 L 585 60" stroke="#10b981" stroke-width="2" marker-end="url(#ok-arrow)"/>
+        <path d="M 565 200 L 585 200" stroke="#dc2626" stroke-width="2" marker-end="url(#esc-arrow)"/>
+    </svg>
+</div>
+
+<p>L'ANPP classe toute modification post-approbation de la décision d'enregistrement en trois catégories exclusives :<br />
+1. <strong>Modification Mineure (Mmin) :</strong> Répercussions sur la qualité, la sécurité ou l'efficacité minimes ou nulles.<br />
+2. <strong>Modification Modérée (Mmod) :</strong> Impact potentiel sur la qualité, la sécurité ou l'efficacité.<br />
+3. <strong>Modification Majeure (Mmaj) :</strong> Répercussions significatives sur la qualité, la sécurité ou l'efficacité.</p>
+<pre><code>       ┌────────────────────────────────────────────────────────────────────────┐
+       │             ALGORITHME DE QUALIFICATION &amp; RECLASSEMENT ANPP            │
+       └───────────────────────────────────┬────────────────────────────────────┘
+                                           │
+                                 Saisie de la variation
+                             (Sélection parmi rubriques 1 à 34)
+                                           │
+                                           ▼
+                       Évaluation des &quot;Conditions à remplir&quot;
+                                           │
+                      ┌────────────────────┴────────────────────┐
+                      ▼                                         ▼
+            Toutes conditions remplies             Au moins une condition non remplie
+                      │                                         │
+                      ▼                                         ▼
+           Classification nominale               RECLASSEMENT AUTOMATIQUE OBLIGATOIRE
+             (ex: Mmin ou Mmod)                                 │
+                                                ┌───────────────┴───────────────┐
+                                                ▼                               ▼
+                                         Mmin  ──&gt;  Mmod ou Mmaj         Mmod  ──&gt;  Mmaj
+</code></pre>
+<div class="callout danger"><div class="callout-title">Exigence Bloquante & Règle BPF</div>> **Règle réglementaire de reclassement (Section 5.1 & 5.2 de la Ligne Directrice) :**
+<div class="callout info">Dès lors qu'une ou plusieurs conditions prédéfinies pour une modification mineure (`Mmin`) ou modérée (`Mmod`) ne sont pas strictement satisfaites, la plateforme réévalue et **reclasse automatiquement** la demande au niveau supérieur (`Mmin` reclassée en `Mmod` ou `Mmaj`, et `Mmod` reclassée en `Mmaj`), en ajustant instantanément la liste des documents justificatifs requis.</div></div>
+
+<h3>5.2 Regroupement de Modifications (<em>Grouping</em> - Arrêté du 07/11/2021)</h3>
+<p>En vertu de l'article 09 de l'arrêté du 07 novembre 2021, la plateforme permet de soumettre plusieurs modifications au sein d'une même procédure groupée (<em>Grouping</em>) lorsque :<br />
+- Elles concernent une même décision d'enregistrement et découlent d'un même changement technique (ex: changement de site de fabrication de l'API entraînant une modification de taille de lot et de méthode analytique).<br />
+- La plateforme calcule le niveau global de risque du groupe : si un groupe contient une modification <code>Mmaj</code>, l'ensemble du dossier groupé est instruit selon le niveau de sévérité maximal <code>Mmaj</code>.</p>
+<h3>5.3 Documentation Générale Requise pour TOUTE Demande de Modification</h3>
+<p>Selon la section 5.3 de la Ligne Directrice, toute soumission de variation (Mmin, Mmod, Mmaj) génère obligatoirement le bordereau de pièces maîtresses suivant :<br />
+1. <strong>Lettre de demande officielle</strong> de modification de la DE, visée par le PDT.<br />
+2. <strong>Tableau comparatif standardisé :</strong> État actuel approuvé vs Situation proposée, définissant clairement la portée du changement.<br />
+3. <strong>Justificatif technico-réglementaire</strong> motivant la modification.<br />
+4. <strong>Bordereau de versement</strong> de la redevance ANPP applicable (+ justificatif bancaire).<br />
+5. <strong>Version modifiée des sections concernées du dossier CTD</strong> (remplacement page à page).<br />
+6. <strong>Liste actualisée et visée</strong> de tous les intervenants (fabricants SA, PF, sites de conditionnement et de contrôle).<br />
+7. <strong>Attestation formelle de non-modification des autres sections</strong> en dehors de celles déclarées.<br />
+8. <strong>Copie de la décision d’enregistrement (DE) en vigueur</strong>.<br />
+9. <strong>Accusés de dépôt</strong> des demandes de modifications et/ou renouvellements actuellement en cours d'instruction par l'ANPP avec leurs bordereaux.<br />
+10. <strong>Approbation de la modification par les autorités du pays d'origine</strong> (pour les médicaments importés).<br />
+11. <strong>Autorisations des sites et preuves BPF/BPL</strong> valides pour les opérations concernées.<br />
+12. <strong>Informations "produit" révisées</strong> (RCP, notice bilingue, étiquetage, maquettes visées PDT).</p>
+<h3>5.4 Référentiel des 34 Rubriques de Modifications Réglementaires</h3>
+<h4>I. Modifications Administratives (LD-DEPP07 Section 5.4.1)</h4>
+<ul>
+<li><strong>1.</strong> Changement dans la dénomination commerciale du produit fini.</li>
+<li><strong>2.</strong> Changement dans la dénomination de la substance active, d'un excipient ou d'un article de conditionnement (avec maintien de l'entité chimique/spécification).</li>
+<li><strong>3.</strong> Changement ou attribution du code ATC par l'OMS.</li>
+<li><strong>4.</strong> Changement du nom et/ou de l'adresse du titulaire de l'AMM, du titulaire du dossier permanent de la substance active (DPSA/DMF), du site de stockage de la banque de cellules, du site de fabrication de l'API, du produit intermédiaire ou du produit fini, du conditionneur primaire/secondaire, ou du site de contrôle.</li>
+<li><strong>5.</strong> Suppression d'un site de fabrication, de contrôle, de conditionnement ou de stockage (avec maintien d'au moins un site approuvé opérationnel).</li>
+</ul>
+<h4>II. Modifications relatives au CEP ou Préqualification API (LD-DEPP07 Section 5.4.1.2)</h4>
+<ul>
+<li><strong>6.a.</strong> Soumission d'un CEP nouveau ou mis à jour provenant d'un fabricant déjà approuvé (<code>6.a.1</code> ➔ Mmin, <code>6.a.2</code> ➔ Mmin, <code>6.a.3</code> ➔ Mmod).</li>
+<li><strong>6.b.</strong> Soumission d'un CEP provenant d'un nouveau fabricant (<code>6.b.1</code> ➔ Mmin, <code>6.b.2</code> ➔ Mmod).</li>
+</ul>
+<h4>III. Modifications Qualitatives Substance Active 3.2.S (LD-DEPP07 Section 5.4.2.1)</h4>
+<ul>
+<li><strong>7.</strong> Remplacement ou ajout d'un site de fabrication ou d'un nouveau fabricant d'API :</li>
+<li><em>7.a :</em> Uniquement le contrôle de la SA (<code>7.a.1</code> ➔ Mmin, <code>7.a.2</code> ➔ Mmod).</li>
+<li><em>7.b :</em> Production du matériau de départ (<code>7.b.1</code> ➔ Mmin, <code>7.b.2</code> ➔ Mmaj).</li>
+<li><em>7.c :</em> Production de l'intermédiaire (<code>7.c.1</code> ➔ Mmod, <code>7.c.2</code> ➔ Mmin).</li>
+<li><em>7.d :</em> Production complète de l'API (<code>7.d.1</code> ➔ Mmod, <code>7.d.2</code> ➔ Mmaj).</li>
+<li><strong>8.a.</strong> Ajout ou changement d'un bloc de fabrication ou d'une unité de production sur un site API approuvé ➔ Mmin.</li>
+<li><strong>9.</strong> Changement dans le procédé de fabrication de l'API :</li>
+<li><em>9.a.1 :</em> Changement mineur sans altération du profil d'impuretés ni de la voie de synthèse ➔ Mmod.</li>
+<li><em>9.a.2 :</em> Changement important susceptible d'avoir des répercussions significatives ➔ Mmaj.</li>
+<li><strong>10.</strong> Modification de la taille de lot de l'API ou d'un intermédiaire :</li>
+<li><em>10.a.1 :</em> Augmentation jusqu'à 10 fois la taille acceptée ➔ Mmin.</li>
+<li><em>10.b :</em> Réduction de la taille de lot ➔ Mmin.</li>
+<li><em>10.c.1 :</em> Augmentation supérieure à 10 fois la taille acceptée ➔ Mmod.</li>
+<li><strong>11.</strong> Essais en cours de fabrication ou limites durant la synthèse de l'API :</li>
+<li><em>11.a :</em> Resserrement des limites ➔ Mmin.</li>
+<li><em>11.b :</em> Changement mineur d'une procédure analytique ➔ Mmin.</li>
+<li><em>11.c :</em> Ajout d'un nouveau paramètre de spécification ➔ Mmin.</li>
+<li><em>11.d :</em> Suppression d'un paramètre redondant ➔ Mmin.</li>
+<li><em>11.e :</em> Ajout suite à un problème de qualité/sécurité ➔ Mmod.</li>
+<li><em>11.f :</em> Élargissement des limites acceptées ➔ Mmaj.</li>
+<li><strong>12.</strong> Changement des spécifications et critères d'acceptation de l'API :</li>
+<li><em>12.a :</em> Mise à jour suite à révision de monographie de Pharmacopée officielle ➔ Mmin.</li>
+<li><em>12.c :</em> Ajout de paramètre (<code>12.c.1</code> ➔ Mmin, <code>12.c.2</code> ➔ Mmod, <code>12.c.3</code> ➔ Mmaj).</li>
+<li><em>12.b :</em> Suppression de paramètre (<code>12.b.1</code> ➔ Mmin, <code>12.b.2</code> ➔ Mmod, <code>12.b.3</code> ➔ Mmaj).</li>
+<li><em>12.d :</em> Remplacement de paramètre (<code>12.d.1</code> ➔ Mmin, <code>12.d.2</code> ➔ Mmod, <code>12.d.3</code> ➔ Mmaj).</li>
+<li><em>12.e :</em> Resserrement d'un critère d'acceptation ➔ Mmin.</li>
+<li><em>12.f :</em> Élargissement d'un critère (<code>12.f.1</code> ➔ Mmin, <code>12.f.2</code> ➔ Mmod, <code>12.f.3</code> ➔ Mmaj).</li>
+<li><strong>13.</strong> Procédures d'essai de la SA ou de ses intermédiaires :</li>
+<li><em>13.a :</em> Mise à jour suite à révision pharmacopée officielle ➔ Mmin.</li>
+<li><em>13.b :</em> Passage d'une méthode interne à une pharmacopée reconnue ➔ Mmin.</li>
+<li><em>13.c :</em> Ajout d'une procédure (<code>13.c.1</code> ➔ Mmin, <code>13.c.2</code> ➔ Mmod, <code>13.c.3</code> ➔ Mmaj).</li>
+<li><em>13.d :</em> Modification/remplacement de procédure (<code>13.d.1</code> ➔ Mmin, <code>13.d.2</code> ➔ Mmod, <code>13.d.3</code> ➔ Mmaj).</li>
+<li><em>13.e :</em> Suppression d'une procédure alternative (<code>13.e.1/2</code> ➔ Mmin, <code>13.e.3</code> ➔ Mmaj).</li>
+<li><strong>14.</strong> Changement de conditionnement primaire de la SA :</li>
+<li><em>14.a :</em> Composition qualitative/quantitative ➔ Mmin.</li>
+<li><em>14.b :</em> SA liquides non stériles ➔ Mmod.</li>
+<li><strong>15.</strong> Période de recontrôle ou durée de vie de l'API :</li>
+<li><em>15.a :</em> Réduction ➔ Mmin.</li>
+<li><em>15.b :</em> Extension ➔ Mmod.</li>
+<li><strong>16.</strong> Conditions de stockage de l'API sur l'étiquette :</li>
+<li><em>16.a :</em> Conditions plus restrictives ➔ Mmin.</li>
+<li><em>16.b :</em> Tout autre changement ➔ Mmod.</li>
+</ul>
+<h4>IV. Modifications Qualitatives Produit Fini 3.2.P (LD-DEPP07 Section 5.4.2.2)</h4>
+<ul>
+<li><strong>17.</strong> Système d'aromatisation ou de coloration du produit fini :</li>
+<li><em>17.a :</em> Augmentation ou réduction de teneur ➔ Mmin.</li>
+<li><em>17.b :</em> Ajout, suppression ou remplacement d'arôme/colorant ➔ Mmin.</li>
+<li><strong>18.a.</strong> Masse de l'enrobage ou des capsules vides pour formes orales solides à libération immédiate ➔ Mmin.</li>
+<li><strong>19.</strong> Composition en excipients d'une forme orale solide à libération immédiate :</li>
+<li><em>19.a :</em> Remplacement d'un excipient par un excipient comparable à concentration similaire ➔ Mmod (ou Mmaj si conditions non satisfaites).</li>
+<li><em>19.b :</em> Changement quantitatif des excipients ➔ Mmaj.</li>
+<li><strong>20.</strong> Site de fabrication du produit fini :</li>
+<li><em>20.a :</em> Site de conditionnement secondaire ➔ Mmin.</li>
+<li><em>20.b :</em> Site de conditionnement primaire (solides, crèmes, sirops) ➔ Mmin.</li>
+<li><em>20.c :</em> Site chargé de la fabrication (procédé conventionnel non complexe) ➔ Mmod.</li>
+<li><strong>21.a.</strong> Remplacement ou ajout d'un site de contrôle analytique ➔ Mmin.</li>
+<li><strong>22.</strong> Taille de lot du produit fini (formes orales solides ou solutions non stériles) :</li>
+<li><em>22.a :</em> Augmentation jusqu'à 10 fois la taille approuvée ➔ Mmin.</li>
+<li><em>22.b :</em> Réduction jusqu'à 10 fois ➔ Mmin.</li>
+<li><em>22.c :</em> Plus de 10 fois supérieure ou inférieure ➔ Mmod.</li>
+<li><strong>23.</strong> Changement dans le procédé de fabrication du produit fini (sans changement du principe fondamental) ➔ Mmod.</li>
+<li><strong>24.</strong> Contrôles en cours de fabrication du produit intermédiaire ou fini :</li>
+<li><em>24.a :</em> Resserrement des limites ➔ Mmin.</li>
+<li><em>24.b :</em> Suppression d'un contrôle redondant ➔ Mmin.</li>
+<li><em>24.c / 24.d :</em> Ajout, révision ou remplacement d'un contrôle ➔ Mmin.</li>
+<li><strong>25.</strong> Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique ➔ Mmin.</li>
+<li><strong>26.</strong> Spécifications ou procédures analytiques d'un excipient :</li>
+<li><em>26.a :</em> Suppression d'un paramètre interne non critique ➔ Mmin.</li>
+<li><em>26.b :</em> Ajout d'un nouveau paramètre ➔ Mmin.</li>
+<li><em>26.c :</em> Resserrement des limites ➔ Mmin.</li>
+<li><em>26.d :</em> Changement ou remplacement d'une méthode ➔ Mmod.</li>
+<li><strong>27.</strong> Mise à jour des spécifications du produit fini suite à révision d'une monographie de Pharmacopée officielle ➔ Mmin.</li>
+<li><strong>28.</strong> Spécifications et critères d'acceptation du produit fini :</li>
+<li><em>28.a :</em> Suppression d'un paramètre non critique redondant ➔ Mmin.</li>
+<li><em>28.b :</em> Ajout d'un paramètre de contrôle ➔ Mmin.</li>
+<li><em>28.c :</em> Resserrement d'un critère ➔ Mmin.</li>
+<li><em>28.d :</em> Remplacement d'un paramètre ➔ Mmin.</li>
+<li><strong>29.</strong> Procédures analytiques du produit fini :</li>
+<li><em>29.a :</em> Suppression d'une procédure alternative ➔ Mmin.</li>
+<li><em>29.b :</em> Ajout d'une procédure analytique ➔ Mmin.</li>
+<li><em>29.c :</em> Modification ou remplacement d'une procédure ➔ Mmod.</li>
+<li><em>29.d :</em> Mise à jour selon monographie pharmacopée ➔ Mmin.</li>
+<li><em>29.e :</em> Transfert vers une pharmacopée reconnue ➔ Mmin.</li>
+<li><strong>30.</strong> Conditionnement primaire du produit fini (changement ou ajout de type de contenant) :</li>
+<li><em>30.a :</em> Formes pharmaceutiques non stériles ➔ Mmod.</li>
+<li><em>30.b :</em> Médicaments stériles ➔ Mmaj.</li>
+<li><em>30.c :</em> Suppression d'un contenant sans supprimer de dosage/forme ➔ Mmod.</li>
+<li><strong>31.</strong> Composition qualitative et quantitative du conditionnement primaire :</li>
+<li><em>31.a :</em> Formes solides (ex: blister vers autre blister équivalent) ➔ Mmin.</li>
+<li><em>31.b :</em> Formes semi-solides et liquides non stériles ➔ Mmod.</li>
+<li><strong>32.</strong> Durée de conservation du produit fini pour la vente :</li>
+<li><em>32.a :</em> Réduction ➔ Mmod.</li>
+<li><em>32.b :</em> Extension (sur base de données de stabilité temps réel) ➔ Mmod.</li>
+<li><strong>33.</strong> Durée de conservation après première ouverture, dilution ou reconstitution :</li>
+<li><em>33.a :</em> Réduction ➔ Mmod.</li>
+<li><em>33.b :</em> Extension ➔ Mmod.</li>
+<li><strong>34.</strong> Changement des conditions de stockage du produit fini ou en cours d'utilisation ➔ Mmod.</li>
+</ul>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 5 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 6 : 6. Architecture Technique et Ergonomie "Pharm</span>
+        </div>
+        <h2>6. Architecture Technique et Ergonomie "Pharma Explorer"</h2>
+<h3>6.1 Stack Technologique Native et Souveraine</h3>
+<ul>
+<li><strong>Backend &amp; Serveur Applicatif :</strong> <strong>Golang (Go 1.26+)</strong></li>
+<li>Performance native sans runtime lourd, binaire unique auto-suffisant (<code>homolog.exe</code>).</li>
+<li>Streaming de documents par morceaux (Chunked upload 5 Mo) résilient aux micro-coupures réseau.</li>
+<li>Driver PostgreSQL natif <code>jackc/pgx/v5</code> avec pool de connexions optimisé.</li>
+<li><strong>Stockage Abstrait Sécurisé (<code>StorageProvider</code>) :</strong></li>
+<li>Architecture CAS (Content-Addressed Storage) basée sur l'empreinte cryptographique <strong>SHA-256</strong>.</li>
+<li>Déduplication physique des fichiers à la source et chiffrement AES-GCM sur disque.</li>
+<li><strong>Base de Données Relationnelle :</strong> <strong>PostgreSQL 16+</strong></li>
+<li>Schémas configurables via colonnes <code>JSONB</code> indexées (checklists dynamiques, modèles de dossiers).</li>
+<li>Recherche plein texte bilingue intégrée (<code>tsvector</code> / <code>tsquery</code>).</li>
+<li>Table <code>audit_logs</code> strictement <em>append-only</em> (triggers SQL interdisant formellement <code>UPDATE</code> et <code>DELETE</code> selon 21 CFR Part 11).</li>
+<li><strong>Frontend Embarqué (<code>//go:embed</code>) :</strong></li>
+<li>TypeScript strict, Tailwind CSS, Lucide Icons, PDF.js local sans appel à aucun CDN public externe.</li>
+<li>Zéro dépendance Node.js requise sur le serveur en production.</li>
+</ul>
+<h3>6.2 Modèle Ergonomique "Pharma Explorer" à 3 Volets</h3>
+<p>Inspiré des outils d'exploration professionnelle haute densité, l'écran de travail optimise chaque pixel disponible :</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ [📁 Navigation]  C:\Homolog &gt; Dossiers &gt; ENR-2026-0042 (Amoxicilline 500mg) &gt; CTD_Module_1 &gt; 1.P     │
+├────────────────────┬─────────────────────────────────────────────────┬─────────────────────────────────┤
+│ ARBRE DE NAVIGATION│ VUE TABLEAU COMPACT (Hauteur ligne : 32px)      │ VOLET DE PRÉVISUALISATION       │
+│ (Volet Gauche)     │ (Zone Centrale)                                 │ (Volet Droit - Alt+P)           │
+├────────────────────┼─────────────────────────────────────────────────┼─────────────────────────────────┤
+│ ▼ ENR-2026-0042    │ Réf  | Statut | Document        | Ver | Validé  │ [Visionneuse PDF.js Intégrée]   │
+│   ► Mod 1 : Admin  │ 1.P.1| Valide | RCP_Origine.pdf | 1.0 | ✅ DT    │                                 │
+│     ▼ 1.P Info     │ 1.P.2| Valide | Notice_FR_AR.pdf| 2.0 | ✅ DT    │ Titre : Notice_FR_AR.pdf        │
+│       • 1.P.1 (3/3)│ 1.P.3| Manque | Échantillons    | -   | ❌       │ Version : 2.0 (En vigueur)      │
+│       • 1.P.2 (4/4)│ 1.P.4| Valide | CoA_API_Lot.pdf | 1.0 | ✅ DT    │ SHA-256 : e3b0c44298fc1c...     │
+│       • 1.P.3 (0/1)│ 1.P.5| Valide | CoA_PF_Lot.pdf  | 1.0 | ✅ DT    │ Horodatage : 2026-11-10 14:32Z  │
+│       • 1.P.8 (1/1)│ 1.P.8| Valide | Engag_NonCom.pdf| 1.0 | ✅ DT    │                                 │
+│   ► Mod 2 : Résumé │ 1.P.9| Valide | Engag_Stab.pdf  | 1.0 | ✅ DT    │ [ Signer Électroniquement (DT) ]│
+│   ► Mod 3 : Qualité│                                                 │ [ Télécharger avec Certificat ] │
+│   ► Mod 5 : BE/BA  │                                                 │                                 │
+├────────────────────┴─────────────────────────────────────────────────┴─────────────────────────────────┤
+│ Éléments : 7 | Complétude : 85 % (1 obligatoire manquante) | Stockage : 1.42 Go / 50 Go                │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<ul>
+<li><strong>Adaptation RTL Arabe Intégrale :</strong></li>
+<li>Bascule instantanée LTR ⇄ RTL via <code>dir="rtl"</code>.</li>
+<li>Inversion symétrique naturelle de l'interface : arbre de navigation ancré à droite, tableau de données au centre, volet de prévisualisation à gauche.</li>
+<li>Polices locales sans appel réseau : <code>Cairo</code> (typographie arabe fluide) et <code>Inter</code> (typographie latine).</li>
+</ul>
+<h3>6.3 Console Dédiée d'Administration du Laboratoire (Back-Office Autonome)</h3>
+<div class="diagram-container">
+    <div class="diagram-title">
+        <span>Architecture Double Interface : Pharma Explorer (Métier) vs Cockpit Admin Laboratoire</span>
+        <span class="badge-tech">Dual-Console Workspace & Cloisonnement des Profils</span>
+    </div>
+    <svg viewBox="0 0 760 310" width="100%" height="310" style="font-family: inherit;">
+        <rect x="0" y="0" width="760" height="310" fill="#f8fafc" rx="6" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- CONSOLE 1 : PHARMA EXPLORER (GAUCHE) -->
+        <g transform="translate(15, 15)">
+            <rect x="0" y="0" width="460" height="280" rx="5" fill="#ffffff" stroke="#0284c7" stroke-width="1.8"/>
+            <!-- Barre de titre Explorer -->
+            <rect x="0" y="0" width="460" height="28" rx="4" fill="#091e36"/>
+            <circle cx="15" cy="14" r="4" fill="#ef4444"/>
+            <circle cx="28" cy="14" r="4" fill="#f59e0b"/>
+            <circle cx="41" cy="14" r="4" fill="#10b981"/>
+            <text x="60" y="18" font-size="8" font-weight="700" fill="#ffffff">PHARMA EXPLORER • INTERFACE OPÉRATIONNELLE DOSSIERS CTD / DM</text>
+            <rect x="360" y="5" width="90" height="18" rx="3" fill="#0284c7"/>
+            <text x="405" y="17" font-size="6.5" font-weight="700" fill="#ffffff" text-anchor="middle">MODE MÉTIER</text>
+
+            <!-- 3 Volets Explorer -->
+            <!-- Volet 1 : Arborescence CTD/DM -->
+            <rect x="8" y="36" width="130" height="236" fill="#f8fafc" rx="3" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="14" y="50" font-size="7" font-weight="700" fill="#091e36">VOLET 1 : ARBORESCENCE</text>
+            <line x1="8" y1="56" x2="138" y2="56" stroke="#e2e8f0" stroke-width="1"/>
+            <text x="14" y="70" font-size="6.5" font-weight="700" fill="#0284c7">📁 Module 1 (Algérie)</text>
+            <text x="22" y="85" font-size="6.2" fill="#475569">├ 1.A Demandeur (PDT)</text>
+            <text x="22" y="100" font-size="6.2" fill="#475569">├ 1.H Détenteur / Prix</text>
+            <text x="22" y="115" font-size="6.2" fill="#475569">├ 1.M Fabricants SA/PF</text>
+            <text x="22" y="130" font-size="6.2" fill="#475569">└ 1.P Notice / Stabilité</text>
+            <text x="14" y="150" font-size="6.5" font-weight="700" fill="#0284c7">📁 Module 3 (Qualité)</text>
+            <text x="22" y="165" font-size="6.2" fill="#475569">├ 3.2.S Substance Active</text>
+            <text x="22" y="180" font-size="6.2" fill="#475569">└ 3.2.P Produit Fini</text>
+            <text x="14" y="200" font-size="6.5" font-weight="700" fill="#0284c7">📁 Module 5 (Clinique/BE)</text>
+            <text x="14" y="220" font-size="6.5" font-weight="700" fill="#0d9488">📁 Coffre GED ALCOA+</text>
+            <text x="14" y="240" font-size="6.5" font-weight="700" fill="#6366f1">📁 Variations LD-DEPP07</text>
+
+            <!-- Volet 2 : Table Haute Densité -->
+            <rect x="144" y="36" width="180" height="236" fill="#ffffff" rx="3" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="150" y="50" font-size="7" font-weight="700" fill="#091e36">VOLET 2 : TABLE BPF DENSE</text>
+            <line x1="144" y1="56" x2="324" y2="56" stroke="#e2e8f0" stroke-width="1"/>
+            
+            <!-- Lignes tableau BPF -->
+            <rect x="148" y="62" width="172" height="36" rx="2" fill="#f0f9ff" stroke="#bae6fd" stroke-width="0.8"/>
+            <text x="154" y="74" font-size="6.5" font-weight="700" fill="#0369a1">1.P.2.1 Notice Patient FR/AR</text>
+            <rect x="154" y="79" width="35" height="12" rx="2" fill="#d97706"/>
+            <text x="171" y="88" font-size="5.8" font-weight="700" fill="#ffffff" text-anchor="middle">En Revue</text>
+            <text x="195" y="88" font-size="6" fill="#64748b">v0.3 • AQ Checker</text>
+
+            <rect x="148" y="104" width="172" height="36" rx="2" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="0.8"/>
+            <text x="154" y="116" font-size="6.5" font-weight="700" fill="#065f46">3.2.P.8 Stabilités Zone IVb</text>
+            <rect x="154" y="121" width="42" height="12" rx="2" fill="#059669"/>
+            <text x="175" y="130" font-size="5.8" font-weight="700" fill="#ffffff" text-anchor="middle">Approuvé</text>
+            <text x="202" y="130" font-size="6" fill="#64748b">v1.0 • Scellé DT</text>
+
+            <rect x="148" y="146" width="172" height="36" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
+            <text x="154" y="158" font-size="6.5" font-weight="700" fill="#334155">1.A.3 Formulaire Officiel ANPP</text>
+            <rect x="154" y="163" width="38" height="12" rx="2" fill="#8b5cf6"/>
+            <text x="173" y="172" font-size="5.8" font-weight="700" fill="#ffffff" text-anchor="middle">Prêt DT</text>
+            <text x="198" y="172" font-size="6" fill="#64748b">v0.9 • BV1 calculé</text>
+
+            <!-- Volet 3 : Volet Contextuel d'Inspection -->
+            <rect x="330" y="36" width="122" height="236" fill="#f8fafc" rx="3" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="336" y="50" font-size="7" font-weight="700" fill="#091e36">VOLET 3 : INSPECTION</text>
+            <line x1="330" y1="56" x2="452" y2="56" stroke="#e2e8f0" stroke-width="1"/>
+            <rect x="336" y="64" width="110" height="60" rx="2" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+            <text x="391" y="95" font-size="6.5" font-weight="700" fill="#94a3b8" text-anchor="middle">Aperçu PDF / Diff</text>
+            <text x="336" y="140" font-size="6.2" font-weight="700" fill="#0f172a">Métadonnées ALCOA+ :</text>
+            <text x="336" y="154" font-size="5.8" fill="#475569">• SHA-256 : a8f3...e912</text>
+            <text x="336" y="166" font-size="5.8" fill="#475569">• Rédacteur : Dr. Benali</text>
+            <text x="336" y="178" font-size="5.8" fill="#475569">• Horodatage : UTC +1</text>
+            <text x="336" y="190" font-size="5.8" fill="#475569">• Verrou : Check-out</text>
+            <!-- Bouton Visa PDT -->
+            <rect x="336" y="210" width="110" height="22" rx="3" fill="#059669"/>
+            <text x="391" y="224" font-size="6.5" font-weight="800" fill="#ffffff" text-anchor="middle">PARAPHEUR DT (2FA)</text>
+        </g>
+
+        <!-- COMMUTATEUR WORKSPACE SWITCHER (CENTRE) -->
+        <g transform="translate(485, 90)">
+            <rect x="0" y="0" width="30" height="120" rx="4" fill="#091e36"/>
+            <text x="15" y="25" font-size="6" font-weight="800" fill="#38bdf8" text-anchor="middle">S</text>
+            <text x="15" y="38" font-size="6" font-weight="800" fill="#38bdf8" text-anchor="middle">W</text>
+            <text x="15" y="51" font-size="6" font-weight="800" fill="#38bdf8" text-anchor="middle">I</text>
+            <text x="15" y="64" font-size="6" font-weight="800" fill="#38bdf8" text-anchor="middle">T</text>
+            <text x="15" y="77" font-size="6" font-weight="800" fill="#38bdf8" text-anchor="middle">C</text>
+            <text x="15" y="90" font-size="6" font-weight="800" fill="#38bdf8" text-anchor="middle">H</text>
+            <path d="M 5 105 L 15 115 L 25 105" stroke="#38bdf8" stroke-width="1.5" fill="none"/>
+        </g>
+
+        <!-- CONSOLE 2 : COCKPIT ADMIN LABORATOIRE (DROITE) -->
+        <g transform="translate(525, 15)">
+            <rect x="0" y="0" width="220" height="280" rx="5" fill="#ffffff" stroke="#0d9488" stroke-width="1.8"/>
+            <rect x="0" y="0" width="220" height="28" rx="4" fill="#0f766e"/>
+            <text x="110" y="18" font-size="8" font-weight="700" fill="#ffffff" text-anchor="middle">COCKPIT ADMIN LABORATOIRE</text>
+
+            <rect x="8" y="36" width="204" height="42" rx="3" fill="#f0fdfa" stroke="#ccfbf1" stroke-width="1"/>
+            <text x="14" y="50" font-size="7" font-weight="700" fill="#0f766e">1. Gestion des Utilisateurs</text>
+            <text x="14" y="63" font-size="6.2" fill="#475569">Attribution des 9 rôles, 2FA hors-ligne,</text>
+            <text x="14" y="73" font-size="6.2" fill="#475569">révocation immédiate de session.</text>
+
+            <rect x="8" y="84" width="204" height="42" rx="3" fill="#f0fdfa" stroke="#ccfbf1" stroke-width="1"/>
+            <text x="14" y="98" font-size="7" font-weight="700" fill="#0f766e">2. Matrice 14 Permissions RBAC</text>
+            <text x="14" y="111" font-size="6.2" fill="#475569">Contrôle granulaire par profil,</text>
+            <text x="14" y="121" font-size="6.2" fill="#475569">ségrégation Maker-Checker-Approver.</text>
+
+            <rect x="8" y="132" width="204" height="42" rx="3" fill="#f0fdfa" stroke="#ccfbf1" stroke-width="1"/>
+            <text x="14" y="146" font-size="7" font-weight="700" fill="#0f766e">3. Établissement Demandeur</text>
+            <text x="14" y="159" font-size="6.2" fill="#475569">Agrément MIPH 1.A.6, décision DT 1.A.7,</text>
+            <text x="14" y="169" font-size="6.2" fill="#475569">coordonnées officielles ANPP.</text>
+
+            <rect x="8" y="180" width="204" height="42" rx="3" fill="#f0fdfa" stroke="#ccfbf1" stroke-width="1"/>
+            <text x="14" y="194" font-size="7" font-weight="700" fill="#0f766e">4. Référentiel Sites 1.H.8</text>
+            <text x="14" y="207" font-size="6.2" fill="#475569">Fabricants SA/PF, certificats BPF/GMP,</text>
+            <text x="14" y="217" font-size="6.2" fill="#475569">licences ML et dates d'échéance.</text>
+
+            <rect x="8" y="228" width="204" height="42" rx="3" fill="#f0fdfa" stroke="#ccfbf1" stroke-width="1"/>
+            <text x="14" y="242" font-size="7" font-weight="700" fill="#0f766e">5. Surveillance & Quotas CAS</text>
+            <text x="14" y="255" font-size="6.2" fill="#475569">Audit trail immuable, consommation,</text>
+            <text x="14" y="265" font-size="6.2" fill="#475569">déduplication cryptographique SHA-256.</text>
+        </g>
+    </svg>
+</div>
+
+<p>Conformément aux principes de séparation des fonctions BPF et du <em>Zero-Trust</em>, l'Administrateur de Laboratoire n'ayant aucun droit d'accès aux dossiers scientifiques, documents de santé et secrets de fabrication, il est <strong>accueilli par défaut sur une interface dédiée d'administration et de gouvernance</strong>, totalement découplée de l'explorateur scientifique "Pharma Explorer" :</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ SANAD PHARMA — Console d'Administration &amp; Sécurité du Laboratoire                [Admin: Dr. Amine] ⚙️ │
+├─────────────────┬──────────────────────────────────────────────────────────────────────────────────────┤
+│ NAVIGATION      │ ESPACE DE TRAVAIL CENTRAL                                                            │
+├─────────────────┼──────────────────────────────────────────────────────────────────────────────────────┤
+│ 👥 Utilisateurs │ 🛡️ MATRICE DYNAMIQUE DES HABILITATIONS (RBAC)                                        │
+│ 🏢 Établissements│ [ Enregistrer ]  [ Réinitialiser ]  [ Exporter Certificat Qualification BPF ]        │
+│ 🏭 Sites Fab.   ├──────────────────────────────────────────────────────────────────────────────────────┤
+│ 🛡️ Habilitations│ Permission / Rôle      | Resp. Reg | PDT (DT) | CQ/Stab | R&amp;D/Prod | Consultant | Audit │
+│ 📜 Audit Trail  │ DOSSIER_VIEW           |    [x]    |   [x]    |   [x]   |   [x]    |    [~]     |  [x]  │
+│ 💾 Quotas &amp; CAS │ DOC_DRAFT_MAKER        |    [x]    |   [ ]*   |   [x]   |   [x]    |    [~]     |  [ ]  │
+│ ⚙️ Paramètres   │ DOC_APPROVE_PDT        |    [ ]    |   [x]🔒  |   [ ]   |   [ ]    |    [ ]     |  [ ]  │
+│                 │ EXPORT_PACKAGE         |    [x]    |   [x]    |   [ ]   |   [ ]    |    [ ]     |  [ ]  │
+│                 ├──────────────────────────────────────────────────────────────────────────────────────┤
+│                 │ 🔒 Garde-fous BPF : Le Visa PDT et la non auto-approbation SoD sont verrouillés.     │
+└─────────────────┴──────────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>Cette console regroupe l'ensemble des modules d'administration :<br />
+1. <strong>Annuaire Collaborateurs &amp; Départements :</strong> Création et désactivation des comptes, affectation aux pôles d'expertise (Affaires Réglementaires, CQ, R&amp;D, Production, Assurance Qualité), et gestion des comptes <em>Consultants Externes</em> avec compte à rebours d'expiration contractuelle.<br />
+2. <strong>Matrice Interactive des Rôles &amp; Permissions (RBAC) :</strong> Tableau interactif permettant d'ajuster les permissions par profil ou par utilisateur, avec mise en évidence des verrous réglementaires non désactivables.<br />
+3. <strong>Référentiel Établissements &amp; Décision d'Exercice PDT (1.A.7) :</strong> Enregistrement de l'agrément ministériel MIPH et de la décision ministérielle nominative nommant le Pharmacien Directeur Technique responsable.<br />
+4. <strong>Cartographie des Sites de Fabrication &amp; Sous-traitants (1.H.8) :</strong> Déclaration des sites avec rôles industriels, licences de fabrication et certificats BPF/GMP.<br />
+5. <strong>Surveillance Audit Trail &amp; Sécurité Système (<code>audit_logs</code>) :</strong> Tableau de bord de traçabilité des connexions, échecs d'authentification 2FA, blocages de routes HTTP 403 et modifications de rôles.<br />
+6. <strong>Supervision Quotas &amp; Stockage CAS :</strong> Suivi de l'espace disque dédupliqué SHA-256 et déclenchement des sauvegardes chiffrées <code>.homolog</code>.</p>
+<p><em>Pour les utilisateurs disposant d'un double rôle (ex: PDT ayant également un mandat d'administrateur du laboratoire), un commutateur d'espace permet de basculer instantanément en un clic entre la <strong>Console Admin</strong> et le <strong>Pharma Explorer</strong>.</em></p>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 6 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 7 : 7. Sécurité, Rôles et Conformité 21 CFR Part </span>
+        </div>
+        <h2>7. Sécurité, Rôles et Conformité 21 CFR Part 11 / BPF</h2>
+<h3>7.1 Politique de Sécurité du Système d'Information Pharmaceutique (PSSI)</h3>
+<div class="diagram-container">
+    <div class="diagram-title">
+        <span>Architecture de Sécurité PSSI : Défense en Profondeur (5 Anneaux de Protection)</span>
+        <span class="badge-tech">Zero-Trust Quarantine, RBAC 14 Perms & Immuabilité BPF</span>
+    </div>
+    <svg viewBox="0 0 760 270" width="100%" height="270" style="font-family: inherit;">
+        <rect x="0" y="0" width="760" height="270" fill="#f8fafc" rx="6" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- 5 ANNEAUX / COUCHES DE DÉFENSE (De gauche à droite) -->
+        <!-- Couche 1: Quarantaine Admin Tech -->
+        <g transform="translate(15, 20)">
+            <rect x="0" y="0" width="135" height="230" rx="5" fill="#fef2f2" stroke="#f87171" stroke-width="1.5"/>
+            <rect x="0" y="0" width="135" height="25" rx="4" fill="#dc2626"/>
+            <text x="67" y="16" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">NIVEAU 1 : QUARANTAINE</text>
+            <text x="67" y="40" font-size="7" font-weight="800" fill="#991b1b" text-anchor="middle">Admin Système / Tech</text>
+            <text x="10" y="60" font-size="6.2" font-weight="700" fill="#dc2626">ZÉRO ACCÈS MÉTIER :</text>
+            <text x="10" y="75" font-size="6" fill="#475569">✖ Interdiction lecture CTD</text>
+            <text x="10" y="90" font-size="6" fill="#475569">✖ Interdiction lecture DM</text>
+            <text x="10" y="105" font-size="6" fill="#475569">✖ Volet Prix 1.H.4/5 masqué</text>
+            <text x="10" y="120" font-size="6" fill="#475569">✖ Zéro droit de signature</text>
+            <rect x="8" y="140" width="119" height="75" rx="3" fill="#ffffff" stroke="#fca5a5" stroke-width="0.8"/>
+            <text x="67" y="155" font-size="6.5" font-weight="700" fill="#7f1d1d" text-anchor="middle">Rôle Exclusif :</text>
+            <text x="12" y="170" font-size="5.8" fill="#475569">• Maintenance conteneur</text>
+            <text x="12" y="185" font-size="5.8" fill="#475569">• Sauvegarde disque chiffré</text>
+            <text x="12" y="200" font-size="5.8" fill="#475569">• Disponibilité infra</text>
+        </g>
+
+        <!-- Couche 2: Frontend Route Guards & Dynamic UI Masking -->
+        <g transform="translate(160, 20)">
+            <rect x="0" y="0" width="135" height="230" rx="5" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.5"/>
+            <rect x="0" y="0" width="135" height="25" rx="4" fill="#d97706"/>
+            <text x="67" y="16" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">NIVEAU 2 : FRONTEND</text>
+            <text x="67" y="40" font-size="7" font-weight="800" fill="#92400e" text-anchor="middle">Route Guards & UI</text>
+            <text x="10" y="60" font-size="6.2" font-weight="700" fill="#b45309">MASQUAGE DYNAMIQUE :</text>
+            <text x="10" y="75" font-size="6" fill="#475569">✔ Interception URL directe</text>
+            <text x="10" y="90" font-size="6" fill="#475569">✔ Écran 403 Pharma</text>
+            <text x="10" y="105" font-size="6" fill="#475569">✔ `display: none` prix/conf.</text>
+            <text x="10" y="120" font-size="6" fill="#475569">✔ Mode Guest Consultant</text>
+            <rect x="8" y="140" width="119" height="75" rx="3" fill="#ffffff" stroke="#fde68a" stroke-width="0.8"/>
+            <text x="67" y="155" font-size="6.5" font-weight="700" fill="#78350f" text-anchor="middle">Disabled + Tooltip :</text>
+            <text x="12" y="170" font-size="5.8" fill="#475569">• Actions hors-rôle grisées</text>
+            <text x="12" y="185" font-size="5.8" fill="#475569">• Infobulle explicative</text>
+            <text x="12" y="200" font-size="5.8" fill="#475569">• Guidage workflow</text>
+        </g>
+
+        <!-- Couche 3: Backend Go RBAC Middleware -->
+        <g transform="translate(305, 20)">
+            <rect x="0" y="0" width="145" height="230" rx="5" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="1.5"/>
+            <rect x="0" y="0" width="145" height="25" rx="4" fill="#0284c7"/>
+            <text x="72" y="16" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">NIVEAU 3 : BACKEND GO</text>
+            <text x="72" y="40" font-size="7" font-weight="800" fill="#0369a1" text-anchor="middle">Hermetic Route Guard</text>
+            <text x="10" y="60" font-size="6.2" font-weight="700" fill="#0284c7">FILTRAGE DES 14 PERMS :</text>
+            <text x="10" y="75" font-size="6" fill="#475569">✔ Contrôle JWT / Session</text>
+            <text x="10" y="90" font-size="6" fill="#475569">✔ Interception HTTP 403</text>
+            <text x="10" y="105" font-size="6" fill="#475569">✔ SoD anti auto-approbation</text>
+            <text x="10" y="120" font-size="6" fill="#475569">✔ Invalidation cache instant.</text>
+            <rect x="8" y="140" width="129" height="75" rx="3" fill="#ffffff" stroke="#bae6fd" stroke-width="0.8"/>
+            <text x="72" y="155" font-size="6.5" font-weight="700" fill="#0c4a6e" text-anchor="middle">Garde-Fous Hardcodés :</text>
+            <text x="12" y="170" font-size="5.8" fill="#475569">• `permissions_version`</text>
+            <text x="12" y="185" font-size="5.8" fill="#475569">• Re-auth TOTP 2FA</text>
+            <text x="12" y="200" font-size="5.8" fill="#475569">• Session idle timeout 15m</text>
+        </g>
+
+        <!-- Couche 4: PostgreSQL Immuable Audit Trail -->
+        <g transform="translate(460, 20)">
+            <rect x="0" y="0" width="135" height="230" rx="5" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5"/>
+            <rect x="0" y="0" width="135" height="25" rx="4" fill="#7c3aed"/>
+            <text x="67" y="16" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">NIVEAU 4 : POSTGRESQL</text>
+            <text x="67" y="40" font-size="7" font-weight="800" fill="#5b21b6" text-anchor="middle">Triggers d'Immuabilité</text>
+            <text x="10" y="60" font-size="6.2" font-weight="700" fill="#6d28d9">ALCOA+ STRICT :</text>
+            <text x="10" y="75" font-size="6" fill="#475569">✔ Append-only audit trail</text>
+            <text x="10" y="90" font-size="6" fill="#475569">✔ Trigger interdit `UPDATE`</text>
+            <text x="10" y="105" font-size="6" fill="#475569">✔ Trigger interdit `DELETE`</text>
+            <text x="10" y="120" font-size="6" fill="#475569">✔ Horodatage UTC serveur</text>
+            <rect x="8" y="140" width="119" height="75" rx="3" fill="#ffffff" stroke="#ddd6fe" stroke-width="0.8"/>
+            <text x="67" y="155" font-size="6.5" font-weight="700" fill="#4c1d95" text-anchor="middle">Traçabilité 21 CFR 11 :</text>
+            <text x="12" y="170" font-size="5.8" fill="#475569">• Qui, quoi, quand, motif</text>
+            <text x="12" y="185" font-size="5.8" fill="#475569">• Événements 403 tracés</text>
+            <text x="12" y="200" font-size="5.8" fill="#475569">• Inaltérabilité prouvée</text>
+        </g>
+
+        <!-- Couche 5: Storage CAS SHA-256 -->
+        <g transform="translate(605, 20)">
+            <rect x="0" y="0" width="140" height="230" rx="5" fill="#ecfdf5" stroke="#86efac" stroke-width="1.5"/>
+            <rect x="0" y="0" width="140" height="25" rx="4" fill="#059669"/>
+            <text x="70" y="16" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">NIVEAU 5 : COFFRE CAS</text>
+            <text x="70" y="40" font-size="7" font-weight="800" fill="#065f46" text-anchor="middle">Hachage SHA-256</text>
+            <text x="10" y="60" font-size="6.2" font-weight="700" fill="#047857">SOUVERAINETÉ LOCALE :</text>
+            <text x="10" y="75" font-size="6" fill="#475569">✔ Déduplication physique</text>
+            <text x="10" y="90" font-size="6" fill="#475569">✔ Adresse = Empreinte</text>
+            <text x="10" y="105" font-size="6" fill="#475569">✔ Zéro fuite cloud / CDN</text>
+            <text x="10" y="120" font-size="6" fill="#475569">✔ Chiffrement AES-256</text>
+            <rect x="8" y="140" width="124" height="75" rx="3" fill="#ffffff" stroke="#a7f3d0" stroke-width="0.8"/>
+            <text x="70" y="155" font-size="6.5" font-weight="700" fill="#064e3b" text-anchor="middle">Intégrité Pérenne :</text>
+            <text x="12" y="170" font-size="5.8" fill="#475569">• Archive réversible .homolog</text>
+            <text x="12" y="185" font-size="5.8" fill="#475569">• Vérification d'empreinte</text>
+            <text x="12" y="200" font-size="5.8" fill="#475569">• Résilience absolue</text>
+        </g>
+    </svg>
+</div>
+
+<p>La plateforme SANAD PHARMA (Homolog) traite des données industrielles hautement sensibles, des secrets de fabrication (formules galéniques, procédés de synthèse chimique) et des données d'enregistrement engageant la responsabilité légale et pénale du Pharmacien Directeur Technique. La politique de sécurité s'articule autour de 5 principes directeurs incompressibles :</p>
+<ol>
+<li><strong>Cloisonnement « Zero-Trust » des Administrateurs Techniques :</strong></li>
+<li>L'Administrateur Système Local (On-Premise) et le Super-Administrateur Éditeur (Cloud SaaS) sont strictement cantonnés aux opérations d'infrastructure (sauvegardes, supervision système, certificats TLS, provisioning d'instances et quotas de stockage).</li>
+<li><strong>Règle absolue d'étanchéité :</strong> Les profils administrateurs techniques n'ont <strong>aucun droit de consultation, de visualisation ou de téléchargement des pièces pharmaceutiques</strong> (dossiers CTD, documents GED, formules de fabrication ou dossiers de lots). Les endpoints de téléchargement de documents leur renvoient un refus d'accès HTTP 403 Forbidden systématique.</li>
+<li><strong>Séparation des Fonctions (<em>Segregation of Duties - SoD</em>) &amp; Interdiction de l'Auto-Approbation :</strong></li>
+<li>Conformément aux Bonnes Pratiques de Fabrication (BPF) et aux exigences d'intégrité 21 CFR Part 11, <strong>l'auto-approbation est formellement interdite</strong> par le moteur applicatif.</li>
+<li>Un utilisateur ayant rédigé ou modifié une pièce (<em>Maker</em>) ne peut en aucun cas agir comme réviseur qualité (<em>Checker</em>) ni comme signataire (<em>Approver</em>) sur ce même document, même s'il possède par ailleurs un profil d'administrateur ou de responsable.</li>
+<li><strong>Authentification Forte, Secrets &amp; Sessions BPF :</strong></li>
+<li>Hachage de mots de passe cryptographiquement robuste via <strong>Argon2id</strong> (mémoire 64 Mo, 3 itérations, sel 16 octets), longueur minimale de 12 caractères avec complexité obligatoire (majuscules, minuscules, chiffres, caractères spéciaux).</li>
+<li>Second facteur <strong>TOTP (RFC 6238)</strong> 100 % hors-ligne obligatoire pour tout profil ayant des prérogatives d'édition, d'approbation ou de gestion des comptes.</li>
+<li>Sessions sécurisées par Cookies HttpOnly, SameSite=Strict, transmission HTTPS exclusive.</li>
+<li><strong>Verrouillage d'inactivité BPF :</strong> Expiration automatique de session après 15 minutes d'inactivité (<em>Idle Timeout</em>).</li>
+<li><strong>Protection anti-brute force :</strong> Blocage automatique du compte pour une durée de 15 minutes après 5 tentatives infructueuses consécutives.</li>
+<li><strong>Chiffrement, Intégrité ALCOA+ &amp; Piste d'Audit Immuable :</strong></li>
+<li><strong>Chiffrement au repos :</strong> Données binaires stockées dans un volume chiffré (AES-256 / LUKS) avec déduplication physique gérée par le pilote CAS (Content-Addressable Storage) indexé par empreinte SHA-256.</li>
+<li><strong>Chiffrement en transit :</strong> TLS 1.3 exclusif avec suite cryptographique moderne et politique HSTS stricte.</li>
+<li><strong>Immuabilité 21 CFR Part 11 :</strong> Table <code>audit_logs</code> strictement <em>append-only</em> protégée par triggers SQL PostgreSQL interdisant toute modification (<code>UPDATE</code>) ou suppression (<code>DELETE</code>), journalisant nominativement chaque lecture, export, tentative d'accès, approbation et signature avec horodatage UTC et adresse IP.</li>
+<li><strong>Souveraineté Numérique &amp; Absence Totale d'Exfiltration :</strong></li>
+<li>Architecture 100 % autonome sans dépendance vers des CDN publics ou des serveurs tiers (polices Inter/Cairo, icônes Lucide et visionneuse PDF.js compilées directement dans le binaire serveur Go via <code>//go:embed</code>).</li>
+<li>Zéro télémétrie externe, zéro tracking.</li>
+</ol>
+<h4>Typologie des 9 Profils Utilisateurs Stricts :</h4>
+<ol>
+<li><strong>Super-Administrateur Éditeur (Mode Cloud SaaS) :</strong> Provisioning d'instances laboratoires, isolation des schémas PostgreSQL, quotas de stockage. Aucun accès aux données métier.</li>
+<li><strong>Administrateur Système Local (Mode On-Premise) :</strong> Sauvegardes, certificats TLS, surveillance système. Aucun accès aux documents pharmaceutiques.</li>
+<li><strong>Administrateur de Laboratoire :</strong> Gestion des comptes utilisateurs internes, attribution des profils et structures du laboratoire.</li>
+<li><strong>Responsable Affaires Réglementaires :</strong> Création et pilotage des dossiers CTD/DM, coordination des pièces justificatives, suivi des échanges ANPP, télé-procédures.</li>
+<li><strong>Directeur Technique (Pharmacien DT / PDT) :</strong> Seul titulaire du pouvoir légal d'approbation et de scellement. Droit de signature électronique légale bloquante (21 CFR Part 11) pour validation finale des dossiers.</li>
+<li><strong>Contributeur Qualité / BPF :</strong> Gestion documentaire interne, téléversement de SOP, certificats BPF, rapports d'audit, révision qualité indépendante (<em>Checker</em>).</li>
+<li><strong>Contributeur R&amp;D / Production :</strong> Dépôt des formules cadres, dossiers de lots de validation (3.2.P.3.5), données de stabilité et méthodes d'analyse (<em>Maker Technique</em>).</li>
+<li><strong>Consultant Externe :</strong> Accès invité (<em>Guest</em>) strictement restreint et cloisonné aux seuls dossiers auxquels il est affecté, avec date d'expiration contractuelle automatique.</li>
+<li><strong>Auditeur / Inspecteur :</strong> Consultation en lecture seule avec accès au journal d'audit immuable (<code>audit_logs</code>) pour inspections ANPP ou audits internes.</li>
+</ol>
+<h3>7.2 Matrice Exhaustive des Permissions Granulaires (RBAC)</h3>
+<p>Le contrôle d'accès est régi par 14 permissions unitaires combinées aux 9 profils :</p>
+<table>
+<thead>
+<tr>
+<th>Permission Système</th>
+<th>Description Fonctionnelle</th>
+<th style="text-align: center;">Super Admin SaaS</th>
+<th style="text-align: center;">Admin Sys Local</th>
+<th style="text-align: center;">Admin Labo</th>
+<th style="text-align: center;">Resp. Reg. (RA)</th>
+<th style="text-align: center;">Directeur Tech. (PDT)</th>
+<th style="text-align: center;">Contrib. Qualité</th>
+<th style="text-align: center;">Contrib. R&amp;D/Prod</th>
+<th style="text-align: center;">Consultant Externe</th>
+<th style="text-align: center;">Auditeur Inspecteur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SYS_MAINT</code></td>
+<td>Maintenance système, backups, TLS, provisioning</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>USER_MANAGE</code></td>
+<td>Gestion des comptes utilisateurs &amp; profils internes</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>REF_VIEW</code></td>
+<td>Consultation du référentiel produits &amp; établissements</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⚠️ <em>(1)</em></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>REF_EDIT</code></td>
+<td>Création / modification produits, sites &amp; établissements</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>DOSSIER_VIEW</code></td>
+<td>Consultation de l'arborescence des dossiers CTD / DM</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⚠️ <em>(1)</em></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>DOSSIER_CREATE</code></td>
+<td>Création / instanciation d'un nouveau dossier CTD / DM</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>DOC_READ</code></td>
+<td>Visualisation &amp; téléchargement de documents GED/CTD</td>
+<td style="text-align: center;">❌ <em>(2)</em></td>
+<td style="text-align: center;">❌ <em>(2)</em></td>
+<td style="text-align: center;">❌ <em>(2)</em></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⚠️ <em>(1)</em></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td><code>DOC_DRAFT_MAKER</code></td>
+<td>Création de brouillon, édition &amp; import de révisions</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌ <em>(3)</em></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⚠️ <em>(1)</em></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>DOC_CHECK_REVIEW</code></td>
+<td>Relecture qualité, formulation d'observations &amp; validation</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌ <em>(3)</em></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>DOC_LOCK_CHECKOUT</code></td>
+<td>Verrouillage exclusif temporaire d'un document en cours</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">⚠️ <em>(1)</em></td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>DOC_APPROVE_PDT</code></td>
+<td>Visa légal &amp; Signature électronique 21 CFR Part 11</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>DOC_ARCHIVE</code></td>
+<td>Déclaration d'obsolescence et archivage définitif</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>EXPORT_PACKAGE</code></td>
+<td>Génération Submission Package E-TASJIL / Export complet</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td><code>AUDIT_VIEW</code></td>
+<td>Consultation du journal d'audit immuable <code>audit_logs</code></td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+</tr>
+</tbody>
+</table>
+<p><em>(1) <strong>Cloisonnement Consultant Externe :</strong> Accès restreint strictement limité aux seuls documents et sections CTD/DM explicitement assignés par le Responsable Réglementaire. Tout accès transverse à la GED générale, aux formules confidentielles ou aux autres dossiers est bloqué.</em><br />
+<em>(2) <strong>Principe Zero-Trust Administrateurs :</strong> Interdiction technique absolue de téléchargement et de consultation du contenu des pièces pharmaceutiques et données de santé pour les rôles d'administration technique.</em><br />
+<em>(3) <strong>Séparation des Fonctions (SoD) :</strong> Pour garantir la conformité BPF, le Pharmacien Directeur Technique exerce le rôle d'<strong>Approver</strong> (visa légal). Le système lui interdit de s'auto-désigner comme Maker et Approver d'un même document sans relecture indépendante par un Checker.</em></p>
+<h4>7.2.1 Blocage Hermétique des Routes API (Backend Defense-in-Depth)</h4>
+<p>Le masquage dans l'interface utilisateur ne constitue en aucun cas la barrière de sécurité principale. La plateforme applique le principe fondamental de <strong>Défense en Profondeur</strong> : chaque endpoint API HTTP/REST est strictement verrouillé côté serveur par le middleware <code>RequirePermission(perm)</code> ou <code>RequireRole(roles...)</code>. Toute requête non autorisée (y compris via tentative directe par script, curl ou manipulation de requêtes) est interceptée immédiatement avec les règles suivantes :</p>
+<ol>
+<li><strong>Réponse d'Erreur Standardisée :</strong> Renvoi systématique d'un code de statut <code>HTTP 403 Forbidden</code> accompagné d'un message d'erreur normalisé (ex: <code>{"error": "forbidden", "message": "Accès réglementaire refusé : permissions insuffisantes", "code": "ERR_RBAC_FORBIDDEN"}</code>).</li>
+<li><strong>Journalisation d'Alerte dans l'Audit Trail :</strong> Toute tentative d'accès à une route protégée sans les droits requis déclenche l'écriture instantanée d'un événement d'audit critique dans <code>audit_logs</code> consignant l'adresse IP cliente, l'identifiant de l'utilisateur, son rôle déclaré, l'URI sollicitée, la méthode HTTP et les headers, à des fins de traçabilité médico-légale et de conformité 21 CFR Part 11.</li>
+<li><strong>Cartographie des Routes API Sensibles Strictement Verrouillées :</strong></li>
+<li><strong>Téléchargement &amp; Flux Binaires GED :</strong> <code>/api/v1/ged/documents/{id}/file</code> et <code>/api/v1/ged/versions/{id}/download</code> bloquent formellement les requêtes émanant des rôles <code>admin_systeme_local</code> et <code>super_admin_editeur</code> (Principe Zero-Trust : restitution <code>HTTP 403</code>).</li>
+<li><strong>Signature Électronique Légale PDT :</strong> <code>/api/v1/dossiers/{id}/sign-pdt</code> et <code>/api/v1/ged/versions/{id}/sign-dt</code> exigent obligatoirement le rôle nominatif <code>directeur_technique</code>.</li>
+<li><strong>Soumission &amp; Export eCTD :</strong> <code>/api/v1/dossiers/{id}/export-submission-package</code> et <code>/api/v1/dossiers/{id}/export-homolog</code> sont réservés exclusivement aux rôles <code>responsable_affaires_reglementaires</code> et <code>directeur_technique</code>.</li>
+<li><strong>Données Économiques &amp; Prix :</strong> Les endpoints restituant les structures de prix PCSU (1.H.4), factures FOB (1.H.4), benchmark international (1.H.5) et bordereaux financiers BV1/BV2 (1.A.4) sont strictement filtrés au niveau SQL pour les profils <code>contributeur_rd_production</code>, <code>contributeur_qualite_bpf</code> et <code>consultant_externe</code> (champs masqués ou code 403).</li>
+<li><strong>Administration Utilisateurs :</strong> Les routes <code>/api/v1/users/*</code> sont inaccessibles en dehors de <code>admin_laboratoire</code>.</li>
+<li><strong>Audit Logs :</strong> L'endpoint <code>/api/v1/audit/logs</code> est inaccessible en dehors de <code>directeur_technique</code>, <code>admin_laboratoire</code> et <code>auditeur_inspecteur</code>.</li>
+</ol>
+<h4>7.2.2 Gardes de Navigation &amp; Matrice d'Adaptation Contextuelle de l'UI (Pharma Explorer)</h4>
+<p>Côté client, le routeur applicatif TypeScript et les composants de l'interface intègrent des gardes de navigation (<em>Navigation Route Guards</em>) et un moteur de rendu conditionnel :<br />
+- <strong>Navigation Route Guards :</strong> Toute tentative de saisie directe d'un fragment d'URL non autorisé (ex: <code>#/admin/users</code>, <code>#/audit</code>, <code>#/dossier/{unauthorized_id}</code>) est interceptée avant tout rendu : redirection immédiate vers l'accueil ou affichage d'un écran sécurisé institutionnel <em>« 403 - Accès Réglementaire Non Autorisé »</em>.<br />
+- <strong>Règle d'or ergonomique :</strong><br />
+  - <strong>Masquage total (<em>Display: None</em>) :</strong> Utilisé pour la confidentialité et l'étanchéité métier (ex : l'Admin Système ne voit pas le visualiseur PDF ; le chimiste R&amp;D ne voit pas les prix et marges ; le Consultant externe ne voit que son propre dossier).<br />
+  - <strong>Désactivation avec infobulle contextuelle (<em>Disabled + Tooltip</em>) :</strong> Utilisé pour guider le workflow sans frustration (ex : le bouton <em>"Signer (PDT)"</em> est visible par le DT mais grisé tant que le dossier n'atteint pas 100 % de complétude ; le bouton <em>"Soumettre pour Visa DT"</em> est grisé pour le Maker tant que le Checker n'a pas validé).</p>
+<h5>Matrice d'Adaptation et de Masquage Dynamique de l'Interface UI :</h5>
+<table>
+<thead>
+<tr>
+<th>Composant / Zone de l'interface</th>
+<th>Éléments concernés</th>
+<th>Rôles pour lesquels l'élément est <strong>AFFICHÉ &amp; ACTIF</strong></th>
+<th>Rôles pour lesquels l'élément est <strong>MASQUÉ OU DÉSACTIVÉ</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bouton Signature Électronique PDT</strong></td>
+<td>Bouton officiel <em>"Signer électroniquement (DT)"</em> avec saisie TOTP et déclaration solennelle</td>
+<td><strong>Pharmacien DT</strong> <em>(actif si complétude 100%, sinon désactivé avec tooltip)</em></td>
+<td><strong>Masqué</strong> pour tous les autres profils <em>(remplacé par badge d'état : « En attente visa DT » ou « Scellé »)</em>.</td>
+</tr>
+<tr>
+<td><strong>Arbre de Navigation (Tree Explorer)</strong></td>
+<td>Liste des dossiers d'enregistrement CTD / DM du laboratoire</td>
+<td>DT, RA, CQ, R&amp;D, AQ, Auditeur, Admin Labo</td>
+<td><strong>Cloisonné pour le Consultant Externe :</strong> L'arbre est filtré pour n'afficher <strong>strictement que les dossiers qui lui sont affectés</strong>.</td>
+</tr>
+<tr>
+<td><strong>Données Financières &amp; Prix</strong></td>
+<td>Sections 1.H.4 (PCSU / FOB), 1.H.5 (Benchmark), 1.A.4 (Redevances bancaires)</td>
+<td>Responsable Affaires Réglementaires, Pharmacien DT, Admin Labo</td>
+<td><strong>Masqué</strong> pour Contributeurs R&amp;D, Production, CQ et Consultants Externes.</td>
+</tr>
+<tr>
+<td><strong>Générateur E-TASJIL</strong></td>
+<td>Bouton d'export du <em>Submission Package</em> ZIP et fiches de télé-saisie ANPP</td>
+<td>Affaires Réglementaires, Pharmacien DT</td>
+<td><strong>Masqué</strong> pour les contributeurs techniques, consultants et auditeurs.</td>
+</tr>
+<tr>
+<td><strong>Visionneuse PDF &amp; Boutons Fichiers</strong></td>
+<td>Aperçu PDF.js intégré et téléchargement des pièces originales</td>
+<td>DT, RA, CQ, R&amp;D, AQ, Auditeur, Consultant <em>(si assigné)</em></td>
+<td><strong>Masqué pour les Administrateurs Techniques</strong> <em>(Badge Zero-Trust : « Données confidentielles inaccessibles »)</em>.</td>
+</tr>
+<tr>
+<td><strong>Piste d'Audit Trail (<code>audit_logs</code>)</strong></td>
+<td>Menu et écran de consultation des journaux immuables</td>
+<td>Pharmacien DT, Admin Labo, Auditeur / Inspecteur ANPP</td>
+<td><strong>Masqué</strong> pour les contributeurs techniques et consultants.</td>
+</tr>
+<tr>
+<td><strong>Gestion des Utilisateurs</strong></td>
+<td>Écran d'administration des comptes internes et profils</td>
+<td><strong>Administrateur de Laboratoire</strong></td>
+<td><strong>Masqué</strong> pour tous les profils opérationnels et techniques.</td>
+</tr>
+<tr>
+<td><strong>Workflow Rédactionnel</strong></td>
+<td>Boutons d'édition : <em>« Check-out »</em>, <em>« Soumettre Revue »</em>, <em>« Valider (Checker) »</em>, <em>« Rejeter »</em></td>
+<td>Affichés dynamiquement au <strong>Maker</strong> et au <strong>Checker</strong> désignés</td>
+<td><strong>Désactivé avec tooltip explicatif</strong> pour les tiers <em>(ex: « Document verrouillé en édition par Dr. X »)</em>.</td>
+</tr>
+</tbody>
+</table>
+<h4>7.2.3 Architecture Technique du Moteur RBAC Dynamique &amp; Révocation Instantanée</h4>
+<p>L'attribution des droits s'appuie sur une infrastructure de données dynamique combinée à des sécurités cryptographiques et mémoires :<br />
+1. <strong>Schéma Relationnel Dynamique (PostgreSQL) :</strong><br />
+   - Tables dédiées : <code>roles</code> (définition des profils système et personnalisés), <code>permissions</code> (catalogue des 14 permissions unitaires du CDC), <code>role_permissions</code> (matrice par défaut profil ⇄ permissions), et <code>user_permissions</code> (surcharges et dérogations nominatives autorisées).<br />
+   - Migration ascendante transparente <code>000004_rbac_dynamic_permissions.up.sql</code> garantissant l'absence de régression pour les comptes existants.<br />
+2. <strong>Garde-fous Réglementaires Inviolables (Hard-coded Go Enforcement) :</strong><br />
+   - Même si un administrateur tente de modifier les droits en base de données, le code backend Go bloque formellement :<br />
+     - L'exercice du visa légal <code>DOC_APPROVE_PDT</code> par un utilisateur non titulaire de la décision ministérielle officielle de Pharmacien Directeur Technique (1.A.7).<br />
+     - L'accès <code>DOC_READ</code> (fichiers originaux et visionneuse PDF) pour les administrateurs techniques (<em>Zero-Trust</em>).<br />
+     - L'auto-approbation d'un document par son rédacteur (<em>Séparation des Fonctions SoD au niveau de la pièce</em>).<br />
+3. <strong>Révocation Instantanée via Cache de Versioning de Permissions :</strong><br />
+   - Chaque utilisateur ou rôle possède un compteur de version de permissions (<code>permissions_version</code>).<br />
+   - Le middleware de session Go compare ce compteur en mémoire partagée ultra-rapide (<code>sync.Map</code> / atomique). Dès qu'un administrateur enregistre une modification en base, le compteur est incrémenté : la session active de l'utilisateur recharge immédiatement ses nouveaux droits dès la requête HTTP suivante, sans aucune latence ni besoin de déconnexion.<br />
+4. <strong>Cloisonnement au Dossier pour Consultants Externes :</strong><br />
+   - L'accès d'un consultant est assujetti à la table <code>dossier_consultants</code> (<code>dossier_id</code>, <code>user_id</code>, <code>expires_at</code>).<br />
+   - Le middleware filtre les requêtes pour interdire l'accès à tout autre dossier ou à la GED transverse, et révoque automatiquement l'accès dès dépassement de la date <code>expires_at</code>.</p>
+<h3>7.3 Signature Électronique Légale et Intégrité ALCOA+</h3>
+<ul>
+<li><strong>Double facteur (2FA) TOTP 100 % hors-ligne (RFC 6238) :</strong> Compatible Google Authenticator, Microsoft Authenticator, FreeOTP, avec 10 codes de secours à usage unique chiffrés.</li>
+<li><strong>Re-authentification à la signature :</strong> Toute signature de pièce critique ou validation de dossier impose la re-saisie du mot de passe ou validation TOTP accompagnée de la mention solennelle légale obligatoire :<blockquote>
+<p><em>"En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur."</em></p>
+</blockquote>
+</li>
+<li><strong>Scellement cryptographique :</strong> Génération d'une empreinte SHA-256 scellant le binaire du document, l'identifiant nominatif du signataire, le rôle officiel, l'horodatage UTC et l'adresse IP.</li>
+</ul>
+<h3>7.4 Atelier d'Élaboration Collaborative &amp; Workflow Multi-Acteurs BPF (Maker-Checker-Approver)</h3>
+<p>L'élaboration d'un dossier CTD d'enregistrement de médicament ou d'homologation de DM ne se résume pas au téléversement passif de fichiers scannés par un utilisateur unique. En pratique industrielle pharmaceutique, le <strong>Pharmacien Directeur Technique (PDT)</strong> assume la responsabilité légale et pénale exclusive devant l'ANPP et le Ministère de l'Industrie Pharmaceutique (Décret exécutif n° 20-325, Arrêté du 10 mai 2021), mais n'est <strong>jamais</strong> l'unique rédacteur de l'ensemble des centaines de pièces techniques constituant les dossiers.</p>
+<p>La plateforme structure ainsi un atelier collaboratif d'élaboration documentaire fondé sur la séparation des responsabilités BPF, le paradigme réglementaire <strong>Maker-Checker-Approver</strong> et la gouvernance des données ALCOA+.</p>
+<h4>7.4.1 Matrice d'Attribution et Cartographie des Rédacteurs par Département</h4>
+<p>Chaque section CTD et pièce GED est cartographiée et assignée nativement selon le pôle d'expertise métier compétent :</p>
+<table>
+<thead>
+<tr>
+<th>Pôle / Département Métier</th>
+<th>Rôle dans le Workflow</th>
+<th>Périmètre Documentaire CTD &amp; GED Dédié</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Affaires Réglementaires (RA)</strong></td>
+<td><strong>Maker (Rédacteur Principal)</strong><br>Module 1 &amp; Administratif</td>
+<td>• <strong>Module 1 complet :</strong> Formulaire de demande (1.A.3), courriers officiels (1.A.2), fiches synoptiques (1.A.11), attestations de prix (1.H.4 / 1.H.5).<br>• <strong>Informations produit :</strong> Notices bilingues FR/AR (1.P.2), Résumés des Caractéristiques du Produit (RCP 1.P.1), maquettes d'étiquetage et emballages à l'échelle (1.P.2).<br>• <strong>Engagements réglementaires :</strong> Lettre de validation sur 3 lots (1.P.8), lettre de suivi de stabilité continue (1.P.9), attestation d'évaluation PDT (1.H.10).<br>• <strong>Dossiers de variations ANPP :</strong> Tableaux comparatifs <em>Approuvé vs Proposé</em>, lettres de motivation et attestations de non-modification des autres sections (LD-DEPP07/V01).<br>• <strong>Bordereaux financiers :</strong> Formulaires BV1 (initial/DM) et BV2 (variations/renouvellements).</td>
+</tr>
+<tr>
+<td><strong>Contrôle Qualité (CQ) &amp; Laboratoire de Stabilités</strong></td>
+<td><strong>Maker (Rédacteur Technique)</strong><br>Modules 1.P &amp; 3 (Qualité)</td>
+<td>• <strong>Spécifications analytiques :</strong> Spécifications et méthodes de contrôle des Matières Premières / Principes Actifs (3.2.S.4) et du Produit Fini (3.2.P.5.1).<br>• <strong>Validation analytique :</strong> Protocoles et rapports de validation des méthodes analytiques selon ICH Q2(R1) (3.2.P.5.3 - spécificité, linéarité, répétabilité, fidélité intermédiaire, exactitude, limites de détection/quantification).<br>• <strong>Bulletins de libération :</strong> Certificats d'analyse (CoA) des lots pilotes et industriels de Substance Active (1.P.4) et Produit Fini (1.P.5).<br>• <strong>Études de stabilité :</strong> Protocoles et rapports de stabilité sous conditions climatiques Zone IVb (30°C ± 2°C / 75% RH ± 5% RH ou 30°C / 65% RH) et stabilités accélérées (40°C / 75% RH) (3.2.P.8.1, 3.2.P.8.2, 3.2.P.8.3).</td>
+</tr>
+<tr>
+<td><strong>Recherche &amp; Développement (R&amp;D) / Galénique</strong></td>
+<td><strong>Maker (Rédacteur Technique)</strong><br>Modules 2.3, 3.2.P &amp; BE</td>
+<td>• <strong>Développement pharmaceutique (3.2.P.2) :</strong> Justification de la formule, compatibilité principe actif/excipients, développement galénique, sélection du contenant-fermeture primaire.<br>• <strong>Profils de dissolution comparatifs :</strong> Cinétiques de dissolution in vitro multimilieux (pH 1.2, pH 4.5, pH 6.8) et calcul des facteurs de similitude (f_1, f_2) pour justification d'exonération de bioéquivalence (<em>Biowaiver</em> - 1.M.P.3).<br>• <strong>Synthèse Qualité :</strong> Résumé global de la qualité (QOS - Quality Overall Summary, Module 2.3).</td>
+</tr>
+<tr>
+<td><strong>Production Industrielle &amp; Ingénierie</strong></td>
+<td><strong>Maker (Rédacteur Technique)</strong><br>Module 3 (Fabrication)</td>
+<td>• <strong>Formules de fabrication :</strong> Formule unitaire et formule par taille de lot industrielle (3.2.P.3.2).<br>• <strong>Procédé et contrôles en cours (IPC) :</strong> Schéma synoptique des étapes de production, paramètres critiques de procédé (CPP) et contrôles en cours de fabrication (3.2.P.3.3 / 3.2.P.3.4).<br>• <strong>Validation de procédé :</strong> Protocoles et rapports de validation prospective sur 3 lots industriels consécutifs à l'échelle commerciale (3.2.P.3.5 / engagement 1.P.8 pour fabrication locale).</td>
+</tr>
+<tr>
+<td><strong>Assurance Qualité (AQ) &amp; Conformité BPF</strong></td>
+<td><strong>Checker (Réviseur Qualité)</strong><br>&amp; Maker (GED Qualité)</td>
+<td>• <strong>Rôle Checker :</strong> Relecture qualité indépendante, vérification de la conformité aux BPF algériennes et aux pharmacopées (Ph. Eur., USP), contrôle des calculs et vérification de la complétude documentaire avant soumission au DT.<br>• <strong>Rôle Maker (GED transverse) :</strong> Manuel qualité, Procédures Opératoires Normalisées (SOP / POS), Revue Périodique de la Qualité Produit (PQR / RQP), rapports d'audit BPF des fournisseurs et sous-traitants, qualifications d'équipements (QI/QO/QP), dossiers de déviations et CAPA.</td>
+</tr>
+<tr>
+<td><strong>Partenaires &amp; Rédacteurs Externes (Tiers / CRO)</strong></td>
+<td><strong>Maker Externe (Cloisonné)</strong><br>Modules 3.2.S &amp; 5</td>
+<td>• <strong>Fabricant de Substance Active (API) :</strong> Dossier de la Substance Active (Drug Master File / Active Substance Master File - DMF/ASMF partie fermée/ouverte 3.2.S) et lettres d'accès nominatives (Letter of Access - 1.M.S.3).<br>• <strong>Centre d'Essais Cliniques / CRO :</strong> Protocoles, rapports d'études de bioéquivalence in vivo (Module 5.3.1.2), validation des méthodes bioanalytiques humaines (5.3.1.4) et rapports statistiques de pharmacocinétique.</td>
+</tr>
+<tr>
+<td><strong>Pharmacien Directeur Technique (PDT)</strong></td>
+<td><strong>Approver (Visa Légal Exclusif)</strong><br>Garant Réglementaire</td>
+<td>• <strong>Autorité légale et pénale exclusive :</strong> Seul utilisateur habilité à apposer la signature électronique légale bloquante (21 CFR Part 11) et le visa d'approbation sur les formulaires, notices, engagements et l'ensemble du dossier CTD avant dépôt officiel à l'ANPP (E-TASJIL / guichet physique).<br>• <strong>Supervision &amp; Arbitrage :</strong> Droit de refus motivé, renvoi en révision aux rédacteurs, et verrouillage final du dossier scellé.</td>
+</tr>
+</tbody>
+</table>
+<h4>7.4.2 Cycle de Vie Rédactionnel &amp; Chaîne Maker-Checker-Approver</h4>
+<div class="diagram-container">
+    <div class="diagram-title">
+        <span>Workflow BPF Maker-Checker-Approver & Ségrégation Stricte des Tâches (SoD)</span>
+        <span class="badge-tech">Cycle de Vie Rédactionnel & Visa Légal 21 CFR Part 11</span>
+    </div>
+    <svg viewBox="0 0 760 300" width="100%" height="300" style="font-family: inherit;">
+        <defs>
+            <marker id="wf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#0284c7"/>
+            </marker>
+            <marker id="wf-reject" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444"/>
+            </marker>
+            <marker id="wf-seal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#10b981"/>
+            </marker>
+        </defs>
+
+        <rect x="0" y="0" width="760" height="300" fill="#f8fafc" rx="6" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- 3 LIGNES DE NAGE (SWIMLANES) -->
+        <!-- Ligne 1: Maker -->
+        <rect x="10" y="10" width="740" height="85" fill="#f0f9ff" rx="4" stroke="#bae6fd" stroke-width="1"/>
+        <rect x="10" y="10" width="140" height="20" rx="3" fill="#0284c7"/>
+        <text x="80" y="24" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">1. RÉDACTEUR (MAKER)</text>
+        <text x="15" y="45" font-size="6.8" fill="#475569">Affaires Réglementaires (1.A/1.H)</text>
+        <text x="15" y="60" font-size="6.8" fill="#475569">R&D / Contrôle Qualité (3.2.S/P)</text>
+        <text x="15" y="75" font-size="6.8" fill="#475569">Production Industrielle (3.2.P.3)</text>
+
+        <!-- Ligne 2: Checker -->
+        <rect x="10" y="105" width="740" height="85" fill="#fffbeb" rx="4" stroke="#fde68a" stroke-width="1"/>
+        <rect x="10" y="105" width="140" height="20" rx="3" fill="#d97706"/>
+        <text x="80" y="119" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">2. RELECTEUR (CHECKER)</text>
+        <text x="15" y="145" font-size="6.8" fill="#92400e">Assurance Qualité BPF (AQ)</text>
+        <text x="15" y="160" font-size="6.8" fill="#92400e">Relecture croisée indépendante</text>
+        <text x="15" y="175" font-size="6.8" fill="#b45309">Validation technique & BPF</text>
+
+        <!-- Ligne 3: Approver -->
+        <rect x="10" y="200" width="740" height="90" fill="#ecfdf5" rx="4" stroke="#a7f3d0" stroke-width="1"/>
+        <rect x="10" y="200" width="160" height="20" rx="3" fill="#059669"/>
+        <text x="90" y="214" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">3. DIRECTEUR TECHNIQUE (PDT)</text>
+        <text x="15" y="240" font-size="6.8" fill="#065f46">Pharmacien Directeur Technique (1.A.7)</text>
+        <text x="15" y="255" font-size="6.8" fill="#065f46">Responsabilité légale & pénale</text>
+        <text x="15" y="270" font-size="6.8" fill="#047857">Scellement 21 CFR Part 11</text>
+
+        <!-- ÉTATS & BOÎTES DU WORKFLOW -->
+        <!-- État 1: À Rédiger -->
+        <g transform="translate(180, 25)">
+            <rect x="0" y="0" width="95" height="55" rx="5" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+            <rect x="0" y="0" width="95" height="15" rx="4" fill="#64748b"/>
+            <text x="47" y="11" font-size="7" font-weight="700" fill="#ffffff" text-anchor="middle">1. À RÉDIGER</text>
+            <text x="47" y="30" font-size="6.5" fill="#334155" text-anchor="middle">Template Maître</text>
+            <text x="47" y="45" font-size="6.5" font-weight="600" fill="#0284c7" text-anchor="middle">Action: Check-out</text>
+        </g>
+
+        <!-- Transition 1 -> 2 -->
+        <path d="M 275 52 L 310 52" stroke="#0284c7" stroke-width="2" marker-end="url(#wf-arrow)"/>
+
+        <!-- État 2: En Cours -->
+        <g transform="translate(315, 25)">
+            <rect x="0" y="0" width="110" height="55" rx="5" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+            <rect x="0" y="0" width="110" height="15" rx="4" fill="#0284c7"/>
+            <text x="55" y="11" font-size="7" font-weight="700" fill="#ffffff" text-anchor="middle">2. EN COURS (DRAFT)</text>
+            <text x="55" y="30" font-size="6.5" fill="#0f172a" text-anchor="middle">Verrouillé Rédacteur</text>
+            <text x="55" y="45" font-size="6.5" font-weight="700" fill="#0369a1" text-anchor="middle">Versions v0.1 ➔ v0.2</text>
+        </g>
+
+        <!-- Transition 2 -> 3 (Soumission Checker) -->
+        <path d="M 370 80 L 370 120" stroke="#d97706" stroke-width="2" marker-end="url(#wf-arrow)"/>
+        <text x="375" y="103" font-size="6.5" font-weight="700" fill="#d97706">Soumission Revue</text>
+
+        <!-- État 3: En Revue Qualité (Checker) -->
+        <g transform="translate(315, 120)">
+            <rect x="0" y="0" width="110" height="55" rx="5" fill="#ffffff" stroke="#d97706" stroke-width="2"/>
+            <rect x="0" y="0" width="110" height="15" rx="4" fill="#d97706"/>
+            <text x="55" y="11" font-size="7" font-weight="700" fill="#ffffff" text-anchor="middle">3. EN REVUE QUALITÉ</text>
+            <text x="55" y="30" font-size="6.5" fill="#78350f" text-anchor="middle">Relecture Checker</text>
+            <text x="55" y="45" font-size="6.5" font-weight="600" fill="#92400e" text-anchor="middle">Diff & Audit Trail</text>
+        </g>
+
+        <!-- Rejet Checker vers Maker (Loopback rouge) -->
+        <path d="M 315 145 C 270 145, 270 65, 310 65" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#wf-reject)"/>
+        <rect x="250" y="98" width="55" height="14" rx="2" fill="#fee2e2" stroke="#f87171" stroke-width="0.8"/>
+        <text x="277" y="108" font-size="6" font-weight="700" fill="#b91c1c" text-anchor="middle">Ajustements</text>
+
+        <!-- Transition 3 -> 4 (Certification Checker) -->
+        <path d="M 425 147 L 460 147" stroke="#059669" stroke-width="2" marker-end="url(#wf-arrow)"/>
+        <text x="442" y="140" font-size="6.5" font-weight="700" fill="#059669" text-anchor="middle">Conforme</text>
+
+        <!-- État 4: Prêt pour Visa DT -->
+        <g transform="translate(465, 120)">
+            <rect x="0" y="0" width="110" height="55" rx="5" fill="#ffffff" stroke="#8b5cf6" stroke-width="2"/>
+            <rect x="0" y="0" width="110" height="15" rx="4" fill="#8b5cf6"/>
+            <text x="55" y="11" font-size="7" font-weight="700" fill="#ffffff" text-anchor="middle">4. PRÊT POUR VISA DT</text>
+            <text x="55" y="30" font-size="6.5" fill="#4c1d95" text-anchor="middle">Parapheur Électronique</text>
+            <text x="55" y="45" font-size="6.5" font-weight="700" fill="#6d28d9" text-anchor="middle">Verrouillé en écriture</text>
+        </g>
+
+        <!-- Transition 4 -> 5 (Visa PDT) -->
+        <path d="M 520 175 L 520 220" stroke="#10b981" stroke-width="2.5" marker-end="url(#wf-seal)"/>
+        <text x="525" y="200" font-size="6.8" font-weight="800" fill="#047857">Re-Auth 2FA TOTP</text>
+
+        <!-- État 5: Approuvé & Scellé (V1.0) -->
+        <g transform="translate(460, 220)">
+            <rect x="0" y="0" width="125" height="60" rx="5" fill="#ffffff" stroke="#10b981" stroke-width="2.5"/>
+            <rect x="0" y="0" width="125" height="18" rx="4" fill="#059669"/>
+            <text x="62" y="12" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">5. APPROUVÉ & SCELLÉ</text>
+            <text x="62" y="32" font-size="7" font-weight="700" fill="#065f46" text-anchor="middle">Version Officielle v1.0</text>
+            <text x="62" y="46" font-size="6.5" fill="#047857" text-anchor="middle">Hash SHA-256 + Horodatage UTC</text>
+            <text x="62" y="56" font-size="6" font-weight="700" fill="#15803d" text-anchor="middle">Non Répudiation Légale BPF</text>
+        </g>
+
+        <!-- CADRE SÉGRÉGATION DES TÂCHES (SoD GUARD BOX) -->
+        <g transform="translate(600, 25)">
+            <rect x="0" y="0" width="140" height="255" rx="5" fill="#ffffff" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <rect x="0" y="0" width="140" height="22" rx="4" fill="#dc2626"/>
+            <text x="70" y="15" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">SÉGRÉGATION SoD (BPF)</text>
+            
+            <circle cx="20" cy="45" r="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1"/>
+            <text x="20" y="49" font-size="9" font-weight="800" fill="#dc2626" text-anchor="middle">✖</text>
+            <text x="35" y="42" font-size="7" font-weight="800" fill="#7f1d1d">Anti Auto-Approbation</text>
+            <text x="35" y="54" font-size="6.3" fill="#475569">Maker ≠ Checker</text>
+
+            <circle cx="20" cy="85" r="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1"/>
+            <text x="20" y="89" font-size="9" font-weight="800" fill="#dc2626" text-anchor="middle">✖</text>
+            <text x="35" y="82" font-size="7" font-weight="800" fill="#7f1d1d">Mandat Exclusif PDT</text>
+            <text x="35" y="94" font-size="6.3" fill="#475569">Seul le DT peut signer</text>
+
+            <circle cx="20" cy="125" r="8" fill="#ecfdf5" stroke="#10b981" stroke-width="1"/>
+            <text x="20" y="129" font-size="9" font-weight="800" fill="#059669" text-anchor="middle">✔</text>
+            <text x="35" y="122" font-size="7" font-weight="800" fill="#065f46">Règle Go Hermétique</text>
+            <text x="35" y="134" font-size="6.3" fill="#475569">Backend 403 bloquant</text>
+
+            <rect x="10" y="155" width="120" height="85" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+            <text x="70" y="170" font-size="6.8" font-weight="700" fill="#0f172a" text-anchor="middle">Sanctions Algériennes :</text>
+            <text x="15" y="185" font-size="6.2" fill="#475569">• Décret 20-325 Art. 12</text>
+            <text x="15" y="200" font-size="6.2" fill="#475569">• Responsabilité pénale</text>
+            <text x="15" y="215" font-size="6.2" fill="#475569">• Invalidation dossier</text>
+            <text x="15" y="230" font-size="6.2" fill="#475569">• Retrait agrément</text>
+        </g>
+    </svg>
+</div>
+
+<p>Chaque document ou section CTD suit un cycle de vie strict à 5 états, assorti d'un audit trail horodaté et inaltérable :</p>
+<ol>
+<li><strong><code>À Rédiger</code> (<em>Draft Pending</em>) :</strong> La section CTD est instanciée selon la matrice de procédure (ex: NI, NF, MI, MF). Le système l'assigne automatiquement au département compétent (ou à un contributeur nominatif) avec une date limite de rédaction.</li>
+<li><strong><code>En Cours de Rédaction</code> (<em>Drafting</em>) :</strong> Le rédacteur (<em>Maker</em>) initialise le document à partir d'un <strong>Modèle Maître (<em>Master Template</em>)</strong> ou d'un canevas vierge. Il dispose d'un mécanisme de verrouillage collaboratif (<strong>Check-out / Check-in</strong>) empêchant les éditions concurrentes. Les versions intermédiaires sont numérotées en révisions mineures (<code>0.1</code>, <code>0.2</code>, <code>0.3</code>...).</li>
+<li><strong><code>En Revue Qualité / Pair</code> (<em>Under Review - Checker</em>) :</strong> Le rédacteur soumet son document pour relecture. Le vérificateur désigné (<em>Checker</em> - Assurance Qualité, Responsable Réglementaire ou Chef de Laboratoire) annote le document, formule ses observations ou valide la conformité scientifique et réglementaire. En cas de non-conformité, la pièce est renvoyée au statut <em>En Cours de Rédaction</em> avec l'historique des remarques.</li>
+<li><strong><code>Prêt pour Visa DT</code> (<em>Pending Approval</em>) :</strong> La revue qualité est validée avec succès. Le document est converti en version figée (format PDF/A normalisé avec indexation plein texte) et soumis au parapheur électronique du Pharmacien Directeur Technique.</li>
+<li><strong><code>Approuvé &amp; Scellé</code> (<em>Approved - PDT Visa</em>) :</strong> Le Pharmacien Directeur Technique effectue la re-authentification forte (2FA TOTP), valide la mention solennelle légale et appose sa signature électronique conforme 21 CFR Part 11. Le document bascule en version majeure (<code>1.0</code>), est scellé par empreinte SHA-256 dans le stockage CAS immuable, et devient inaltérable.</li>
+</ol>
+<h4>7.4.3 Ordonnancement Chronologique, Chemin Critique &amp; Dépendances Conditionnelles (Gating)</h4>
+<div class="diagram-container">
+    <div class="diagram-title">
+        <span>Diagramme PERT & Chemin Critique de l'Élaboration Documentaire CTD/DM</span>
+        <span class="badge-tech">Ordonnancement Chronologique & Jalons Incompressibles</span>
+    </div>
+    <svg viewBox="0 0 760 430" width="100%" height="430" style="font-family: inherit;">
+        <defs>
+            <marker id="arrow-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#dc2626"/>
+            </marker>
+            <marker id="arrow-norm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#0284c7"/>
+            </marker>
+            <marker id="arrow-slack" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#64748b"/>
+            </marker>
+            <linearGradient id="critGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#fff1f2"/>
+                <stop offset="100%" stop-color="#ffe4e6"/>
+            </linearGradient>
+            <linearGradient id="normGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#f0f9ff"/>
+                <stop offset="100%" stop-color="#e0f2fe"/>
+            </linearGradient>
+            <linearGradient id="gateGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#f0fdf4"/>
+                <stop offset="100%" stop-color="#dcfce7"/>
+            </linearGradient>
+        </defs>
+
+        <rect x="0" y="0" width="760" height="430" fill="#f8fafc" rx="6" stroke="#e2e8f0" stroke-width="1"/>
+
+        <!-- Axe Temporel (Mois 0 à Mois 12) -->
+        <line x1="20" y1="35" x2="740" y2="35" stroke="#cbd5e1" stroke-width="1.5"/>
+        <circle cx="30" cy="35" r="3" fill="#091e36"/>
+        <text x="30" y="25" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">M0 (Lancement)</text>
+        <circle cx="150" cy="35" r="3" fill="#0284c7"/>
+        <text x="150" y="25" font-size="7.5" font-weight="600" fill="#0284c7" text-anchor="middle">M2</text>
+        <circle cx="270" cy="35" r="3" fill="#0284c7"/>
+        <text x="270" y="25" font-size="7.5" font-weight="600" fill="#0284c7" text-anchor="middle">M4 (Lots Pilotes)</text>
+        <circle cx="510" cy="35" r="3" fill="#dc2626"/>
+        <text x="510" y="25" font-size="7.5" font-weight="700" fill="#dc2626" text-anchor="middle">M10 (Seuil M6 Stabilités)</text>
+        <circle cx="630" cy="35" r="3" fill="#0284c7"/>
+        <text x="630" y="25" font-size="7.5" font-weight="600" fill="#0284c7" text-anchor="middle">M11 (QOS/Notices)</text>
+        <circle cx="725" cy="35" r="3" fill="#10b981"/>
+        <text x="725" y="25" font-size="7.5" font-weight="700" fill="#10b981" text-anchor="middle">M12 (Dépôt)</text>
+
+        <!-- LIAISONS / ARROWS (Tracé en premier pour z-index) -->
+        <!-- Start -> T1 (Critique) -->
+        <path d="M 40 180 L 70 180" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow-crit)"/>
+        
+        <!-- T1 -> T2 (Critique) -->
+        <path d="M 180 180 L 210 180" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow-crit)"/>
+
+        <!-- T2 -> T3 (Stabilités - CHEMIN CRITIQUE ROUGE) -->
+        <path d="M 320 180 L 360 180" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow-crit)"/>
+
+        <!-- T2 -> T4 (Bioéquivalence CRO) -->
+        <path d="M 320 180 C 340 180, 340 280, 370 280" stroke="#0284c7" stroke-width="1.8" marker-end="url(#arrow-norm)"/>
+
+        <!-- Start -> T5 (Dossier Administratif) -->
+        <path d="M 40 180 C 50 180, 60 80, 90 80" stroke="#64748b" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrow-slack)"/>
+
+        <!-- T5 -> T7 (Administratif vers Engagements) -->
+        <path d="M 200 80 C 350 80, 500 80, 630 150" stroke="#64748b" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrow-slack)"/>
+
+        <!-- T4 -> T6 (BE vers QOS) -->
+        <path d="M 480 280 C 510 280, 510 190, 530 190" stroke="#0284c7" stroke-width="1.8" marker-end="url(#arrow-norm)"/>
+
+        <!-- T3 -> T6 (Stabilités vers QOS - CRITIQUE GATING) -->
+        <path d="M 480 180 L 530 180" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow-crit)"/>
+
+        <!-- T6 -> T7 (QOS vers Visa PDT - CRITIQUE) -->
+        <path d="M 640 180 L 670 180" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow-crit)"/>
+
+        <!-- T7 -> FIN (CRITIQUE) -->
+        <path d="M 735 180 L 745 180" stroke="#dc2626" stroke-width="2.5"/>
+
+        <!-- NOEUD START (M0) -->
+        <g transform="translate(10, 160)">
+            <circle cx="20" cy="20" r="18" fill="#091e36" stroke="#0284c7" stroke-width="2"/>
+            <text x="20" y="24" font-size="8" font-weight="800" fill="#ffffff" text-anchor="middle">DÉBUT</text>
+        </g>
+
+        <!-- NOEUD T1 : Socle Amont & Méthodes Analytiques (CRITIQUE) -->
+        <g transform="translate(70, 140)">
+            <rect x="0" y="0" width="110" height="75" rx="4" fill="url(#critGrad)" stroke="#dc2626" stroke-width="2"/>
+            <rect x="0" y="0" width="110" height="20" rx="4" fill="#dc2626"/>
+            <text x="55" y="14" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1 : Méthodes ICH Q2</text>
+            <line x1="0" y1="46" x2="110" y2="46" stroke="#fca5a5" stroke-width="1"/>
+            <line x1="36" y1="20" x2="36" y2="75" stroke="#fca5a5" stroke-width="1"/>
+            <line x1="74" y1="20" x2="74" y2="75" stroke="#fca5a5" stroke-width="1"/>
+            <!-- Ligne Haut: ES | D | EF -->
+            <text x="18" y="37" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">ES: 0</text>
+            <text x="55" y="37" font-size="7.5" font-weight="700" fill="#b91c1c" text-anchor="middle">D: 60j</text>
+            <text x="92" y="37" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">EF: 60</text>
+            <!-- Ligne Bas: LS | MT | LF -->
+            <text x="18" y="65" font-size="7" fill="#475569" text-anchor="middle">LS: 0</text>
+            <text x="55" y="65" font-size="7" font-weight="700" fill="#dc2626" text-anchor="middle">MT: 0</text>
+            <text x="92" y="65" font-size="7" fill="#475569" text-anchor="middle">LF: 60</text>
+        </g>
+
+        <!-- NOEUD T2 : Lots Pilotes & CoA (CRITIQUE) -->
+        <g transform="translate(210, 140)">
+            <rect x="0" y="0" width="110" height="75" rx="4" fill="url(#critGrad)" stroke="#dc2626" stroke-width="2"/>
+            <rect x="0" y="0" width="110" height="20" rx="4" fill="#dc2626"/>
+            <text x="55" y="14" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">T2 : Lots & CoA 3.2.P</text>
+            <line x1="0" y1="46" x2="110" y2="46" stroke="#fca5a5" stroke-width="1"/>
+            <line x1="36" y1="20" x2="36" y2="75" stroke="#fca5a5" stroke-width="1"/>
+            <line x1="74" y1="20" x2="74" y2="75" stroke="#fca5a5" stroke-width="1"/>
+            <text x="18" y="37" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">ES: 60</text>
+            <text x="55" y="37" font-size="7.5" font-weight="700" fill="#b91c1c" text-anchor="middle">D: 30j</text>
+            <text x="92" y="37" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">EF: 90</text>
+            <text x="18" y="65" font-size="7" fill="#475569" text-anchor="middle">LS: 60</text>
+            <text x="55" y="65" font-size="7" font-weight="700" fill="#dc2626" text-anchor="middle">MT: 0</text>
+            <text x="92" y="65" font-size="7" fill="#475569" text-anchor="middle">LF: 90</text>
+        </g>
+
+        <!-- NOEUD T3 : Stabilités Zone IVb 6 mois min (Goulot Temporel Incompressible - CHEMIN CRITIQUE MAJEUR) -->
+        <g transform="translate(360, 135)">
+            <rect x="0" y="0" width="120" height="85" rx="5" fill="#fee2e2" stroke="#b91c1c" stroke-width="2.5"/>
+            <rect x="0" y="0" width="120" height="22" rx="4" fill="#b91c1c"/>
+            <text x="60" y="15" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">T3 : STABILITÉS IVb (M6)</text>
+            <line x1="0" y1="52" x2="120" y2="52" stroke="#f87171" stroke-width="1"/>
+            <line x1="40" y1="22" x2="40" y2="85" stroke="#f87171" stroke-width="1"/>
+            <line x1="80" y1="22" x2="80" y2="85" stroke="#f87171" stroke-width="1"/>
+            <text x="20" y="42" font-size="8" font-weight="800" fill="#7f1d1d" text-anchor="middle">ES: 90</text>
+            <text x="60" y="42" font-size="8" font-weight="800" fill="#991b1b" text-anchor="middle">D: 180j</text>
+            <text x="100" y="42" font-size="8" font-weight="800" fill="#7f1d1d" text-anchor="middle">EF: 270</text>
+            <text x="20" y="74" font-size="7.5" font-weight="700" fill="#475569" text-anchor="middle">LS: 90</text>
+            <text x="60" y="74" font-size="8" font-weight="800" fill="#dc2626" text-anchor="middle">MT: 0 ★</text>
+            <text x="100" y="74" font-size="7.5" font-weight="700" fill="#475569" text-anchor="middle">LF: 270</text>
+            <!-- Badge Gating -->
+            <rect x="15" y="88" width="90" height="13" rx="3" fill="#ef4444"/>
+            <text x="60" y="97" font-size="6.5" font-weight="800" fill="#ffffff" text-anchor="middle">VERROU BLOQUANT</text>
+        </g>
+
+        <!-- NOEUD T4 : Bioéquivalence in vivo CRO (Sous-critique / Flottement 30j) -->
+        <g transform="translate(370, 255)">
+            <rect x="0" y="0" width="110" height="70" rx="4" fill="url(#normGrad)" stroke="#0284c7" stroke-width="1.5"/>
+            <rect x="0" y="0" width="110" height="18" rx="4" fill="#0284c7"/>
+            <text x="55" y="13" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">T4 : Bioéquivalence CRO</text>
+            <line x1="0" y1="44" x2="110" y2="44" stroke="#bae6fd" stroke-width="1"/>
+            <line x1="36" y1="18" x2="36" y2="70" stroke="#bae6fd" stroke-width="1"/>
+            <line x1="74" y1="18" x2="74" y2="70" stroke="#bae6fd" stroke-width="1"/>
+            <text x="18" y="35" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">ES: 90</text>
+            <text x="55" y="35" font-size="7.5" font-weight="700" fill="#0284c7" text-anchor="middle">D: 150j</text>
+            <text x="92" y="35" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">EF: 240</text>
+            <text x="18" y="60" font-size="7" fill="#475569" text-anchor="middle">LS: 120</text>
+            <text x="55" y="60" font-size="7" font-weight="700" fill="#059669" text-anchor="middle">MT: +30j</text>
+            <text x="92" y="60" font-size="7" fill="#475569" text-anchor="middle">LF: 270</text>
+        </g>
+
+        <!-- NOEUD T5 : Dossier Administratif & Agréments MIPH (Marge importante) -->
+        <g transform="translate(90, 55)">
+            <rect x="0" y="0" width="110" height="65" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.2"/>
+            <rect x="0" y="0" width="110" height="18" rx="4" fill="#64748b"/>
+            <text x="55" y="13" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">T5 : Agréments MIPH / 1.A</text>
+            <line x1="0" y1="41" x2="110" y2="41" stroke="#cbd5e1" stroke-width="1"/>
+            <line x1="36" y1="18" x2="36" y2="65" stroke="#cbd5e1" stroke-width="1"/>
+            <line x1="74" y1="18" x2="74" y2="65" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="18" y="33" font-size="7" font-weight="700" fill="#091e36" text-anchor="middle">ES: 30</text>
+            <text x="55" y="33" font-size="7" font-weight="700" fill="#475569" text-anchor="middle">D: 45j</text>
+            <text x="92" y="33" font-size="7" font-weight="700" fill="#091e36" text-anchor="middle">EF: 75</text>
+            <text x="18" y="56" font-size="6.8" fill="#64748b" text-anchor="middle">LS: 225</text>
+            <text x="55" y="56" font-size="7" font-weight="700" fill="#059669" text-anchor="middle">MT: +195j</text>
+            <text x="92" y="56" font-size="6.8" fill="#64748b" text-anchor="middle">LF: 270</text>
+        </g>
+
+        <!-- NOEUD T6 : Synthèses QOS (2.3) & Notices / RCP (CRITIQUE - DÉVERROUILLÉ APRÈS T3) -->
+        <g transform="translate(530, 140)">
+            <rect x="0" y="0" width="110" height="75" rx="4" fill="url(#critGrad)" stroke="#dc2626" stroke-width="2"/>
+            <rect x="0" y="0" width="110" height="20" rx="4" fill="#dc2626"/>
+            <text x="55" y="14" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">T6 : QOS 2.3 & Notices</text>
+            <line x1="0" y1="46" x2="110" y2="46" stroke="#fca5a5" stroke-width="1"/>
+            <line x1="36" y1="20" x2="36" y2="75" stroke="#fca5a5" stroke-width="1"/>
+            <line x1="74" y1="20" x2="74" y2="75" stroke="#fca5a5" stroke-width="1"/>
+            <text x="18" y="37" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">ES: 270</text>
+            <text x="55" y="37" font-size="7.5" font-weight="700" fill="#b91c1c" text-anchor="middle">D: 30j</text>
+            <text x="92" y="37" font-size="7.5" font-weight="700" fill="#091e36" text-anchor="middle">EF: 300</text>
+            <text x="18" y="65" font-size="7" fill="#475569" text-anchor="middle">LS: 270</text>
+            <text x="55" y="65" font-size="7" font-weight="700" fill="#dc2626" text-anchor="middle">MT: 0</text>
+            <text x="92" y="65" font-size="7" fill="#475569" text-anchor="middle">LF: 300</text>
+        </g>
+
+        <!-- NOEUD T7 : Engagements 1.P.8/9, BV1 & Visa Scellé PDT (CRITIQUE) -->
+        <g transform="translate(670, 140)">
+            <rect x="0" y="0" width="75" height="75" rx="4" fill="url(#gateGrad)" stroke="#10b981" stroke-width="2"/>
+            <rect x="0" y="0" width="75" height="20" rx="4" fill="#059669"/>
+            <text x="37" y="14" font-size="7.5" font-weight="700" fill="#ffffff" text-anchor="middle">T7 : Visa PDT</text>
+            <line x1="0" y1="46" x2="75" y2="46" stroke="#86efac" stroke-width="1"/>
+            <line x1="25" y1="20" x2="25" y2="75" stroke="#86efac" stroke-width="1"/>
+            <line x1="50" y1="20" x2="50" y2="75" stroke="#86efac" stroke-width="1"/>
+            <text x="12" y="37" font-size="7" font-weight="700" fill="#065f46" text-anchor="middle">300</text>
+            <text x="37" y="37" font-size="7" font-weight="700" fill="#047857" text-anchor="middle">20j</text>
+            <text x="62" y="37" font-size="7" font-weight="700" fill="#065f46" text-anchor="middle">320</text>
+            <text x="12" y="65" font-size="6.8" fill="#475569" text-anchor="middle">300</text>
+            <text x="37" y="65" font-size="7" font-weight="700" fill="#10b981" text-anchor="middle">0</text>
+            <text x="62" y="65" font-size="6.8" fill="#475569" text-anchor="middle">320</text>
+        </g>
+
+        <!-- NOEUD FINAL (J320 Dépôt E-TASJIL) -->
+        <g transform="translate(670, 240)">
+            <rect x="0" y="0" width="75" height="42" rx="4" fill="#091e36" stroke="#0284c7" stroke-width="1.5"/>
+            <text x="37" y="16" font-size="7.5" font-weight="800" fill="#38bdf8" text-anchor="middle">SOUMISSION</text>
+            <text x="37" y="30" font-size="7" font-weight="600" fill="#ffffff" text-anchor="middle">J-320 (ANPP)</text>
+        </g>
+        <path d="M 707 215 L 707 240" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-crit)"/>
+
+        <!-- LÉGENDE PERT & NORMES -->
+        <g transform="translate(20, 360)">
+            <rect x="0" y="0" width="720" height="55" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="12" y="16" font-size="7.5" font-weight="700" fill="#0f172a">LÉGENDE OFFICIELLE DU CHEMIN CRITIQUE & RÈGLES DE GATING :</text>
+            
+            <line x1="15" y1="32" x2="45" y2="32" stroke="#dc2626" stroke-width="3"/>
+            <text x="50" y="35" font-size="7" font-weight="700" fill="#dc2626">Chemin Critique Incompressible (Marge Totale = 0j, délai total de soumission : 320 jours ouvrés / 11 mois)</text>
+
+            <line x1="15" y1="46" x2="45" y2="46" stroke="#64748b" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <text x="50" y="49" font-size="7" fill="#475569">Chemin Secondaire / Marge Positive (MT &gt; 0) : Pas d'incidence sur la date de dépôt si exécuté dans la marge.</text>
+
+            <!-- Boîte Type standard -->
+            <rect x="520" y="8" width="185" height="40" rx="3" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8"/>
+            <line x1="520" y1="28" x2="705" y2="28" stroke="#cbd5e1" stroke-width="0.8"/>
+            <line x1="580" y1="8" x2="580" y2="48" stroke="#cbd5e1" stroke-width="0.8"/>
+            <line x1="645" y1="8" x2="645" y2="48" stroke="#cbd5e1" stroke-width="0.8"/>
+            <text x="550" y="21" font-size="6.5" font-weight="700" fill="#0f172a" text-anchor="middle">ES (Plus Tôt)</text>
+            <text x="612" y="21" font-size="6.5" font-weight="700" fill="#0284c7" text-anchor="middle">Durée (D)</text>
+            <text x="675" y="21" font-size="6.5" font-weight="700" fill="#0f172a" text-anchor="middle">EF (Fin Tôt)</text>
+            <text x="550" y="41" font-size="6.5" fill="#475569" text-anchor="middle">LS (Plus Tard)</text>
+            <text x="612" y="41" font-size="6.5" font-weight="700" fill="#dc2626" text-anchor="middle">Marge (MT)</text>
+            <text x="675" y="41" font-size="6.5" fill="#475569" text-anchor="middle">LF (Fin Tard)</text>
+        </g>
+    </svg>
+</div>
+
+<p>L'élaboration des centaines de pièces composant un dossier CTD (Guide ANPP Juillet 2025) ou un dossier DM (Arrêté du 10 mai 2021) ne s'opère pas au hasard ni en vrac. Elle est gouvernée par un <strong>Chemin Critique industriel et réglementaire</strong> articulé en 5 phases successives, avec <strong>déverrouillage conditionnel (<em>Gating</em>)</strong> et <strong>propagation descendante des données critiques</strong> :</p>
+<h5>Règles de Déverrouillage Conditionnel (<em>Gating Rules</em>) dans la Plateforme :</h5>
+<ol>
+<li><strong>Verrouillage amont de la fabrication :</strong> La section 3.2.P.3 (Fabrication) et les spécifications de contrôle 3.2.P.5 ne peuvent être figées tant que la validation des méthodes analytiques (ICH Q2 - 3.2.P.5.3) n'a pas été formellement validée par le CQ (<em>Checker</em>).</li>
+<li><strong>Verrouillage des épreuves physiques :</strong> Les études de stabilité (3.2.P.8) et les essais de bioéquivalence (Module 5) ne peuvent être déclarés initiés sans certificat d'analyse libératoire conforme (CoA 1.P.4 / 1.P.5). L'horloge de stabilité impose un compte à rebours réglementaire (M0, M3, M6, M9, M12) avec blocage de la soumission tant que le jalon M6 accéléré et temps réel n'est pas scellé.</li>
+<li><strong>Verrouillage des synthèses et de l'information médicale :</strong> </li>
+<li>Le Résumé Global de la Qualité (<strong>QOS 2.3</strong>) reste au statut <em>« Verrouillé - En attente données brutes Module 3 »</em> tant que 100 % des sous-sections de 3.2.S et 3.2.P ne sont pas au minimum en statut de revue validée.</li>
+<li>La <strong>Notice patient (1.P.2)</strong>, le <strong>RCP (1.P.1)</strong> et les <strong>Maquettes d'emballage</strong> restent verrouillés en édition finale tant que les conclusions de stabilité (durée de vie en mois, température maximale de conservation, précautions particulières de conservation) ne sont pas validées par le Responsable Stabilités.</li>
+<li><strong>Propagation descendante en cascade des données maîtresses :</strong></li>
+<li>Dès validation du rapport 3.2.P.8, les données finales (ex: <em>« 36 mois »</em>, <em>« À conserver à une température ne dépassant pas 30°C »</em>) sont répercutées automatiquement dans les champs dynamiques de la Notice FR/AR, du RCP et des articles de conditionnement.</li>
+<li>Dès validation de la formule de lot (3.2.P.3.2), la composition qualitative et quantitative exacte est injectée dans le RCP (rubrique 2), la Notice et le formulaire de demande 1.A.3.</li>
+<li><strong>Verrou de complétude pré-dépôt :</strong> L'export du Submission Package (E-TASJIL) et la signature légale finale du PDT sont techniquement bloqués tant que l'ensemble des branches du DAG (Directed Acyclic Graph) documentaire ne sont pas toutes à l'état <em>« Approuvé &amp; Scellé »</em>.</li>
+</ol>
+<h4>7.4.4 Bibliothèque de Modèles Maîtres Pharmaceutiques (<em>Master Templates</em>)</h4>
+<p>Pour garantir l'uniformité rédactionnelle et la stricte conformité aux exigences de l'ANPP et aux référentiels internationaux (ICH Q1, Q2, Q3, Q6, CTD), la plateforme intègre une bibliothèque native de modèles maîtres paramétrables :<br />
+- <strong>Template Notice Patient Bilingue (FR/AR - 1.P.2) :</strong> Modèle pré-structuré selon le canevas officiel de l'ANPP (Dénomination, composition, indications thérapeutiques, contre-indications, précautions d'emploi, posologie et mode d'administration, effets indésirables, conditions de conservation, date de révision). Support bilingue côte-à-côte ou séquencé avec mise en page RTL/LTR optimisée.<br />
+- <strong>Template Résumé des Caractéristiques du Produit (RCP - 1.P.1) :</strong> Structure conforme au standard ANPP et EMA (rubriques 1 à 10 : composition qualitative/quantitative, forme pharmaceutique, données cliniques, propriétés pharmacologiques, données pharmaceutiques).<br />
+- <strong>Template Spécifications et Méthodes d'Essai Produit Fini (ICH Q6A - 3.2.P.5.1 &amp; 3.2.P.5.2) :</strong> Tableau standardisé des critères de libération et péremption (aspect, identification, dosage principe actif, substances apparentées/impuretés, dissolution, uniformité de masse/teneur, contamination microbiologique).<br />
+- <strong>Template Protocole et Rapport de Stabilité Zone IVb (ICH Q1A(R2) - 3.2.P.8) :</strong> Canevas d'essais en conditions climatiques algériennes Zone IVb (30°C ± 2°C / 75% RH ± 5% RH en longue durée, 40°C ± 2°C / 75% RH ± 5% RH en accéléré), tableau de suivi des points de contrôle (M0, M3, M6, M9, M12, M18, M24, M36), évaluation statistique des tendances et conclusion sur la durée de validité.<br />
+- <strong>Template Résumé Global de la Qualité (Quality Overall Summary - QOS Module 2.3) :</strong> Synthèse critique des données de qualité de la substance active (2.3.S) et du produit fini (2.3.P), justifiant les choix de développement galénique et la stratégie de contrôle.<br />
+- <strong>Template Protocole et Rapport de Validation de Procédé (3.2.P.3.5) :</strong> Définition des paramètres opératoires critiques (CPP), des attributs qualité critiques (CQA), plan d'échantillonnage intensif sur 3 lots consécutifs à échelle industrielle et critères d'acceptation statistiques (indices C_p / Cpk).<br />
+- <strong>Template Fiche Technique Dispositif Médical (Arrêté du 10 mai 2021) :</strong> Structure réglementaire requise pour l'homologation des DM (classification selon annexe I, description, principes de fonctionnement, matières premières, stérilisation, performances et évaluation clinique).</p>
+<h4>7.4.5 Générateur Automatisé de Formulaires &amp; Lettres d'Engagement en 1 Clic</h4>
+<p>Afin d'éliminer les erreurs manuelles de saisie et les rejets administratifs de dossiers par l'ANPP, la plateforme intègre un générateur dynamique capable de composer instantanément les documents réglementaires obligatoires en fusionnant les métadonnées de l'établissement et du produit :<br />
+- <strong>Lettre d'engagement de validation industrielle (1.P.8) :</strong> Génération automatique de l'engagement officiel du PDT de réaliser la validation du procédé de fabrication sur les trois (03) premiers lots industriels consécutifs dès l'obtention de la DE et d'en transmettre les résultats à l'ANPP.<br />
+- <strong>Lettre d'engagement de suivi de stabilité en Zone IVb (1.P.9) :</strong> Génération de l'engagement de poursuivre le suivi de stabilité en temps réel sur les lots commerciaux en conditions Zone IVb jusqu'au terme de la durée de conservation autorisée.<br />
+- <strong>Attestation d'évaluation et de conformité par le PDT (1.H.10) :</strong> Génération de l'attestation formelle requise pour les produits fabriqués localement, par laquelle le Pharmacien Directeur Technique certifie l'exhaustivité et la véracité des contrôles effectués.<br />
+- <strong>Bordereaux de versement officiels BV1 et BV2 :</strong> Édition automatique des bordereaux normalisés de l'ANPP avec calcul précis des montants de redevance (selon la procédure NI, NF, MI, MF, RI, RF ou DM), ventilation par rubriques et références bancaires pré-remplies.<br />
+- <strong>Attestation formelle de non-modification des autres sections (LD-DEPP07/V01) :</strong> Pour les dossiers de variations, génération automatique de l'attestation légale jurant sur l'honneur qu'aucune autre modification qualitative ou quantitative n'a été introduite dans les sections non déclarées.</p>
+<h4>7.4.6 Tableau de Bord de Supervision du Pharmacien Directeur Technique (Cockpit DT)</h4>
+<p>Pour lui permettre d'exercer pleinement sa responsabilité de garant légal sans être submergé par les micro-tâches rédactionnelles, le Pharmacien Directeur Technique dispose d'un tableau de bord de supervision dédié :<br />
+- <strong>Vue d'avancement global en temps réel :</strong> Matrice visuelle de complétude par module CTD (Modules 1 à 5) et par département responsable.<br />
+- <strong>Parapheur électronique unifié :</strong> Liste consolidée de tous les documents arrivés au statut <em>Prêt pour Visa DT</em>, avec accès direct au diff des révisions, au rapport de conformité du <em>Checker</em> et au volet d'aperçu instantané.<br />
+- <strong>Signature par lot (<em>Batch Review &amp; Signing</em>) :</strong> Possibilité de signer électroniquement une liasse de documents validés en une seule opération sécurisée (une saisie TOTP validant l'ensemble de la liasse avec audit trail nominatif pour chaque pièce).<br />
+- <strong>Détection proactive des retards &amp; Goulots d'étranglement :</strong> Indicateurs d'alerte sur les sections en retard par rapport au planning de soumission ciblé ou à l'échéance de réponse aux compléments ANPP.</p>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 7 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 8 : 8. Taxonomie du Coffre-Fort GED Pharmaceutiqu</span>
+        </div>
+        <h2>8. Taxonomie du Coffre-Fort GED Pharmaceutique (Standard BPF)</h2>
+<p>Les documents de référence du laboratoire sont organisés en cinq branches maîtresses interconnectées avec les checklists des dossiers d'enregistrement :</p>
+<ol>
+<li><strong><code>01_Affaires_Reglementaires</code></strong></li>
+<li><code>01_01_Agrements_Etablissement</code> (Agréments MIPH demandeur et fabricants)</li>
+<li><code>01_02_Decisions_Enregistrement</code> (DE initiales, renouvellements et avenants)</li>
+<li><code>01_03_Decisions_Homologation</code> (Décisions d'homologation DM/DMDIV)</li>
+<li><code>01_04_Dossiers_CTD_Reference</code> (Dossiers maîtres archivés et fiches de variations)</li>
+<li><code>01_05_Notices_Articles_Conditionnement</code> (Notices bilingues FR/AR, étiquettes, maquettes à l'échelle)</li>
+<li><code>01_06_Correspondances_ANPP</code> (Courriers de compléments, notifications, accusés de réception)</li>
+<li><strong><code>02_Assurance_Qualite_BPF</code></strong></li>
+<li><code>02_01_Manuel_Qualite_Procedures</code> (Procédures opératoires normalisées - POS / SOP)</li>
+<li><code>02_02_Certificats_BPF_ISO</code> (Certificats GMP fabricants SA et PF, certificats ISO 13485)</li>
+<li><code>02_03_Rapports_Audit_Inspections</code> (Rapports d'inspection ANPP, audits fournisseurs)</li>
+<li><code>02_04_CAPA_Deviations</code> (Déviations qualité et actions correctives/préventives)</li>
+<li><strong><code>03_Developpement_Production</code></strong></li>
+<li><code>03_01_Formules_Fabrication_DMF</code> (Dossiers de lot maîtres, Drug Master Files / DPSA)</li>
+<li><code>03_02_Methodes_Controle_Validation</code> (Méthodes d'analyse, transferts et validations analytiques)</li>
+<li><code>03_03_Etudes_Stabilite</code> (Protocoles et rapports de stabilité Zone IVa/IVb, temps réel et accéléré)</li>
+<li><code>03_04_Specifications_Matieres_PF</code> (Spécifications SA, excipients, articles de conditionnement, PF)</li>
+<li><code>03_05_Dossiers_Techniques_DM</code> (Fichiers techniques DM selon arrêté du 10 mai 2021)</li>
+<li><strong><code>04_Vigilance_Post_Market</code></strong></li>
+<li><code>04_01_Pharmacovigilance</code> (Rapports périodiques de sécurité - PSUR, fiches de notification d'effets indésirables)</li>
+<li><code>04_02_Materiovigilance</code> (Incidents DM, fiches d'alerte)</li>
+<li><code>04_03_Rappels_Lots</code> (Procédures de retrait et dossiers d'investigation)</li>
+<li><strong><code>05_Contrats_Tiers</code></strong></li>
+<li><code>05_01_Accords_Qualite_QTA</code> (Quality Technical Agreements avec façonniers et fournisseurs)</li>
+<li><code>05_02_Contrats_Faconnage_SousTraitance</code> (Contrats de fabrication, conditionnement, analyse)</li>
+<li><code>05_03_Certificats_Fournisseurs_APIs</code> (CEP EDQM, lettres d'accès APIMF, déclarations EST/OGM)</li>
+</ol>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 8 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 9 : 9. Module ANPP Submission Assistant & E-Servi</span>
+        </div>
+        <h2>9. Module ANPP Submission Assistant &amp; E-Services Gateway (Télé-Procédures ANPP)</h2>
+<h3>9.1 Cartographie des E-Services Officiels de l'ANPP</h3>
+<p>L'ANPP met à disposition des opérateurs pharmaceutiques un ensemble de portails numériques spécialisés avec lesquels la plateforme <strong>Homolog</strong> s'articule :<br />
+1. <strong>E-TASJIL (<code>https://etasjil.anpp.dz</code>) :</strong> Portail officiel de gestion dématérialisée des procédures d'enregistrement des produits pharmaceutiques.<br />
+2. <strong>RDV PP (<code>https://rdvpp.anpp.dz</code>) :</strong> Plateforme de prise de rendez-vous en ligne obligatoire pour le dépôt physique et l'accueil des dossiers de produits pharmaceutiques (créneau d'ouverture hebdomadaire : du mercredi 10h00 au jeudi 10h00).<br />
+3. <strong>RDV DM (<code>https://rdvdm.anpp.dz</code>) :</strong> Plateforme de prise de rendez-vous en ligne obligatoire pour le dépôt des dossiers d'homologation des dispositifs médicaux (créneau d'ouverture : du mardi 10h00 au jeudi 10h00 ; jours de réception : dimanche, lundi, mercredi).<br />
+4. <strong>État Déclaratif (<code>https://etatdeclaratif.anpp.dz</code>) :</strong> Extranet réglementaire dédié aux déclarations périodiques d'approvisionnement et d'état des stocks.<br />
+5. <strong>RCP (<code>https://rcp.anpp.dz</code>) :</strong> Registre public de consultation des Résumés des Caractéristiques du Produit approuvés.</p>
+<h3>9.2 Cycle de Soumission Hybride et Positionnement d'Homolog</h3>
+<p>La réglementation pharmaceutique algérienne impose un <strong>cycle de soumission hybride</strong> (télé-procédure en amont + dépôt physique des classeurs et échantillons sur convocation). <strong>Homolog</strong> automatise l'intégralité de la chaîne préparatoire et assiste le Pharmacien Directeur Technique sans rupture d'intégrité :</p>
+<h3>9.3 Spécifications Fonctionnelles de l'Assistant de Soumission</h3>
+<h4>9.3.1 Génération Automatisée des Bordereaux et Formulaires Officiels ANPP</h4>
+<p>La plateforme génère directement, sans ressaisie manuelle, les documents réglementaires au format exact exigé par l'ANPP (Word <code>.docx</code>, Excel <code>.xlsx</code> et PDF scellé) :<br />
+- <strong>Bordereau de Versement BV1 :</strong> Dépôt d'un dossier d'enregistrement initial (NI/NF) ou d'homologation DM initiale avec calcul automatique des montants de redevance en DZD ou devises.<br />
+- <strong>Bordereau de Versement BV2 :</strong> Dépôt des demandes de modifications (Mmin, Mmod, Mmaj) et renouvellements quinquennaux (RI/RF).<br />
+- <strong>Formulaire officiel de demande d'homologation DM :</strong> Formulaire standardisé conforme au décret exécutif n° 20-324 et à l'arrêté du 10 mai 2021.<br />
+- <strong>Récépissé officiel de dépôt :</strong> Pré-rempli avec les métadonnées de l'établissement demandeur, du fabricant, du produit et du Pharmacien Directeur Technique.<br />
+- <strong>Attestation formelle de non-modification des autres sections :</strong> Générée selon le canevas officiel de la ligne directrice LD-DEPP07/V01.</p>
+<h4>9.3.2 Générateur de Paquet de Télé-Soumission pour E-TASJIL (Export 1-Clic)</h4>
+<ul>
+<li><strong>Arborescence eCTD / DM normalisée :</strong> Export d'une archive structurée et validée respectant la nomenclature officielle des fichiers ANPP (Module 1 à 5).</li>
+<li><strong>Fiche récapitulative de saisie E-TASJIL :</strong> Synthèse pré-formatée alignée champ par champ avec les masques de saisie d'E-TASJIL (DCI, dosage, forme galénique, code ATC, sites de synthèse SA, façonnage PF, conditionnement, contrôles), permettant un copier-coller instantané ou une injection assistée sans risque d'erreur humaine.</li>
+<li><strong>Index PDF d'intégrité :</strong> Table des matières interactive avec liens hypertextes et empreintes cryptographiques SHA-256 de chaque document.</li>
+</ul>
+<h4>9.3.3 Veille Calendaire &amp; Assistant de Prise de RDV (RDV PP / RDV DM)</h4>
+<ul>
+<li><strong>Moteur d'alertes calendaires proactives :</strong></li>
+<li>Notification automatique au Responsable Réglementaire et au PDT chaque mardi matin à 09h50 pour les créneaux Dispositifs Médicaux (<code>rdvdm.anpp.dz</code>).</li>
+<li>Notification chaque mercredi matin à 09h50 pour les créneaux Produits Pharmaceutiques (<code>rdvpp.anpp.dz</code>).</li>
+<li><strong>Assistant de saisie rapide (Fast-Fill Sécurisé) :</strong> Préparation des données requises par le formulaire de rendez-vous (Raison sociale, n° d'agrément MIPH, nom du PDT, dénomination produit, objet de la demande, annexe choisie : Alger, Oran ou Constantine) pour réserver le créneau dès l'ouverture du guichet hebdomadaire.</li>
+</ul>
+<h4>9.3.4 Contrôle de Complétude Pré-Dépôt Bloquant</h4>
+<p>L'assistant applique un audit automatisé bloquant avant d'autoriser l'export du Submission Package :<br />
+1. <strong>Complétude documentaire :</strong> 100 % des pièces obligatoires de la procédure (NI, RI, MI, NF, RF, MF ou DM) doivent être déposées et validées.<br />
+2. <strong>Validité des titres réglementaires :</strong> Vérification automatique des dates de péremption des agréments MIPH, certificats BPF/GMP, lettres d'accès CEP et licences.<br />
+3. <strong>Signature solennelle du Pharmacien Directeur Technique :</strong> Présence obligatoire de la signature électronique nominative avec horodatage UTC et scellement SHA-256 (21 CFR Part 11).</p>
+<h3>9.4 Architecture Technique du Connecteur (API-Ready)</h3>
+<p>Dans le backend Go de <strong>Homolog</strong>, le module d'interopérabilité est modélisé par des interfaces découplées au sein du package <code>internal/anpp</code> :</p>
+<pre><code class="language-go">// SubmissionPackage représente le paquet complet prêt pour le dépôt ANPP.
+type SubmissionPackage struct {
+    DossierID         string
+    ProcedureCode     string // NI, RI, MI, NF, RF, MF, DM
+    BordereauType     string // BV1, BV2
+    GeneratedDocs     map[string][]byte // Formulaires Word/Excel/PDF pré-remplis
+    ManifestSHA256    string
+    PDTSignatureProof string
+}
+
+// Service d'exportation et d'assistance réglementaire ANPP.
+type ANPPService interface {
+    ValidatePreSubmission(ctx context.Context, dossierID string) (*ComplianceReport, error)
+    GenerateSubmissionPackage(ctx context.Context, dossierID string) (*SubmissionPackage, error)
+    GenerateFastFillData(ctx context.Context, dossierID string) (*RDVFastFillData, error)
+    // Connecteur M2M : actif dès publication des spécifications techniques de télétransmission par l'ANPP
+    SubmitDirectM2M(ctx context.Context, pkg *SubmissionPackage, creds *ANPPCredentials) (*SubmissionReceipt, error)
+}
+</code></pre>
+<p>Cette architecture garantit que l'application est immédiatement opérationnelle en mode hybride aujourd'hui, et prête à être branchée sur une API B2B officielle de l'ANPP dès que celle-ci sera disponible.</p>
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 9 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 10 : 10. Conclusion et Validation</span>
+        </div>
+        <h2>10. Conclusion et Validation</h2>
+<p>Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme <strong>Homolog</strong>. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.</p>
+            <div class="callout info">
+                <div class="callout-title">Engagement de Conformité Réglementaire & Sécurité</div>
+                La signature de ce document engage l'ensemble des départements de l'établissement demandeur au strict respect des procédures opérationnelles, des contrôles d'accès RBAC et des protocoles de signature électronique 21 CFR Part 11 définis dans les présentes spécifications.
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Cadre Réglementaire</th>
+                        <th style="width: 40%;">Exigence Clé Implémentée</th>
+                        <th style="width: 30%;">Statut de Validation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Guide CTD ANPP (Juillet 2025)</strong></td>
+                        <td>Nomenclature intégrale Module 1, formulaires 1.A.3, BV1/BV2, 6 parcours NI à MF.</td>
+                        <td><span class="badge badge-done">Conformité Totale ✅</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ligne Directrice LD-DEPP07/V01 (Avril 2026)</strong></td>
+                        <td>Moteur des 34 rubriques Mmin/Mmod/Mmaj, escalade automatique et Grouping Art. 09.</td>
+                        <td><span class="badge badge-done">Conformité Totale ✅</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Décrets 20-324 / 20-325 & Arrêtés</strong></td>
+                        <td>Enregistrement médicament, homologation DM et régularisation du parc transitoire.</td>
+                        <td><span class="badge badge-done">Conformité Totale ✅</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>21 CFR Part 11 / ALCOA+</strong></td>
+                        <td>Audit trail immuable append-only, scellement SHA-256, signature PDT 2FA non répudiable.</td>
+                        <td><span class="badge badge-done">Conformité Totale ✅</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ségrégation des Tâches (SoD)</strong></td>
+                        <td>Interdiction absolue d'auto-approbation BPF (Rédacteur ≠ Relecteur ≠ Approbateur DT).</td>
+                        <td><span class="badge badge-done">Garde-Fou Go Actif ✅</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Approbation et Signatures Officielles</h2>
+            <div class="sign-grid">
+                <div class="sign-box">
+                    <div class="sign-role">Pharmacien Directeur Technique (PDT)</div>
+                    <div style="font-size: 6.8pt; color: #64748b; margin-bottom: 3px;">Mandat Légal MIPH (Art. 1.A.7)</div>
+                    <div class="sign-space"></div>
+                    <div>Date : ____ / ____ / 2026</div>
+                    <div>Visa, Cachet & Empreinte TOTP :</div>
+                </div>
+                <div class="sign-box">
+                    <div class="sign-role">Responsable Assurance Qualité BPF</div>
+                    <div style="font-size: 6.8pt; color: #64748b; margin-bottom: 3px;">Revue Indépendante & GAMP 5</div>
+                    <div class="sign-space"></div>
+                    <div>Date : ____ / ____ / 2026</div>
+                    <div>Visa & Cachet Qualité :</div>
+                </div>
+                <div class="sign-box">
+                    <div class="sign-role">Direction Générale de l'Établissement</div>
+                    <div style="font-size: 6.8pt; color: #64748b; margin-bottom: 3px;">Agrément Ministériel MIPH (1.A.6)</div>
+                    <div class="sign-space"></div>
+                    <div>Date : ____ / ____ / 2026</div>
+                    <div>Signature & Cachet Société :</div>
+                </div>
+            </div>
+            
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 10 • Cahier des Charges v1.0</span>
+        </div>
+        
+
+</body>
+</html>
