@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOMOLOG — Pitch Commercial & Démonstration Executive</title>
+    <style>
+        :root {
+            --bg-dark: #0a0f1d;
+            --bg-card: rgba(17, 24, 39, 0.85);
+            --bg-card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --primary: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.35);
+            --emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.3);
+            --amber: #f59e0b;
+            --purple: #8b5cf6;
+            --red: #ef4444;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+        }
+
+        /* Arrière-plan subtilement dégradé */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(2, 132, 199, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+            z-index: 0;
+        }
+
+        /* Conteneur de diapositives */
+        .presentation-deck {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 80px 80px 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.96) translateX(40px);
+            transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            pointer-events: all;
+        }
+
+        .slide.previous {
+            opacity: 0;
+            transform: scale(0.96) translateX(-40px);
+        }
+
+        /* Header de slide */
+        .slide-header {
+            margin-bottom: 24px;
+        }
+
+        .slide-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--primary);
+            background: rgba(2, 132, 199, 0.12);
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(2, 132, 199, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .slide-title {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .slide-subtitle {
+            font-size: 15px;
+            color: var(--text-dim);
+            font-weight: 400;
+            line-height: 1.5;
+            max-width: 900px;
+        }
+
+        /* Cartes & Grilles */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .card.highlight-emerald {
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 10px 30px var(--emerald-glow);
+        }
+
+        .card.highlight-blue {
+            border-color: rgba(2, 132, 199, 0.4);
+            box-shadow: 0 10px 30px var(--primary-glow);
+        }
+
+        .card.highlight-red {
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .card-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .card-body {
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        .card-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-emerald {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-purple {
+            background: rgba(139, 92, 246, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        /* Slide 1 Hero Spécifique */
+        .hero-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-caducee {
+            width: 72px;
+            height: 72px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.2), rgba(16, 185, 129, 0.2));
+            border: 2px solid rgba(16, 185, 129, 0.4);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 0 40px var(--emerald-glow);
+        }
+
+        .hero-title {
+            font-size: 46px;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 14px;
+        }
+
+        .hero-pills {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .hero-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        .hero-pill strong {
+            color: #ffffff;
+        }
+
+        /* Tableau Comparatif Slide 2 & 5 */
+        .table-compare {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            margin-top: 10px;
+        }
+
+        .table-compare th {
+            text-align: left;
+            padding: 10px 14px;
+            color: var(--text-muted);
+            font-weight: 700;
+            border-bottom: 1.5px solid var(--bg-card-border);
+            text-transform: uppercase;
+            font-size: 10.5px;
+        }
+
+        .table-compare td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        /* Scénarios Démo */
+        .step-timeline {
+            display: flex;
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .step-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--bg-card-border);
+            border-radius: 10px;
+            padding: 18px;
+            position: relative;
+        }
+
+        .step-num {
+            position: absolute;
+            top: -12px;
+            left: 16px;
+            background: var(--primary);
+            color: white;
+            font-weight: 800;
+            font-size: 11px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px var(--primary-glow);
+        }
+
+        /* Barre d'outils et commandes fixes */
+        .deck-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            padding: 6px 16px;
+            border-radius: 999px;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .deck-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .deck-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .slide-counter {
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            padding: 0 8px;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Volet Notes Présentateur */
+        .notes-panel {
+            position: fixed;
+            bottom: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            max-width: 90vw;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1.5px solid var(--amber);
+            border-radius: 12px;
+            padding: 16px 20px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #fef3c7;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            display: none;
+            z-index: 99;
+        }
+
+        .notes-panel.open {
+            display: block;
+        }
+
+        .notes-header {
+            font-weight: 800;
+            color: var(--amber);
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Barre de progression supérieure */
+        .progress-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            z-index: 100;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--emerald));
+            width: 10%;
+            transition: width 0.3s ease;
+        }
+
+        /* Mode Impression / Export PDF */
+        @media print {
+            body {
+                overflow: visible !important;
+                height: auto !important;
+                background: white !important;
+                color: #0f172a !important;
+            }
+            .ambient-bg, .deck-controls, .notes-panel, .progress-bar-container {
+                display: none !important;
+            }
+            .presentation-deck {
+                display: block !important;
+                height: auto !important;
+            }
+            .slide {
+                position: relative !important;
+                opacity: 1 !important;
+                transform: none !important;
+                height: 100vh !important;
+                page-break-after: always !important;
+                background: white !important;
+                padding: 40px !important;
+            }
+            .card {
+                background: #f8fafc !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #0f172a !important;
+                box-shadow: none !important;
+            }
+            .card-title, .slide-title, .hero-title {
+                color: #0f172a !important;
+            }
+            .card-body, .slide-subtitle {
+                color: #475569 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+    <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <div class="presentation-deck">
+
+        <!-- ====================================================================
+             SLIDE 1 : Titre & Vision
+             ==================================================================== -->
+        <div class="slide active hero-slide" data-notes="Accroche DG/PDT : Présenter HOMOLOG comme la première réponse technologique souveraine et intégrée aux nouvelles exigences de l'ANPP (Guide CTD Juillet 2025). Mettre l'accent sur la conformité légale et la réduction du time-to-market.">
+            <div class="hero-caducee">⚕️</div>
+            <div class="slide-eyebrow">Plateforme Réglementaire &amp; GED Pharmaceutique Certifiée</div>
+            <h1 class="hero-title">HOMOLOG</h1>
+            <p class="slide-subtitle" style="font-size: 18px; max-width: 820px; margin: 0 auto 10px auto;">
+                Sécurisez vos enregistrements ANPP, protégez vos secrets de fabrication et accélérez la mise sur le marché de vos médicaments et dispositifs médicaux en Algérie.
+            </p>
+            <div class="hero-pills">
+                <span class="hero-pill">📋 Guide CTD Officiel <strong>Juillet 2025</strong></span>
+                <span class="hero-pill">🏛️ Décrets <strong>20-324 &amp; 20-325</strong></span>
+                <span class="hero-pill">✍️ Visa Légal <strong>21 CFR Part 11</strong></span>
+                <span class="hero-pill">🛡️ Piste d'Audit <strong>ALCOA+ Immuable</strong></span>
+                <span class="hero-pill">🔒 Protection du <strong>Secret Industriel</strong></span>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 2 : Le Contexte Réglementaire & Les Risques
+             ==================================================================== -->
+        <div class="slide" data-notes="Pain Points : Expliquer qu'un rejet d'irrecevabilité ANPP coûte entre 6 et 12 mois de retard de commercialisation (perte sèche de CA). Souligner le risque d'espionnage industriel lors de partage non cloisonné avec des consultants CRO.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">Les Nouveaux Enjeux Réglementaires</div>
+                <h2 class="slide-title">Pourquoi les Méthodes Traditionnelles Échouent ?</h2>
+                <div class="slide-subtitle">La gestion des dossiers d'enregistrement par classeurs papier, dossiers partagés et tableurs Excel expose les laboratoires à 3 risques majeurs :</div>
+            </div>
+            <div class="grid-3">
+                <div class="card highlight-red">
+                    <div class="card-icon">⚠️</div>
+                    <div class="card-title">Le Rejet d'Irrecevabilité ANPP</div>
+                    <div class="card-body">
+                        L'absence d'une seule pièce obligatoire [E] entraîne le rejet immédiat du dossier au guichet unique de l'ANPP.<br>
+                        <strong>Impact :</strong> 6 à 12 mois de retard de mise sur le marché et des millions de dinars de perte de chiffre d'affaires.
+                    </div>
+                    <span class="card-badge badge-red">Coût Business Majeur</span>
+                </div>
+                <div class="card highlight-red">
+                    <div class="card-icon">🔓</div>
+                    <div class="card-title">La Fuite du Secret d'Affaires</div>
+                    <div class="card-body">
+                        Le partage de dossiers complets avec des experts externes ou CRO expose les prix FOB (1.H.4), les marges et les synthèses chimiques brevetées (3.2.S).<br>
+                        <strong>Impact :</strong> Perte de confidentialité industrielle et risque de concurrence déloyale.
+                    </div>
+                    <span class="card-badge badge-red">Risque Propriété Intellectuelle</span>
+                </div>
+                <div class="card highlight-red">
+                    <div class="card-icon">⚖️</div>
+                    <div class="card-title">Responsabilité Pénale du PDT</div>
+                    <div class="card-body">
+                        En vertu du Décret 20-325, le Pharmacien Directeur Technique engage sa responsabilité légale et ordinale sur la conformité de chaque pièce soumise.<br>
+                        <strong>Impact :</strong> Impossibilité de certifier l'intégrité sans visa électronique 21 CFR Part 11.
+                    </div>
+                    <span class="card-badge badge-red">Responsabilité Personnelle</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 3 : La Réponse HOMOLOG
+             ==================================================================== -->
+        <div class="slide" data-notes="Présenter les 4 piliers d'HOMOLOG : Moteur CTD, Coffre-fort GED certifié, Cloisonnement hermétique du secret et Visa légal PDT. Insister sur le fait que la solution est 100% adaptée à la réglementation algérienne.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">L'Architecture HOMOLOG</div>
+                <h2 class="slide-title">La Solution Complète Dédiée à l'Algérie</h2>
+                <div class="slide-subtitle">Une suite logicielle pharmaceutique conçue de A à Z selon les décrets exécutifs et guides de l'ANPP :</div>
+            </div>
+            <div class="grid-4">
+                <div class="card highlight-blue">
+                    <div class="card-icon">🏛️</div>
+                    <div class="card-title">Moteur de Dossiers ANPP</div>
+                    <div class="card-body">
+                        Checklists interactives des 6 procédures officielles (NI, RI, MI, NF, RF, MF) et Homologation Dispositifs Médicaux (Classes I à III).
+                    </div>
+                    <span class="card-badge badge-emerald">Guide Juillet 2025</span>
+                </div>
+                <div class="card highlight-emerald">
+                    <div class="card-icon">🔒</div>
+                    <div class="card-title">Coffre-Fort GED ALCOA+</div>
+                    <div class="card-body">
+                        Archivage cryptographique CAS (SHA-256) garantissant l'intégrité absolue, le versioning strict (v0.1 à v1.0) et le verrouillage exclusif.
+                    </div>
+                    <span class="card-badge badge-emerald">21 CFR Part 11</span>
+                </div>
+                <div class="card highlight-purple">
+                    <div class="card-icon">🛡️</div>
+                    <div class="card-title">Secret Industriel Breveté</div>
+                    <div class="card-body">
+                        Cloisonnement "Need-to-Know" : masquage automatique des prix FOB et des synthèses chimiques pour les consultants et CRO.
+                    </div>
+                    <span class="card-badge badge-purple">PSSI &amp; BPF</span>
+                </div>
+                <div class="card highlight-blue">
+                    <div class="card-icon">✍️</div>
+                    <div class="card-title">Visa Légal du Pharmacien DT</div>
+                    <div class="card-body">
+                        Signature électronique avec ré-authentification obligatoire, apposition du sceau légal et verrouillage définitif du dossier pour dépôt.
+                    </div>
+                    <span class="card-badge badge-emerald">Décret 20-325</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 4 : Moteur de Dossiers & Checklists Intelligentes
+             ==================================================================== -->
+        <div class="slide" data-notes="Focus Affaires Réglementaires (RA) : Démontrer le calcul automatique de complétude (0-100%). Montrer que le système empêche tout dépôt si une exigence [E] manque. Finis les oublis qui bloquent le dossier.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">Excellence Réglementaire</div>
+                <h2 class="slide-title">Zéro Risque d'Irrecevabilité au Dépôt</h2>
+                <div class="slide-subtitle">Un moteur intelligent qui guide les Affaires Réglementaires pas à pas jusqu'à la recevabilité garantie :</div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title" style="display:flex; justify-content:space-between;">
+                        <span>📋 Checklists CTD &amp; DM Intégrales</span>
+                        <span style="color:var(--emerald); font-size:12px; font-weight:700;">100% Conforme ANPP</span>
+                    </div>
+                    <div class="card-body">
+                        <ul style="padding-left:18px; margin-top:8px; line-height:1.7;">
+                            <li><strong>Modules CTD 1 à 5 :</strong> Exigences régionales algériennes (1.A à 1.P), Qualité CMC (3.2.S, 3.2.P, 3.2.R), Sécurité non-clinique et Clinique/Bioéquivalence.</li>
+                            <li><strong>Dispositifs Médicaux :</strong> 5 sections obligatoires (DM.A, DM.Q ISO 13485, DM.T Technique, DM.S Sécurité, DM.I Notice/IFU).</li>
+                            <li><strong>Niveaux d'Exigence :</strong> Distinction visuelle immédiate entre <strong>[E] Exigé</strong>, <strong>[F] Facultatif</strong> et <strong>[P] Partiel</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card highlight-emerald">
+                    <div class="card-title">⚡ Indicateur de Complétude &amp; Garde-Fou</div>
+                    <div class="card-body">
+                        <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:14px; margin-bottom:12px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-weight:700;">
+                                <span>Complétude Dossier :</span>
+                                <span style="color:var(--emerald);">100% Validé Interne</span>
+                            </div>
+                            <div style="height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+                                <div style="height:100%; width:100%; background:linear-gradient(90deg, var(--primary), var(--emerald));"></div>
+                            </div>
+                        </div>
+                        <ul style="padding-left:18px; line-height:1.7;">
+                            <li><strong>Verrouillage Anti-Oubli :</strong> Impossible de soumettre un dossier tant que les pièces obligatoires ne sont pas certifiées et visées.</li>
+                            <li><strong>Suivi Chronologique ANPP :</strong> Enregistrement du numéro de récépissé officiel et monitoring du délai légal.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 5 : Le Secret Industriel & Commercial (Différenciateur Clé)
+             ==================================================================== -->
+        <div class="slide" data-notes="Point fort commercial absolu : Aucune autre solution sur le marché ne propose ce niveau d'isolation. Expliquer qu'un consultant CRO bioéquivalence ou un stagiaire QA ne verra JAMAIS le prix d'achat, les marges ou la synthèse brevetée.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">Innovation Exclusivité HOMOLOG</div>
+                <h2 class="slide-title">Le Secret Industriel &amp; Commercial Protégé</h2>
+                <div class="slide-subtitle">Un cloisonnement granulaire « Need-to-Know » préservant vos secrets de fabrication et vos marges commerciales :</div>
+            </div>
+            <div class="grid-2">
+                <div class="card highlight-purple">
+                    <div class="card-title" style="color:#c084fc;">🔒 Secret Commercial &amp; Pricing</div>
+                    <div class="card-body">
+                        <p style="margin-bottom:8px;"><strong>Réservé exclusivement à la Direction Générale et aux Affaires Réglementaires :</strong></p>
+                        <table class="table-compare">
+                            <tr>
+                                <td><strong>1.A.4</strong> Quittance bancaire &amp; Attestation de change</td>
+                                <td><span class="badge-red">MASQUÉ pour tiers</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>1.H.4</strong> Structure de prix PCSU / Attestation FOB</td>
+                                <td><span class="badge-red">MASQUÉ pour tiers</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>1.H.5</strong> Benchmark de prix international</td>
+                                <td><span class="badge-red">MASQUÉ pour tiers</span></td>
+                            </tr>
+                        </table>
+                        <div style="margin-top:10px; font-size:11.5px; color:#fca5a5; font-style:italic;">
+                            Même les pharmaciens QA internes ou techniciens n'ont pas accès aux prix d'achat ni aux marges du laboratoire.
+                        </div>
+                    </div>
+                </div>
+                <div class="card highlight-purple">
+                    <div class="card-title" style="color:#c084fc;">🛡️ Secret Industriel &amp; Formules de Synthèse</div>
+                    <div class="card-body">
+                        <p style="margin-bottom:8px;"><strong>Confinement étanche pour les prestataires externes (CRO) :</strong></p>
+                        <table class="table-compare">
+                            <tr>
+                                <td><strong>3.2.S</strong> Synthèse substance active (ASMF/DMF)</td>
+                                <td><span class="badge-purple">Réservé Interne</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>3.2.P</strong> Procédé de fabrication 3 lots &amp; Formule</td>
+                                <td><span class="badge-purple">Réservé Interne</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Module 5</strong> Études cliniques &amp; Bioéquivalence</td>
+                                <td><span class="badge-emerald">Accessible CRO</span></td>
+                            </tr>
+                        </table>
+                        <div style="margin-top:10px; font-size:11.5px; color:#c084fc; font-style:italic;">
+                            Votre expert bioéquivalence tiers travaille sur son module sans jamais voir vos secrets galéniques.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 6 : Visa Légal 21 CFR Part 11 & Pharmacien DT
+             ==================================================================== -->
+        <div class="slide" data-notes="Pour le Pharmacien Directeur Technique : Mettre en avant la sérénité juridique. Signature électronique irréfutable avec double facteur ou mot de passe, traçabilité juridique selon l'article 1.A.7.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">Conformité Médico-Légale</div>
+                <h2 class="slide-title">Le Visa Légal du Pharmacien Directeur Technique</h2>
+                <div class="slide-subtitle">La garantie légale indispensable pour engager la responsabilité du laboratoire devant l'ANPP (Décret 20-325) :</div>
+            </div>
+            <div class="grid-3">
+                <div class="card highlight-blue">
+                    <div class="card-icon">🔑</div>
+                    <div class="card-title">Ré-Authentification Obligatoire</div>
+                    <div class="card-body">
+                        Conformément au standard mondial <strong>21 CFR Part 11</strong>, l'apposition du visa légal exige la re-saisie formelle des identifiants (mot de passe ou 2FA TOTP). Impossible de signer accidentellement.
+                    </div>
+                </div>
+                <div class="card highlight-emerald">
+                    <div class="card-icon">🔏</div>
+                    <div class="card-title">Sceau Cryptographique Immuable</div>
+                    <div class="card-body">
+                        Génération d'une empreinte SHA-256 unique associant le signataire, son titre ordinal (PDT titulaire de la décision 1.A.7), l'horodatage UTC certifié et la déclaration d'engagement légal.
+                    </div>
+                </div>
+                <div class="card highlight-purple">
+                    <div class="card-icon">🔒</div>
+                    <div class="card-title">Verrouillage Définitif du Dossier</div>
+                    <div class="card-body">
+                        Une fois signé par le Directeur Technique, le dossier bascule en état <code>valide_interne</code> : toute modification ultérieure est strictement interdite sans une procédure formelle de révision BPF.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 7 : Coffre-Fort GED & Piste d'Audit ALCOA+
+             ==================================================================== -->
+        <div class="slide" data-notes="Pour le Directeur Qualité (QA) : Démontrer que lors d'une inspection ANPP, vous pouvez sortir en 1 seconde l'historique complet de qui a vu, modifié ou visé un document. ALCOA+ 100% respecté.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">Intégrité &amp; Traçabilité BPF</div>
+                <h2 class="slide-title">Coffre-Fort GED &amp; Audit Trail ALCOA+</h2>
+                <div class="slide-subtitle">Soyez toujours prêts pour les inspections de l'ANPP et les audits de conformité BPF :</div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">🗄️ Coffre-Fort Documentaire CAS</div>
+                    <div class="card-body">
+                        <ul style="padding-left:18px; line-height:1.7;">
+                            <li><strong>Stockage Adressable (CAS SHA-256) :</strong> Tout fichier est identifié par son empreinte cryptographique. Altération physique impossible.</li>
+                            <li><strong>Taxonomie Officielle en 5 Branches :</strong> Classement normalisé (01_Affaires_Reglementaires, 02_Qualite_BPF, 03_Production, 04_Clinique, 05_Legal).</li>
+                            <li><strong>Check-out / Lock Exclusif :</strong> Empêche les conflits d'édition entre collaborateurs.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card highlight-emerald">
+                    <div class="card-title">🛡️ Journal d'Audit Immuable (ALCOA+)</div>
+                    <div class="card-body">
+                        <p style="margin-bottom:8px;">Chaque événement du cycle de vie est enregistré de façon inaltérable :</p>
+                        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:10px; font-family:monospace; font-size:11px; color:#34d399;">
+                            [2026-11-13T12:44:35Z] USER: dt@sanadpharma.dz<br>
+                            ACTION: DOSSIER_PDT_SIGN_SUCCESS (21 CFR Part 11)<br>
+                            ENTITY: DOS-2026-AMOX-NI (Amoxicilline 500mg)<br>
+                            SEAL: 9e32a68b4f...d88c21a0 (SHA-256 Intègre)
+                        </div>
+                        <div style="margin-top:10px; font-size:11.5px; color:var(--text-dim);">
+                            <strong>Attributable, Legible, Contemporaneous, Original, Accurate.</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 8 : Souveraineté & Architecture Zero-Trust
+             ==================================================================== -->
+        <div class="slide" data-notes="Pour la DSI et la Direction Générale : Démontrer la souveraineté. La solution peut tourner 100% en local dans les serveurs du labo (On-Premise) sans dépendance cloud, ou en Cloud algérien souverain. Zero-Trust sur les données santé.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">Souveraineté &amp; Sécurité Informatique</div>
+                <h2 class="slide-title">Hébergement Hybride &amp; Zero-Trust Santé</h2>
+                <div class="slide-subtitle">Vos données scientifiques et médicales ne quittent jamais votre périmètre de contrôle :</div>
+            </div>
+            <div class="grid-3">
+                <div class="card highlight-blue">
+                    <div class="card-icon">🏢</div>
+                    <div class="card-title">100% On-Premise Local</div>
+                    <div class="card-body">
+                        Déploiement possible directement dans la salle des serveurs de votre laboratoire. Zéro dépendance vers des serveurs étrangers, conformité totale avec la réglementation nationale sur les données de santé.
+                    </div>
+                </div>
+                <div class="card highlight-emerald">
+                    <div class="card-icon">🛡️</div>
+                    <div class="card-title">Zero-Trust Informatique</div>
+                    <div class="card-body">
+                        Même vos administrateurs système et ingénieurs réseau n'ont pas accès au contenu des pièces pharmaceutiques. Le système bloque automatiquement l'accès documentaire aux profils techniques.
+                    </div>
+                </div>
+                <div class="card highlight-purple">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-title">Performance &amp; Robustesse Go</div>
+                    <div class="card-body">
+                        Binaire compilé ultra-rapide (temps de réponse < 15 millisecondes), consommation mémoire minimale, architecture résiliente avec base PostgreSQL 16 haute disponibilité.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 9 : Démonstration Live (Scénario 5 Minutes)
+             ==================================================================== -->
+        <div class="slide" data-notes="Transition vers la démo live de la plateforme : Annoncer un scénario concret en 3 étapes de 5 minutes chrono pour prouver que tout ce qui a été présenté est réel et déjà opérationnel.">
+            <div class="slide-header">
+                <div class="slide-eyebrow">Preuve par la Démonstration</div>
+                <h2 class="slide-title">Démonstration Live en 3 Scénarios</h2>
+                <div class="slide-subtitle">Voyez la plateforme opérer en conditions réelles sur un dossier d'Amoxicilline 500mg :</div>
+            </div>
+            <div class="step-timeline">
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <div class="card-title" style="margin-top:8px;">Vision Direction &amp; Visa PDT</div>
+                    <div class="card-body">
+                        Connexion en tant que Pharmacien Directeur Technique : inspection de la complétude 100%, consultation des prix 1.H.4 et signature officielle 21 CFR Part 11.
+                    </div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <div class="card-title" style="margin-top:8px;">Bascule Consultant CRO</div>
+                    <div class="card-body">
+                        Bascule instantanée en rôle Consultant Tiers : vérification en direct que les prix et formules chimiques sont masqués par un cadenas rouge 🔒 CONFIDENTIEL.
+                    </div>
+                </div>
+                <div class="step-box">
+                    <div class="step-num">3</div>
+                    <div class="card-title" style="margin-top:8px;">Audit Trail &amp; Export ZIP</div>
+                    <div class="card-body">
+                        Consultation de l'Audit Trail immuable traçant la signature, et génération du dossier de soumission officiel ordonné prêt pour l'ANPP.
+                    </div>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:30px;">
+                <button class="hero-pill" style="background:var(--primary); color:white; border:none; padding:10px 24px; font-size:13px; font-weight:700; cursor:pointer;" onclick="window.open('/', '_blank')">
+                    🚀 Lancer l'Application HOMOLOG en Direct ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             SLIDE 10 : ROI & Appel à l'Action
+             ==================================================================== -->
+        <div class="slide hero-slide" data-notes="Closing commercial : 1 seul rejet évité compense largement le coût de la solution. Proposer une étude de cadrage et un audit de conformité CTD gratuit sur leurs dossiers actuels.">
+            <div class="slide-eyebrow" style="margin-bottom:16px;">Accompagnement &amp; Partenariat</div>
+            <h2 class="hero-title" style="font-size:38px; margin-bottom:12px;">Rentabilisez Votre Investissement dès le 1er Dépôt</h2>
+            <p class="slide-subtitle" style="font-size: 16px; max-width: 800px; margin: 0 auto 24px auto;">
+                Un seul dossier rejeté par l'ANPP coûte 6 mois de retard. HOMOLOG garantit votre recevabilité dès le premier guichet.
+            </p>
+            <div class="grid-3" style="max-width: 900px; text-align: left; margin-bottom: 24px;">
+                <div class="card">
+                    <div class="card-title">📦 Déploiement Clé en Main</div>
+                    <div class="card-body">Installation On-Premise ou Cloud en moins de 48 heures sans perturbation de votre activité.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🔄 Migration de vos Dossiers</div>
+                    <div class="card-body">Reprise de vos dossiers d'enregistrement existants et indexation dans le nouveau référentiel.</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🎓 Formation Certifiante</div>
+                    <div class="card-body">Formation approfondie de vos équipes Affaires Réglementaires et Assurance Qualité aux normes 2026.</div>
+                </div>
+            </div>
+            <div style="background:linear-gradient(135deg, rgba(2, 132, 199, 0.2), rgba(16, 185, 129, 0.2)); border:1.5px solid var(--emerald); padding:16px 32px; border-radius:12px; display:inline-block;">
+                <div style="font-size:15px; font-weight:800; color:#ffffff; margin-bottom:4px;">
+                    🎯 Offre de Lancement : Audit de Conformité CTD Offert
+                </div>
+                <div style="font-size:12px; color:var(--text-dim);">
+                    Bénéficiez d'une analyse de recevabilité gratuite sur l'un de vos dossiers pilotes avec nos experts réglementaires.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Volet Notes Présentateur -->
+    <div class="notes-panel" id="notes-panel">
+        <div class="notes-header">
+            <span>🎙️ Notes du Présentateur (Touche 'S' pour masquer)</span>
+            <span id="notes-slide-indicator">Slide 1 / 10</span>
+        </div>
+        <div id="notes-content">Notes de présentation...</div>
+    </div>
+
+    <!-- Barre de Contrôles Fixe -->
+    <div class="deck-controls">
+        <button class="deck-btn" onclick="prevSlide()" title="Précédent (Flèche Gauche)">◀ Précédent</button>
+        <span class="slide-counter" id="slide-counter">01 / 10</span>
+        <button class="deck-btn" onclick="nextSlide()" title="Suivant (Flèche Droite ou Espace)">Suivant ▶</button>
+        <button class="deck-btn" onclick="toggleNotes()" title="Notes Orateur (Touche S)">🎙️ Notes (S)</button>
+        <button class="deck-btn" onclick="toggleFullscreen()" title="Plein Écran (Touche F)">⛶ Plein Écran (F)</button>
+        <button class="deck-btn" onclick="window.print()" title="Imprimer ou Exporter en PDF">📄 PDF / Imprimer</button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentSlideIdx = 0;
+        const totalSlides = slides.length;
+
+        function updateSlide(newIdx) {
+            if (newIdx < 0 || newIdx >= totalSlides) return;
+
+            slides.forEach((slide, idx) => {
+                slide.classList.remove('active', 'previous');
+                if (idx < newIdx) {
+                    slide.classList.add('previous');
+                } else if (idx === newIdx) {
+                    slide.classList.add('active');
+                }
+            });
+
+            currentSlideIdx = newIdx;
+
+            // Mise à jour du compteur
+            const pad = (n) => String(n).padStart(2, '0');
+            document.getElementById('slide-counter').textContent = `${pad(currentSlideIdx + 1)} / ${pad(totalSlides)}`;
+
+            // Mise à jour barre de progression
+            const progress = ((currentSlideIdx + 1) / totalSlides) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            // Mise à jour des notes
+            const activeSlide = slides[currentSlideIdx];
+            const notes = activeSlide.getAttribute('data-notes') || "Aucune note pour cette diapositive.";
+            document.getElementById('notes-content').textContent = notes;
+            document.getElementById('notes-slide-indicator').textContent = `Slide ${currentSlideIdx + 1} / ${totalSlides}`;
+        }
+
+        function nextSlide() {
+            if (currentSlideIdx < totalSlides - 1) {
+                updateSlide(currentSlideIdx + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIdx > 0) {
+                updateSlide(currentSlideIdx - 1);
+            }
+        }
+
+        function toggleNotes() {
+            const panel = document.getElementById('notes-panel');
+            panel.classList.toggle('open');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => alert(`Erreur: ${err.message}`));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Navigation Clavier
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                toggleFullscreen();
+            } else if (e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                toggleNotes();
+            } else if (e.key.toLowerCase() === 'p' && e.ctrlKey) {
+                // Laisser faire l'impression
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                updateSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                updateSlide(totalSlides - 1);
+            }
+        });
+
+        // Initialisation
+        updateSlide(0);
+    </script>
+</body>
+</html>
