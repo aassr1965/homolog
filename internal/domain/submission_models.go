@@ -94,25 +94,25 @@ type ANPPEservicesManifest struct {
 
 	// Produit de santé (Médicament ou Dispositif Médical)
 	Product struct {
-		BrandName            string `json:"brand_name" xml:"brand_name"`
-		GenericNameDCI       string `json:"generic_name_dci,omitempty" xml:"generic_name_dci,omitempty"`
-		Dosage               string `json:"dosage,omitempty" xml:"dosage,omitempty"`
-		PharmaceuticalForm   string `json:"pharmaceutical_form,omitempty" xml:"pharmaceutical_form,omitempty"`
-		DMClass              string `json:"dm_class,omitempty" xml:"dm_class,omitempty"`
-		OriginType           string `json:"origin_type,omitempty" xml:"origin_type,omitempty"`
+		BrandName          string `json:"brand_name" xml:"brand_name"`
+		GenericNameDCI     string `json:"generic_name_dci,omitempty" xml:"generic_name_dci,omitempty"`
+		Dosage             string `json:"dosage,omitempty" xml:"dosage,omitempty"`
+		PharmaceuticalForm string `json:"pharmaceutical_form,omitempty" xml:"pharmaceutical_form,omitempty"`
+		DMClass            string `json:"dm_class,omitempty" xml:"dm_class,omitempty"`
+		OriginType         string `json:"origin_type,omitempty" xml:"origin_type,omitempty"`
 	} `json:"product" xml:"product"`
 
 	// Quittance financière Trésorerie ANPP (BV1)
 	FinancialClearance struct {
-		SlipNumber               string  `json:"slip_number" xml:"slip_number"`
-		SlipType                 string  `json:"slip_type" xml:"slip_type"`
-		AmountDZD                float64 `json:"amount_dzd" xml:"amount_dzd"`
-		AmountWordsFR            string  `json:"amount_words_fr" xml:"amount_words_fr"`
-		AmountWordsAR            string  `json:"amount_words_ar" xml:"amount_words_ar"`
-		PaymentReference         string  `json:"payment_reference" xml:"payment_reference"`
-		PaidAt                   string  `json:"paid_at" xml:"paid_at"`
-		BeneficiaryTreasury      string  `json:"beneficiary_treasury" xml:"beneficiary_treasury"`
-		IsCleared                bool    `json:"is_cleared" xml:"is_cleared"`
+		SlipNumber          string  `json:"slip_number" xml:"slip_number"`
+		SlipType            string  `json:"slip_type" xml:"slip_type"`
+		AmountDZD           float64 `json:"amount_dzd" xml:"amount_dzd"`
+		AmountWordsFR       string  `json:"amount_words_fr" xml:"amount_words_fr"`
+		AmountWordsAR       string  `json:"amount_words_ar" xml:"amount_words_ar"`
+		PaymentReference    string  `json:"payment_reference" xml:"payment_reference"`
+		PaidAt              string  `json:"paid_at" xml:"paid_at"`
+		BeneficiaryTreasury string  `json:"beneficiary_treasury" xml:"beneficiary_treasury"`
+		IsCleared           bool    `json:"is_cleared" xml:"is_cleared"`
 	} `json:"financial_clearance" xml:"financial_clearance"`
 
 	// Inventaire des pièces jointes et conformité CTD
@@ -126,12 +126,12 @@ type ANPPEservicesManifest struct {
 
 	// Sceau d'intégrité réglementaire et Visa PDT (21 CFR Part 11)
 	IntegritySeal struct {
-		IsPDTSigned       bool      `json:"is_pdt_signed" xml:"is_pdt_signed"`
-		PDTSignedBy       string    `json:"pdt_signed_by,omitempty" xml:"pdt_signed_by,omitempty"`
+		IsPDTSigned       bool       `json:"is_pdt_signed" xml:"is_pdt_signed"`
+		PDTSignedBy       string     `json:"pdt_signed_by,omitempty" xml:"pdt_signed_by,omitempty"`
 		PDTSignedAt       *time.Time `json:"pdt_signed_at,omitempty" xml:"pdt_signed_at,omitempty"`
-		PDTSignatureRole  string    `json:"pdt_signature_role,omitempty" xml:"pdt_signature_role,omitempty"`
-		PDTSignatureSeal  string    `json:"pdt_signature_seal,omitempty" xml:"pdt_signature_seal,omitempty"`
-		ManifestDigestHex string    `json:"manifest_digest_hex" xml:"manifest_digest_hex"`
+		PDTSignatureRole  string     `json:"pdt_signature_role,omitempty" xml:"pdt_signature_role,omitempty"`
+		PDTSignatureSeal  string     `json:"pdt_signature_seal,omitempty" xml:"pdt_signature_seal,omitempty"`
+		ManifestDigestHex string     `json:"manifest_digest_hex" xml:"manifest_digest_hex"`
 	} `json:"integrity_seal" xml:"integrity_seal"`
 }
 

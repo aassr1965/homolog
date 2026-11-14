@@ -23,54 +23,54 @@ const (
 
 // ANPPDeficiencyLetter représente une lettre officielle de notification de compléments de l'ANPP
 type ANPPDeficiencyLetter struct {
-	ID                 string               `json:"id"`
-	OrganizationID     string               `json:"organization_id"`
-	DossierID          string               `json:"dossier_id"`
-	DossierReference   string               `json:"dossier_reference,omitempty"`
-	DossierTitle       string               `json:"dossier_title,omitempty"`
-	ProductBrandName   string               `json:"product_brand_name,omitempty"`
-	ReferenceNumber    string               `json:"reference_number"`    // Ex: ANPP/DEPP/N°1428/2026
-	ReceivedDate       time.Time            `json:"received_date"`
-	LegalDeadlineDays  int                  `json:"legal_deadline_days"` // 30, 60, 90, 180 jours
-	DueDate            time.Time            `json:"due_date"`
-	Status             string               `json:"status"`              // open, partially_answered, submitted, overdue
-	DocumentID         *string              `json:"document_id,omitempty"` // Scan GED de la lettre
-	DocumentTitle      string               `json:"document_title,omitempty"`
-	Notes              string               `json:"notes"`
-	Tasks              []ANPPDeficiencyTask `json:"tasks,omitempty"`
-	TotalTasksCount    int                  `json:"total_tasks_count"`
-	AnsweredTasksCount int                  `json:"answered_tasks_count"`
-	ValidatedTasksCount int                 `json:"validated_tasks_count"`
-	DaysRemaining      int                  `json:"days_remaining"`
-	UrgencyBadge       string               `json:"urgency_badge"` // critical, urgent, warning, normal, expired
-	CreatedAt          time.Time            `json:"created_at"`
-	UpdatedAt          time.Time            `json:"updated_at"`
+	ID                  string               `json:"id"`
+	OrganizationID      string               `json:"organization_id"`
+	DossierID           string               `json:"dossier_id"`
+	DossierReference    string               `json:"dossier_reference,omitempty"`
+	DossierTitle        string               `json:"dossier_title,omitempty"`
+	ProductBrandName    string               `json:"product_brand_name,omitempty"`
+	ReferenceNumber     string               `json:"reference_number"` // Ex: ANPP/DEPP/N°1428/2026
+	ReceivedDate        time.Time            `json:"received_date"`
+	LegalDeadlineDays   int                  `json:"legal_deadline_days"` // 30, 60, 90, 180 jours
+	DueDate             time.Time            `json:"due_date"`
+	Status              string               `json:"status"`                // open, partially_answered, submitted, overdue
+	DocumentID          *string              `json:"document_id,omitempty"` // Scan GED de la lettre
+	DocumentTitle       string               `json:"document_title,omitempty"`
+	Notes               string               `json:"notes"`
+	Tasks               []ANPPDeficiencyTask `json:"tasks,omitempty"`
+	TotalTasksCount     int                  `json:"total_tasks_count"`
+	AnsweredTasksCount  int                  `json:"answered_tasks_count"`
+	ValidatedTasksCount int                  `json:"validated_tasks_count"`
+	DaysRemaining       int                  `json:"days_remaining"`
+	UrgencyBadge        string               `json:"urgency_badge"` // critical, urgent, warning, normal, expired
+	CreatedAt           time.Time            `json:"created_at"`
+	UpdatedAt           time.Time            `json:"updated_at"`
 }
 
 // ANPPDeficiencyTask représente une question unitaire décomposée issue de la lettre
 type ANPPDeficiencyTask struct {
-	ID                   string     `json:"id"`
-	LetterID             *string    `json:"letter_id,omitempty"`
-	DossierID            string     `json:"dossier_id"`
-	OrganizationID       string     `json:"organization_id"`
-	QuestionNumber       int        `json:"question_number"`
-	QuestionText         string     `json:"question_text"`
-	ModuleTarget         string     `json:"module_target"` // Module 1, Module 3, Module 4, Module 5, etc.
-	Priority             string     `json:"priority"`      // normale, haute, urgente
-	AssignedTo           *string    `json:"assigned_to,omitempty"`
-	AssignedUserName     string     `json:"assigned_user_name,omitempty"`
-	AssignedUserRole     string     `json:"assigned_user_role,omitempty"`
-	DueDate              time.Time  `json:"due_date"`
-	Status               string     `json:"status"` // a_traiter, en_cours, repondu, valide_dt
-	ResponseDocumentID   *string    `json:"response_document_id,omitempty"`
-	ResponseDocumentTitle string    `json:"response_document_title,omitempty"`
-	ResponseSummary      string     `json:"response_summary"`
-	ValidatedByDTID      *string    `json:"validated_by_dt_id,omitempty"`
-	ValidatedByName      string     `json:"validated_by_name,omitempty"`
-	ValidatedAt          *time.Time `json:"validated_at,omitempty"`
-	DaysRemaining        int        `json:"days_remaining"`
-	CreatedAt            time.Time  `json:"created_at"`
-	UpdatedAt            time.Time  `json:"updated_at"`
+	ID                    string     `json:"id"`
+	LetterID              *string    `json:"letter_id,omitempty"`
+	DossierID             string     `json:"dossier_id"`
+	OrganizationID        string     `json:"organization_id"`
+	QuestionNumber        int        `json:"question_number"`
+	QuestionText          string     `json:"question_text"`
+	ModuleTarget          string     `json:"module_target"` // Module 1, Module 3, Module 4, Module 5, etc.
+	Priority              string     `json:"priority"`      // normale, haute, urgente
+	AssignedTo            *string    `json:"assigned_to,omitempty"`
+	AssignedUserName      string     `json:"assigned_user_name,omitempty"`
+	AssignedUserRole      string     `json:"assigned_user_role,omitempty"`
+	DueDate               time.Time  `json:"due_date"`
+	Status                string     `json:"status"` // a_traiter, en_cours, repondu, valide_dt
+	ResponseDocumentID    *string    `json:"response_document_id,omitempty"`
+	ResponseDocumentTitle string     `json:"response_document_title,omitempty"`
+	ResponseSummary       string     `json:"response_summary"`
+	ValidatedByDTID       *string    `json:"validated_by_dt_id,omitempty"`
+	ValidatedByName       string     `json:"validated_by_name,omitempty"`
+	ValidatedAt           *time.Time `json:"validated_at,omitempty"`
+	DaysRemaining         int        `json:"days_remaining"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
 // CalculateDeadlineAndUrgency calcule le nombre de jours restants et le niveau d'urgence
@@ -85,11 +85,11 @@ func CalculateDeadlineAndUrgency(dueDate time.Time, now time.Time) (int, string)
 	case days <= 15:
 		badge = "critical" // Rouge clignotant / alerte maximale
 	case days <= 30:
-		badge = "urgent"   // Orange vif
+		badge = "urgent" // Orange vif
 	case days <= 60:
-		badge = "warning"  // Ambre
+		badge = "warning" // Ambre
 	default:
-		badge = "normal"   // Vert
+		badge = "normal" // Vert
 	}
 	return days, badge
 }
@@ -126,9 +126,9 @@ func (l *ANPPDeficiencyLetter) ComputeMetrics(now time.Time) {
 // CreateDeficiencyLetterRequest représente la charge utile de création d'une lettre
 type CreateDeficiencyLetterRequest struct {
 	ReferenceNumber   string                      `json:"reference_number"`
-	ReceivedDate      string                      `json:"received_date"`      // "YYYY-MM-DD"
+	ReceivedDate      string                      `json:"received_date"`       // "YYYY-MM-DD"
 	LegalDeadlineDays int                         `json:"legal_deadline_days"` // 30, 60, 90, 180
-	DueDate           string                      `json:"due_date"`           // "YYYY-MM-DD"
+	DueDate           string                      `json:"due_date"`            // "YYYY-MM-DD"
 	DocumentID        *string                     `json:"document_id,omitempty"`
 	Notes             string                      `json:"notes"`
 	Tasks             []CreateDeficiencyTaskInput `json:"tasks"`

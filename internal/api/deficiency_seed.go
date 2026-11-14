@@ -69,16 +69,16 @@ func SeedInitialDeficiencies(ctx context.Context, pool *pgxpool.Pool, orgSlug st
 
 	tasks := []domain.ANPPDeficiencyTask{
 		{
-			QuestionNumber:        1,
-			QuestionText:          "Fournir les profils d'impuretés organiques et de solvants résiduels selon la section 3.2.S.3.2 pour trois lots industriels consécutifs conformément à la monographie Ph. Eur.",
-			ModuleTarget:          "Module 3",
-			Priority:              "haute",
-			AssignedTo:            &raUserIDStr,
-			DueDate:               dueDate,
-			Status:                domain.DeficiencyTaskStatusValidatedDT,
-			ResponseSummary:       "Rapport analytique chromatographique (HPLC/GC-MS) validant que les teneurs en solvants résiduels (classe 2 et 3) demeurent strictement sous les seuils ICH Q3C. Certificats d'analyses des 3 lots industriels validés.",
-			ValidatedByDTID:       &dtUserIDStr,
-			ValidatedAt:           &validatedAt,
+			QuestionNumber:  1,
+			QuestionText:    "Fournir les profils d'impuretés organiques et de solvants résiduels selon la section 3.2.S.3.2 pour trois lots industriels consécutifs conformément à la monographie Ph. Eur.",
+			ModuleTarget:    "Module 3",
+			Priority:        "haute",
+			AssignedTo:      &raUserIDStr,
+			DueDate:         dueDate,
+			Status:          domain.DeficiencyTaskStatusValidatedDT,
+			ResponseSummary: "Rapport analytique chromatographique (HPLC/GC-MS) validant que les teneurs en solvants résiduels (classe 2 et 3) demeurent strictement sous les seuils ICH Q3C. Certificats d'analyses des 3 lots industriels validés.",
+			ValidatedByDTID: &dtUserIDStr,
+			ValidatedAt:     &validatedAt,
 		},
 		{
 			QuestionNumber:  2,
