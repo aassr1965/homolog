@@ -873,6 +873,10 @@
                 const modal = m.querySelector('.modal');
                 if (modal) modal.classList.remove('modal-fullscreen');
             });
+            const previewIframe = document.getElementById("doc-preview-iframe");
+            if (previewIframe && previewIframe.src !== "about:blank") {
+                previewIframe.src = "about:blank";
+            }
         }
 
         function closeModal(id) {
@@ -890,6 +894,47 @@
                     if (lbl) lbl.innerText = 'Agrandir';
                 }
             }
+            if (id === 'modal-doc-preview') {
+                const iframe = document.getElementById("doc-preview-iframe");
+                if (iframe) iframe.src = "about:blank";
+            }
+        }
+
+        // Visualiseur universel de documents & scans in-app (Agrandissable)
+        function openDocumentViewerModal(docId, docTitle, versionId) {
+            if (!docId) {
+                if (typeof showNotifyModal === 'function') {
+                    showNotifyModal("Document introuvable", "Aucun identifiant de pièce documentaire n'a été fourni.", "⚠️");
+                } else {
+                    alert("Aucun document à afficher");
+                }
+                return;
+            }
+
+            let url = `/api/v1/ged/documents/${docId}/download`;
+            if (versionId) url += `?version_id=${encodeURIComponent(versionId)}`;
+
+            const titleEl = document.getElementById("doc-preview-title");
+            if (titleEl) {
+                titleEl.innerText = docTitle || "Aperçu de la Pièce Numérisée";
+                titleEl.title = docTitle || "Aperçu de la Pièce Numérisée";
+            }
+
+            const downloadBtn = document.getElementById("doc-preview-download-btn");
+            if (downloadBtn) {
+                downloadBtn.href = url;
+            }
+
+            const iframe = document.getElementById("doc-preview-iframe");
+            if (iframe) {
+                iframe.src = url;
+            }
+
+            openModal("modal-doc-preview");
+        }
+
+        function closeDocPreviewModal() {
+            closeModal("modal-doc-preview");
         }
 
         function showNotifyModal(title, contentHtml, icon = "ℹ️", btnText = "Compris") {
