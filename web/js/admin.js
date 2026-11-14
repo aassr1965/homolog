@@ -9,6 +9,44 @@ let adminRoles = [];
 let adminPermissions = [];
 let selectedAdminUserIndex = 0;
 
+// Métadonnées exhaustives et descriptives pour les 14 permissions unitaires (CDC Section 7.1)
+const RBAC_PERM_METADATA = {
+    "REF_VIEW": { icon: "🏢", label: "Voir Réf.", fullTitle: "Consulter Référentiel", desc: "Consultation du Référentiel MIPH, Établissements, Sites et Produits", cat: "ref", isLast: false },
+    "REF_EDIT": { icon: "✏️", label: "Édit Réf.", fullTitle: "Éditer Référentiel", desc: "Modification et création de Produits, Établissements et Sites", cat: "ref", isLast: true },
+
+    "DOSSIER_VIEW": { icon: "📁", label: "Voir CTD", fullTitle: "Consulter Dossiers", desc: "Consultation des dossiers d'enregistrement CTD et homologation DM", cat: "dossier", isLast: false },
+    "DOSSIER_EDIT": { icon: "📝", label: "Rédig CTD", fullTitle: "Rédiger Dossiers", desc: "Édition, composition des modules CTD et rattachement des pièces", cat: "dossier", isLast: false },
+    "DOSSIER_SUBMIT": { icon: "🚀", label: "Dépôt ANPP", fullTitle: "Soumettre Dépôt", desc: "Verrouillage et soumission officielle du dossier pour dépôt ANPP", cat: "dossier", isLast: false },
+    "VARIATION_MANAGE": { icon: "🔄", label: "Variations", fullTitle: "Gérer Variations", desc: "Instruction et gestion des 12 types de variations post-enregistrement", cat: "dossier", isLast: true },
+
+    "DOC_READ": { icon: "📖", label: "Lire GED", fullTitle: "Lire / Télécharger GED", desc: "Lecture et téléchargement des pièces GED (bloqué aux profils IT par Zero-Trust)", cat: "ged", isLast: false },
+    "DOC_WRITE": { icon: "📤", label: "Dépôt GED", fullTitle: "Déposer en GED", desc: "Téléversement de pièces, nouvelles versions et check-in/out", cat: "ged", isLast: false },
+    "DOC_REVIEW": { icon: "🔍", label: "Revue BPF", fullTitle: "Revue Qualité BPF", desc: "Revue technique et vérification qualité BPF (Maker-Checker)", cat: "ged", isLast: false },
+    "DOC_APPROVE_PDT": { icon: "✍️", label: "Visa PDT", fullTitle: "Visa Légal DT (1.A.7)", desc: "Signature électronique légale exclusive du Pharmacien Directeur Technique", cat: "ged", isLast: false },
+    "EXPORT_LEGAL": { icon: "📦", label: "Export ANPP", fullTitle: "Export Légal Souverain", desc: "Génération de l'archive officielle scellée ANPP et bordereaux BV", cat: "ged", isLast: true },
+
+    "AUDIT_VIEW": { icon: "🛡️", label: "Piste Audit", fullTitle: "Audit Trail 21 CFR", desc: "Consultation des journaux d'audit immuables ALCOA+ (21 CFR Part 11)", cat: "sys", isLast: false },
+    "USER_MANAGE": { icon: "👥", label: "Comptes RH", fullTitle: "Gestion Utilisateurs", desc: "Gestion des comptes collaborateurs, attribution des rôles et dérogations", cat: "sys", isLast: false },
+    "SYS_MAINT": { icon: "⚙️", label: "Maint. IT", fullTitle: "Maintenance Système", desc: "Administration système, sauvegardes et certificats TLS", cat: "sys", isLast: true }
+};
+
+const RBAC_PERMS_LIST = [
+    { code: "REF_VIEW", ...RBAC_PERM_METADATA["REF_VIEW"] },
+    { code: "REF_EDIT", ...RBAC_PERM_METADATA["REF_EDIT"] },
+    { code: "DOSSIER_VIEW", ...RBAC_PERM_METADATA["DOSSIER_VIEW"] },
+    { code: "DOSSIER_EDIT", ...RBAC_PERM_METADATA["DOSSIER_EDIT"] },
+    { code: "DOSSIER_SUBMIT", ...RBAC_PERM_METADATA["DOSSIER_SUBMIT"] },
+    { code: "VARIATION_MANAGE", ...RBAC_PERM_METADATA["VARIATION_MANAGE"] },
+    { code: "DOC_READ", ...RBAC_PERM_METADATA["DOC_READ"] },
+    { code: "DOC_WRITE", ...RBAC_PERM_METADATA["DOC_WRITE"] },
+    { code: "DOC_REVIEW", ...RBAC_PERM_METADATA["DOC_REVIEW"] },
+    { code: "DOC_APPROVE_PDT", ...RBAC_PERM_METADATA["DOC_APPROVE_PDT"] },
+    { code: "EXPORT_LEGAL", ...RBAC_PERM_METADATA["EXPORT_LEGAL"] },
+    { code: "AUDIT_VIEW", ...RBAC_PERM_METADATA["AUDIT_VIEW"] },
+    { code: "USER_MANAGE", ...RBAC_PERM_METADATA["USER_MANAGE"] },
+    { code: "SYS_MAINT", ...RBAC_PERM_METADATA["SYS_MAINT"] }
+];
+
 // Rendu de l'arborescence dédiée du domaine Administration
 function renderAdminTree() {
     const container = document.getElementById("tree-root");
@@ -130,6 +168,7 @@ function renderAdminUsersTable() {
     const thead = document.getElementById("table-head");
     const tbody = document.getElementById("doc-tbody");
     if (!thead || !tbody) return;
+    thead.classList.remove("two-tier");
 
     thead.innerHTML = `
         <tr>
@@ -276,6 +315,7 @@ function renderAdminUserPreview(user) {
                 <div style="display:flex; flex-direction:column; gap:3px;">
                     ${perms.map(p => {
                         const has = userPerms.has(p);
+                        const meta = RBAC_PERM_METADATA[p] || { icon: "🔹", label: p, fullTitle: p };
                         const isSpecialPDT = p === 'DOC_APPROVE_PDT';
                         const isDocReadBlocked = p === 'DOC_READ' && isZeroTrust;
 
@@ -284,14 +324,18 @@ function renderAdminUserPreview(user) {
                             : `<span style="color:var(--text-dim);">✗ Non attribué</span>`;
 
                         if (isSpecialPDT && has) {
-                            statusBadge = `<span style="color:#d97706; font-weight:700;">💊 Visa Exclusif 1.A.7</span>`;
+                            statusBadge = `<span style="color:#d97706; font-weight:700;">✍️ Visa Exclusif 1.A.7</span>`;
                         } else if (isDocReadBlocked) {
                             statusBadge = `<span style="color:var(--accent-red); font-weight:700;">🚫 Bloqué Zero-Trust</span>`;
                         }
 
                         return `
                             <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface); padding:4px 8px; border-radius:3px; font-size:11px;">
-                                <span style="font-family:monospace; color:${has ? 'var(--text-main)' : 'var(--text-dim)'};">${p}</span>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span>${meta.icon}</span>
+                                    <span style="font-weight:600; color:${has ? 'var(--text-main)' : 'var(--text-dim)'};">${meta.fullTitle}</span>
+                                    <span style="font-family:monospace; font-size:9px; color:var(--text-dim); opacity:0.7;">(${p})</span>
+                                </div>
                                 <div>${statusBadge}</div>
                             </div>
                         `;
@@ -362,30 +406,37 @@ function renderAdminMatrixTable() {
     const thead = document.getElementById("table-head");
     const tbody = document.getElementById("doc-tbody");
     if (!thead || !tbody) return;
+    thead.classList.add("two-tier");
 
-    const permsList = [
-        { code: "REF_VIEW", label: "REF_V", desc: "Consultation Référentiel MIPH" },
-        { code: "REF_EDIT", label: "REF_E", desc: "Modification Référentiel Sites/Produits" },
-        { code: "DOSSIER_VIEW", label: "DOS_V", desc: "Consultation Dossiers CTD & Variations" },
-        { code: "DOSSIER_EDIT", label: "DOS_E", desc: "Édition et Remplissage des Modules CTD" },
-        { code: "DOSSIER_SUBMIT", label: "DOS_SUB", desc: "Soumission Dépôt Officiel ANPP" },
-        { code: "DOC_READ", label: "DOC_R", desc: "Lecture et Téléchargement GED BPF (Zero-Trust)" },
-        { code: "DOC_WRITE", label: "DOC_W", desc: "Dépôt de Documents et Nouvelles Versions" },
-        { code: "DOC_REVIEW", label: "DOC_REV", desc: "Revue Qualité et Vérification Technique" },
-        { code: "DOC_APPROVE_PDT", label: "DOC_PDT", desc: "Visa Légal Pharmacien DT (1.A.7 Exclusif)" },
-        { code: "AUDIT_VIEW", label: "AUDIT_V", desc: "Consultation Audit Trail 21 CFR Part 11" },
-        { code: "USER_MANAGE", label: "USR_MNG", desc: "Administration des Utilisateurs & Rôles" },
-        { code: "SYS_MAINT", label: "SYS_MNT", desc: "Maintenance Système et Sauvegardes" },
-        { code: "VARIATION_MANAGE", label: "VAR_MNG", desc: "Gestion des 12 Items de Variations Post-AMM" },
-        { code: "EXPORT_LEGAL", label: "EXP_LEG", desc: "Export Archive Souveraine Certifiée ANPP" }
-    ];
+    const permsList = RBAC_PERMS_LIST;
 
     thead.innerHTML = `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+            <th rowspan="2" style="min-width: 200px; vertical-align: middle; padding: 8px 10px; background: var(--bg-th); border-right: 2px solid var(--border-color);">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-main); display:flex; align-items:center; gap:5px;">
+                    <span>🛡️</span> Rôle Réglementaire BPF
+                </div>
+                <div style="font-size: 10px; color: var(--text-dim); font-weight: normal; margin-top:2px;">9 profils métier (CDC 7.1)</div>
+            </th>
+            <th colspan="2" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(3, 105, 161, 0.12); color: #0284c7; padding: 6px 4px; border-right: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;">
+                🏢 Référentiel MIPH
+            </th>
+            <th colspan="4" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.12); color: #059669; padding: 6px 4px; border-right: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;">
+                📋 Dossiers CTD & Soumission ANPP
+            </th>
+            <th colspan="5" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(217, 119, 6, 0.12); color: #d97706; padding: 6px 4px; border-right: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;">
+                📄 Coffre-Fort GED & Approbation BPF
+            </th>
+            <th colspan="3" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(99, 102, 241, 0.12); color: #6366f1; padding: 6px 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                🔒 PSSI, Sécurité & Système
+            </th>
+        </tr>
         <tr>
-            <th style="min-width: 180px;">Rôle Réglementaire</th>
             ${permsList.map(p => `
-                <th style="text-align:center; padding:6px 4px; font-size:10px; font-family:monospace; ${p.code === 'DOC_APPROVE_PDT' ? 'background:rgba(217,119,6,0.15); color:#d97706;' : ''}" title="${p.code} : ${p.desc}">
-                    ${p.label}
+                <th style="text-align: center; padding: 6px 4px; font-size: 10px; min-width: 72px; vertical-align: bottom; ${p.code === 'DOC_APPROVE_PDT' ? 'background: rgba(217,119,6,0.18);' : ''} ${p.isLast ? 'border-right: 2px solid var(--border-color);' : ''}" title="${p.fullTitle} (${p.code}) : ${p.desc}">
+                    <div style="font-size: 13px; line-height: 1; margin-bottom: 2px;">${p.icon}</div>
+                    <div style="font-weight: 700; color: ${p.code === 'DOC_APPROVE_PDT' ? '#d97706' : 'var(--text-main)'}; line-height: 1.2; white-space: nowrap;">${p.label}</div>
+                    <div style="font-family: monospace; font-size: 8px; color: var(--text-dim); margin-top: 2px; letter-spacing: -0.3px; opacity: 0.8;">${p.code}</div>
                 </th>
             `).join('')}
         </tr>
@@ -403,27 +454,29 @@ function renderAdminMatrixTable() {
         let cellsHtml = '';
         permsList.forEach(p => {
             const has = rolePerms.has(p.code);
+            const borderSep = p.isLast ? 'border-right: 2px solid var(--border-color);' : '';
+
             if (p.code === 'DOC_APPROVE_PDT') {
                 if (isPDT) {
-                    cellsHtml += `<td style="text-align:center; background:rgba(217,119,6,0.1);"><span style="color:#d97706; font-weight:700;" title="Exclusivité Nominative 1.A.7">✓ DT</span></td>`;
+                    cellsHtml += `<td style="text-align:center; background:rgba(217,119,6,0.1); ${borderSep}"><span style="color:#d97706; font-weight:700;" title="Exclusivité Nominative 1.A.7">✓ DT</span></td>`;
                 } else {
-                    cellsHtml += `<td style="text-align:center; color:var(--text-dim); opacity:0.3;">—</td>`;
+                    cellsHtml += `<td style="text-align:center; color:var(--text-dim); opacity:0.3; ${borderSep}">—</td>`;
                 }
             } else if (p.code === 'DOC_READ' && isZeroTrust) {
-                cellsHtml += `<td style="text-align:center; background:rgba(239,68,68,0.1);"><span style="color:var(--accent-red); font-weight:700; font-size:9px;" title="Bloqué par Zero-Trust">🚫 ZT</span></td>`;
+                cellsHtml += `<td style="text-align:center; background:rgba(239,68,68,0.1); ${borderSep}"><span style="color:var(--accent-red); font-weight:700; font-size:9px;" title="Bloqué par Zero-Trust">🚫 ZT</span></td>`;
             } else if (isConsultantRole && p.code === 'DOSSIER_VIEW') {
-                cellsHtml += `<td style="text-align:center; background:rgba(2,132,199,0.1);"><span style="color:var(--accent-blue); font-weight:700; font-size:9px;" title="Cloisonné au seul dossier assigné">✓ Dossier</span></td>`;
+                cellsHtml += `<td style="text-align:center; background:rgba(2,132,199,0.1); ${borderSep}"><span style="color:var(--accent-blue); font-weight:700; font-size:9px;" title="Cloisonné au seul dossier assigné">✓ Dossier</span></td>`;
             } else {
                 if (has) {
-                    cellsHtml += `<td style="text-align:center;"><span style="color:var(--accent-emerald); font-weight:700;">✓</span></td>`;
+                    cellsHtml += `<td style="text-align:center; ${borderSep}"><span style="color:var(--accent-emerald); font-weight:700;">✓</span></td>`;
                 } else {
-                    cellsHtml += `<td style="text-align:center; color:var(--text-dim); opacity:0.3;">—</td>`;
+                    cellsHtml += `<td style="text-align:center; color:var(--text-dim); opacity:0.3; ${borderSep}">—</td>`;
                 }
             }
         });
 
         tr.innerHTML = `
-            <td style="font-weight:600; color:var(--text-main);">
+            <td style="font-weight:600; color:var(--text-main); border-right: 2px solid var(--border-color);">
                 ${role.name_fr}
                 <div style="font-size:10px; color:var(--text-dim); font-weight:normal; font-family:monospace;">${role.id}</div>
             </td>
@@ -449,6 +502,7 @@ function renderRolePreview(role, permsList) {
     if (!preview || !role) return;
 
     const rolePerms = new Set(role.permissions || []);
+    const isZeroTrust = role.id === 'admin_systeme_local' || role.id === 'super_admin_editeur';
 
     preview.innerHTML = `
         <div class="pdf-sim-page">
@@ -474,12 +528,27 @@ function renderRolePreview(role, permsList) {
             <div style="display:flex; flex-direction:column; gap:4px;">
                 ${permsList.map(p => {
                     const has = rolePerms.has(p.code);
+                    const isSpecialPDT = p.code === 'DOC_APPROVE_PDT';
+                    const isDocReadBlocked = p.code === 'DOC_READ' && isZeroTrust;
+
+                    let badge = has 
+                        ? `<span style="color:var(--accent-emerald); font-weight:700;">✓ Accordée</span>`
+                        : `<span style="color:var(--text-dim);">— Refusée</span>`;
+
+                    if (isSpecialPDT && has) {
+                        badge = `<span style="color:#d97706; font-weight:700;">✍️ Visa Exclusif 1.A.7</span>`;
+                    } else if (isDocReadBlocked) {
+                        badge = `<span style="color:var(--accent-red); font-weight:700;">🚫 Bloqué Zero-Trust</span>`;
+                    }
+
                     return `
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface); padding:4px 8px; border-radius:3px; font-size:11px;">
-                            <span style="font-family:monospace; color:${has ? 'var(--text-main)' : 'var(--text-dim)'};">${p.code}</span>
-                            <span style="color:${has ? 'var(--accent-emerald)' : 'var(--text-dim)'}; font-weight:${has ? '700' : 'normal'};">
-                                ${has ? '✓ Accordée' : '— Refusée'}
-                            </span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface); padding:5px 8px; border-radius:3px; font-size:11px;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="font-size:13px;">${p.icon}</span>
+                                <span style="font-weight:600; color:${has ? 'var(--text-main)' : 'var(--text-dim)'};">${p.fullTitle}</span>
+                                <span style="font-family:monospace; font-size:9px; color:var(--text-dim); opacity:0.7;">(${p.code})</span>
+                            </div>
+                            <div>${badge}</div>
                         </div>
                     `;
                 }).join('')}
@@ -493,6 +562,7 @@ function renderAdminPoliciesView() {
     const thead = document.getElementById("table-head");
     const tbody = document.getElementById("doc-tbody");
     if (!thead || !tbody) return;
+    thead.classList.remove("two-tier");
 
     thead.innerHTML = `
         <tr>
@@ -952,14 +1022,21 @@ function openUserPermissionsModal(userId) {
             const hasByRole = rolePerms.has(code);
             const overrideVal = overridesMap.has(code) ? overridesMap.get(code) : null;
 
+            const meta = RBAC_PERM_METADATA[code] || { icon: "🔹", fullTitle: code, desc: "" };
+
             catHtml += `
-                <div style="background:var(--bg-surface); padding:6px; border-radius:4px; font-size:11px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
-                        <span style="font-family:monospace; font-weight:700; color:var(--text-main);">${code}</span>
-                        <span style="font-size:10px; color:${hasByRole ? 'var(--accent-emerald)' : 'var(--text-dim)'};">
+                <div style="background:var(--bg-surface); padding:8px; border-radius:4px; font-size:11px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:13px;">${meta.icon}</span>
+                            <span style="font-weight:700; color:var(--text-main);">${meta.fullTitle}</span>
+                            <span style="font-family:monospace; font-size:9px; color:var(--text-dim); opacity:0.8;">(${code})</span>
+                        </div>
+                        <span style="font-size:10px; color:${hasByRole ? 'var(--accent-emerald)' : 'var(--text-dim)'}; font-weight:600;">
                             Rôle : ${hasByRole ? '✓ Inclus' : '✗ Non inclus'}
                         </span>
                     </div>
+                    ${meta.desc ? `<div style="font-size:10px; color:var(--text-muted); margin-bottom:5px; line-height:1.3;">${meta.desc}</div>` : ''}
                     <select class="perm-override-select" data-perm="${code}" style="width:100%; font-size:10px; padding:3px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:3px;">
                         <option value="default" ${overrideVal === null ? 'selected' : ''}>Droit par défaut du rôle (${hasByRole ? 'Autorisé' : 'Refusé'})</option>
                         <option value="granted" ${overrideVal === true ? 'selected' : ''} style="color:var(--accent-blue); font-weight:700;">✓ Dérogation : Forcer Accordé (+)</option>
@@ -1039,11 +1116,16 @@ function exportRBACMatrixCSV() {
 
     const perms = [
         "REF_VIEW", "REF_EDIT", "DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT",
-        "DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "AUDIT_VIEW",
-        "USER_MANAGE", "SYS_MAINT", "VARIATION_MANAGE", "EXPORT_LEGAL"
+        "VARIATION_MANAGE", "DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT",
+        "EXPORT_LEGAL", "AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"
     ];
 
-    let csv = "Role_ID;Role_Name_FR;Role_Name_AR;" + perms.join(";") + "\n";
+    const permsHeaders = perms.map(p => {
+        const m = RBAC_PERM_METADATA[p];
+        return m ? `"${m.fullTitle} (${p})"` : `"${p}"`;
+    });
+
+    let csv = "Role_ID;Role_Name_FR;Role_Name_AR;" + permsHeaders.join(";") + "\n";
 
     adminRoles.forEach(r => {
         const rolePerms = new Set(r.permissions || []);
