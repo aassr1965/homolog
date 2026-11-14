@@ -64,6 +64,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/005_rbac_and_dynamic_permissions.sql",
 		"migrations/006_consultant_guest_cloisonnement.sql",
 		"migrations/007_industrial_and_commercial_secrecy.sql",
+		"migrations/008_foreign_manufacturer_and_cpp.sql",
 	}
 
 	for _, file := range migrationFiles {

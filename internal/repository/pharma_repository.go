@@ -407,6 +407,7 @@ func (r *PharmaRepository) CreateMedicine(ctx context.Context, m *domain.Medicin
 			apimf_dmf_number, polymorphic_form, particle_size_criticality,
 			storage_conditions_fr, storage_conditions_ar, shelf_life_months, in_use_shelf_life, validation_batch_files_held,
 			economic_file_type, pcsu_amount, fob_price, fob_currency, has_chamber_of_commerce_visa, has_benchmark_dossier,
+			foreign_mah_name, foreign_mah_country, cpp_number, cpp_issuing_authority, cpp_issue_date, manufacturer_site_id,
 			registration_decision_number, registration_date, expiry_date, status, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4,
@@ -417,7 +418,8 @@ func (r *PharmaRepository) CreateMedicine(ctx context.Context, m *domain.Medicin
 			$21, $22, $23,
 			$24, $25, $26, $27, $28,
 			$29, $30, $31, $32, $33, $34,
-			$35, $36, $37, $38, $39, $40
+			$35, $36, $37, $38, $39, $40,
+			$41, $42, $43, $44, $45, $46
 		)
 	`
 	_, err = tx.Exec(ctx, medQuery,
@@ -429,6 +431,7 @@ func (r *PharmaRepository) CreateMedicine(ctx context.Context, m *domain.Medicin
 		m.APIMFNumber, m.PolymorphicForm, m.ParticleSizeCriticality,
 		m.StorageConditionsFR, m.StorageConditionsAR, m.ShelfLifeMonths, m.InUseShelfLife, m.ValidationBatchFilesHeld,
 		m.EconomicFileType, m.PCSUAmount, m.FOBPrice, m.FOBCurrency, m.HasChamberOfCommerceVisa, m.HasBenchmarkDossier,
+		m.ForeignMAHName, m.ForeignMAHCountry, m.CPPNumber, m.CPPIssuingAuthority, m.CPPIssueDate, m.ManufacturerSiteID,
 		m.RegistrationDecisionNumber, m.RegistrationDate, m.ExpiryDate, m.Status, m.CreatedAt, m.UpdatedAt,
 	)
 	if err != nil {
@@ -484,6 +487,12 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 			COALESCE(fob_currency, ''),
 			has_chamber_of_commerce_visa,
 			has_benchmark_dossier,
+			COALESCE(foreign_mah_name, ''),
+			COALESCE(foreign_mah_country, ''),
+			COALESCE(cpp_number, ''),
+			COALESCE(cpp_issuing_authority, ''),
+			cpp_issue_date,
+			manufacturer_site_id,
 			COALESCE(registration_decision_number, ''),
 			registration_date,
 			expiry_date,
@@ -501,6 +510,7 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 		&m.APIMFNumber, &m.PolymorphicForm, &m.ParticleSizeCriticality,
 		&m.StorageConditionsFR, &m.StorageConditionsAR, &m.ShelfLifeMonths, &m.InUseShelfLife, &m.ValidationBatchFilesHeld,
 		&m.EconomicFileType, &m.PCSUAmount, &m.FOBPrice, &m.FOBCurrency, &m.HasChamberOfCommerceVisa, &m.HasBenchmarkDossier,
+		&m.ForeignMAHName, &m.ForeignMAHCountry, &m.CPPNumber, &m.CPPIssuingAuthority, &m.CPPIssueDate, &m.ManufacturerSiteID,
 		&m.RegistrationDecisionNumber, &m.RegistrationDate, &m.ExpiryDate, &m.Status, &m.CreatedAt, &m.UpdatedAt,
 	)
 	if err != nil {
@@ -508,6 +518,13 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 			return nil, ErrNotFound
 		}
 		return nil, err
+	}
+
+	// Récupération des données du site producteur si spécifié (1.H.8 & 1.M.P)
+	if m.ManufacturerSiteID != nil {
+		if site, err := r.GetManufacturingSiteByID(ctx, orgID, *m.ManufacturerSiteID); err == nil {
+			m.ManufacturerSite = site
+		}
 	}
 
 	// Récupération des sites intervenants associés (1.H.8)
@@ -593,8 +610,14 @@ func (r *PharmaRepository) UpdateMedicine(ctx context.Context, m *domain.Medicin
 			fob_currency = $31,
 			has_chamber_of_commerce_visa = $32,
 			has_benchmark_dossier = $33,
-			status = $34,
-			updated_at = $35
+			foreign_mah_name = $34,
+			foreign_mah_country = $35,
+			cpp_number = $36,
+			cpp_issuing_authority = $37,
+			cpp_issue_date = $38,
+			manufacturer_site_id = $39,
+			status = $40,
+			updated_at = $41
 		WHERE organization_id = $1 AND id = $2
 	`
 	tag, err := tx.Exec(ctx, query,
@@ -606,6 +629,7 @@ func (r *PharmaRepository) UpdateMedicine(ctx context.Context, m *domain.Medicin
 		m.APIMFNumber, m.PolymorphicForm, m.ParticleSizeCriticality,
 		m.StorageConditionsFR, m.StorageConditionsAR, m.ShelfLifeMonths, m.InUseShelfLife, m.ValidationBatchFilesHeld,
 		m.EconomicFileType, m.PCSUAmount, m.FOBPrice, m.FOBCurrency, m.HasChamberOfCommerceVisa, m.HasBenchmarkDossier,
+		m.ForeignMAHName, m.ForeignMAHCountry, m.CPPNumber, m.CPPIssuingAuthority, m.CPPIssueDate, m.ManufacturerSiteID,
 		m.Status, m.UpdatedAt,
 	)
 	if err != nil {
@@ -619,10 +643,15 @@ func (r *PharmaRepository) UpdateMedicine(ctx context.Context, m *domain.Medicin
 	if m.ProductID != uuid.Nil {
 		_, err = tx.Exec(ctx, `
 			UPDATE products SET
-				commercial_name = $1,
-				updated_at = $2
-			WHERE id = $3 AND organization_id = $4
-		`, m.BrandNameFR, now, m.ProductID, m.OrganizationID)
+				brand_name_fr = $1,
+				brand_name_ar = $2,
+				dci = $3,
+				dosage = $4,
+				pharmaceutical_form = $5,
+				administration_route = $6,
+				updated_at = $7
+			WHERE id = $8 AND organization_id = $9
+		`, m.BrandNameFR, m.BrandNameAR, m.DCIFR, m.DosageFR, m.PharmaceuticalFormFR, m.AdministrationRouteFR, now, m.ProductID, m.OrganizationID)
 		if err != nil {
 			return fmt.Errorf("mise à jour produit parent échouée: %w", err)
 		}
@@ -711,6 +740,12 @@ func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, o
 			COALESCE(fob_currency, ''),
 			has_chamber_of_commerce_visa,
 			has_benchmark_dossier,
+			COALESCE(foreign_mah_name, ''),
+			COALESCE(foreign_mah_country, ''),
+			COALESCE(cpp_number, ''),
+			COALESCE(cpp_issuing_authority, ''),
+			cpp_issue_date,
+			manufacturer_site_id,
 			COALESCE(registration_decision_number, ''),
 			registration_date,
 			expiry_date,
@@ -759,6 +794,7 @@ func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, o
 			&m.APIMFNumber, &m.PolymorphicForm, &m.ParticleSizeCriticality,
 			&m.StorageConditionsFR, &m.StorageConditionsAR, &m.ShelfLifeMonths, &m.InUseShelfLife, &m.ValidationBatchFilesHeld,
 			&m.EconomicFileType, &m.PCSUAmount, &m.FOBPrice, &m.FOBCurrency, &m.HasChamberOfCommerceVisa, &m.HasBenchmarkDossier,
+			&m.ForeignMAHName, &m.ForeignMAHCountry, &m.CPPNumber, &m.CPPIssuingAuthority, &m.CPPIssueDate, &m.ManufacturerSiteID,
 			&m.RegistrationDecisionNumber, &m.RegistrationDate, &m.ExpiryDate, &m.Status, &m.CreatedAt, &m.UpdatedAt,
 		); err != nil {
 			return nil, 0, err

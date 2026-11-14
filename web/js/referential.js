@@ -327,6 +327,12 @@ var currentRefSection = window.currentRefSection || 'establishments';
                             <strong>Conservation :</strong> ${item.storage_conditions_fr || '-'}<br><br>
                             <strong>Volet Économique :</strong><br>
                             ${item.economic_file_type === 'pcsu' ? `PCSU Sortie Usine : <strong>${item.pcsu_amount} DZD</strong> (Fabrication Locale)` : `Prix FOB : <strong>${item.fob_price} ${item.fob_currency}</strong> (Importation avec Benchmark 1.H.5)`}
+                            ${item.foreign_mah_name ? `
+                            <br><br><strong>Producteur Étranger &amp; Certificat CPP (1.H.1 &amp; 1.H.8) :</strong><br>
+                            Titulaire MAH : <strong>${item.foreign_mah_name}</strong> (${item.foreign_mah_country || 'Étranger'})<br>
+                            ${item.cpp_number ? `Certificat CPP OMS : <strong>${item.cpp_number}</strong> (${item.cpp_issuing_authority || 'Autorité étrangère'})<br>` : ''}
+                            ${item.cpp_issue_date ? `Date délivrance CPP : ${item.cpp_issue_date.slice(0, 10)}<br>` : ''}
+                            ` : ''}
                         </div>
                     </div>
                     <div class="meta-box">
@@ -334,6 +340,8 @@ var currentRefSection = window.currentRefSection || 'establishments';
                         <div class="meta-row"><span class="meta-label">DCI :</span><span class="meta-val">${item.dci_fr}</span></div>
                         <div class="meta-row"><span class="meta-label">Typologie :</span><span class="meta-val">${item.origin_type}</span></div>
                         <div class="meta-row"><span class="meta-label">Statut Catalogue :</span><span class="meta-val" style="font-weight:700; color:${item.status === 'archive' || item.status === 'retire' ? 'var(--accent-red)' : 'var(--accent-emerald)'};">${item.status === 'archive' || item.status === 'retire' ? 'ARCHIVÉ / RETIRÉ' : (item.status || 'EN PRÉPARATION').toUpperCase()}</span></div>
+                        ${item.foreign_mah_name ? `<div class="meta-row"><span class="meta-label">Titulaire MAH :</span><span class="meta-val">${item.foreign_mah_name} (${item.foreign_mah_country})</span></div>` : ''}
+                        ${item.cpp_number ? `<div class="meta-row"><span class="meta-label">Certificat CPP :</span><span class="meta-val"><code>${item.cpp_number}</code></span></div>` : ''}
                         <div class="meta-row"><span class="meta-label">Monographie Ph. Eur. :</span><span class="meta-val">${item.has_pharmacopoeia_monograph ? 'Oui' : 'Non'}</span></div>
                         <div class="meta-row"><span class="meta-label">CEP EDQM :</span><span class="meta-val">${item.cep_number || 'Non requis'}</span></div>
                     </div>
@@ -388,6 +396,28 @@ var currentRefSection = window.currentRefSection || 'establishments';
         let editingEstID = null;
         let editingSiteID = null;
         let editingMedID = null;
+
+        async function populateForeignSitesDropdown(selectedID) {
+            const select = document.getElementById("med-manufacturer-site-id");
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Aucun ou site non répertorié --</option>';
+            try {
+                const res = await fetch('/api/v1/manufacturing-sites');
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = data.manufacturing_sites || data.items || [];
+                    list.forEach(site => {
+                        const opt = document.createElement("option");
+                        opt.value = site.id;
+                        opt.textContent = `${site.site_name_fr} (${site.country_code}) - ${site.site_role}`;
+                        if (selectedID && site.id === selectedID) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                }
+            } catch(e) {}
+        }
 
         async function populateEstablishmentsDropdown(selectedID) {
             const select = document.getElementById("site-est-id");
@@ -535,14 +565,20 @@ var currentRefSection = window.currentRefSection || 'establishments';
             const origin = document.getElementById("med-origin").value;
             const pcsuGroup = document.getElementById("eco-pcsu-group");
             const fobGroup = document.getElementById("eco-fob-group");
+            const foreignGroup = document.getElementById("foreign-producer-group");
             const title = document.getElementById("eco-section-title");
             if (origin === 'generique_local') {
                 pcsuGroup.style.display = 'flex';
                 fobGroup.style.display = 'none';
+                if (foreignGroup) foreignGroup.style.display = 'none';
                 title.innerText = "💰 Volet Économique (1.H.4 - PCSU Fabrication Locale)";
             } else {
                 pcsuGroup.style.display = 'none';
                 fobGroup.style.display = 'flex';
+                if (foreignGroup) {
+                    foreignGroup.style.display = 'block';
+                    populateForeignSitesDropdown();
+                }
                 title.innerText = "💰 Volet Économique (1.H.4 & 1.H.5 - Prix FOB & Benchmark International)";
             }
         }
@@ -607,7 +643,14 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 document.getElementById("med-currency").value = item.fob_currency || 'EUR';
                 document.getElementById("med-visa-cc").checked = !!item.has_chamber_of_commerce_visa;
             }
+            // Pré-remplissage Producteur Étranger & CPP OMS (1.H.1 & 1.H.8)
+            document.getElementById("med-foreign-mah").value = item.foreign_mah_name || '';
+            document.getElementById("med-foreign-country").value = item.foreign_mah_country || '';
+            document.getElementById("med-cpp-number").value = item.cpp_number || '';
+            document.getElementById("med-cpp-authority").value = item.cpp_issuing_authority || '';
+            document.getElementById("med-cpp-date").value = item.cpp_issue_date ? item.cpp_issue_date.slice(0, 10) : '';
             toggleEcoFields();
+            populateForeignSitesDropdown(item.manufacturer_site_id);
             const title = document.getElementById("modal-med-title");
             if (title) title.innerText = "Mise à jour de la Spécialité Pharmaceutique";
             const btn = document.getElementById("modal-med-submit-btn");
@@ -666,6 +709,14 @@ var currentRefSection = window.currentRefSection || 'establishments';
             const origin = document.getElementById("med-origin").value;
             const isEdit = !!editingMedID;
             const currentItem = isEdit ? currentRefList.find(m => m.id === editingMedID) : null;
+
+            const foreignMah = origin !== 'generique_local' ? document.getElementById("med-foreign-mah").value.trim() : null;
+            const foreignCountry = origin !== 'generique_local' ? document.getElementById("med-foreign-country").value.trim().toUpperCase() : null;
+            const siteID = (origin !== 'generique_local' && document.getElementById("med-manufacturer-site-id").value) ? document.getElementById("med-manufacturer-site-id").value : null;
+            const cppNum = origin !== 'generique_local' ? document.getElementById("med-cpp-number").value.trim() : null;
+            const cppAuth = origin !== 'generique_local' ? document.getElementById("med-cpp-authority").value.trim() : null;
+            const cppDate = (origin !== 'generique_local' && document.getElementById("med-cpp-date").value) ? new Date(document.getElementById("med-cpp-date").value).toISOString() : null;
+
             const payload = {
                 origin_type: origin,
                 brand_name_fr: document.getElementById("med-brand-name").value.trim(),
@@ -680,6 +731,12 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 fob_price: origin !== 'generique_local' ? parseFloat(document.getElementById("med-fob").value) || 0 : null,
                 fob_currency: document.getElementById("med-currency").value,
                 has_chamber_of_commerce_visa: origin !== 'generique_local' ? document.getElementById("med-visa-cc").checked : false,
+                foreign_mah_name: foreignMah,
+                foreign_mah_country: foreignCountry,
+                manufacturer_site_id: siteID,
+                cpp_number: cppNum,
+                cpp_issuing_authority: cppAuth,
+                cpp_issue_date: cppDate,
                 status: currentItem ? currentItem.status : 'en_preparation'
             };
 
