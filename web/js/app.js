@@ -457,7 +457,7 @@
                 `;
             } else if (domain === 'ctd') {
                 tb.innerHTML = `
-                    <button class="btn-pill" id="tb-btn-new-dossier" data-perm="DOSSIER_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDossierModal()">➕ Nouveau Dossier</button>
+                    <button class="btn-pill" id="tb-btn-new-dossier" data-perm="DOSSIER_CREATE" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDossierModal()">➕ Nouveau Dossier</button>
                     <button class="btn-pill" id="tb-btn-members" onclick="openDossierMembersModal()">👥 Équipe &amp; Secret</button>
                     <button class="btn-pill" id="tb-btn-sign-pdt" onclick="openSignPDTModal()">✍️ Visa PDT (21 CFR Part 11)</button>
                     <button class="btn-pill" id="tb-btn-deposit-anpp" onclick="openRecordDepositModal()">🏛️ Enregistrer Dépôt ANPP</button>
@@ -467,7 +467,7 @@
                     <button class="btn-pill" id="tb-btn-deficiency" onclick="openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Enregistrer Complément ANPP</button>
                     <button class="btn-pill" id="tb-btn-appointments" onclick="openAppointmentsModal()">📅 Séances ANPP</button>
                     <button class="btn-pill" id="tb-btn-reg-watch" onclick="openRegulatoryWatchModal()">📜 Veille Juridique</button>
-                    <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_LEGAL" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
+                    <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_PACKAGE" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
                     <button class="btn-pill" onclick="loadDossiers()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
@@ -477,7 +477,7 @@
                 `;
             } else if (domain === 'deficiencies') {
                 tb.innerHTML = `
-                    <button class="btn-pill" data-perm="DOSSIER_EDIT" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
                     <button class="btn-pill" onclick="loadDeficienciesDashboard()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
@@ -487,7 +487,7 @@
                 `;
             } else if (domain === 'variations') {
                 tb.innerHTML = `
-                    <button class="btn-pill" data-perm="VARIATION_MANAGE" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
+                    <button class="btn-pill" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
                     <button class="btn-pill" onclick="renderVariationsTable()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
@@ -507,7 +507,7 @@
                 `;
             } else if (domain === 'ged') {
                 tb.innerHTML = `
-                    <button class="btn-pill" data-perm="DOC_WRITE" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewGEDDocModal()">➕ Déposer Document</button>
+                    <button class="btn-pill" data-perm="DOC_DRAFT_MAKER" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewGEDDocModal()">➕ Déposer Document</button>
                     <select id="ged-filter-status" onchange="filterGEDByStatus(this.value)" class="btn-pill" style="background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color); font-size:11px;">
                         <option value="">Tous les statuts</option>
                         <option value="en_vigueur">En Vigueur (Approuvé)</option>
