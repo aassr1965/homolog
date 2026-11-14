@@ -832,13 +832,27 @@
 
         // Piste d'audit trail ALCOA+ en mémoire
 
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add("open");
+                el.style.display = "flex";
+            }
+        }
+
         function closeAllModals() {
-            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.modal-overlay').forEach(m => {
+                m.classList.remove('open');
+                m.style.display = "none";
+            });
         }
 
         function closeModal(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.remove("open");
+            if (el) {
+                el.classList.remove("open");
+                el.style.display = "none";
+            }
         }
 
         function showNotifyModal(title, contentHtml, icon = "ℹ️", btnText = "Compris") {

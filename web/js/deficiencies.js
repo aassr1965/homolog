@@ -319,7 +319,7 @@ function renderDeficiencyLetterDetailModal(letter) {
     });
 
     tasksList.innerHTML = tasksHTML;
-    modal.style.display = "flex";
+    openModal("modal-deficiency-detail");
 }
 
 // Enregistrement d'une réponse à une question
@@ -445,7 +445,7 @@ async function openNewDeficiencyLetterModal(dossierId) {
         addQuestionRowToLetterModal();
     }
 
-    modal.style.display = "flex";
+    openModal("modal-new-deficiency-letter");
 }
 
 // Ajout dynamique d'une ligne de question dans la modale
