@@ -213,6 +213,9 @@
                         <button class="addr-item" data-perm="AUDIT_VIEW" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openAuditModal(); toggleUserDropdown();">
                             🛡️ Consulter l'Audit Trail immuable
                         </button>
+                        <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openFeeSchedulesModal(); toggleUserDropdown();">
+                            ⚖️ Barème Officiel des Redevances ANPP
+                        </button>
                         <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px; color:#ef4444;" onclick="executeLogout()">
                             🚪 Se déconnecter (Révocation de session)
                         </button>
@@ -1862,8 +1865,8 @@
 
 
     <!-- Modal Nouvelle Notification Officielle de Compléments ANPP -->
-    <div class="modal" id="modal-new-deficiency-letter">
-        <div class="modal-content" style="max-width:680px;">
+    <div class="modal-overlay" id="modal-new-deficiency-letter" onclick="if(event.target === this) closeModal('modal-new-deficiency-letter')">
+        <div class="modal modal-lg" style="width:680px; max-width:min(680px, calc(100vw - 24px));">
             <div class="modal-header">
                 <div class="modal-title">
                     <span>⏱️</span>
@@ -1928,8 +1931,8 @@
     </div>
 
     <!-- Modal Studio Détail Lettre & Questions avec Visa PDT -->
-    <div class="modal" id="modal-deficiency-detail">
-        <div class="modal-content" style="max-width:820px; max-height:90vh; display:flex; flex-direction:column;">
+    <div class="modal-overlay" id="modal-deficiency-detail" onclick="if(event.target === this) closeModal('modal-deficiency-detail')">
+        <div class="modal modal-xl" style="width:820px; max-width:min(820px, calc(100vw - 24px));">
             <div class="modal-header">
                 <div class="modal-title">
                     <span>⏱️</span>
@@ -1970,8 +1973,8 @@
     </div>
 
     <!-- Modal Génération Bordereau BV1 / BV2 -->
-    <div class="modal" id="modal-generate-slip">
-        <div class="modal-content" style="max-width:540px;">
+    <div class="modal-overlay" id="modal-generate-slip" onclick="if(event.target === this) closeModal('modal-generate-slip')">
+        <div class="modal" style="width:540px; max-width:min(540px, calc(100vw - 24px));">
             <div class="modal-header">
                 <div class="modal-title">
                     <span>💰</span>
@@ -2022,8 +2025,8 @@
     </div>
 
     <!-- Modal Enregistrement Quittance de Paiement Trésor -->
-    <div class="modal" id="modal-record-slip-payment">
-        <div class="modal-content" style="max-width:480px;">
+    <div class="modal-overlay" id="modal-record-slip-payment" onclick="if(event.target === this) closeModal('modal-record-slip-payment')">
+        <div class="modal" style="width:480px; max-width:min(480px, calc(100vw - 24px));">
             <div class="modal-header">
                 <div class="modal-title">
                     <span>🏛️</span>
@@ -2066,8 +2069,8 @@
     </div>
 
     <!-- Modal Consultation & Révision des Barèmes Légaux Officiels -->
-    <div class="modal" id="modal-fee-schedules">
-        <div class="modal-content" style="max-width:880px; max-height:90vh; display:flex; flex-direction:column;">
+    <div class="modal-overlay" id="modal-fee-schedules" onclick="if(event.target === this) closeModal('modal-fee-schedules')">
+        <div class="modal modal-xl" style="width:880px; max-width:min(880px, calc(100vw - 24px)); max-height:90vh; display:flex; flex-direction:column;">
             <div class="modal-header">
                 <div class="modal-title">
                     <span>⚖️</span>

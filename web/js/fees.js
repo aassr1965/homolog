@@ -59,7 +59,7 @@ async function openGenerateFeeSlipModal(dossierId) {
         document.getElementById("slip-target-dossier-info").innerText = `${currentDossierDetail.dossier_code} — ${currentDossierDetail.medicine ? currentDossierDetail.medicine.brand_name_fr : (currentDossierDetail.medical_device ? currentDossierDetail.medical_device.commercial_name_fr : '')}`;
     }
 
-    modal.style.display = "flex";
+    openModal("modal-generate-slip");
 }
 
 // Exécution de la génération du bordereau
@@ -135,10 +135,9 @@ function openRecordSlipPaymentModal(slipId, slipNumber, amountDZD) {
     document.getElementById("pay-slip-ref").value = "";
     document.getElementById("pay-slip-date").value = new Date().toISOString().substring(0, 10);
 
-    modal.style.display = "flex";
+    openModal("modal-record-slip-payment");
 }
 
-// Enregistrement du paiement / quittance Trésor
 async function executeRecordSlipPayment(e) {
     if (e) e.preventDefault();
 
@@ -191,7 +190,7 @@ function openFeeSchedulesModal() {
     const modal = document.getElementById("modal-fee-schedules");
     if (!modal) return;
     loadFeeSchedules();
-    modal.style.display = "flex";
+    openModal("modal-fee-schedules");
 }
 
 // Rendu du tableau des barèmes
