@@ -797,7 +797,7 @@
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:16px;">💊</span>
-                    <span>Nouveau Médicament (Guide Enregistrement ANPP 2025)</span>
+                    <span id="modal-med-title">Nouveau Médicament (Guide Enregistrement ANPP 2025)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-new-med')">✕</button>
             </div>
@@ -869,7 +869,58 @@
 
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-med')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Médicament (Base SQL)</button>
+                        <button type="submit" id="modal-med-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Médicament (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Archivage Réglementaire Médicament (21 CFR Part 11 & BPF ALCOA+) -->
+    <div class="modal-overlay" id="modal-archive-med" onclick="if(event.target === this) closeModal('modal-archive-med')">
+        <div class="modal modal-md">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-amber);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">📦</span>
+                    <span style="color:var(--accent-amber); font-weight:700;">Retrait &amp; Archivage Réglementaire (21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-archive-med')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.5; color:var(--text-main);">
+                    <strong>⚖️ Garantie d'Intégrité ALCOA+ :</strong> Aucune suppression physique n'est effectuée. Conformément à la réglementation pharmaceutique (BPF / 21 CFR Part 11), l'historique et les dossiers CTD associés sont intégralement conservés. La spécialité passera au statut <code>ARCHIVÉ / RETIRÉ</code> avec scellement de la signature nominative dans l'Audit Trail immuable.
+                </div>
+                <form id="form-archive-med" onsubmit="handleArchiveMedicine(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="archive-med-id">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Spécialité Pharmaceutique Ciblée :</label>
+                        <input type="text" id="archive-med-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Réglementaire de Retrait * :</label>
+                        <select id="archive-med-reason-select" onchange="document.getElementById('archive-med-reason').value = this.value" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:600;">
+                            <option value="">-- Sélectionner un motif réglementaire motivé --</option>
+                            <option value="Arrêt définitif de commercialisation / Fin de cycle de vie produit">Arrêt définitif de commercialisation (Fin de vie)</option>
+                            <option value="Retrait ou non-renouvellement d'AMM ordonné par l'ANPP">Retrait ou non-renouvellement d'AMM (Décision ANPP)</option>
+                            <option value="Remplacement par une nouvelle spécialité / Variation majeure galénique">Remplacement par nouvelle spécialité / variation majeure</option>
+                            <option value="Rupture définitive de chaîne d'approvisionnement Substance Active (API)">Rupture définitive d'approvisionnement API</option>
+                            <option value="Autre motif réglementaire">Autre motif réglementaire motivé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Justification / Référence Notification ANPP * :</label>
+                        <input type="text" id="archive-med-reason" required placeholder="Ex: Décision Ministérielle N°... ou Arrêt voté le ..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:700; font-size:11px; color:var(--accent-red);">
+                            ✍️ Signature Électronique Nominative (21 CFR Part 11) * :
+                        </label>
+                        <p style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Ressaisissez votre mot de passe pour sceller l'opération dans le registre d'audit ALCOA+ :</p>
+                        <input type="password" id="archive-med-password" required placeholder="Mot de passe du signataire (DT / Resp. RA)" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--accent-red); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-archive-med')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-amber); color:white; border:none; font-weight:600;">Sceller et Archiver la Spécialité (21 CFR Part 11)</button>
                     </div>
                 </form>
             </div>
@@ -1428,12 +1479,12 @@
 
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.13.3"></script>
-    <script src="/js/auth.js?v=2026.11.13.3"></script>
-    <script src="/js/admin.js?v=2026.11.13.3"></script>
-    <script src="/js/referential.js?v=2026.11.13.3"></script>
-    <script src="/js/variations.js?v=2026.11.13.3"></script>
-    <script src="/js/ged.js?v=2026.11.13.3"></script>
-    <script src="/js/dossiers.js?v=2026.11.13.3"></script>
+    <script src="/js/app.js?v=2026.11.14.1"></script>
+    <script src="/js/auth.js?v=2026.11.14.1"></script>
+    <script src="/js/admin.js?v=2026.11.14.1"></script>
+    <script src="/js/referential.js?v=2026.11.14.1"></script>
+    <script src="/js/variations.js?v=2026.11.14.1"></script>
+    <script src="/js/ged.js?v=2026.11.14.1"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.1"></script>
 </body>
 </html>

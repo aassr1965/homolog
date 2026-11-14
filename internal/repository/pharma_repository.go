@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"homolog/internal/auth"
 	"homolog/internal/domain"
 )
 
@@ -547,6 +548,123 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 	return &m, nil
 }
 
+// UpdateMedicine met à jour les informations d'un médicament et synchronise le produit parent
+func (r *PharmaRepository) UpdateMedicine(ctx context.Context, m *domain.Medicine, siteIDs []uuid.UUID) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	now := time.Now()
+	m.UpdatedAt = now
+
+	// 1. Mise à jour de la table medicines
+	query := `
+		UPDATE medicines SET
+			origin_type = $3,
+			brand_name_fr = $4,
+			brand_name_ar = $5,
+			dci_fr = $6,
+			dci_ar = $7,
+			dosage_fr = $8,
+			dosage_ar = $9,
+			pharmaceutical_form_fr = $10,
+			pharmaceutical_form_ar = $11,
+			administration_route_fr = $12,
+			administration_route_ar = $13,
+			atc_code = $14,
+			has_pharmacopoeia_monograph = $15,
+			pharmacopoeia_name = $16,
+			has_cep = $17,
+			cep_number = $18,
+			cep_access_letter_held = $19,
+			apimf_dmf_number = $20,
+			polymorphic_form = $21,
+			particle_size_criticality = $22,
+			storage_conditions_fr = $23,
+			storage_conditions_ar = $24,
+			shelf_life_months = $25,
+			in_use_shelf_life = $26,
+			validation_batch_files_held = $27,
+			economic_file_type = $28,
+			pcsu_amount = $29,
+			fob_price = $30,
+			fob_currency = $31,
+			has_chamber_of_commerce_visa = $32,
+			has_benchmark_dossier = $33,
+			status = $34,
+			updated_at = $35
+		WHERE organization_id = $1 AND id = $2
+	`
+	tag, err := tx.Exec(ctx, query,
+		m.OrganizationID, m.ID, m.OriginType,
+		m.BrandNameFR, m.BrandNameAR, m.DCIFR, m.DCIAR,
+		m.DosageFR, m.DosageAR, m.PharmaceuticalFormFR, m.PharmaceuticalFormAR,
+		m.AdministrationRouteFR, m.AdministrationRouteAR, m.ATCCode,
+		m.HasPharmacopoeiaMonograph, m.PharmacopoeiaName, m.HasCEP, m.CEPNumber, m.CEPAccessLetterHeld,
+		m.APIMFNumber, m.PolymorphicForm, m.ParticleSizeCriticality,
+		m.StorageConditionsFR, m.StorageConditionsAR, m.ShelfLifeMonths, m.InUseShelfLife, m.ValidationBatchFilesHeld,
+		m.EconomicFileType, m.PCSUAmount, m.FOBPrice, m.FOBCurrency, m.HasChamberOfCommerceVisa, m.HasBenchmarkDossier,
+		m.Status, m.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("mise à jour médicament échouée: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("médicament introuvable ou non autorisé")
+	}
+
+	// 2. Mise à jour du produit parent
+	if m.ProductID != uuid.Nil {
+		_, err = tx.Exec(ctx, `
+			UPDATE products SET
+				commercial_name = $1,
+				updated_at = $2
+			WHERE id = $3 AND organization_id = $4
+		`, m.BrandNameFR, now, m.ProductID, m.OrganizationID)
+		if err != nil {
+			return fmt.Errorf("mise à jour produit parent échouée: %w", err)
+		}
+	}
+
+	// 3. Mise à jour des sites associés si une liste est explicitement fournie
+	if len(siteIDs) > 0 {
+		_, _ = tx.Exec(ctx, "DELETE FROM medicine_manufacturing_sites WHERE medicine_id = $1", m.ID)
+		for _, siteID := range siteIDs {
+			linkQuery := `
+				INSERT INTO medicine_manufacturing_sites (medicine_id, site_id, role_in_product)
+				VALUES ($1, $2, 'intervenant')
+				ON CONFLICT (medicine_id, site_id, role_in_product) DO NOTHING
+			`
+			if _, err := tx.Exec(ctx, linkQuery, m.ID, siteID); err != nil {
+				return fmt.Errorf("liaison site échouée: %w", err)
+			}
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+// ArchiveMedicine applique un soft delete réglementaire avec traçabilité 21 CFR Part 11 / BPF
+func (r *PharmaRepository) ArchiveMedicine(ctx context.Context, orgID, id uuid.UUID, reason, archivedBy string) error {
+	now := time.Now()
+	query := `
+		UPDATE medicines SET
+			status = 'archive',
+			updated_at = $3
+		WHERE organization_id = $1 AND id = $2
+	`
+	tag, err := r.pool.Exec(ctx, query, orgID, id, now)
+	if err != nil {
+		return fmt.Errorf("archivage médicament échoué: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("médicament introuvable ou non autorisé")
+	}
+	return nil
+}
+
 func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, originFilter, search string, limit, offset int) ([]domain.Medicine, int, error) {
 	if limit <= 0 {
 		limit = 50
@@ -822,4 +940,14 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 		list = append(list, dm)
 	}
 	return list, total, nil
+}
+
+// VerifyUserPassword vérifie le mot de passe de l'utilisateur pour la signature 21 CFR Part 11
+func (r *PharmaRepository) VerifyUserPassword(ctx context.Context, userID uuid.UUID, password string) (bool, error) {
+	var pwdHash string
+	err := r.pool.QueryRow(ctx, "SELECT password_hash FROM users WHERE id = $1", userID).Scan(&pwdHash)
+	if err != nil {
+		return false, err
+	}
+	return auth.VerifyPassword(password, pwdHash)
 }
