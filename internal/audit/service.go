@@ -38,6 +38,9 @@ const (
 	ActionDeficiencyLetterCreate = "DEFICIENCY_LETTER_CREATE"
 	ActionDeficiencyTaskUpdate   = "DEFICIENCY_TASK_UPDATE"
 	ActionDeficiencyTaskSignDT   = "DEFICIENCY_TASK_SIGN_DT"
+	ActionFeeSlipGenerated       = "FEE_SLIP_GENERATED"
+	ActionFeeSlipStatusUpdate     = "FEE_SLIP_STATUS_UPDATE"
+	ActionFeeScheduleUpdate      = "FEE_SCHEDULE_UPDATE"
 )
 
 // Entry représente les données à consigner dans l'Audit Trail

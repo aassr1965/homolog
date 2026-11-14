@@ -1969,15 +1969,205 @@
         </div>
     </div>
 
+    <!-- Modal Génération Bordereau BV1 / BV2 -->
+    <div class="modal" id="modal-generate-slip">
+        <div class="modal-content" style="max-width:540px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>💰</span>
+                    <span>Émission de Bordereau de Versement ANPP (BV1 / BV2)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-generate-slip')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-generate-slip" onsubmit="executeGenerateFeeSlip(event)">
+                    <input type="hidden" id="slip-dossier-id">
+                    
+                    <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:12px;">
+                        <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">Dossier Cible :</div>
+                        <div id="slip-target-dossier-info" style="font-size:12px; font-weight:700; color:var(--accent-blue); margin-top:2px;"></div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Type de Bordereau * :</label>
+                            <select id="slip-type-select" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="BV1" selected>BV1 — Dépôt Initial de Dossier</option>
+                                <option value="BV2">BV2 — Compléments / Expertises LNCM / Variations</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Montant Spécifique (DZD) :</label>
+                            <input type="number" step="1000" id="slip-custom-amount" placeholder="Automatique selon barème" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            <span style="font-size:9.5px; color:var(--text-dim);">Laisser vide pour appliquer le barème officiel</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Précis de Versement :</label>
+                        <input type="text" id="slip-purpose-input" placeholder="ex: Redevance d'enregistrement initial selon barème légal en vigueur..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+
+                    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:10px; font-size:11px; color:#1e40af; margin-bottom:14px;">
+                        ℹ️ <strong>Règle ALCOA+ &amp; Barème Versionné :</strong> Le bordereau scellera le tarif en vigueur à la date d'émission avec conversion automatique en toutes lettres en <strong>français</strong> et en <strong>arabe</strong> (compte Trésorerie ANPP).
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-generate-slip')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none;">Générer &amp; Afficher Bordereau Officiel ➔</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Enregistrement Quittance de Paiement Trésor -->
+    <div class="modal" id="modal-record-slip-payment">
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🏛️</span>
+                    <span>Enregistrement Quittance de Paiement Trésor</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-record-slip-payment')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-record-slip-payment" onsubmit="executeRecordSlipPayment(event)">
+                    <input type="hidden" id="pay-slip-id">
+                    
+                    <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase;">Bordereau :</div>
+                            <div id="pay-slip-number-disp" style="font-size:13px; font-weight:700; color:var(--accent-blue);"></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase;">Montant Net :</div>
+                            <div id="pay-slip-amount-disp" style="font-size:14px; font-weight:800; color:#16a34a;"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Numéro de Quittance du Trésor / Avis d'Opéré * :</label>
+                        <input type="text" id="pay-slip-ref" required placeholder="ex: QUIT-TRESOR-2026-N°84920" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date Effective de Règlement * :</label>
+                        <input type="date" id="pay-slip-date" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-record-slip-payment')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:#16a34a; color:white; font-weight:700; border:none;">Valider Encaissement &amp; Quittance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Consultation & Révision des Barèmes Légaux Officiels -->
+    <div class="modal" id="modal-fee-schedules">
+        <div class="modal-content" style="max-width:880px; max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>⚖️</span>
+                    <span>Barèmes Officiels des Redevances ANPP (Grilles Versionnées)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-fee-schedules')">✕</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <div style="font-size:11px; color:var(--text-dim); margin-bottom:12px;">
+                    Les montants ci-dessous sont fixés par décret exécutif et arrêté interministériel. Toute révision tarifaire s'applique à sa date d'effet sans modifier rétroactivement les bordereaux déjà émis.
+                </div>
+
+                <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; overflow:hidden; margin-bottom:16px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                        <thead>
+                            <tr style="background:var(--bg-sub); border-bottom:1px solid var(--border-color); color:var(--text-dim); font-size:10px; text-transform:uppercase;">
+                                <th style="padding:8px 10px; text-align:left;">Procédure / Nature</th>
+                                <th style="padding:8px 10px; text-align:left;">Référence Légale (JORADP)</th>
+                                <th style="padding:8px 10px; text-align:right;">Tarif Fixé (DZD)</th>
+                                <th style="padding:8px 10px; text-align:left;">Période de Validité</th>
+                                <th style="padding:8px 10px; text-align:center;">Statut</th>
+                                <th style="padding:8px 10px; text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fee-schedules-tbody">
+                            <!-- Injecté dynamiquement par fees.js -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Formulaire de révision tarifaire (Nouvel Arrêté Ministériel) -->
+                <div id="form-revise-schedule-container" style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
+                    <div style="font-weight:700; font-size:12px; color:var(--text-main); margin-bottom:8px;">
+                        ➕ Enregistrer une Révision Tarifaire (Nouvel Arrêté Interministériel)
+                    </div>
+                    <form id="form-save-fee-schedule" onsubmit="executeSaveFeeSchedule(event)">
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:10px; font-weight:600;">Code Procédure * :</label>
+                                <input type="text" id="sched-proc-code" required placeholder="ex: generique_local" style="width:100%; padding:5px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                            <div>
+                                <label style="font-size:10px; font-weight:600;">Catégorie :</label>
+                                <select id="sched-category" style="width:100%; padding:5px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                                    <option value="medicament">Médicament</option>
+                                    <option value="dispositif_medical">Dispositif Médical</option>
+                                    <option value="variation">Variation Post-AMM</option>
+                                    <option value="autre">Autre Prestation</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:10px; font-weight:600;">Nouveau Montant (DZD) * :</label>
+                                <input type="number" step="1000" id="sched-amount" required placeholder="ex: 180000" style="width:100%; padding:5px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:10px; font-weight:600;">Libellé de la Procédure * :</label>
+                                <input type="text" id="sched-label" required placeholder="ex: Enregistrement Générique (Fabrication Locale)" style="width:100%; padding:5px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                            <div>
+                                <label style="font-size:10px; font-weight:600;">Date d'Entrée en Vigueur * :</label>
+                                <input type="date" id="sched-valid-from" required style="width:100%; padding:5px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:8px; margin-bottom:10px;">
+                            <div>
+                                <label style="font-size:10px; font-weight:600;">Référence Journal Officiel / Décret * :</label>
+                                <input type="text" id="sched-legal-ref" required placeholder="ex: Arrêté Interministériel du 14 Juin 2026 / JORADP N°38" style="width:100%; padding:5px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                            <div>
+                                <label style="font-size:10px; font-weight:600;">Notes / Observations :</label>
+                                <input type="text" id="sched-notes" placeholder="ex: Révision triennale..." style="width:100%; padding:5px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end;">
+                            <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; border:none;">Enregistrer la Grille Tarifaire</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-pill" onclick="closeModal('modal-fee-schedules')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.14.5"></script>
-    <script src="/js/auth.js?v=2026.11.14.5"></script>
-    <script src="/js/admin.js?v=2026.11.14.5"></script>
-    <script src="/js/system_admin.js?v=2026.11.14.5"></script>
-    <script src="/js/referential.js?v=2026.11.14.5"></script>
-    <script src="/js/variations.js?v=2026.11.14.5"></script>
-    <script src="/js/ged.js?v=2026.11.14.5"></script>
-    <script src="/js/dossiers.js?v=2026.11.14.5"></script>
-    <script src="/js/deficiencies.js?v=2026.11.14.5"></script>
+    <script src="/js/app.js?v=2026.11.14.6"></script>
+    <script src="/js/auth.js?v=2026.11.14.6"></script>
+    <script src="/js/admin.js?v=2026.11.14.6"></script>
+    <script src="/js/system_admin.js?v=2026.11.14.6"></script>
+    <script src="/js/referential.js?v=2026.11.14.6"></script>
+    <script src="/js/variations.js?v=2026.11.14.6"></script>
+    <script src="/js/ged.js?v=2026.11.14.6"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.6"></script>
+    <script src="/js/deficiencies.js?v=2026.11.14.6"></script>
+    <script src="/js/fees.js?v=2026.11.14.6"></script>
 </body>
 </html>

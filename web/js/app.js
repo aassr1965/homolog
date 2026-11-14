@@ -461,6 +461,8 @@
                     <button class="btn-pill" id="tb-btn-members" onclick="openDossierMembersModal()">👥 Équipe &amp; Secret</button>
                     <button class="btn-pill" id="tb-btn-sign-pdt" onclick="openSignPDTModal()">✍️ Visa PDT (21 CFR Part 11)</button>
                     <button class="btn-pill" id="tb-btn-deposit-anpp" onclick="openRecordDepositModal()">🏛️ Enregistrer Dépôt ANPP</button>
+                    <button class="btn-pill" id="tb-btn-fees" onclick="openGenerateFeeSlipModal(selectedDossierId)">💰 Bordereau BV1/BV2</button>
+                    <button class="btn-pill" id="tb-btn-schedules" onclick="openFeeSchedulesModal()">⚖️ Barème ANPP</button>
                     <button class="btn-pill" id="tb-btn-deficiency" onclick="openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Notifier Complément ANPP</button>
                     <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_LEGAL" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
                     <button class="btn-pill" onclick="loadDossiers()">🔄 Actualiser</button>
