@@ -1935,23 +1935,57 @@
                         </select>
                     </div>
 
-                    <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:12px; margin-bottom:12px;">
                         <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Réf. Notification ANPP * :</label>
                             <input type="text" id="def-ref-number" required placeholder="ex: ANPP/DEPP/N°1428/2026" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
                         <div>
-                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date Réception * :</label>
-                            <input type="date" id="def-received-date" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;" title="Date portée en en-tête sur la lettre officielle de l'ANPP">Date Émission du Courrier :</label>
+                            <input type="date" id="def-letter-date" onchange="syncDeficiencyDates('letter')" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
                         <div>
-                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Délai Légal (Jours) :</label>
-                            <select id="def-deadline-days" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
-                                <option value="30">30 jours (Urgence / Précision)</option>
-                                <option value="60">60 jours (Compléments ciblés)</option>
-                                <option value="90" selected>90 jours (Délai légal standard 20-325)</option>
-                                <option value="180">180 jours (Études de stabilité complémentaires)</option>
-                            </select>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px; color:var(--accent-blue);" title="Date de remise effective (tampon bureau d'ordre, émargement coursier ou récépissé de notification)">Date Réception / Décharge Réelle * :</label>
+                            <input type="date" id="def-received-date" required onchange="syncDeficiencyDates('received')" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+
+                    <!-- Encart dynamique de synchronisation Échéance & Acheminement -->
+                    <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                            <span style="font-weight:700; font-size:11.5px; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                                <span>⚖️</span>
+                                <span>Définition de l'Échéance Légale (Double Choix Synchronisé)</span>
+                            </span>
+                            <span id="def-transit-alert" style="font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:4px; display:none;">
+                                <!-- Affichage délai d'acheminement -->
+                            </span>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Option A — Par Délai Réglementaire (Jours) :</label>
+                                <div style="display:flex; gap:6px;">
+                                    <select id="def-deadline-days" onchange="syncDeficiencyDates('days')" style="flex:1; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                        <option value="30">30 jours (Urgence / Précision)</option>
+                                        <option value="60">60 jours (Compléments ciblés)</option>
+                                        <option value="90" selected>90 jours (Délai légal standard 20-325)</option>
+                                        <option value="180">180 jours (Stabilité / Zone IVb / LNCM)</option>
+                                        <option value="custom">Nombre de jours personnalisé...</option>
+                                    </select>
+                                    <input type="number" id="def-custom-days" min="1" max="730" placeholder="Jours" oninput="syncDeficiencyDates('custom_days')" style="width:75px; display:none; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px; color:var(--accent-emerald);">Option B — Par Date Butoir Explicite (Date Fixe) :</label>
+                                <input type="date" id="def-due-date" required onchange="syncDeficiencyDates('due_date')" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--accent-emerald); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:700;">
+                            </div>
+                        </div>
+
+                        <div id="def-countdown-preview" style="margin-top:8px; font-size:11px; padding:6px 10px; border-radius:4px; background:rgba(37,99,235,0.08); color:var(--accent-blue); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                            <span>📅 Date limite retenue : <strong id="def-preview-due-txt">--</strong></span>
+                            <span id="def-preview-badge" style="font-weight:700;">Compte à rebours : --</span>
                         </div>
                     </div>
 

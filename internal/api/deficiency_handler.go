@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -116,6 +117,10 @@ func (h *DeficiencyHandler) CreateDossierDeficiency(w http.ResponseWriter, r *ht
 		if err != nil {
 			writeJSONError(w, http.StatusBadRequest, "Format de date limite invalide (attendu: AAAA-MM-JJ)")
 			return
+		}
+		daysDiff := int(math.Ceil(dueDate.Sub(receivedDate).Hours() / 24.0))
+		if daysDiff > 0 {
+			req.LegalDeadlineDays = daysDiff
 		}
 	} else {
 		dueDate = receivedDate.AddDate(0, 0, req.LegalDeadlineDays)

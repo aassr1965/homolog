@@ -396,6 +396,129 @@ async function validateTaskDT(taskId) {
     }
 }
 
+// Synchronisation intelligente et bidirectionnelle des dates de notification, acheminement et échéance légale
+function syncDeficiencyDates(trigger) {
+    const letterDateEl = document.getElementById("def-letter-date");
+    const receivedDateEl = document.getElementById("def-received-date");
+    const deadlineDaysSelect = document.getElementById("def-deadline-days");
+    const customDaysInput = document.getElementById("def-custom-days");
+    const dueDateEl = document.getElementById("def-due-date");
+    const transitAlertEl = document.getElementById("def-transit-alert");
+    const previewDueTxtEl = document.getElementById("def-preview-due-txt");
+    const previewBadgeEl = document.getElementById("def-preview-badge");
+
+    if (!receivedDateEl || !dueDateEl) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 1. Analyse du délai d'acheminement (Date émission vs Date réception)
+    if (letterDateEl && letterDateEl.value && receivedDateEl.value) {
+        const dLetter = new Date(letterDateEl.value);
+        const dReceived = new Date(receivedDateEl.value);
+        const transitDiffMs = dReceived - dLetter;
+        const transitDays = Math.round(transitDiffMs / (1000 * 60 * 60 * 24));
+
+        if (transitAlertEl) {
+            if (transitDays > 0) {
+                transitAlertEl.style.display = 'inline-block';
+                if (transitDays > 15) {
+                    transitAlertEl.style.background = 'rgba(239, 68, 68, 0.15)';
+                    transitAlertEl.style.color = '#dc2626';
+                    transitAlertEl.innerHTML = `⚠️ Retard d'acheminement important : <strong>${transitDays} jours</strong>`;
+                } else {
+                    transitAlertEl.style.background = 'rgba(245, 158, 11, 0.15)';
+                    transitAlertEl.style.color = '#b45309';
+                    transitAlertEl.innerHTML = `📬 Acheminement / décharge : <strong>${transitDays} j</strong>`;
+                }
+            } else if (transitDays < 0) {
+                transitAlertEl.style.display = 'inline-block';
+                transitAlertEl.style.background = 'rgba(239, 68, 68, 0.15)';
+                transitAlertEl.style.color = '#dc2626';
+                transitAlertEl.innerHTML = `⚠️ Incohérence : réception antérieure à l'émission !`;
+            } else {
+                transitAlertEl.style.display = 'none';
+            }
+        }
+    } else if (transitAlertEl) {
+        transitAlertEl.style.display = 'none';
+    }
+
+    // 2. Détermination du nombre de jours selon le déclencheur
+    let days = 90;
+    if (deadlineDaysSelect) {
+        if (deadlineDaysSelect.value === 'custom') {
+            if (customDaysInput) {
+                customDaysInput.style.display = 'inline-block';
+                days = parseInt(customDaysInput.value, 10) || 90;
+            }
+        } else {
+            if (customDaysInput) customDaysInput.style.display = 'none';
+            days = parseInt(deadlineDaysSelect.value, 10) || 90;
+        }
+    }
+
+    if (!receivedDateEl.value) {
+        receivedDateEl.value = new Date().toISOString().substring(0, 10);
+    }
+    const dReceived = new Date(receivedDateEl.value);
+
+    // 3. Calculs selon le mode
+    if (trigger === 'due_date') {
+        // L'utilisateur a modifié la date butoir directement (Option B)
+        if (dueDateEl.value) {
+            const dDue = new Date(dueDateEl.value);
+            const diffDays = Math.round((dDue - dReceived) / (1000 * 60 * 60 * 24));
+            if (deadlineDaysSelect) {
+                if ([30, 60, 90, 180].includes(diffDays)) {
+                    deadlineDaysSelect.value = diffDays.toString();
+                    if (customDaysInput) customDaysInput.style.display = 'none';
+                } else if (diffDays > 0) {
+                    deadlineDaysSelect.value = 'custom';
+                    if (customDaysInput) {
+                        customDaysInput.style.display = 'inline-block';
+                        customDaysInput.value = diffDays;
+                    }
+                }
+            }
+        }
+    } else {
+        // L'utilisateur a modifié les jours ou la date de réception (Option A)
+        if (!isNaN(dReceived.getTime())) {
+            const calculatedDue = new Date(dReceived);
+            calculatedDue.setDate(calculatedDue.getDate() + days);
+            dueDateEl.value = calculatedDue.toISOString().substring(0, 10);
+        }
+    }
+
+    // 4. Mise à jour de l'aperçu du compte à rebours
+    if (dueDateEl.value) {
+        const dDue = new Date(dueDateEl.value);
+        if (!isNaN(dDue.getTime())) {
+            if (previewDueTxtEl) {
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                previewDueTxtEl.innerText = dDue.toLocaleDateString('fr-FR', options);
+            }
+            const daysRemaining = Math.ceil((dDue - today) / (1000 * 60 * 60 * 24));
+            if (previewBadgeEl) {
+                if (daysRemaining < 0) {
+                    previewBadgeEl.style.color = '#dc2626';
+                    previewBadgeEl.innerText = `🚨 Délai dépassé de ${Math.abs(daysRemaining)} j !`;
+                } else if (daysRemaining <= 15) {
+                    previewBadgeEl.style.color = '#dc2626';
+                    previewBadgeEl.innerText = `🚨 Critique : J-${daysRemaining} restant(s)`;
+                } else if (daysRemaining <= 30) {
+                    previewBadgeEl.style.color = '#ea580c';
+                    previewBadgeEl.innerText = `⚠️ Urgent : J-${daysRemaining} restant(s)`;
+                } else {
+                    previewBadgeEl.style.color = '#16a34a';
+                    previewBadgeEl.innerText = `⏱️ J-${daysRemaining} restant(s)`;
+                }
+            }
+        }
+    }
+}
+
 // Ouverture de la modale de création d'une nouvelle notification ANPP
 async function openNewDeficiencyLetterModal(dossierId) {
     const modal = document.getElementById("modal-new-deficiency-letter");
@@ -435,10 +558,21 @@ async function openNewDeficiencyLetterModal(dossierId) {
         document.getElementById("def-dossier-id").value = '';
     }
 
+    const todayStr = new Date().toISOString().substring(0, 10);
     document.getElementById("def-ref-number").value = '';
-    document.getElementById("def-received-date").value = new Date().toISOString().substring(0, 10);
+    const letterDateEl = document.getElementById("def-letter-date");
+    if (letterDateEl) letterDateEl.value = todayStr;
+    document.getElementById("def-received-date").value = todayStr;
     document.getElementById("def-deadline-days").value = "90";
+    const customDaysEl = document.getElementById("def-custom-days");
+    if (customDaysEl) {
+        customDaysEl.value = '';
+        customDaysEl.style.display = 'none';
+    }
     document.getElementById("def-notes").value = '';
+    
+    // Initialisation synchrone des dates (Délai + Échéance calculée)
+    syncDeficiencyDates('init');
 
     // Réinitialiser les questions à 1 question par défaut
     const questionsContainer = document.getElementById("def-questions-rows");
@@ -509,9 +643,31 @@ async function executeCreateDeficiencyLetter(e) {
     }
 
     const refNumber = document.getElementById("def-ref-number").value.trim();
+    const letterDate = document.getElementById("def-letter-date") ? document.getElementById("def-letter-date").value : '';
     const receivedDate = document.getElementById("def-received-date").value;
-    const deadlineDays = parseInt(document.getElementById("def-deadline-days").value, 10) || 90;
-    const notes = document.getElementById("def-notes").value.trim();
+    const deadlineDaysSelect = document.getElementById("def-deadline-days");
+    let deadlineDays = 90;
+    if (deadlineDaysSelect) {
+        if (deadlineDaysSelect.value === 'custom') {
+            const customVal = parseInt(document.getElementById("def-custom-days").value, 10);
+            deadlineDays = customVal > 0 ? customVal : 90;
+        } else {
+            deadlineDays = parseInt(deadlineDaysSelect.value, 10) || 90;
+        }
+    }
+    const dueDate = document.getElementById("def-due-date").value;
+    let notes = document.getElementById("def-notes").value.trim();
+
+    // Traçabilité probatoire du décalage d'acheminement dans les notes si constaté
+    if (letterDate && receivedDate && letterDate !== receivedDate) {
+        const dLetter = new Date(letterDate);
+        const dRec = new Date(receivedDate);
+        const transitDays = Math.round((dRec - dLetter) / (1000 * 60 * 60 * 24));
+        if (transitDays > 0) {
+            const transitNotice = `[Courrier émis le: ${letterDate} | Reçu en décharge le: ${receivedDate} (Délai d'acheminement: ${transitDays} jours)]`;
+            notes = notes ? `${transitNotice}\n${notes}` : transitNotice;
+        }
+    }
 
     if (!refNumber) {
         alert("La référence officielle de la lettre ANPP est obligatoire");
@@ -550,6 +706,7 @@ async function executeCreateDeficiencyLetter(e) {
                 reference_number: refNumber,
                 received_date: receivedDate,
                 legal_deadline_days: deadlineDays,
+                due_date: dueDate,
                 notes: notes,
                 tasks: tasks
             })
