@@ -348,6 +348,7 @@ func main() {
 
 				// Pilotage unitaire, alertes de délai légal et visa PDT
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/deficiencies/letters/{letterId}", deficiencyHandler.GetDeficiencyLetter)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/deficiencies/letters/{letterId}/attach-document", deficiencyHandler.AttachDocumentToLetter)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/deficiencies/dashboard", deficiencyHandler.GetDeficiencyDashboard)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Put("/api/v1/deficiencies/tasks/{taskId}", deficiencyHandler.UpdateDeficiencyTask)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/deficiencies/tasks/{taskId}/validate-dt", deficiencyHandler.ValidateDeficiencyTaskDT)

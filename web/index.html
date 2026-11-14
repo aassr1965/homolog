@@ -1989,6 +1989,24 @@
                         </div>
                     </div>
 
+                    <!-- Numérisation / Dépôt du scan officiel de la lettre ANPP -->
+                    <div style="background:var(--bg-sub); border:1px dashed var(--border-color); border-radius:6px; padding:10px 12px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                            <label for="def-document-file" style="font-weight:700; font-size:11.5px; color:var(--text-main); display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <span>📎</span>
+                                <span>Pièce Justificative Officielle (Scan ANPP, Photo, Décharge Réception, Bordereau Postal) :</span>
+                            </label>
+                            <span style="font-size:10px; color:var(--accent-blue); background:rgba(37,99,235,0.08); padding:2px 8px; border-radius:4px; font-weight:600;">Coffre-Fort GED ALCOA+ SHA-256</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="file" id="def-document-file" accept=".pdf,.png,.jpg,.jpeg,.webp" style="font-size:11.5px; flex:1; padding:5px 8px; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main);">
+                            <button type="button" class="btn-pill" style="font-size:10.5px; padding:4px 8px;" onclick="document.getElementById('def-document-file').value=''" title="Effacer le fichier">✕</button>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
+                            Archivage automatique dans la GED sous <code>01.06 Correspondances &amp; Notifications ANPP</code> avec empreinte immuable dédupliquée.
+                        </div>
+                    </div>
+
                     <div style="margin-bottom:12px;">
                         <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Notes / Contexte de la Commission :</label>
                         <textarea id="def-notes" rows="2" placeholder="ex: Séance de la Commission d'Enregistrement du 12 Novembre, synthèse des réserves formulées..." style="width:100%; padding:6px 8px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; resize:vertical; min-height:48px; font-family:inherit;"></textarea>
@@ -2045,7 +2063,14 @@
                         <div>Date Réception : <strong id="m-def-received" style="color:var(--text-main);"></strong></div>
                         <div>Date Échéance Légale : <strong id="m-def-due" style="color:var(--text-main);"></strong></div>
                     </div>
+                    <!-- Zone document officiel GED / Scan ANPP -->
+                    <div id="m-def-doc-container" style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--border-color);">
+                        <!-- Injecté dynamiquement : lien scan GED ou bouton d'ajout -->
+                    </div>
                 </div>
+
+                <!-- Input caché pour téléversement direct de scan depuis le studio -->
+                <input type="file" id="m-def-attach-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp" style="display:none;" onchange="executeAttachScanFileToLetter(this)">
 
                 <!-- Liste des questions décomposées -->
                 <div style="font-weight:700; font-size:12px; color:var(--text-main); margin-bottom:10px;">

@@ -188,7 +188,18 @@ function renderDeficienciesDashboardView(data) {
                 <tr style="background:${rowBg}; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="openDeficiencyLetterDetail('${l.id}')">
                     <td style="padding:10px 12px;">
                         <div style="font-weight:700; color:var(--accent-blue);">${escapeHTML(l.reference_number)}</div>
-                        <div style="font-size:10px; color:var(--text-muted);">${l.notes ? escapeHTML(l.notes).substring(0, 45) + '...' : 'Notification officielle'}</div>
+                        ${l.document_id ? `
+                            <div style="margin-top:2px;">
+                                <a href="/api/v1/ged/documents/${l.document_id}/download" target="_blank" onclick="event.stopPropagation();" title="Télécharger le scan officiel GED (${escapeHTML(l.document_title || 'Document GED')})" style="text-decoration:none; font-size:10px; color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:3px;">
+                                    <span>📄</span> <span>Scan ANPP scellé</span>
+                                </a>
+                            </div>
+                        ` : `
+                            <div style="margin-top:2px; font-size:9.5px; color:var(--text-dim);">
+                                <span>⚠️ Sans scan GED</span>
+                            </div>
+                        `}
+                        <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">${l.notes ? escapeHTML(l.notes).substring(0, 45) + '...' : 'Notification officielle'}</div>
                     </td>
                     <td style="padding:10px 12px;">
                         <div style="font-weight:600; color:var(--text-main);">${escapeHTML(l.product_brand_name || l.dossier_reference || 'Dossier ANPP')}</div>
@@ -260,6 +271,55 @@ function renderDeficiencyLetterDetailModal(letter) {
     document.getElementById("m-def-received").innerText = (letter.received_date || '').substring(0, 10);
     document.getElementById("m-def-due").innerText = (letter.due_date || '').substring(0, 10);
     document.getElementById("m-def-notes").innerText = letter.notes || 'Aucune note particulière.';
+
+    // Rendu du scan officiel numérisé ANPP (GED ALCOA+)
+    const docContainer = document.getElementById("m-def-doc-container");
+    if (docContainer) {
+        if (letter.document_id) {
+            docContainer.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:18px;">📄</span>
+                        <div>
+                            <div style="font-size:11.5px; font-weight:700; color:var(--text-main);">
+                                ${escapeHTML(letter.document_title || 'Scan Officiel du Courrier ANPP')}
+                            </div>
+                            <div style="font-size:10px; color:var(--text-muted);">
+                                Pièce officielle archivée au coffre-fort numérique GED (CAS SHA-256) · Opposabilité légale
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <a href="/api/v1/ged/documents/${letter.document_id}/download" target="_blank" class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; text-decoration:none; padding:4px 10px; display:inline-flex; align-items:center; gap:4px; font-weight:600;">
+                            <span>📥</span> <span>Visualiser / Télécharger le Scan</span>
+                        </a>
+                        <button type="button" class="btn-pill" style="font-size:11px; padding:4px 8px;" onclick="promptAttachDeficiencyDocument('${letter.id}')" title="Remplacer par un nouveau scan ou photo">
+                            🔄 Remplacer
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            docContainer.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:18px;">⚠️</span>
+                        <div>
+                            <div style="font-size:11.5px; font-weight:600; color:var(--text-main);">
+                                Aucun document officiel (scan PDF ou photo du courrier) rattaché
+                            </div>
+                            <div style="font-size:10px; color:var(--text-dim);">
+                                Exigence ALCOA+ : Numérisez et rattachez l'original avec cachet bureau d'ordre ou récépissé
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-pill" style="font-size:11px; background:var(--bg-surface); color:var(--accent-blue); font-weight:700; border:1px solid var(--accent-blue); padding:4px 12px; display:inline-flex; align-items:center; gap:4px;" onclick="promptAttachDeficiencyDocument('${letter.id}')">
+                        <span>📎</span> <span>Téléverser le Scan Officiel (GED)</span>
+                    </button>
+                </div>
+            `;
+        }
+    }
 
     const tasksList = document.getElementById("m-def-tasks-list");
     if (!tasksList) return;
@@ -571,6 +631,10 @@ async function openNewDeficiencyLetterModal(dossierId) {
     }
     document.getElementById("def-notes").value = '';
     
+    // Réinitialisation du champ fichier scan officiel
+    const docFileEl = document.getElementById("def-document-file");
+    if (docFileEl) docFileEl.value = '';
+
     // Initialisation synchrone des dates (Délai + Échéance calculée)
     syncDeficiencyDates('init');
 
@@ -696,6 +760,35 @@ async function executeCreateDeficiencyLetter(e) {
     }
 
     try {
+        // Étape 1 : Archivage préalable du scan/photo/PDF dans le coffre-fort numérique GED ALCOA+ si fourni
+        let uploadedDocId = null;
+        const fileInput = document.getElementById("def-document-file");
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('taxonomy_path', '01_Affaires_Reglementaires/01_06_Correspondances_ANPP');
+            formData.append('title_fr', `Courrier Compléments ANPP - ${refNumber}`);
+            formData.append('title_ar', `إرسالية استكمال ملف التسجيل - ${refNumber}`);
+            const cleanCode = refNumber.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30);
+            formData.append('document_code', `ANPP-COMPL-${cleanCode}-${Date.now().toString().slice(-4)}`);
+            formData.append('document_type', 'notification_anpp');
+            formData.append('department', 'affaires_reglementaires');
+            formData.append('revision_summary', `Scan officiel du courrier de compléments ANPP (Réf: ${refNumber})`);
+            formData.append('file', file);
+
+            const gedResp = await fetch('/api/v1/ged/documents', {
+                method: 'POST',
+                body: formData
+            });
+            if (!gedResp.ok) {
+                const errJson = await gedResp.json().catch(() => ({}));
+                throw new Error("Échec d'archivage du document en GED : " + (errJson.error || gedResp.statusText));
+            }
+            const createdDoc = await gedResp.json();
+            uploadedDocId = createdDoc.id;
+        }
+
+        // Étape 2 : Création de la notification en base SQL avec le document_id lié
         const resp = await fetch(`/api/v1/dossiers/${dossierId}/deficiencies`, {
             method: 'POST',
             headers: {
@@ -707,6 +800,7 @@ async function executeCreateDeficiencyLetter(e) {
                 received_date: receivedDate,
                 legal_deadline_days: deadlineDays,
                 due_date: dueDate,
+                document_id: uploadedDocId,
                 notes: notes,
                 tasks: tasks
             })
@@ -719,6 +813,7 @@ async function executeCreateDeficiencyLetter(e) {
 
         const created = await resp.json();
         closeModal("modal-new-deficiency-letter");
+        if (fileInput) fileInput.value = '';
         
         if (typeof showToast === 'function') {
             showToast(`Lettre ANPP enregistrée (${tasks.length} questions décomposées)`);
@@ -736,3 +831,78 @@ async function executeCreateDeficiencyLetter(e) {
         alert("Erreur lors de la création de la lettre: " + err.message);
     }
 }
+
+// ==============================================================================
+// Gestion du versement ultérieur / mise à jour du scan officiel (GED)
+// ==============================================================================
+let targetLetterIdForUpload = null;
+
+function promptAttachDeficiencyDocument(letterId) {
+    targetLetterIdForUpload = letterId;
+    const input = document.getElementById('m-def-attach-file-input');
+    if (input) {
+        input.value = '';
+        input.click();
+    }
+}
+
+async function executeAttachScanFileToLetter(input) {
+    if (!input.files || input.files.length === 0 || !targetLetterIdForUpload) return;
+    const file = input.files[0];
+    const letter = currentDeficiencyLetterDetail;
+    const refNumber = letter ? letter.reference_number : 'ANPP';
+
+    try {
+        if (typeof showToast === 'function') {
+            showToast("Archivage du scan dans le coffre-fort GED (CAS SHA-256)...");
+        }
+        const formData = new FormData();
+        formData.append('taxonomy_path', '01_Affaires_Reglementaires/01_06_Correspondances_ANPP');
+        formData.append('title_fr', `Courrier Compléments ANPP - ${refNumber}`);
+        formData.append('title_ar', `إرسالية استكمال ملف التسجيل - ${refNumber}`);
+        const cleanCode = refNumber.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30);
+        formData.append('document_code', `ANPP-COMPL-${cleanCode}-${Date.now().toString().slice(-4)}`);
+        formData.append('document_type', 'notification_anpp');
+        formData.append('department', 'affaires_reglementaires');
+        formData.append('revision_summary', `Scan officiel rattaché à la notification ANPP (Réf: ${refNumber})`);
+        formData.append('file', file);
+
+        const gedResp = await fetch('/api/v1/ged/documents', {
+            method: 'POST',
+            body: formData
+        });
+        if (!gedResp.ok) {
+            const errJson = await gedResp.json().catch(() => ({}));
+            throw new Error("Échec du versement GED : " + (errJson.error || gedResp.statusText));
+        }
+        const createdDoc = await gedResp.json();
+
+        const attachResp = await fetch(`/api/v1/deficiencies/letters/${targetLetterIdForUpload}/attach-document`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ document_id: createdDoc.id })
+        });
+        if (!attachResp.ok) {
+            const errJson = await attachResp.json().catch(() => ({}));
+            throw new Error("Échec du rattachement : " + (errJson.error || attachResp.statusText));
+        }
+
+        if (typeof showToast === 'function') {
+            showToast("Scan officiel archivé et rattaché avec succès");
+        } else {
+            alert("Scan officiel archivé et rattaché avec succès");
+        }
+
+        // Recharger le détail et le dashboard
+        openDeficiencyLetterDetail(targetLetterIdForUpload);
+        if (typeof currentDomain !== 'undefined' && currentDomain === 'deficiencies') {
+            loadDeficienciesDashboard();
+        }
+    } catch (err) {
+        alert("Erreur lors du versement du document : " + err.message);
+    }
+}
+

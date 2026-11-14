@@ -126,6 +126,14 @@ func (h *DeficiencyHandler) CreateDossierDeficiency(w http.ResponseWriter, r *ht
 		dueDate = receivedDate.AddDate(0, 0, req.LegalDeadlineDays)
 	}
 
+	var docID *string
+	if req.DocumentID != nil && strings.TrimSpace(*req.DocumentID) != "" {
+		trimmed := strings.TrimSpace(*req.DocumentID)
+		if _, err := uuid.Parse(trimmed); err == nil {
+			docID = &trimmed
+		}
+	}
+
 	letter := domain.ANPPDeficiencyLetter{
 		OrganizationID:    user.OrganizationID.String(),
 		DossierID:         dossierIDStr,
@@ -134,7 +142,7 @@ func (h *DeficiencyHandler) CreateDossierDeficiency(w http.ResponseWriter, r *ht
 		LegalDeadlineDays: req.LegalDeadlineDays,
 		DueDate:           dueDate,
 		Status:            domain.DeficiencyLetterStatusOpen,
-		DocumentID:        req.DocumentID,
+		DocumentID:        docID,
 		Notes:             strings.TrimSpace(req.Notes),
 	}
 
@@ -388,4 +396,67 @@ func (h *DeficiencyHandler) ValidateDeficiencyTaskDT(w http.ResponseWriter, r *h
 		"message": "Visa Pharmacien Directeur Technique apposé avec succès",
 		"task":    validated,
 	})
+}
+
+// AttachDocumentToLetter rattache ou met à jour le scan officiel du courrier ANPP (GED) sur une lettre existante
+func (h *DeficiencyHandler) AttachDocumentToLetter(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Non authentifié")
+		return
+	}
+
+	letterIDStr := chi.URLParam(r, "letterId")
+	if _, err := uuid.Parse(letterIDStr); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de notification ANPP invalide")
+		return
+	}
+
+	var req struct {
+		DocumentID string `json:"document_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Format JSON invalide")
+		return
+	}
+
+	req.DocumentID = strings.TrimSpace(req.DocumentID)
+	if _, err := uuid.Parse(req.DocumentID); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de document GED invalide (UUID requis)")
+		return
+	}
+
+	if err := h.deficiencyRepo.AttachDocumentToLetter(r.Context(), user.OrganizationID.String(), letterIDStr, req.DocumentID); err != nil {
+		if errors.Is(err, repository.ErrLetterNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Lettre de compléments non trouvée")
+			return
+		}
+		writeJSONError(w, http.StatusInternalServerError, "Échec de rattachement du document GED: "+err.Error())
+		return
+	}
+
+	// Audit Trail ALCOA+
+	if h.auditService != nil {
+		_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         audit.ActionDeficiencyLetterAttachDoc,
+			EntityType:     "anpp_deficiency_letters",
+			EntityID:       letterIDStr,
+			Details: map[string]any{
+				"document_id": req.DocumentID,
+			},
+			IPAddress: r.RemoteAddr,
+			UserAgent: r.UserAgent(),
+		})
+	}
+
+	updated, err := h.deficiencyRepo.GetLetter(r.Context(), user.OrganizationID.String(), letterIDStr)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "document_id": req.DocumentID})
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
 }

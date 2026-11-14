@@ -112,6 +112,7 @@ func TestDeficiencyAPI_Workflow(t *testing.T) {
 	r.Get("/api/v1/dossiers/{id}/deficiencies", handler.ListDossierDeficiencies)
 	r.Post("/api/v1/dossiers/{id}/deficiencies", handler.CreateDossierDeficiency)
 	r.Get("/api/v1/deficiencies/letters/{letterId}", handler.GetDeficiencyLetter)
+	r.Post("/api/v1/deficiencies/letters/{letterId}/attach-document", handler.AttachDocumentToLetter)
 	r.Get("/api/v1/deficiencies/dashboard", handler.GetDeficiencyDashboard)
 	r.Put("/api/v1/deficiencies/tasks/{taskId}", handler.UpdateDeficiencyTask)
 	r.Post("/api/v1/deficiencies/tasks/{taskId}/validate-dt", handler.ValidateDeficiencyTaskDT)
@@ -325,6 +326,45 @@ func TestDeficiencyAPI_Workflow(t *testing.T) {
 		}
 		if len(letter.Tasks) != 2 {
 			t.Errorf("attendu 2 tâches, obtenu %d", len(letter.Tasks))
+		}
+	})
+
+	// Test 8: Rattachement du scan officiel ANPP archivé en GED
+	t.Run("POST /api/v1/deficiencies/letters/{letterId}/attach-document [Rattachement Scan GED]", func(t *testing.T) {
+		testDocID := uuid.New()
+		_, err := db.Pool.Exec(context.Background(), `
+			INSERT INTO ged_documents (id, organization_id, taxonomy_path, title_fr, document_code, status, current_version)
+			VALUES ($1, $2, '01_Affaires_Reglementaires/01_06_Correspondances_ANPP', 'Notification Officielle ANPP Scan Numérisé', 'SCAN-ANPP-TEST', 'brouillon', 'v0.1')
+		`, testDocID, testOrgID)
+		if err != nil {
+			t.Fatalf("échec insertion document test GED: %v", err)
+		}
+
+		attachPayload := map[string]string{
+			"document_id": testDocID.String(),
+		}
+		bodyBytes, _ := json.Marshal(attachPayload)
+
+		req := httptest.NewRequest("POST", "/api/v1/deficiencies/letters/"+createdLetterID+"/attach-document", bytes.NewReader(bodyBytes))
+		req = req.WithContext(context.WithValue(req.Context(), UserContextKey, raUser))
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("attendu code 200 OK lors du rattachement scan, obtenu %d: %s", w.Code, w.Body.String())
+		}
+
+		var updatedLetter domain.ANPPDeficiencyLetter
+		if err := json.NewDecoder(w.Body).Decode(&updatedLetter); err != nil {
+			t.Fatalf("échec décodage lettre mise à jour: %v", err)
+		}
+
+		if updatedLetter.DocumentID == nil || *updatedLetter.DocumentID != testDocID.String() {
+			t.Errorf("DocumentID attendu %s, obtenu %v", testDocID.String(), updatedLetter.DocumentID)
+		}
+		if updatedLetter.DocumentTitle != "Notification Officielle ANPP Scan Numérisé" {
+			t.Errorf("DocumentTitle attendu 'Notification Officielle ANPP Scan Numérisé', obtenu %s", updatedLetter.DocumentTitle)
 		}
 	})
 }
