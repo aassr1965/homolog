@@ -263,6 +263,37 @@ const mockAuditTrail = [
                 const btnExp = document.getElementById('tb-btn-export');
                 if (btnExp) btnExp.style.display = 'none';
             }
+
+            // Garde-Fou Zero-Trust & Univers Dédié Administrateur Système (SYS_MAINT / CDC Section 7.1) :
+            const isSystemAdmin = hasRole('admin_systeme_local', 'super_admin_editeur');
+            if (isSystemAdmin) {
+                // Masquer tous les univers métier pharmaceutiques pour l'administrateur IT (Zero-Trust strict)
+                ['act-ref', 'act-ctd', 'act-variations', 'act-dm', 'act-ged', 'act-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                ['mob-act-ref', 'mob-act-ctd', 'mob-act-variations', 'mob-act-dm', 'mob-act-ged', 'mob-act-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+
+                // Afficher le bouton Cockpit IT
+                const actSys = document.getElementById('act-sys');
+                if (actSys) actSys.style.display = '';
+                const mobSys = document.getElementById('mob-act-sys');
+                if (mobSys) mobSys.style.display = '';
+
+                // Rediriger automatiquement vers l'univers IT si l'utilisateur est sur un module pharma
+                if (currentDomain !== 'sys' && currentDomain !== 'audit') {
+                    setTimeout(() => switchDomainModule('sys'), 10);
+                }
+            } else {
+                // Pour les profils non-IT, masquer le Cockpit IT
+                const actSys = document.getElementById('act-sys');
+                if (actSys) actSys.style.display = 'none';
+                const mobSys = document.getElementById('mob-act-sys');
+                if (mobSys) mobSys.style.display = 'none';
+            }
         }
 
         function showAppView(user, org) {
