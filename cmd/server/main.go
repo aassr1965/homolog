@@ -52,6 +52,7 @@ func main() {
 	var auditService *audit.Service
 	var authHandler *api.AuthHandler
 	var adminHandler *api.AdminHandler
+	var systemHandler *api.SystemHandler
 	var pharmaHandler *api.PharmaHandler
 	var gedHandler *api.GEDHandler
 	var dossierHandler *api.DossierHandler
@@ -78,6 +79,7 @@ func main() {
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService, cfg)
 		adminHandler = api.NewAdminHandler(db.Pool, sessionManager, auditService, cfg)
+		systemHandler = api.NewSystemHandler(db.Pool, sessionManager, auditService, cfg)
 
 		pharmaRepo := repository.NewPharmaRepository(db.Pool)
 		pharmaHandler = api.NewPharmaHandler(pharmaRepo, auditService)
@@ -228,6 +230,16 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Delete("/api/v1/admin/users/{id}", adminHandler.DisallowDeleteUser)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/roles", adminHandler.ListRoles)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/permissions", adminHandler.ListPermissions)
+			}
+
+			// Console Dédiée Administrateur Système & Maintenance IT (SYS_MAINT / PSSI)
+			if systemHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Get("/api/v1/system/metrics", systemHandler.GetSystemMetrics)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Get("/api/v1/system/sessions", systemHandler.ListActiveSessions)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Delete("/api/v1/system/sessions/{id}", systemHandler.RevokeSession)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/sessions/emergency-lockdown", systemHandler.EmergencyLockdown)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/backup", systemHandler.TriggerBackup)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/verify-integrity", systemHandler.VerifyCASIntegrity)
 			}
 
 			// Référentiel Établissements, Sites & Produits (Jalon 1.3 - Guide ANPP 2025)

@@ -372,6 +372,9 @@
                 } else if (domain === 'admin') {
                     icon = "⚙️";
                     text = isArabic ? "إدارة المخبر والمصفوفة" : "Administration Labo & Matrice RBAC";
+                } else if (domain === 'sys') {
+                    icon = "🖥️";
+                    text = isArabic ? "لوحة تحكم البنية التحتية" : "Cockpit IT & Infrastructure PSSI";
                 }
                 titleEl.innerHTML = `<span>${icon}</span> <span>${text}</span>`;
             }
@@ -411,6 +414,14 @@
                 document.getElementById("bc-mod").innerText = "Conformité PSSI & BPF";
                 if (typeof loadAdminSection === 'function') {
                     loadAdminSection(currentAdminSection || 'users');
+                }
+            } else if (domain === 'sys') {
+                document.getElementById("bc-root").innerText = "INFRASTRUCTURE_IT";
+                document.getElementById("bc-sec").innerText = "On-Premise_BPF";
+                document.getElementById("bc-prod").innerText = "PostgreSQL & CAS";
+                document.getElementById("bc-mod").innerText = "Haute Disponibilité";
+                if (typeof loadSystemSection === 'function') {
+                    loadSystemSection(currentSystemSection || 'status');
                 }
             }
 
@@ -496,11 +507,28 @@
                         PSSI Labo : <strong style="color:var(--accent-emerald);">Contrôle d'Accès ALCOA+ & SoD</strong>
                     </div>
                 `;
+            } else if (domain === 'sys') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="loadSystemMetrics()">🔄 Actualiser Métriques</button>
+                    <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none;" onclick="triggerSystemBackup()">💾 Instantané Sauvegarde</button>
+                    <button class="btn-pill" onclick="triggerCASIntegrityCheck()">🔍 Contrôle Intégrité CAS</button>
+                    <button class="btn-pill" style="border-color:#ef4444; color:#ef4444;" onclick="openEmergencyLockdownModal()">🚨 Verrouillage Urgence</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Infrastructure : <strong style="color:var(--accent-emerald);">PostgreSQL 16+ &amp; CAS SHA-256</strong>
+                    </div>
+                `;
             }
         }
 
         function renderTreeForDomain(domain) {
             const container = document.getElementById("tree-root");
+            if (domain === 'sys') {
+                if (typeof renderSystemTree === 'function') {
+                    renderSystemTree();
+                }
+                return;
+            }
             if (domain === 'ref') {
                 container.innerHTML = `
                     <div class="tree-node ${currentRefSection === 'establishments' ? 'selected' : ''}" onclick="loadRefSection('establishments')">
