@@ -58,6 +58,7 @@ func main() {
 	var dossierHandler *api.DossierHandler
 	var deficiencyHandler *api.DeficiencyHandler
 	var feeHandler *api.FeeHandler
+	var submissionHandler *api.SubmissionHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -103,6 +104,8 @@ func main() {
 
 		feeRepo := repository.NewFeeRepository(db.Pool)
 		feeHandler = api.NewFeeHandler(feeRepo, dossierRepo, auditService, db.Pool)
+
+		submissionHandler = api.NewSubmissionHandler(dossierRepo, feeRepo, pharmaRepo, auditService)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -353,6 +356,13 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}", feeHandler.GetPaymentSlip)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}/print-html", feeHandler.GetPaymentSlipPrintHTML)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Put("/api/v1/fees/slips/{slipId}/status", feeHandler.UpdatePaymentSlipStatus)
+			}
+
+			// Assistant de Soumission E-Services ANPP & Validation Pré-Dépôt (Jalon 1.7 Phase 3)
+			if submissionHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/pre-submission-audit", submissionHandler.GetPreSubmissionAudit)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/eservices-manifest", submissionHandler.GetEservicesManifest)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/lock-pre-submission", submissionHandler.LockPreSubmission)
 			}
 		})
 	}

@@ -2161,16 +2161,86 @@
         </div>
     </div>
 
+    <!-- Modal Assistant de Soumission E-Services ANPP & Validation Pré-Dépôt (Jalon 1.7 Phase 3) -->
+    <div class="modal-overlay" id="modal-pre-submission-audit" onclick="if(event.target === this) closeModal('modal-pre-submission-audit')">
+        <div class="modal modal-xl" style="width:860px; max-width:min(860px, calc(100vw - 24px)); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🚀</span>
+                    <span>Assistant de Soumission E-Services ANPP &amp; Validation Pré-Dépôt</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-pre-submission-audit')">✕</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">Dossier d'Enregistrement Cible :</div>
+                        <div style="font-size:13px; font-weight:800; color:var(--accent-blue);" id="audit-dossier-code"></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">Produit / Spécialité :</div>
+                        <div style="font-size:12px; font-weight:700; color:var(--text-main);" id="audit-product-name"></div>
+                    </div>
+                </div>
+
+                <!-- Bannière d'état éligibilité Gatekeeper BPF / ANPP -->
+                <div id="audit-summary-banner" style="margin-bottom:14px;"></div>
+
+                <!-- Tableau détaillé des règles et points de contrôle -->
+                <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; overflow:hidden; margin-bottom:16px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                        <thead>
+                            <tr style="background:var(--bg-sub); border-bottom:1px solid var(--border-color); color:var(--text-dim); font-size:10px; text-transform:uppercase;">
+                                <th style="padding:8px 10px; text-align:left; width:130px;">Domaine</th>
+                                <th style="padding:8px 10px; text-align:left;">Exigence Réglementaire (Décret 20-325 &amp; Arrêté)</th>
+                                <th style="padding:8px 10px; text-align:center; width:110px;">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-checks-tbody">
+                            <!-- Injecté dynamiquement par submissions.js -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Zone d'action et manifeste E-Services -->
+                <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:6px; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <div style="font-size:12px; font-weight:700; color:var(--text-main);">📦 Package Manifeste E-Services ANPP (v2.4)</div>
+                        <div style="font-size:10.5px; color:var(--text-dim); margin-top:2px;">Contient l'inventaire scellé, les empreintes SHA-256 et la quittance BV1 Trésor.</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="downloadEservicesManifest('json')" style="font-size:11px;">
+                            📥 Télécharger Manifeste (JSON)
+                        </button>
+                        <button type="button" class="btn-pill" onclick="downloadEservicesManifest('xml')" style="font-size:11px;">
+                            📄 Télécharger Manifeste (XML)
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; color:var(--text-dim);">La certification pré-dépôt requiert l'habilitation légale du Pharmacien Directeur Technique (1.A.7).</span>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-pre-submission-audit')">Fermer</button>
+                    <button type="button" id="btn-lock-submission" class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none;" onclick="executeLockPreSubmission()">
+                        🔒 Certifier &amp; Verrouiller pour Dépôt ANPP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.14.6"></script>
-    <script src="/js/auth.js?v=2026.11.14.6"></script>
-    <script src="/js/admin.js?v=2026.11.14.6"></script>
-    <script src="/js/system_admin.js?v=2026.11.14.6"></script>
-    <script src="/js/referential.js?v=2026.11.14.6"></script>
-    <script src="/js/variations.js?v=2026.11.14.6"></script>
-    <script src="/js/ged.js?v=2026.11.14.6"></script>
-    <script src="/js/dossiers.js?v=2026.11.14.6"></script>
-    <script src="/js/deficiencies.js?v=2026.11.14.6"></script>
-    <script src="/js/fees.js?v=2026.11.14.6"></script>
+    <script src="/js/app.js?v=2026.11.14.7"></script>
+    <script src="/js/auth.js?v=2026.11.14.7"></script>
+    <script src="/js/admin.js?v=2026.11.14.7"></script>
+    <script src="/js/system_admin.js?v=2026.11.14.7"></script>
+    <script src="/js/referential.js?v=2026.11.14.7"></script>
+    <script src="/js/variations.js?v=2026.11.14.7"></script>
+    <script src="/js/ged.js?v=2026.11.14.7"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.7"></script>
+    <script src="/js/deficiencies.js?v=2026.11.14.7"></script>
+    <script src="/js/fees.js?v=2026.11.14.7"></script>
+    <script src="/js/submissions.js?v=2026.11.14.7"></script>
 </body>
 </html>

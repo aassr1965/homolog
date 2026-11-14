@@ -41,6 +41,9 @@ const (
 	ActionFeeSlipGenerated       = "FEE_SLIP_GENERATED"
 	ActionFeeSlipStatusUpdate     = "FEE_SLIP_STATUS_UPDATE"
 	ActionFeeScheduleUpdate      = "FEE_SCHEDULE_UPDATE"
+	ActionPreSubmissionAudit     = "PRE_SUBMISSION_AUDIT"
+	ActionPreSubmissionLock      = "PRE_SUBMISSION_LOCK"
+	ActionManifestExport         = "ESERVICES_MANIFEST_EXPORT"
 )
 
 // Entry représente les données à consigner dans l'Audit Trail
