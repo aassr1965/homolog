@@ -108,7 +108,8 @@ function renderDeficienciesDashboardView(data) {
                             Traçabilité ALCOA+ des notifications officielles de l'ANPP, décomposition par question/module et visa légal Pharmacien Directeur Technique (1.A.7).
                         </div>
                     </div>
-                    <div style="display:flex; gap:8px;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; padding:6px 14px; font-size:11.5px;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
                         <button class="btn-pill" onclick="loadDeficienciesDashboard()" title="Actualiser les compteurs">🔄 Actualiser</button>
                     </div>
                 </div>
@@ -145,7 +146,7 @@ function renderDeficienciesDashboardView(data) {
             <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">
                 <div style="padding:10px 14px; background:var(--bg-surface); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-weight:700; font-size:12px; color:var(--text-main);">📋 Notifications Officielles de Compléments en Instance (${letters.length})</span>
-                    <span style="font-size:11px; color:var(--text-dim);">Triées par urgence croissante</span>
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; font-weight:700; border:none; padding:4px 12px;" onclick="openNewDeficiencyLetterModal()">➕ Nouvelle Notification ANPP</button>
                 </div>
     `;
 
@@ -154,7 +155,8 @@ function renderDeficienciesDashboardView(data) {
             <div style="padding:40px; text-align:center; color:var(--text-muted);">
                 <div style="font-size:32px; margin-bottom:8px;">🎉</div>
                 <div style="font-weight:600; font-size:13px; color:var(--text-main);">Aucun complément ANPP en instance</div>
-                <div style="font-size:11px; margin-top:4px;">Tous les dossiers d'enregistrement sont à jour ou en attente d'évaluation initiale.</div>
+                <div style="font-size:11px; margin-top:4px; margin-bottom:16px;">Tous les dossiers d'enregistrement sont à jour ou en attente d'évaluation initiale.</div>
+                <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; padding:8px 18px; font-size:12px; cursor:pointer;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
             </div>
         `;
     } else {
