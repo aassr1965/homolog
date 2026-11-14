@@ -332,7 +332,7 @@ const mockAuditTrail = [
 
             switchDomainModule(targetDomain);
 
-            // Rafraîchissement discret des alertes de compléments ANPP
+            // Rafraîchissement discret des alertes de compléments ANPP et compteur d'échéances
             if (typeof updateDeficiencyBadgeCount === 'function' && typeof hasPermission === 'function' && hasPermission('DOSSIER_VIEW')) {
                 fetch('/api/v1/deficiencies/dashboard')
                     .then(r => r.json())
@@ -340,6 +340,9 @@ const mockAuditTrail = [
                         updateDeficiencyBadgeCount(data);
                     })
                     .catch(() => {});
+            }
+            if (typeof refreshAlertsModalContent === 'function') {
+                refreshAlertsModalContent();
             }
         }
 
@@ -547,10 +550,95 @@ const mockAuditTrail = [
             );
         }
 
-        function openAlertsModal() {
+        async function openAlertsModal() {
             closeAddressBar();
             closeAllModals();
-            document.getElementById("modal-alerts").classList.add("open");
+            openModal("modal-alerts");
+            await refreshAlertsModalContent();
+        }
+
+        async function refreshAlertsModalContent() {
+            const container = document.getElementById("alerts-cards-container");
+            if (!container) return;
+
+            let letters = [];
+            try {
+                const resp = await fetch('/api/v1/deficiencies/dashboard');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    letters = data.recent_letters || [];
+                    
+                    const criticalCount = data.critical_letters || 0;
+                    const urgentCount = data.urgent_letters || 0;
+                    const totalUrgent = criticalCount + urgentCount;
+                    const txtAlerts = document.getElementById("txt-urgent-alerts");
+                    if (txtAlerts) {
+                        const displayCount = Math.max(totalUrgent, letters.length);
+                        txtAlerts.innerText = `${displayCount} Échéance${displayCount > 1 ? 's' : ''} (J < 30j)`;
+                    }
+                }
+            } catch (e) {
+                console.warn("Échec chargement alertes compléments:", e);
+            }
+
+            let html = '';
+
+            // 1. Alertes réelles issues de la base SQL (Compléments ANPP)
+            if (letters.length > 0) {
+                letters.forEach(l => {
+                    const days = l.days_remaining != null ? l.days_remaining : 30;
+                    const isCritical = days <= 15;
+                    const badgeColor = isCritical ? '#ef4444' : '#f59e0b';
+                    const badgeBg = isCritical ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)';
+                    const cardClass = isCritical ? 'alert-card' : 'alert-card warning';
+                    const statusTxt = days < 0 ? `Expiré (${Math.abs(days)}j de retard)` : `Expire dans ${days} jour${days > 1 ? 's' : ''}`;
+
+                    html += `
+                        <div class="${cardClass}">
+                            <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-size:14px;">⏱️</span>
+                                    <strong style="font-size:13px; color:var(--text-main);">Demande de Compléments ANPP — ${escapeHTML(l.product_brand_name || l.dossier_reference || 'Dossier')}</strong>
+                                    <span style="background:${badgeBg}; color:${badgeColor}; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;">${statusTxt}</span>
+                                </div>
+                                <div style="color:var(--text-muted); font-size:11px;">
+                                    Courrier officiel : <code style="color:${isCritical ? 'var(--accent-blue)' : 'var(--accent-amber)'};">${escapeHTML(l.reference_number)}</code> • Date butoir : <strong>${(l.due_date || '').substring(0, 10)}</strong> • Dossier : <strong>${escapeHTML(l.dossier_reference || '')}</strong>
+                                </div>
+                                <div style="color:var(--text-dim); font-size:11px;">
+                                    ${l.notes ? escapeHTML(l.notes) : 'Réponses aux questions notifiées et visa Pharmacien Directeur Technique requis (Mandat 1.A.7).'}
+                                </div>
+                            </div>
+                            <button class="btn-pill" style="background:${badgeColor}; color:white; border:none; padding:6px 12px; white-space:nowrap; cursor:pointer;" onclick="closeModal('modal-alerts'); if(typeof switchDomainModule === 'function') switchDomainModule('deficiencies'); if(typeof openDeficiencyLetterDetail === 'function') openDeficiencyLetterDetail('${l.id}');">
+                                Ouvrir Studio ➔
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            // 2. Alertes statutaires réglementaires (AMM & DM)
+            html += `
+                <div class="alert-card">
+                    <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:14px;">💊</span>
+                            <strong style="font-size:13px; color:var(--text-main);">Renouvellement Décision d'Enregistrement (AMM) — Paracétamol 500mg</strong>
+                            <span style="background:rgba(239,68,68,0.2); color:#ef4444; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;">Expire dans 18 jours</span>
+                        </div>
+                        <div style="color:var(--text-muted); font-size:11px;">
+                            Référence ANPP : <code style="color:var(--accent-blue);">DZ-2019-0412</code> • Date limite de dépôt : <strong>28/11/2026</strong> • Type : Renouvellement quinquennal
+                        </div>
+                        <div style="color:var(--text-dim); font-size:11px;">
+                            Action requise : Valider les pièces administratives du Module 1 (Statut de commercialisation, BPF fabricant actif).
+                        </div>
+                    </div>
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 12px; white-space:nowrap; cursor:pointer;" onclick="goToLocation('ctd-para-1'); closeModal('modal-alerts');">
+                        Accéder au Module 1 ➔
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = html;
         }
 
         async function openAuditModal() {
