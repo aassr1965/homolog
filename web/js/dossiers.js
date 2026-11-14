@@ -124,7 +124,7 @@
                             Seul le dossier d'expertise contractuellement assigné est affiché ci-dessous (CDC Section 7.2.2).
                         </div>
                     ` : `
-                        <button class="btn-pill" data-perm="DOSSIER_EDIT" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:600;" onclick="openNewDossierModal()">
+                        <button class="btn-pill" data-perm="DOSSIER_CREATE" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:600;" onclick="openNewDossierModal()">
                             ➕ Nouveau Dossier ANPP
                         </button>
                     `}
