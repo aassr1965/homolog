@@ -56,6 +56,7 @@ func main() {
 	var pharmaHandler *api.PharmaHandler
 	var gedHandler *api.GEDHandler
 	var dossierHandler *api.DossierHandler
+	var deficiencyHandler *api.DeficiencyHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -75,6 +76,9 @@ func main() {
 		// Initialisation des dossiers réglementaires ANPP de démonstration (Jalon 1.5)
 		api.SeedInitialDossiers(ctx, db.Pool, cfg.OnPremOrgSlug)
 
+		// Initialisation du Studio de Compléments ANPP & Traçabilité Délais (Jalon 1.7)
+		api.SeedInitialDeficiencies(ctx, db.Pool, cfg.OnPremOrgSlug)
+
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService, cfg)
@@ -89,6 +93,9 @@ func main() {
 
 		dossierRepo := repository.NewDossierRepository(db.Pool)
 		dossierHandler = api.NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditService, db.Pool)
+
+		deficiencyRepo := repository.NewDeficiencyRepository(db.Pool)
+		deficiencyHandler = api.NewDeficiencyHandler(deficiencyRepo, dossierRepo, auditService, db.Pool)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -310,6 +317,19 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/members", dossierHandler.ListMembers)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Post("/api/v1/dossiers/{id}/members", dossierHandler.AssignMember)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Delete("/api/v1/dossiers/{id}/members/{userId}", dossierHandler.RemoveMember)
+			}
+
+			// Studio de Compléments ANPP & Traçabilité des Réponses (Jalon 1.7)
+			if deficiencyHandler != nil {
+				// Liste et création de demandes de compléments au sein d'un dossier
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/deficiencies", deficiencyHandler.ListDossierDeficiencies)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/deficiencies", deficiencyHandler.CreateDossierDeficiency)
+
+				// Pilotage unitaire, alertes de délai légal et visa PDT
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/deficiencies/letters/{letterId}", deficiencyHandler.GetDeficiencyLetter)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/deficiencies/dashboard", deficiencyHandler.GetDeficiencyDashboard)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Put("/api/v1/deficiencies/tasks/{taskId}", deficiencyHandler.UpdateDeficiencyTask)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/deficiencies/tasks/{taskId}/validate-dt", deficiencyHandler.ValidateDeficiencyTaskDT)
 			}
 		})
 	}

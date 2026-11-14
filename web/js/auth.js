@@ -331,6 +331,16 @@ const mockAuditTrail = [
             }
 
             switchDomainModule(targetDomain);
+
+            // Rafraîchissement discret des alertes de compléments ANPP (Jalon 1.7)
+            if (typeof updateDeficiencyBadgeCount === 'function' && typeof hasPermission === 'function' && hasPermission('DOSSIER_VIEW')) {
+                fetch('/api/v1/deficiencies/dashboard')
+                    .then(r => r.json())
+                    .then(data => {
+                        updateDeficiencyBadgeCount(data);
+                    })
+                    .catch(() => {});
+            }
         }
 
         function toggleUserDropdown(e) {

@@ -236,6 +236,11 @@
                 <span class="act-icon">📋</span>
                 <span class="act-label" id="lbl-act-ctd">Dossiers CTD</span>
             </button>
+            <button class="act-btn" id="act-deficiencies" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('deficiencies')" title="Studio de Compléments ANPP & Compte à Rebours Légal (Jalon 1.7)">
+                <span class="act-icon">⏱️</span>
+                <span class="act-label" id="lbl-act-def">Compléments</span>
+                <span class="act-badge" id="badge-deficiencies" style="display:none; background:var(--accent-red); color:white;">0</span>
+            </button>
             <button class="act-btn" id="act-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (12 Items ANPP)">
                 <span class="act-icon">🔄</span>
                 <span class="act-label" id="lbl-act-var">Variations</span>
@@ -272,6 +277,7 @@
             <div class="mobile-domain-switcher" id="mobile-domain-switcher">
                 <button class="mob-dom-btn active" id="mob-act-ref" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique">🏢 Ref</button>
                 <button class="mob-dom-btn" id="mob-act-ctd" onclick="switchDomainModule('ctd')" title="Dossiers CTD">📋 CTD</button>
+                <button class="mob-dom-btn" id="mob-act-deficiencies" onclick="switchDomainModule('deficiencies')" title="Compléments ANPP">⏱️ Compléments</button>
                 <button class="mob-dom-btn" id="mob-act-variations" onclick="switchDomainModule('variations')" title="Variations Post-AMM">🔄 Variations</button>
                 <button class="mob-dom-btn" id="mob-act-dm" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">💉 DM</button>
                 <button class="mob-dom-btn" id="mob-act-ged" onclick="switchDomainModule('ged')" title="GED BPF">📁 GED</button>
@@ -1855,14 +1861,123 @@
     </div>
 
 
+    <!-- Modal Nouvelle Notification Officielle de Compléments ANPP -->
+    <div class="modal" id="modal-new-deficiency-letter">
+        <div class="modal-content" style="max-width:680px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>⏱️</span>
+                    <span>Enregistrer une Notification de Compléments ANPP (Jalon 1.7)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-new-deficiency-letter')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-deficiency-letter" onsubmit="executeCreateDeficiencyLetter(event)">
+                    <input type="hidden" id="def-dossier-id">
+                    
+                    <div style="margin-bottom:12px;" id="def-dossier-select-container">
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Dossier d'Enregistrement Rattaché * :</label>
+                        <select id="def-dossier-select" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            <option value="">-- Sélectionner un dossier d'enregistrement --</option>
+                        </select>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Réf. Notification ANPP * :</label>
+                            <input type="text" id="def-ref-number" required placeholder="ex: ANPP/DEPP/N°1428/2026" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date Réception * :</label>
+                            <input type="date" id="def-received-date" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Délai Légal (Jours) :</label>
+                            <select id="def-deadline-days" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="30">30 jours (Urgence / Précision)</option>
+                                <option value="60">60 jours (Compléments ciblés)</option>
+                                <option value="90" selected>90 jours (Délai légal standard 20-325)</option>
+                                <option value="180">180 jours (Études de stabilité complémentaires)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Notes / Contexte de la Commission :</label>
+                        <input type="text" id="def-notes" placeholder="ex: Séance de la Commission d'Enregistrement du 12 Novembre..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+
+                    <!-- Décomposition des questions unitaires -->
+                    <div style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-weight:700; font-size:12px; color:var(--text-main);">📋 Décomposition des Questions Notifiées</span>
+                            <button type="button" class="btn-pill" style="font-size:11px;" onclick="addQuestionRowToLetterModal()">➕ Ajouter une question</button>
+                        </div>
+                        <div id="def-questions-rows" style="max-height:260px; overflow-y:auto; padding-right:4px;">
+                            <!-- Injecté dynamiquement -->
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:14px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-new-deficiency-letter')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none;">Enregistrer la Notification (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Studio Détail Lettre & Questions avec Visa PDT -->
+    <div class="modal" id="modal-deficiency-detail">
+        <div class="modal-content" style="max-width:820px; max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>⏱️</span>
+                    <span>Studio de Traitement des Compléments ANPP</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-deficiency-detail')">✕</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <!-- Synthèse de la notification officielle -->
+                <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <div id="m-def-ref" style="font-size:15px; font-weight:800; color:var(--accent-blue);"></div>
+                            <div id="m-def-product" style="font-size:11.5px; font-weight:600; color:var(--text-main); margin-top:2px;"></div>
+                            <div id="m-def-notes" style="font-size:11px; color:var(--text-dim); margin-top:4px;"></div>
+                        </div>
+                        <div id="m-def-countdown"></div>
+                    </div>
+                    <div style="display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--text-muted); border-top:1px dashed var(--border-color); padding-top:6px;">
+                        <div>Date Réception : <strong id="m-def-received" style="color:var(--text-main);"></strong></div>
+                        <div>Date Échéance Légale : <strong id="m-def-due" style="color:var(--text-main);"></strong></div>
+                    </div>
+                </div>
+
+                <!-- Liste des questions décomposées -->
+                <div style="font-weight:700; font-size:12px; color:var(--text-main); margin-bottom:10px;">
+                    Questions Notifiées &amp; Argumentaires Réglementaires
+                </div>
+                <div id="m-def-tasks-list" style="display:flex; flex-direction:column; gap:12px;">
+                    <!-- Injecté dynamiquement -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; color:var(--text-dim);">Les réponses visées par le Pharmacien DT sont immédiatement scellées dans l'Audit Trail.</span>
+                <button type="button" class="btn-pill" onclick="closeModal('modal-deficiency-detail')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.14.4"></script>
-    <script src="/js/auth.js?v=2026.11.14.4"></script>
-    <script src="/js/admin.js?v=2026.11.14.4"></script>
-    <script src="/js/system_admin.js?v=2026.11.14.4"></script>
-    <script src="/js/referential.js?v=2026.11.14.4"></script>
-    <script src="/js/variations.js?v=2026.11.14.4"></script>
-    <script src="/js/ged.js?v=2026.11.14.4"></script>
-    <script src="/js/dossiers.js?v=2026.11.14.4"></script>
+    <script src="/js/app.js?v=2026.11.14.5"></script>
+    <script src="/js/auth.js?v=2026.11.14.5"></script>
+    <script src="/js/admin.js?v=2026.11.14.5"></script>
+    <script src="/js/system_admin.js?v=2026.11.14.5"></script>
+    <script src="/js/referential.js?v=2026.11.14.5"></script>
+    <script src="/js/variations.js?v=2026.11.14.5"></script>
+    <script src="/js/ged.js?v=2026.11.14.5"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.5"></script>
+    <script src="/js/deficiencies.js?v=2026.11.14.5"></script>
 </body>
 </html>
