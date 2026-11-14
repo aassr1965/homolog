@@ -62,29 +62,40 @@
 
                 <!-- Sélecteur rapide de comptes pour tests & démonstration -->
                 <div class="demo-accounts-box">
-                    <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase;">
-                        ⚡ Comptes nominatifs d'habilitation pré-configurés :
+                    <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; margin-bottom:4px;">
+                        ⚡ Comptes de test & Matrice des 9 Rôles BPF (Homolog2026!Dev) :
                     </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('dt@sanadpharma.dz', 'P@ssw0rdPharma2026!')">
-                        <div>
-                            <strong>💊 Dr. Amine K.</strong>
-                            <div style="color:var(--text-dim); font-size:10px;">Directeur Technique (Agrément MIPH)</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; max-height:180px; overflow-y:auto;">
+                        <div class="demo-btn" onclick="fillDemoAccount('pdt@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>💊 Dr. Yacine</strong><div style="color:var(--text-dim); font-size:9px;">Directeur Technique (1.A.7)</div></div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">dt@sanadpharma.dz</span>
-                    </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('admin@sanadpharma.dz', 'Admin@Pharma2026!')">
-                        <div>
-                            <strong>🏢 Karim M.</strong>
-                            <div style="color:var(--text-dim); font-size:10px;">Administrateur Laboratoire</div>
+                        <div class="demo-btn" onclick="fillDemoAccount('admin.lab@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>🏢 Karim M.</strong><div style="color:var(--text-dim); font-size:9px;">Admin Laboratoire</div></div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">admin@sanadpharma.dz</span>
-                    </div>
-                    <div class="demo-btn" onclick="fillDemoAccount('reg@sanadpharma.dz', 'Reg@Pharma2026!')">
-                        <div>
-                            <strong>📋 Sarah B.</strong>
-                            <div style="color:var(--text-dim); font-size:10px;">Affaires Réglementaires</div>
+                        <div class="demo-btn" onclick="fillDemoAccount('ra.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>📋 Sarah B.</strong><div style="color:var(--text-dim); font-size:9px;">Manager Affaires Réglem.</div></div>
                         </div>
-                        <span style="font-size:10px; color:var(--accent-blue); font-family:monospace;">reg@sanadpharma.dz</span>
+                        <div class="demo-btn" onclick="fillDemoAccount('ra.assoc@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>📝 Sofiane H.</strong><div style="color:var(--text-dim); font-size:9px;">Chargé Réglementaire (Maker)</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('qa.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>🔍 Nadir T.</strong><div style="color:var(--text-dim); font-size:9px;">Manager Assurance Qualité</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('qc.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>🔬 Leila M.</strong><div style="color:var(--text-dim); font-size:9px;">Contrôle Qualité & Stabilité</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('prod.lead@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>⚙️ Omar B.</strong><div style="color:var(--text-dim); font-size:9px;">Production & Validation Procédé</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('consultant.ext@cro.com', 'Homolog2026!Dev')">
+                            <div><strong>🤝 David M.</strong><div style="color:var(--text-dim); font-size:9px;">Consultant Externe CRO</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('auditeur.insp@anpp.dz', 'Homolog2026!Dev')">
+                            <div><strong>🛡️ Inspecteur ANPP</strong><div style="color:var(--text-dim); font-size:9px;">Auditeur Qualité / PSSI</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('admin.sys@cloud.dz', 'Homolog2026!Dev')">
+                            <div><strong>💻 Ahmed Z.</strong><div style="color:var(--text-dim); font-size:9px;">Admin Système (Zero-Trust)</div></div>
+                        </div>
                     </div>
                 </div>
 
@@ -161,9 +172,31 @@
                 <button class="btn-pill" onclick="openAddressBar()" title="Ouvrir la barre d'adresse ou navigation rapide (Ctrl+K)">
                     📁 <span id="txt-goto-btn">Aller à...</span> <kbd style="font-size:10px; opacity:0.6;">Ctrl+K</kbd>
                 </button>
+                <button class="btn-pill" onclick="window.open('/presentation', '_blank')" style="background:linear-gradient(135deg, #0284c7, #10b981); color:white; border:none; font-weight:700;" title="Ouvrir le support de présentation commercial (Pitch Deck 10 Slides)">
+                    📊 Pitch Commercial
+                </button>
+
                 <button class="btn-pill btn-urgent" onclick="openAlertsModal()">
                     🚨 <span id="txt-urgent-alerts">2 Échéances (J &lt; 30j)</span>
                 </button>
+
+                <!-- Sélecteur Rapide de Rôles pour le Développement (Jalon 1.2) -->
+                <div id="dev-role-switcher-container" style="display:flex; align-items:center; gap:6px; background:rgba(2,132,199,0.08); padding:3px 8px; border-radius:6px; border:1px dashed #0284c7;">
+                    <span style="font-size:11px; font-weight:700; color:#0284c7;">🧪 Rôle Dev :</span>
+                    <select id="dev-role-select" onchange="devSwitchRole(this.value)" style="font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:2px 6px; cursor:pointer;" title="Basculez instantanément de rôle pour tester les habilitations et masquages">
+                        <option value="pdt@pharma.dz">💊 Dr. Yacine (Pharmacien DT - 1.A.7)</option>
+                        <option value="admin.lab@pharma.dz">🏢 Karim M. (Admin Labo)</option>
+                        <option value="ra.lead@pharma.dz">📋 Sarah B. (Manager Affaires Réglem.)</option>
+                        <option value="ra.assoc@pharma.dz">📝 Sofiane H. (Chargé Affaires Réglem.)</option>
+                        <option value="qa.lead@pharma.dz">🔍 Nadir T. (Manager Assurance Qualité)</option>
+                        <option value="qc.lead@pharma.dz">🔬 Leila M. (Contrôle Qualité & Stabilités)</option>
+                        <option value="prod.lead@pharma.dz">⚙️ Omar B. (Production & Validation)</option>
+                        <option value="consultant.ext@cro.com">🤝 David M. (Consultant Externe CRO)</option>
+                        <option value="auditeur.insp@anpp.dz">🛡️ Inspecteur ANPP (Auditeur Qualité)</option>
+                        <option value="admin.sys@cloud.dz">💻 Ahmed Z. (Admin Système - Zero-Trust)</option>
+                        <option value="super.admin@homolog.dz">🌐 SuperAdmin Éditeur SaaS</option>
+                    </select>
+                </div>
 
                 <!-- Menu Utilisateur Connecté & Déconnexion -->
                 <div style="position: relative;">
@@ -177,7 +210,7 @@
                             <div id="u-drop-role" style="font-size:11px; color:var(--accent-emerald); font-weight:600; margin-top:3px;">Directeur Technique (BPF)</div>
                             <div id="u-drop-org" style="font-size:10px; color:var(--text-dim); margin-top:2px;">Laboratoire Pharmaceutique National</div>
                         </div>
-                        <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openAuditModal(); toggleUserDropdown();">
+                        <button class="addr-item" data-perm="AUDIT_VIEW" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openAuditModal(); toggleUserDropdown();">
                             🛡️ Consulter l'Audit Trail immuable
                         </button>
                         <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px; color:#ef4444;" onclick="executeLogout()">
@@ -195,31 +228,39 @@
 
         <!-- Activity Bar Latérale Gauche (Univers Métier Pharma) -->
         <div class="activity-bar">
-            <button class="act-btn active" id="act-ref" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique (MIPH, Sites, Produits)">
+            <button class="act-btn active" id="act-ref" data-perm="REF_VIEW" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique (MIPH, Sites, Produits)">
                 <span class="act-icon">🏢</span>
                 <span class="act-label" id="lbl-act-ref">Référentiel</span>
             </button>
-            <button class="act-btn" id="act-ctd" onclick="switchDomainModule('ctd')" title="Dossiers d'Enregistrement ANPP (Modules CTD 1 à 5)">
+            <button class="act-btn" id="act-ctd" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('ctd')" title="Dossiers d'Enregistrement ANPP (Modules CTD 1 à 5)">
                 <span class="act-icon">📋</span>
                 <span class="act-label" id="lbl-act-ctd">Dossiers CTD</span>
             </button>
-            <button class="act-btn" id="act-variations" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (12 Items ANPP)">
+            <button class="act-btn" id="act-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (12 Items ANPP)">
                 <span class="act-icon">🔄</span>
                 <span class="act-label" id="lbl-act-var">Variations</span>
                 <span class="act-badge">12</span>
             </button>
-            <button class="act-btn" id="act-dm" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
+            <button class="act-btn" id="act-dm" data-perm="REF_VIEW" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
                 <span class="act-icon">💉</span>
                 <span class="act-label" id="lbl-act-dm">Dispositifs DM</span>
             </button>
-            <button class="act-btn" id="act-ged" onclick="switchDomainModule('ged')" title="GED BPF & Assurance Qualité (01_ à 05_)">
+            <button class="act-btn" id="act-ged" data-perm="DOC_READ" onclick="switchDomainModule('ged')" title="GED BPF & Assurance Qualité (01_ à 05_)">
                 <span class="act-icon">📁</span>
                 <span class="act-label" id="lbl-act-ged">GED BPF</span>
+            </button>
+            <button class="act-btn" id="act-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Console Dédiée Administration Labo & Matrice RBAC (USER_MANAGE)">
+                <span class="act-icon">⚙️</span>
+                <span class="act-label" id="lbl-act-admin">Admin Lab</span>
+            </button>
+            <button class="act-btn" id="act-sys" data-perm="SYS_MAINT" onclick="switchDomainModule('sys')" title="Cockpit Infrastructure, Backups & Sécurité Serveur (SYS_MAINT)" style="display:none;">
+                <span class="act-icon">🖥️</span>
+                <span class="act-label" id="lbl-act-sys">Cockpit IT</span>
             </button>
 
             <div class="act-spacer"></div>
 
-            <button class="act-btn" onclick="openAuditModal()" title="Piste d'Audit Trail Immuable (21 CFR Part 11)">
+            <button class="act-btn" data-perm="AUDIT_VIEW" onclick="openAuditModal()" title="Piste d'Audit Trail Immuable (21 CFR Part 11)">
                 <span class="act-icon">🛡️</span>
                 <span class="act-label" id="lbl-act-audit">Audit Trail</span>
             </button>
@@ -234,6 +275,8 @@
                 <button class="mob-dom-btn" id="mob-act-variations" onclick="switchDomainModule('variations')" title="Variations Post-AMM">🔄 Variations</button>
                 <button class="mob-dom-btn" id="mob-act-dm" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">💉 DM</button>
                 <button class="mob-dom-btn" id="mob-act-ged" onclick="switchDomainModule('ged')" title="GED BPF">📁 GED</button>
+                <button class="mob-dom-btn" id="mob-act-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration Labo">⚙️ Admin</button>
+                <button class="mob-dom-btn" id="mob-act-sys" data-perm="SYS_MAINT" onclick="switchDomainModule('sys')" title="Cockpit IT" style="display:none;">🖥️ IT</button>
             </div>
 
             <div class="tree-header">
@@ -289,7 +332,7 @@
         <!-- Pane 3 : Right Preview Pane (Windows Preview Pane) -->
         <div class="pane-preview" id="pane-preview">
             <div class="preview-header">
-                <div class="preview-tabs-nav">
+                <div class="preview-tabs-nav" id="preview-tabs-container">
                     <button class="pvt-btn active" id="pvt-btn-doc" onclick="switchPreviewSubTab('doc')">📄 Aperçu Pièce GED</button>
                     <button class="pvt-btn" id="pvt-btn-anpp" onclick="switchPreviewSubTab('anpp')">📋 Fiche ANPP</button>
                 </div>
@@ -343,6 +386,10 @@
         <button class="mob-nav-btn" id="mobnav-ged" onclick="switchDomainModule('ged')" title="GED BPF">
             <span class="mob-nav-icon">📁</span>
             <span class="mob-nav-label">GED</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration">
+            <span class="mob-nav-icon">⚙️</span>
+            <span class="mob-nav-label">Admin</span>
         </button>
         <button class="mob-nav-btn" id="mobnav-tree" onclick="toggleMobileTree()" title="Arborescence">
             <span class="mob-nav-icon">🌳</span>
@@ -601,7 +648,7 @@
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:16px;">🏢</span>
-                    <span>Enregistrement d'un Établissement Pharmaceutique (MIPH / Décret 20-325)</span>
+                    <span id="modal-est-title">Enregistrement d'un Établissement Pharmaceutique (MIPH / Décret 20-325)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-new-est')">✕</button>
             </div>
@@ -658,7 +705,91 @@
                     </div>
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:10px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-est')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer l'Établissement (Base SQL)</button>
+                        <button type="submit" id="modal-est-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer l'Établissement (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Site de Fabrication / Contrôle (Jalon 1.3 - Modules 1.H.8 & 1.M) -->
+    <div class="modal-overlay" id="modal-new-site" onclick="if(event.target === this) closeModal('modal-new-site')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">🏭</span>
+                    <span id="modal-site-title">Enregistrement d'un Site Intervenant (ANPP 1.H.8 &amp; 1.M)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-new-site')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-site" onsubmit="handleCreateManufacturingSite(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nom du Site Intervenant (FR) * :</label>
+                            <input type="text" id="site-name-fr" required placeholder="Ex: Laboratoires Atlas - Unité Formes Sèches" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Pays d'implantation (Code ISO-2) * :</label>
+                            <input type="text" id="site-country-code" required maxlength="2" placeholder="DZ, FR, IN, IT..." value="DZ" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:700; text-transform:uppercase;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Rôle Réglementaire dans le CTD (1.H.8) * :</label>
+                            <select id="site-role" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px; font-size:12px; font-weight:600;">
+                                <option value="formulateur_pf">Formulateur Produit Fini (PF - 1.M.P)</option>
+                                <option value="synthese_sa">Fabricant Substance Active / API (1.M.S)</option>
+                                <option value="intermediaire">Fabricant Intermédiaire de Synthèse</option>
+                                <option value="conditionneur_primaire">Conditionnement Primaire</option>
+                                <option value="conditionneur_secondaire">Conditionnement Secondaire</option>
+                                <option value="controle_analytique">Contrôle Analytique &amp; Libération BPF</option>
+                                <option value="stockage">Magasinage &amp; Stockage Agréé</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Établissement Titulaire Rattaché :</label>
+                            <select id="site-est-id" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="">-- Aucun / Site Tiers Extérieur ou Façonnier --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Licence de Fabrication (ML 1.M.1) :</label>
+                            <input type="text" id="site-ml-number" placeholder="Ex: ML-DZ-2024-0012" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Certificat BPF / GMP (1.M.2) :</label>
+                            <input type="text" id="site-gmp-number" placeholder="Ex: GMP-ANPP-2025-045" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Autorité Émettrice GMP :</label>
+                            <input type="text" id="site-gmp-authority" value="ANPP" placeholder="Ex: ANPP, ANSM, US FDA, EDQM..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date d'Octroi BPF :</label>
+                            <input type="date" id="site-gmp-grant" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Échéance BPF (Alertes J-90) :</label>
+                            <input type="date" id="site-gmp-expiry" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Adresse Physique &amp; Zone Industrielle :</label>
+                        <input type="text" id="site-address" placeholder="Ex: Zone Industrielle Oued Smar, Lot 42, Alger" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-new-site')">Annuler</button>
+                        <button type="submit" id="modal-site-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Site (Base SQL)</button>
                     </div>
                 </form>
             </div>
@@ -671,7 +802,7 @@
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:16px;">💊</span>
-                    <span>Nouveau Médicament (Guide Enregistrement ANPP 2025)</span>
+                    <span id="modal-med-title">Nouveau Médicament (Guide Enregistrement ANPP 2025)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-new-med')">✕</button>
             </div>
@@ -741,38 +872,131 @@
                         </div>
                     </div>
 
+                    <!-- Traçabilité Producteur Étranger & Certificat CPP OMS (ANPP 1.H.1 & 1.H.8) -->
+                    <div id="foreign-producer-group" style="display:none; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <h4 style="font-size:11px; margin-bottom:8px; color:var(--accent-blue);">🌍 Producteur Étranger &amp; Certificat CPP (ANPP 1.H.1 &amp; 1.H.8)</h4>
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Laboratoire Titulaire / Demandeur Étranger (MAH) :</label>
+                                <input type="text" id="med-foreign-mah" placeholder="Ex: Sanofi Winthrop Industrie, Novartis Pharma AG" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Pays du Titulaire (Code ISO-2) :</label>
+                                <input type="text" id="med-foreign-country" maxlength="2" placeholder="Ex: FR, DE, CH, IN" style="width:100%; padding:6px; text-transform:uppercase; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom:10px;">
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Site Fabricant Produit Fini Étranger (Item 1.M.P / 1.H.8) :</label>
+                            <select id="med-manufacturer-site-id" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="">-- Aucun ou site non répertorié --</option>
+                            </select>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° Certificat CPP Modèle OMS (1.H.1) :</label>
+                                <input type="text" id="med-cpp-number" placeholder="Ex: CPP-FR-ANSM-2024-8841" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Autorité Émettrice Étrangère :</label>
+                                <input type="text" id="med-cpp-authority" placeholder="Ex: ANSM, FDA, CDSCO, Swissmedic" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date d'Octroi CPP :</label>
+                                <input type="date" id="med-cpp-date" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-med')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Médicament (Base SQL)</button>
+                        <button type="submit" id="modal-med-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Médicament (Base SQL)</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal Nouveau Dispositif Médical (Jalon 1.3 - Décret 20-324) -->
+    <!-- Modal Archivage Réglementaire Médicament (21 CFR Part 11 & BPF ALCOA+) -->
+    <div class="modal-overlay" id="modal-archive-med" onclick="if(event.target === this) closeModal('modal-archive-med')">
+        <div class="modal modal-md">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-amber);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">📦</span>
+                    <span style="color:var(--accent-amber); font-weight:700;">Retrait &amp; Archivage Réglementaire (21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-archive-med')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.5; color:var(--text-main);">
+                    <strong>⚖️ Garantie d'Intégrité ALCOA+ :</strong> Aucune suppression physique n'est effectuée. Conformément à la réglementation pharmaceutique (BPF / 21 CFR Part 11), l'historique et les dossiers CTD associés sont intégralement conservés. La spécialité passera au statut <code>ARCHIVÉ / RETIRÉ</code> avec scellement de la signature nominative dans l'Audit Trail immuable.
+                </div>
+                <form id="form-archive-med" onsubmit="handleArchiveMedicine(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="archive-med-id">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Spécialité Pharmaceutique Ciblée :</label>
+                        <input type="text" id="archive-med-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Réglementaire de Retrait * :</label>
+                        <select id="archive-med-reason-select" onchange="document.getElementById('archive-med-reason').value = this.value" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:600;">
+                            <option value="">-- Sélectionner un motif réglementaire motivé --</option>
+                            <option value="Arrêt définitif de commercialisation / Fin de cycle de vie produit">Arrêt définitif de commercialisation (Fin de vie)</option>
+                            <option value="Retrait ou non-renouvellement d'AMM ordonné par l'ANPP">Retrait ou non-renouvellement d'AMM (Décision ANPP)</option>
+                            <option value="Remplacement par une nouvelle spécialité / Variation majeure galénique">Remplacement par nouvelle spécialité / variation majeure</option>
+                            <option value="Rupture définitive de chaîne d'approvisionnement Substance Active (API)">Rupture définitive d'approvisionnement API</option>
+                            <option value="Autre motif réglementaire">Autre motif réglementaire motivé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Justification / Référence Notification ANPP * :</label>
+                        <input type="text" id="archive-med-reason" required placeholder="Ex: Décision Ministérielle N°... ou Arrêt voté le ..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:700; font-size:11px; color:var(--accent-red);">
+                            ✍️ Signature Électronique Nominative (21 CFR Part 11) * :
+                        </label>
+                        <p style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">Ressaisissez votre mot de passe pour sceller l'opération dans le registre d'audit ALCOA+ :</p>
+                        <input type="password" id="archive-med-password" required placeholder="Mot de passe du signataire (DT / Resp. RA)" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--accent-red); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-archive-med')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-amber); color:white; border:none; font-weight:600;">Sceller et Archiver la Spécialité (21 CFR Part 11)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau / Mise à jour Dispositif Médical (Décret 20-324 & Arrêté 10/05/2021) -->
     <div class="modal-overlay" id="modal-new-dm" onclick="if(event.target === this) closeModal('modal-new-dm')">
         <div class="modal modal-lg">
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:16px;">💉</span>
-                    <span>Nouveau Dispositif Médical (Arrêté du 10 Mai 2021 &amp; Décret 20-324)</span>
+                    <span id="modal-dm-title">Nouveau Dispositif Médical (Arrêté du 10 Mai 2021 &amp; Décret 20-324)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-new-dm')">✕</button>
             </div>
             <div class="modal-body">
                 <form id="form-new-dm" onsubmit="handleCreateDevice(event)" style="display:flex; flex-direction:column; gap:12px;">
-                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Typologie Réglementaire (Décret 20-324) * :</label>
+                            <select id="dm-origin" onchange="toggleDMEcoFields()" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px; font-size:12px; font-weight:600;">
+                                <option value="fabrication_locale">Fabrication Locale (Volet Éco : PCSU DZD)</option>
+                                <option value="importe">Dispositif Médical Importé (Marquage CE, CLV &amp; CIF)</option>
+                            </select>
+                        </div>
                         <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nom Commercial du DM * :</label>
                             <input type="text" id="dm-name" required placeholder="Ex: Cathéter Intraveineux de Sécurité 20G" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                         <div>
-                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Référence Fabricant * :</label>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Référence Fabricant (Catalogue) * :</label>
                             <input type="text" id="dm-ref" required placeholder="Ex: LPA-IVC-20G" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
                         <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Classe de Risque ANPP * :</label>
                             <select id="dm-class" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px; font-size:12px; font-weight:600;">
@@ -784,25 +1008,179 @@
                             </select>
                         </div>
                         <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nomenclature GMDN / EMDN :</label>
+                            <input type="text" id="dm-gmdn" placeholder="Ex: 34978 (Cathéter IV périphérique)" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:10px;">
+                        <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Règle de Classification (Arrêté 10/05/2021) :</label>
                             <input type="text" id="dm-rule" value="Règle 2 (Dispositif invasif chirurgical temporaire)" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Méthode de Stérilisation :</label>
+                            <select id="dm-sterilization-method" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="Oxyde d'éthylène (ETO)">Oxyde d'éthylène (ETO)</option>
+                                <option value="Rayonnement Gamma (25 kGy)">Rayonnement Gamma (25 kGy)</option>
+                                <option value="Vapeur saturée (Autoclave)">Vapeur saturée (Autoclave)</option>
+                                <option value="Faisceau d'électrons (E-beam)">Faisceau d'électrons (E-beam)</option>
+                                <option value="Non applicable (Non stérile)">Non applicable (Non stérile)</option>
+                            </select>
+                        </div>
                     </div>
+
                     <div style="display:flex; gap:20px; align-items:center;">
                         <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
-                            <input type="checkbox" id="dm-sterile" checked> Dispositif Stérile
+                            <input type="checkbox" id="dm-sterile" checked onchange="document.getElementById('dm-sterilization-method').disabled = !this.checked"> Dispositif Stérile
                         </label>
                         <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
                             <input type="checkbox" id="dm-single-use" checked> Dispositif à Usage Unique
                         </label>
                     </div>
+
+                    <!-- Volet Économique DM Conditionnel -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <h4 style="font-size:11px; margin-bottom:8px; color:var(--accent-blue);" id="dm-eco-title">💰 Volet Économique DM (PCSU Fabrication Locale)</h4>
+                        <div id="dm-pcsu-group" style="display:flex; gap:10px; align-items:center;">
+                            <label style="font-size:11px; font-weight:600;">Prix Sortie Usine (PCSU) en DZD :</label>
+                            <input type="number" step="0.01" id="dm-pcsu" placeholder="Ex: 45.00" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; width:150px;">
+                            <span style="font-size:11px; color:var(--text-dim);">(Coûts directs matières premières, assemblage salle propre ISO 7 &amp; stérilisation)</span>
+                        </div>
+                        <div id="dm-cif-group" style="display:none; gap:10px; align-items:center;">
+                            <label style="font-size:11px; font-weight:600;">Prix CIF unitaire :</label>
+                            <input type="number" step="0.01" id="dm-cif" placeholder="Ex: 1.85" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; width:120px;">
+                            <select id="dm-cif-currency" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="EUR">EUR (€)</option>
+                                <option value="USD">USD ($)</option>
+                            </select>
+                            <span style="font-size:11px; color:var(--text-dim); margin-left:10px;">(Prix d'importation déclaré au dossier d'homologation ANPP)</span>
+                        </div>
+                    </div>
+
+                    <!-- Volet Traçabilité Fabricant Étranger & Conformité CE / CLV (Décret 20-324) -->
+                    <div id="dm-foreign-group" style="display:none; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <h4 style="font-size:11px; margin-bottom:8px; color:var(--accent-blue);">🌍 Fabricant Légal Étranger, Marquage CE &amp; Certificat CLV/FSC</h4>
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Fabricant Légal Étranger (Legal Manufacturer) :</label>
+                                <input type="text" id="dm-legal-manufacturer" placeholder="Ex: B. Braun Melsungen AG, Terumo Corporation" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Pays d'Origine (Code ISO-2) :</label>
+                                <input type="text" id="dm-manufacturer-country" maxlength="2" placeholder="Ex: DE, FR, JP, US" style="width:100%; padding:6px; text-transform:uppercase; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Site Fabricant Réel / Stérilisation (1.M) :</label>
+                                <select id="dm-manufacturer-site-id" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                    <option value="">-- Aucun ou site non répertorié --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Établissement Mandataire / Déclarant Local (MIPH) :</label>
+                                <select id="dm-est-id" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                    <option value="">-- Sélectionner l'établissement agréé --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1.2fr 1.2fr 0.8fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° Certificat Marquage CE :</label>
+                                <input type="text" id="dm-ce-number" placeholder="Ex: CE-0123-MDR-2023-7749" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Organisme Notifié (Notified Body) :</label>
+                                <input type="text" id="dm-notified-body-name" placeholder="Ex: TÜV SÜD Product Service GmbH" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° ON :</label>
+                                <input type="text" id="dm-notified-body-number" placeholder="Ex: 0123" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date d'Expiration Certificat CE :</label>
+                                <input type="date" id="dm-ce-expiry" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Certificat Système Qualité ISO 13485 :</label>
+                                <input type="text" id="dm-iso-number" placeholder="Ex: ISO13485-DE-TUV-9921" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1.2fr 0.8fr; gap:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° Certificat Libre Vente (CLV / FSC) :</label>
+                                <input type="text" id="dm-clv-number" placeholder="Ex: FSC-DE-BFARM-2023-4410" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Autorité Émettrice du CLV :</label>
+                                <input type="text" id="dm-clv-authority" placeholder="Ex: BfArM (Allemagne), ANSM (France)" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date Délivrance CLV :</label>
+                                <input type="date" id="dm-clv-date" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Destination d'Usage &amp; Indications Cliniques :</label>
                         <textarea id="dm-intended-use" rows="2" placeholder="Accès vasculaire périphérique court terme pour administration intraveineuse de fluides thérapeutiques." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
                     </div>
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-dm')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le DM (Base SQL)</button>
+                        <button type="submit" id="modal-dm-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le DM (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Archivage Réglementaire Dispositif Médical (21 CFR Part 11 & Décret 20-324) -->
+    <div class="modal-overlay" id="modal-archive-dm" onclick="if(event.target === this) closeModal('modal-archive-dm')">
+        <div class="modal modal-md">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-amber);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">📦</span>
+                    <span style="color:var(--accent-amber); font-weight:700;">Retrait &amp; Archivage Réglementaire DM (21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-archive-dm')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.5; color:var(--text-main);">
+                    <strong>⚖️ Garantie d'Intégrité ALCOA+ &amp; Décret 20-324 :</strong> Aucune suppression physique n'est effectuée. Conformément à la réglementation pharmaceutique (BPF / 21 CFR Part 11), le dossier technique d'homologation et l'historique sont intégralement conservés. Le DM passera au statut <code>ARCHIVÉ / RETIRÉ</code> avec scellement de la signature nominative du Pharmacien DT dans l'Audit Trail immuable.
+                </div>
+                <form id="form-archive-dm" onsubmit="handleArchiveDevice(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="archive-dm-id">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Dispositif Médical Ciblé :</label>
+                        <input type="text" id="archive-dm-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Réglementaire de Retrait * :</label>
+                        <select id="archive-dm-reason-select" onchange="document.getElementById('archive-dm-reason').value = this.value" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:600;">
+                            <option value="">-- Sélectionner un motif réglementaire motivé --</option>
+                            <option value="Arrêt définitif de production ou de commercialisation par le fabricant légal">Arrêt définitif de production / commercialisation</option>
+                            <option value="Non-renouvellement ou expiration de la décision d'homologation ANPP">Expiration de la décision d'homologation ANPP</option>
+                            <option value="Expiration ou révocation du certificat CE ou ISO 13485 par l'organisme notifié">Expiration ou retrait du marquage CE / ISO 13485</option>
+                            <option value="Notification de matériovigilance / Mesure corrective de sécurité FSCA">Matériovigilance / Mesure corrective de sécurité (FSCA)</option>
+                            <option value="Remplacement par une nouvelle génération de dispositif médical">Remplacement par nouvelle génération de DM</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Détail &amp; Justification circonstanciée * :</label>
+                        <textarea id="archive-dm-reason" rows="2" required placeholder="Précisez la référence de notification ANPP, le PV de matériovigilance ou la décision interne..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+                    <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:700; font-size:11px; color:var(--accent-amber);">🔐 Signature Électronique Nominative (21 CFR Part 11) * :</label>
+                        <p style="font-size:10px; color:var(--text-dim); margin-bottom:6px;">Veuillez ressaisir votre mot de passe utilisateur pour apposer votre signature cryptographique sur cette opération de retrait irréversible.</p>
+                        <input type="password" id="archive-dm-password" required placeholder="Mot de passe du Pharmacien DT / Signataire" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-archive-dm')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-amber); color:#1c1917; font-weight:700; border:none;">Sceller le Retrait Réglementaire</button>
                     </div>
                 </form>
             </div>
@@ -1199,13 +1577,292 @@
         </div>
     </div>
 
+    <!-- Modal Gestion Équipe & Habilitations Secret (Need-to-Know & Confidentialité Industrielle) -->
+    <div class="modal-overlay" id="modal-dossier-members" onclick="if(event.target === this) closeModal('modal-dossier-members')">
+        <div class="modal modal-lg" style="width: 720px; max-width: 95vw;">
+            <div class="modal-header">
+                <div>
+                    <span style="font-size:18px; margin-right:8px;">👥</span>
+                    <strong style="color:var(--text-main); font-size:14px;">Équipe Affectée &amp; Habilitations Secret</strong>
+                    <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;" id="dossier-members-subtitle">
+                        Cloisonnement granulaire par dossier — Principe du "Besoin d'en connaître" (Need-to-Know)
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-dossier-members')">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
+                <!-- Tableau des membres actifs -->
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-weight:700; font-size:12px; color:var(--text-main);">Collaborateurs &amp; Experts Habilités sur ce dossier :</span>
+                        <span id="dossier-members-count" class="status-tag status-ok">0 habilité(s)</span>
+                    </div>
+                    <div style="max-height: 220px; overflow-y:auto; border:1px solid var(--border-color); border-radius:6px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                            <thead style="background:var(--bg-surface); position:sticky; top:0;">
+                                <tr style="border-bottom:1.5px solid var(--border-color); text-align:left; color:var(--text-muted);">
+                                    <th style="padding:6px 10px;">Collaborateur / Expert</th>
+                                    <th style="padding:6px 10px;">Rôle Dossier</th>
+                                    <th style="padding:6px 10px; text-align:center;">Secret Commercial</th>
+                                    <th style="padding:6px 10px; text-align:center;">Secret Industriel</th>
+                                    <th style="padding:6px 10px;">Échéance</th>
+                                    <th style="padding:6px 10px; text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dossier-members-tbody">
+                                <tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted);">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Formulaire d'affectation pour les gestionnaires -->
+                <div id="form-assign-member-container" style="background:var(--bg-surface); border:1.5px solid var(--border-color); border-radius:6px; padding:12px;">
+                    <div style="font-size:11.5px; font-weight:800; color:var(--accent-blue); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <span>➕</span><span>Affecter un Nouveau Collaborateur ou Expert CRO</span>
+                    </div>
+                    <form id="form-assign-member" onsubmit="event.preventDefault(); executeAssignMember();">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Sélectionner le Collaborateur * :</label>
+                                <select id="assign-user-select" required style="width:100%; padding:6px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11.5px;">
+                                    <option value="">-- Choisir un utilisateur --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Rôle dans ce Dossier * :</label>
+                                <select id="assign-role-in-dossier" required style="width:100%; padding:6px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11.5px;">
+                                    <option value="contributeur_qa">Contributeur Qualité BPF (Modules 1 &amp; 3)</option>
+                                    <option value="contributeur_rd">Contributeur R&amp;D / Galénique (Module 3)</option>
+                                    <option value="consultant_cro">Expert Consultant CRO (Module 5 BE)</option>
+                                    <option value="lead_ra">Chef de Projet Réglementaire Adjoint</option>
+                                    <option value="auditeur">Auditeur Qualité Interne</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Date d'Expiration du Mandat (Optionnel) :</label>
+                                <input type="date" id="assign-expires-at" style="width:100%; padding:5px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:3px; font-weight:600; font-size:10.5px;">Notes de Mission / Dérogation :</label>
+                                <input type="text" id="assign-notes" placeholder="ex: Mandat BE étude bioéquivalence 90 jours" style="width:100%; padding:5px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:11px;">
+                            </div>
+                        </div>
+
+                        <!-- Habilitations de sécurité spécifiques -->
+                        <div style="display:flex; gap:16px; align-items:center; background:rgba(0,0,0,0.02); padding:8px 10px; border-radius:4px; border:1px dashed var(--border-color); margin-bottom:10px;">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="assign-can-financials">
+                                <span style="font-weight:700; color:var(--accent-red);">🔴 Lever le Secret Commercial (1.A.4, 1.H.4, 1.H.5)</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="assign-can-industrial" checked>
+                                <span style="font-weight:700; color:#7e22ce;">🟣 Autoriser le Secret Industriel (3.2.S, 3.2.P)</span>
+                            </label>
+                        </div>
+
+                        <div style="text-align:right;">
+                            <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:5px 12px; font-size:11px;">
+                                🛡️ Valider l'Habilitation &amp; l'Affectation ➔
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-pill" onclick="closeModal('modal-dossier-members')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouveau Collaborateur & Habilitation BPF (21 CFR Part 11 / PSSI) -->
+    <div class="modal-overlay" id="modal-new-user" onclick="if(event.target === this) closeModal('modal-new-user')">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">👤</span>
+                    <span>Nouveau Collaborateur &amp; Habilitation BPF (PSSI / 21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-new-user')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-user" onsubmit="handleCreateUserSubmit(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Prénom * :</label>
+                            <input type="text" id="new-user-firstname" required placeholder="ex: Yasmine" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nom * :</label>
+                            <input type="text" id="new-user-lastname" required placeholder="ex: Benali" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Adresse Email Professionnelle * :</label>
+                        <input type="email" id="new-user-email" required placeholder="yasmine.b@sanadpharma.dz" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Rôle Officiel BPF * :</label>
+                        <select id="new-user-role" required onchange="handleRoleSelectionChange(this.value)" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:600;">
+                            <!-- Injecté dynamiquement par admin.js -->
+                        </select>
+                    </div>
+                    <div id="new-user-contract-container" style="display:none; background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.3); border-radius:4px; padding:10px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:700; font-size:11px; color:var(--accent-blue);">📅 Date d'Échéance du Contrat d'Expertise (Obligatoire PSSI / BPF) * :</label>
+                        <input type="datetime-local" id="new-user-contract-exp" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        <span style="font-size:10px; color:var(--text-dim); display:block; margin-top:3px;">À expiration, les habilitations du consultant externe sont automatiquement suspendues.</span>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Mot de Passe Temporaire Initial (Argon2id) * :</label>
+                        <div style="position:relative;">
+                            <input type="password" id="new-user-password" required placeholder="Min. 12 caractères (Maj, Min, Chiffre, Spécial)" style="width:100%; padding:6px 30px 6px 6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            <button type="button" onclick="togglePasswordVisibility('new-user-password')" style="position:absolute; right:6px; top:6px; background:none; border:none; color:var(--text-muted); cursor:pointer;">👁️</button>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
+                            Politique OWASP / BPF : min. 12 car., 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial (@$!%*?&#).
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-new-user')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;">Créer le Collaborateur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Activation / Suspension Compte (21 CFR Part 11 - Zéro Hard Delete) -->
+    <div class="modal-overlay" id="modal-user-status" onclick="if(event.target === this) closeModal('modal-user-status')">
+        <div class="modal modal-md">
+            <div class="modal-header" id="user-status-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="user-status-icon">🛡️</span>
+                    <span id="user-status-title">Modifier le Statut d'un Compte (BPF / 21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-user-status')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.5; color:var(--text-main);">
+                    <strong>⚖️ Garantie d'Intégrité 21 CFR Part 11 :</strong> Aucun compte n'est supprimé physiquement (Hard Delete). En cas de départ ou de suspension, l'accès est désactivé et l'ensemble des sessions actives est révoqué immédiatement, préservant ainsi l'opposabilité juridique de toutes les signatures électroniques historiques du collaborateur.
+                </div>
+                <form id="form-user-status" onsubmit="handleUserStatusSubmit(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="status-user-id">
+                    <input type="hidden" id="status-target-active">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Collaborateur Ciblé :</label>
+                        <input type="text" id="status-user-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Action demandée :</label>
+                        <div id="status-action-desc" style="font-weight:700; font-size:12px; padding:6px; border-radius:4px;"></div>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Circonstancié (Enregistré dans l'Audit Trail) * :</label>
+                        <textarea id="status-reason" rows="3" required placeholder="ex: Départ définitif de l'entreprise vers un autre établissement ou suspension conservatoire..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-user-status')">Annuler</button>
+                        <button type="submit" id="btn-submit-status" class="btn-pill" style="border:none; font-weight:700; color:white;">Confirmer la Modification</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Réinitialisation Mot de Passe Sécurisée -->
+    <div class="modal-overlay" id="modal-reset-user-password" onclick="if(event.target === this) closeModal('modal-reset-user-password')">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span>🔑</span>
+                    <span>Réinitialisation Sécurisée de Mot de Passe (21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-reset-user-password')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; color:var(--text-main);">
+                    <strong>⚠️ Révocation Automatique :</strong> Cette action détruit instantanément toutes les sessions actives de l'utilisateur et le force à s'authentifier avec son nouveau mot de passe.
+                </div>
+                <form id="form-reset-password" onsubmit="handleResetPasswordSubmit(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="reset-user-id">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Collaborateur :</label>
+                        <input type="text" id="reset-user-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nouveau Mot de Passe Provisoire (Argon2id) * :</label>
+                        <div style="position:relative;">
+                            <input type="password" id="reset-new-password" required placeholder="Min. 12 caractères (Maj, Min, Chiffre, Spécial)" style="width:100%; padding:6px 30px 6px 6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            <button type="button" onclick="togglePasswordVisibility('reset-new-password')" style="position:absolute; right:6px; top:6px; background:none; border:none; color:var(--text-muted); cursor:pointer;">👁️</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Réglementaire de la Réinitialisation * :</label>
+                        <textarea id="reset-reason" rows="2" required placeholder="ex: Demande expresse du collaborateur suite à perte d'identifiants..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-reset-user-password')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-amber); color:#1c1917; font-weight:700; border:none;">Réinitialiser &amp; Révoquer Sessions</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Dérogations & Surcharges Individuelles des Permissions -->
+    <div class="modal-overlay" id="modal-user-permissions" onclick="if(event.target === this) closeModal('modal-user-permissions')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span>🔐</span>
+                    <span>Gestion des Dérogations Individuelles de Permissions (Table user_permissions)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-user-permissions')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); padding:8px 12px; border-radius:6px; margin-bottom:12px;">
+                    <div>
+                        <div id="perm-user-name" style="font-weight:700; color:var(--accent-blue); font-size:13px;"></div>
+                        <div id="perm-user-role" style="font-size:11px; color:var(--text-muted);"></div>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-dim); text-align:right;">
+                        Les dérogations surchargent la matrice par défaut du rôle.<br>
+                        <strong>Incrémentation automatique de permissions_version</strong>
+                    </div>
+                </div>
+
+                <form id="form-user-permissions" onsubmit="handleUserPermissionsSubmit(event)">
+                    <input type="hidden" id="perm-modal-user-id">
+                    <div id="perm-checklist-container" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; max-height:360px; overflow-y:auto; padding-right:6px;">
+                        <!-- Injecté dynamiquement par admin.js -->
+                    </div>
+
+                    <div style="margin-top:12px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Justificatif de Dérogation (Audit Trail PSSI) * :</label>
+                        <textarea id="perm-override-reason" rows="2" required placeholder="ex: Mandat temporaire pour la revue du référentiel ou remplacement d'astreinte..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-user-permissions')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none;">Enregistrer les Dérogations BPF</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.12.3"></script>
-    <script src="/js/auth.js?v=2026.11.12.3"></script>
-    <script src="/js/referential.js?v=2026.11.12.3"></script>
-    <script src="/js/variations.js?v=2026.11.12.3"></script>
-    <script src="/js/ged.js?v=2026.11.12.3"></script>
-    <script src="/js/dossiers.js?v=2026.11.12.3"></script>
+    <script src="/js/app.js?v=2026.11.14.4"></script>
+    <script src="/js/auth.js?v=2026.11.14.4"></script>
+    <script src="/js/admin.js?v=2026.11.14.4"></script>
+    <script src="/js/system_admin.js?v=2026.11.14.4"></script>
+    <script src="/js/referential.js?v=2026.11.14.4"></script>
+    <script src="/js/variations.js?v=2026.11.14.4"></script>
+    <script src="/js/ged.js?v=2026.11.14.4"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.4"></script>
 </body>
 </html>

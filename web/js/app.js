@@ -147,13 +147,13 @@
             const backdrop = document.getElementById('preview-backdrop');
             if (!preview) return;
             
-            // Sur desktop large >= 1400px (ancré dans le flux)
-            if (window.innerWidth >= 1400) {
+            // Sur desktop et laptop >= 992px (ancré dans le flux, sans superposition ni backdrop bloquant)
+            if (window.innerWidth >= 992) {
                 const hidden = (typeof force === 'boolean') ? !force : !preview.classList.contains('hidden');
                 preview.classList.toggle('hidden', hidden);
                 if (backdrop) backdrop.classList.remove('active');
             } else {
-                // Sur laptops / tablettes / mobiles : mode slide-over drawer
+                // Sur tablettes / mobiles (< 992px) : mode slide-over drawer
                 const open = (typeof force === 'boolean') ? force : !preview.classList.contains('slide-open');
                 preview.classList.toggle('slide-open', open);
                 if (backdrop) backdrop.classList.toggle('active', open);
@@ -299,8 +299,37 @@
         }
 
         let currentDomain = 'ref';
+        var currentRefSection = 'establishments';
 
         function switchDomainModule(domain) {
+            // Contrôle d'habilitation préventif côté UI (Jalon 1.2 & CDC 7.2.2)
+            if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE')) {
+                showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas de la permission <code>USER_MANAGE</code> pour accéder à la Console d'Administration.", "🚫", "Fermer");
+                return;
+            }
+            if (domain === 'ged' && typeof hasPermission === 'function' && !hasPermission('DOC_READ')) {
+                showNotifyModal("Accès Refusé (Zero-Trust)", "Votre profil technique est assujetti aux règles Zero-Trust et ne dispose pas de l'habilitation <code>DOC_READ</code>.", "🚫", "Fermer");
+                return;
+            }
+            // Cloisonnement strict pour Consultant Externe (CDC Section 7.2.2) : Seul l'univers CTD assigné est accessible
+            if (typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe') && domain !== 'ctd') {
+                showNotifyModal(
+                    "Accès Cloisonné Tiers (CRO / Expert)",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-blue); font-weight:700;">
+                            🤝 Périmètre d'intervention strictement restreint
+                        </div>
+                        <div style="font-size:11px; color:var(--text-main); line-height:1.5;">
+                            Conformément à la politique de sécurité BPF et à l'article 7.2.2 du Cahier des Charges, les consultants externes n'ont pas accès à la GED transverse de l'entreprise, au Référentiel, ni aux Variations.<br>
+                            Votre mandat est strictement confiné au <strong>dossier d'enregistrement contractuellement assigné</strong>.
+                        </div>
+                    </div>`,
+                    "🔒",
+                    "Compris"
+                );
+                return;
+            }
+
             currentDomain = domain;
             
             // Mise à jour de l'état actif dans l'Activity Bar
@@ -340,6 +369,12 @@
                 } else if (domain === 'ged') {
                     icon = "📁";
                     text = isArabic ? "التوثيق الصيدلاني BPF" : "GED Pharmaceutique & BPF";
+                } else if (domain === 'admin') {
+                    icon = "⚙️";
+                    text = isArabic ? "إدارة المخبر والمصفوفة" : "Administration Labo & Matrice RBAC";
+                } else if (domain === 'sys') {
+                    icon = "🖥️";
+                    text = isArabic ? "لوحة تحكم البنية التحتية" : "Cockpit IT & Infrastructure PSSI";
                 }
                 titleEl.innerHTML = `<span>${icon}</span> <span>${text}</span>`;
             }
@@ -372,6 +407,27 @@
                 currentGEDTaxonomyPath = '';
                 loadGEDTaxonomy();
                 loadGEDDocuments();
+            } else if (domain === 'admin') {
+                document.getElementById("bc-root").innerText = "ADMINISTRATION";
+                document.getElementById("bc-sec").innerText = "Habilitations_RBAC";
+                document.getElementById("bc-prod").innerText = "Collaborateurs & Matrice";
+                document.getElementById("bc-mod").innerText = "Conformité PSSI & BPF";
+                if (typeof loadAdminSection === 'function') {
+                    loadAdminSection(currentAdminSection || 'users');
+                }
+            } else if (domain === 'sys') {
+                document.getElementById("bc-root").innerText = "INFRASTRUCTURE_IT";
+                document.getElementById("bc-sec").innerText = "On-Premise_BPF";
+                document.getElementById("bc-prod").innerText = "PostgreSQL & CAS";
+                document.getElementById("bc-mod").innerText = "Haute Disponibilité";
+                if (typeof loadSystemSection === 'function') {
+                    loadSystemSection(currentSystemSection || 'status');
+                }
+            }
+
+            // Réapplication dynamique des permissions UI sur les nouveaux boutons injectés
+            if (typeof applyPermissionsUI === 'function') {
+                applyPermissionsUI();
             }
         }
 
@@ -380,9 +436,9 @@
             if (!tb) return;
             if (domain === 'ref') {
                 tb.innerHTML = `
-                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewPharmaModal()">➕ Nouveau</button>
+                    <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewPharmaModal()">➕ Nouveau</button>
                     <button class="btn-pill" onclick="loadRefSection(currentRefSection)">🔄 Actualiser</button>
-                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Base Référentiel : <strong style="color:var(--accent-emerald);">PostgreSQL Connecté</strong>
@@ -390,12 +446,13 @@
                 `;
             } else if (domain === 'ctd') {
                 tb.innerHTML = `
-                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDossierModal()">➕ Nouveau Dossier</button>
+                    <button class="btn-pill" id="tb-btn-new-dossier" data-perm="DOSSIER_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDossierModal()">➕ Nouveau Dossier</button>
+                    <button class="btn-pill" id="tb-btn-members" onclick="openDossierMembersModal()">👥 Équipe &amp; Secret</button>
                     <button class="btn-pill" id="tb-btn-sign-pdt" onclick="openSignPDTModal()">✍️ Visa PDT (21 CFR Part 11)</button>
                     <button class="btn-pill" id="tb-btn-deposit-anpp" onclick="openRecordDepositModal()">🏛️ Enregistrer Dépôt ANPP</button>
-                    <button class="btn-pill" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
+                    <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_LEGAL" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
                     <button class="btn-pill" onclick="loadDossiers()">🔄 Actualiser</button>
-                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Complétude : <strong id="kpi-dossier-completeness" style="color:var(--accent-blue);">0%</strong>
@@ -403,9 +460,9 @@
                 `;
             } else if (domain === 'variations') {
                 tb.innerHTML = `
-                    <button class="btn-pill" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
+                    <button class="btn-pill" data-perm="VARIATION_MANAGE" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
                     <button class="btn-pill" onclick="renderVariationsTable()">🔄 Actualiser</button>
-                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Directive : <strong>ANPP LD-DEPP07/V01</strong>
@@ -413,9 +470,9 @@
                 `;
             } else if (domain === 'dm') {
                 tb.innerHTML = `
-                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="document.getElementById('modal-new-dm').classList.add('open')">➕ Nouveau DM</button>
+                    <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="document.getElementById('modal-new-dm').classList.add('open')">➕ Nouveau DM</button>
                     <button class="btn-pill" onclick="loadRefSection('devices')">🔄 Actualiser</button>
-                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Cadre : <strong>Arrêté du 10 Mai 2021</strong>
@@ -423,7 +480,7 @@
                 `;
             } else if (domain === 'ged') {
                 tb.innerHTML = `
-                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewGEDDocModal()">➕ Déposer Document</button>
+                    <button class="btn-pill" data-perm="DOC_WRITE" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewGEDDocModal()">➕ Déposer Document</button>
                     <select id="ged-filter-status" onchange="filterGEDByStatus(this.value)" class="btn-pill" style="background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color); font-size:11px;">
                         <option value="">Tous les statuts</option>
                         <option value="en_vigueur">En Vigueur (Approuvé)</option>
@@ -433,10 +490,32 @@
                         <option value="obsolete">Obsolète</option>
                     </select>
                     <button class="btn-pill" onclick="loadGEDDocuments(currentGEDTaxonomyPath)">🔄 Actualiser</button>
-                    <button class="btn-pill" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Coffre-Fort CAS : <strong style="color:var(--accent-emerald);">Stockage Immuable SHA-256</strong>
+                    </div>
+                `;
+            } else if (domain === 'admin') {
+                tb.innerHTML = `
+                    <button class="btn-pill" data-perm="USER_MANAGE" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewUserModal()">➕ Inviter Collaborateur</button>
+                    <button class="btn-pill" onclick="loadAdminSection(currentAdminSection)">🔄 Actualiser</button>
+                    <button class="btn-pill" data-perm="USER_MANAGE" onclick="exportRBACMatrixCSV()">📊 Exporter Matrice des Droits</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        PSSI Labo : <strong style="color:var(--accent-emerald);">Contrôle d'Accès ALCOA+ & SoD</strong>
+                    </div>
+                `;
+            } else if (domain === 'sys') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="loadSystemMetrics()">🔄 Actualiser Métriques</button>
+                    <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none;" onclick="triggerSystemBackup()">💾 Instantané Sauvegarde</button>
+                    <button class="btn-pill" onclick="triggerCASIntegrityCheck()">🔍 Contrôle Intégrité CAS</button>
+                    <button class="btn-pill" style="border-color:#ef4444; color:#ef4444;" onclick="openEmergencyLockdownModal()">🚨 Verrouillage Urgence</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Infrastructure : <strong style="color:var(--accent-emerald);">PostgreSQL 16+ &amp; CAS SHA-256</strong>
                     </div>
                 `;
             }
@@ -444,6 +523,12 @@
 
         function renderTreeForDomain(domain) {
             const container = document.getElementById("tree-root");
+            if (domain === 'sys') {
+                if (typeof renderSystemTree === 'function') {
+                    renderSystemTree();
+                }
+                return;
+            }
             if (domain === 'ref') {
                 container.innerHTML = `
                     <div class="tree-node ${currentRefSection === 'establishments' ? 'selected' : ''}" onclick="loadRefSection('establishments')">
@@ -501,6 +586,28 @@
                 `;
             } else if (domain === 'ged') {
                 renderGEDTree();
+            } else if (domain === 'admin') {
+                if (typeof renderAdminTree === 'function') {
+                    renderAdminTree();
+                } else {
+                    container.innerHTML = `
+                        <div class="tree-node ${currentAdminSection === 'users' ? 'selected' : ''}" onclick="loadAdminSection('users')">
+                            <span class="chevron">👥</span>
+                            <span>Collaborateurs & Rôles</span>
+                            <span class="count-badge ok">Actifs</span>
+                        </div>
+                        <div class="tree-node ${currentAdminSection === 'matrix' ? 'selected' : ''}" onclick="loadAdminSection('matrix')">
+                            <span class="chevron">🔐</span>
+                            <span>Matrice des 14 Permissions</span>
+                            <span class="count-badge ok">Tableau BPF</span>
+                        </div>
+                        <div class="tree-node ${currentAdminSection === 'policies' ? 'selected' : ''}" onclick="loadAdminSection('policies')">
+                            <span class="chevron">🛡️</span>
+                            <span>Règles SoD & Zero-Trust</span>
+                            <span class="count-badge req">Guardrails</span>
+                        </div>
+                    `;
+                }
             }
         }
 
