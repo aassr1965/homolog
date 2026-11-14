@@ -867,6 +867,41 @@
                         </div>
                     </div>
 
+                    <!-- Traçabilité Producteur Étranger & Certificat CPP OMS (ANPP 1.H.1 & 1.H.8) -->
+                    <div id="foreign-producer-group" style="display:none; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <h4 style="font-size:11px; margin-bottom:8px; color:var(--accent-blue);">🌍 Producteur Étranger &amp; Certificat CPP (ANPP 1.H.1 &amp; 1.H.8)</h4>
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Laboratoire Titulaire / Demandeur Étranger (MAH) :</label>
+                                <input type="text" id="med-foreign-mah" placeholder="Ex: Sanofi Winthrop Industrie, Novartis Pharma AG" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Pays du Titulaire (Code ISO-2) :</label>
+                                <input type="text" id="med-foreign-country" maxlength="2" placeholder="Ex: FR, DE, CH, IN" style="width:100%; padding:6px; text-transform:uppercase; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom:10px;">
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Site Fabricant Produit Fini Étranger (Item 1.M.P / 1.H.8) :</label>
+                            <select id="med-manufacturer-site-id" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="">-- Aucun ou site non répertorié --</option>
+                            </select>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° Certificat CPP Modèle OMS (1.H.1) :</label>
+                                <input type="text" id="med-cpp-number" placeholder="Ex: CPP-FR-ANSM-2024-8841" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Autorité Émettrice Étrangère :</label>
+                                <input type="text" id="med-cpp-authority" placeholder="Ex: ANSM, FDA, CDSCO, Swissmedic" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date d'Octroi CPP :</label>
+                                <input type="date" id="med-cpp-date" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-med')">Annuler</button>
                         <button type="submit" id="modal-med-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le Médicament (Base SQL)</button>
@@ -1479,12 +1514,12 @@
 
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.14.1"></script>
-    <script src="/js/auth.js?v=2026.11.14.1"></script>
-    <script src="/js/admin.js?v=2026.11.14.1"></script>
-    <script src="/js/referential.js?v=2026.11.14.1"></script>
-    <script src="/js/variations.js?v=2026.11.14.1"></script>
-    <script src="/js/ged.js?v=2026.11.14.1"></script>
-    <script src="/js/dossiers.js?v=2026.11.14.1"></script>
+    <script src="/js/app.js?v=2026.11.14.2"></script>
+    <script src="/js/auth.js?v=2026.11.14.2"></script>
+    <script src="/js/admin.js?v=2026.11.14.2"></script>
+    <script src="/js/referential.js?v=2026.11.14.2"></script>
+    <script src="/js/variations.js?v=2026.11.14.2"></script>
+    <script src="/js/ged.js?v=2026.11.14.2"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.2"></script>
 </body>
 </html>

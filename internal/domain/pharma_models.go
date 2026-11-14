@@ -154,6 +154,15 @@ type Medicine struct {
 	HasChamberOfCommerceVisa bool             `json:"has_chamber_of_commerce_visa"`
 	HasBenchmarkDossier      bool             `json:"has_benchmark_dossier"` // 1.H.5
 
+	// Producteur Étranger & Traçabilité Importation (ANPP 1.H.1 & 1.H.8)
+	ForeignMAHName      string             `json:"foreign_mah_name,omitempty"`      // Laboratoire Titulaire étranger (MAH)
+	ForeignMAHCountry   string             `json:"foreign_mah_country,omitempty"`   // Pays titulaire ISO-2 (FR, DE, etc.)
+	CPPNumber           string             `json:"cpp_number,omitempty"`            // N° Certificat CPP Modèle OMS (1.H.1)
+	CPPIssuingAuthority string             `json:"cpp_issuing_authority,omitempty"`// Autorité émettrice étrangère (ANSM, FDA...)
+	CPPIssueDate        *time.Time         `json:"cpp_issue_date,omitempty"`       // Date délivrance CPP
+	ManufacturerSiteID  *uuid.UUID         `json:"manufacturer_site_id,omitempty"` // Site Producteur / Fabricant PF (1.M.P)
+	ManufacturerSite    *ManufacturingSite `json:"manufacturer_site,omitempty"`    // Données jointes du site producteur
+
 	// Références Réglementaires
 	RegistrationDecisionNumber string     `json:"registration_decision_number,omitempty"`
 	RegistrationDate           *time.Time `json:"registration_date,omitempty"`
@@ -198,12 +207,15 @@ func (m *Medicine) Validate() error {
 		}
 	}
 
-	// Règles spécifiques Importation (NI/RI/MI)
+	// Règles spécifiques Importation (NI/RI/MI - Producteur & CPP)
 	if m.OriginType == OriginGeneriqueImporte || m.OriginType == OriginPrinceps {
 		if m.EconomicFileType == EconomicFileFOBBenchmark && m.FOBPrice != nil && *m.FOBPrice > 0 {
 			if strings.TrimSpace(m.FOBCurrency) == "" {
 				m.FOBCurrency = "EUR"
 			}
+		}
+		if m.ForeignMAHCountry != "" && len(strings.TrimSpace(m.ForeignMAHCountry)) != 2 {
+			return errors.New("le code pays du titulaire étranger doit comporter 2 lettres (ISO-3166-1 alpha-2)")
 		}
 	}
 
