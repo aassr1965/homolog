@@ -122,7 +122,7 @@
             }
         }
 
-        // Mode Focus & Responsive Drawer Handlers (Jalon 1.6)
+        // Mode Focus & Responsive Drawer Handlers
         function toggleFocusMode() {
             document.body.classList.toggle('focus-mode');
             const isFocus = document.body.classList.contains('focus-mode');
@@ -302,7 +302,7 @@
         var currentRefSection = 'establishments';
 
         function switchDomainModule(domain) {
-            // Contrôle d'habilitation préventif côté UI (Jalon 1.2 & CDC 7.2.2)
+            // Contrôle d'habilitation préventif côté UI (CDC 7.2.2)
             if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE')) {
                 showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas de la permission <code>USER_MANAGE</code> pour accéder à la Console d'Administration.", "🚫", "Fermer");
                 return;
@@ -843,10 +843,35 @@
             }
         }
 
+        function toggleModalFullscreen(modalOverlayId) {
+            const overlay = document.getElementById(modalOverlayId);
+            if (!overlay) return;
+            const modal = overlay.querySelector('.modal');
+            if (!modal) return;
+
+            const isFullscreen = modal.classList.toggle('modal-fullscreen');
+            const btn = overlay.querySelector('.btn-modal-expand');
+            if (btn) {
+                const icon = btn.querySelector('.expand-icon');
+                const lbl = btn.querySelector('.expand-label');
+                if (isFullscreen) {
+                    if (icon) icon.innerText = '🗗';
+                    if (lbl) lbl.innerText = 'Réduire';
+                    btn.title = 'Restaurer la taille normale';
+                } else {
+                    if (icon) icon.innerText = '⛶';
+                    if (lbl) lbl.innerText = 'Agrandir';
+                    btn.title = 'Agrandir en plein écran';
+                }
+            }
+        }
+
         function closeAllModals() {
             document.querySelectorAll('.modal-overlay').forEach(m => {
                 m.classList.remove('open');
                 m.style.display = "none";
+                const modal = m.querySelector('.modal');
+                if (modal) modal.classList.remove('modal-fullscreen');
             });
         }
 
@@ -855,6 +880,15 @@
             if (el) {
                 el.classList.remove("open");
                 el.style.display = "none";
+                const modal = el.querySelector('.modal');
+                if (modal) modal.classList.remove('modal-fullscreen');
+                const btn = el.querySelector('.btn-modal-expand');
+                if (btn) {
+                    const icon = btn.querySelector('.expand-icon');
+                    const lbl = btn.querySelector('.expand-label');
+                    if (icon) icon.innerText = '⛶';
+                    if (lbl) lbl.innerText = 'Agrandir';
+                }
             }
         }
 

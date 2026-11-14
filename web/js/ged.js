@@ -1,9 +1,9 @@
 // ============================================================================
-// COFFRE-FORT GED PHARMACEUTIQUE (Jalon 1.4 - BPF & ALCOA+)
+// COFFRE-FORT GED PHARMACEUTIQUE (BPF & ALCOA+)
 // ============================================================================
 
 // ============================================================================
-        // COFFRE-FORT GED PHARMACEUTIQUE (Jalon 1.4 - BPF & ALCOA+)
+        // COFFRE-FORT GED PHARMACEUTIQUE (BPF & ALCOA+)
         // ============================================================================
         const defaultGEDTaxonomy = [
             {

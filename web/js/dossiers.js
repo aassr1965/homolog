@@ -1,9 +1,9 @@
 // =========================================================================
-// JALON 1.5 : MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
+// MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
 // =========================================================================
 
 // =========================================================================
-        // JALON 1.5 : MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
+        // MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
         // =========================================================================
 
         function escapeHTML(str) {
@@ -368,7 +368,7 @@
                 }
                 document.getElementById("bc-mod").innerText = prodTitle;
 
-                // Chargement des bordereaux de redevances ANPP (Jalon 1.7 Phase 2)
+                // Chargement des bordereaux de redevances ANPP
                 if (typeof loadDossierPaymentSlips === 'function') {
                     await loadDossierPaymentSlips(id);
                 }
@@ -605,13 +605,13 @@
                         </div>
                     ` : ''}
 
-                    <!-- Assistant Télé-Soumission E-Services ANPP (Jalon 1.7 Phase 3) -->
+                    <!-- Assistant Télé-Soumission E-Services ANPP -->
                     <div style="margin-top:8px; background:linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06)); border:1px solid rgba(37,99,235,0.25); border-radius:6px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                         <div>
                             <div style="font-size:12px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:6px;">
                                 <span>🚀</span>
                                 <span>Assistant de Télé-Soumission E-Services ANPP</span>
-                                <span style="font-size:10px; background:rgba(37,99,235,0.15); color:var(--accent-blue); padding:1px 6px; border-radius:8px; font-weight:700;">Jalon 1.7</span>
+                                <span style="font-size:10px; background:rgba(37,99,235,0.15); color:var(--accent-blue); padding:1px 6px; border-radius:8px; font-weight:700;">E-Services</span>
                             </div>
                             <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">
                                 Audit automatique de conformité pré-dépôt, validation des pièces [E], quittance BV1 et export du manifeste certifié.
@@ -624,7 +624,7 @@
                         </div>
                     </div>
 
-                    <!-- Bordereaux de Versement des Redevances ANPP (Jalon 1.7 Phase 2) -->
+                    <!-- Bordereaux de Versement des Redevances ANPP -->
                     ${(typeof currentDossierPaymentSlips !== 'undefined' && currentDossierPaymentSlips && currentDossierPaymentSlips.length > 0) ? `
                         <div style="margin-top:8px; background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:8px 10px;">
                             <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--text-dim); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
