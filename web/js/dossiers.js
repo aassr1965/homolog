@@ -368,6 +368,11 @@
                 }
                 document.getElementById("bc-mod").innerText = prodTitle;
 
+                // Chargement des bordereaux de redevances ANPP (Jalon 1.7 Phase 2)
+                if (typeof loadDossierPaymentSlips === 'function') {
+                    await loadDossierPaymentSlips(id);
+                }
+
                 // KPI toolbar
                 const kpiEl = document.getElementById("kpi-dossier-completeness");
                 if (kpiEl) {
@@ -597,6 +602,38 @@
                                 🏛️ Récépissé Dépôt ANPP : <code style="color:var(--text-main);">${escapeHTML(dossier.deposit_receipt_ref)}</code> (${dossier.deposit_receipt_date ? escapeHTML(dossier.deposit_receipt_date.substring(0, 10)) : ''})
                             </div>
                             ${dossier.anpp_official_reference ? `<div style="font-size:10px; color:var(--text-dim);">N° Dossier ANPP : <strong>${escapeHTML(dossier.anpp_official_reference)}</strong></div>` : ''}
+                        </div>
+                    ` : ''}
+
+                    <!-- Bordereaux de Versement des Redevances ANPP (Jalon 1.7 Phase 2) -->
+                    ${(typeof currentDossierPaymentSlips !== 'undefined' && currentDossierPaymentSlips && currentDossierPaymentSlips.length > 0) ? `
+                        <div style="margin-top:8px; background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:8px 10px;">
+                            <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--text-dim); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                                <span>💰 Bordereaux de Redevances Légales ANPP (${currentDossierPaymentSlips.length})</span>
+                                <button class="btn-pill" style="font-size:10px; padding:2px 8px;" onclick="openGenerateFeeSlipModal('${dossier.id}')">➕ Émettre Nouveau Bordereau</button>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                ${currentDossierPaymentSlips.map(s => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:4px; padding:6px 10px; font-size:11px;">
+                                        <div>
+                                            <span class="badge" style="background:var(--accent-blue); color:white; font-weight:700; margin-right:6px;">${s.slip_type}</span>
+                                            <strong style="color:var(--text-main); font-family:monospace;">${escapeHTML(s.slip_number)}</strong>
+                                            <span style="color:var(--text-dim); margin:0 6px;">|</span>
+                                            <strong style="color:var(--accent-emerald);">${typeof formatDZD === 'function' ? formatDZD(s.amount_dzd) : s.amount_dzd + ' DZD'}</strong>
+                                            ${s.payment_reference ? `<span style="margin-left:8px; font-size:10px; color:#10b981;">(Quittance : ${escapeHTML(s.payment_reference)})</span>` : ''}
+                                        </div>
+                                        <div style="display:flex; gap:6px; align-items:center;">
+                                            <span class="badge" style="background:${s.status === 'paye' ? 'rgba(16,185,129,0.15)' : 'rgba(234,179,8,0.15)'}; color:${s.status === 'paye' ? '#10b981' : '#b45309'}; font-size:10px;">
+                                                ${s.status === 'paye' ? '✅ Quittance Enregistrée' : '⏳ Émis (En attente règlement)'}
+                                            </span>
+                                            <button class="btn-pill" style="font-size:10px; padding:2px 6px;" onclick="openPrintSlipWindow('${s.id}')">🖨️ Imprimer</button>
+                                            ${s.status !== 'paye' ? `
+                                                <button class="btn-pill" style="font-size:10px; padding:2px 6px; background:#10b981; color:white; border:none;" onclick="openRecordSlipPaymentModal('${s.id}', '${s.slip_number}', ${s.amount_dzd})">🏛️ Saisir Quittance</button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     ` : ''}
                 </div>

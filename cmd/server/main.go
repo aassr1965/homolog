@@ -57,6 +57,7 @@ func main() {
 	var gedHandler *api.GEDHandler
 	var dossierHandler *api.DossierHandler
 	var deficiencyHandler *api.DeficiencyHandler
+	var feeHandler *api.FeeHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -79,6 +80,9 @@ func main() {
 		// Initialisation du Studio de Compléments ANPP & Traçabilité Délais (Jalon 1.7)
 		api.SeedInitialDeficiencies(ctx, db.Pool, cfg.OnPremOrgSlug)
 
+		// Initialisation des Bordereaux de Redevances BV1/BV2 (Jalon 1.7 Phase 2)
+		api.SeedInitialPaymentSlips(ctx, db.Pool, cfg.OnPremOrgSlug)
+
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService, cfg)
@@ -96,6 +100,9 @@ func main() {
 
 		deficiencyRepo := repository.NewDeficiencyRepository(db.Pool)
 		deficiencyHandler = api.NewDeficiencyHandler(deficiencyRepo, dossierRepo, auditService, db.Pool)
+
+		feeRepo := repository.NewFeeRepository(db.Pool)
+		feeHandler = api.NewFeeHandler(feeRepo, dossierRepo, auditService, db.Pool)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -330,6 +337,22 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/deficiencies/dashboard", deficiencyHandler.GetDeficiencyDashboard)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Put("/api/v1/deficiencies/tasks/{taskId}", deficiencyHandler.UpdateDeficiencyTask)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/deficiencies/tasks/{taskId}/validate-dt", deficiencyHandler.ValidateDeficiencyTaskDT)
+			}
+
+			// Calculateur des Redevances ANPP & Bordereaux BV1/BV2 (Jalon 1.7 Phase 2)
+			if feeHandler != nil {
+				// Consultation et mise à jour des barèmes légaux
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/fees/schedules", feeHandler.ListFeeSchedules)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermUserManage, domain.PermRefEdit)).Post("/api/v1/fees/schedules", feeHandler.CreateOrUpdateFeeSchedule)
+
+				// Bordereaux au sein du dossier
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/fees", feeHandler.ListDossierPaymentSlips)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/fees/generate-slip", feeHandler.GenerateDossierPaymentSlip)
+
+				// Consultation, impression officielle et encaissement
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}", feeHandler.GetPaymentSlip)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}/print-html", feeHandler.GetPaymentSlipPrintHTML)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Put("/api/v1/fees/slips/{slipId}/status", feeHandler.UpdatePaymentSlipStatus)
 			}
 		})
 	}
