@@ -44,6 +44,10 @@ const (
 	ActionPreSubmissionAudit     = "PRE_SUBMISSION_AUDIT"
 	ActionPreSubmissionLock      = "PRE_SUBMISSION_LOCK"
 	ActionManifestExport         = "ESERVICES_MANIFEST_EXPORT"
+	ActionAppointmentCreate      = "APPOINTMENT_CREATE"
+	ActionAppointmentStatus      = "APPOINTMENT_STATUS_UPDATE"
+	ActionRegulatoryWatchCreate  = "REGULATORY_WATCH_CREATE"
+	ActionRegulatoryWatchUpdate  = "REGULATORY_WATCH_UPDATE"
 )
 
 // Entry représente les données à consigner dans l'Audit Trail

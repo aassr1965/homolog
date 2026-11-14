@@ -59,6 +59,8 @@ func main() {
 	var deficiencyHandler *api.DeficiencyHandler
 	var feeHandler *api.FeeHandler
 	var submissionHandler *api.SubmissionHandler
+	var appointmentHandler *api.AppointmentHandler
+	var regulatoryWatchHandler *api.RegulatoryWatchHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -84,6 +86,9 @@ func main() {
 		// Initialisation des Bordereaux de Redevances BV1/BV2 (Jalon 1.7 Phase 2)
 		api.SeedInitialPaymentSlips(ctx, db.Pool, cfg.OnPremOrgSlug)
 
+		// Initialisation de la Veille Réglementaire & Séances ANPP (Jalon 1.7 Phase 4)
+		api.SeedInitialRegulatoryWatchAndAppointments(ctx, db.Pool, cfg.OnPremOrgSlug)
+
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService, cfg)
@@ -106,6 +111,12 @@ func main() {
 		feeHandler = api.NewFeeHandler(feeRepo, dossierRepo, auditService, db.Pool)
 
 		submissionHandler = api.NewSubmissionHandler(dossierRepo, feeRepo, pharmaRepo, auditService)
+
+		appointmentRepo := repository.NewAppointmentRepository(db.Pool)
+		appointmentHandler = api.NewAppointmentHandler(appointmentRepo, dossierRepo, auditService)
+
+		regulatoryWatchRepo := repository.NewRegulatoryWatchRepository(db.Pool)
+		regulatoryWatchHandler = api.NewRegulatoryWatchHandler(regulatoryWatchRepo, auditService)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -363,6 +374,22 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/pre-submission-audit", submissionHandler.GetPreSubmissionAudit)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/eservices-manifest", submissionHandler.GetEservicesManifest)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/lock-pre-submission", submissionHandler.LockPreSubmission)
+			}
+
+			// Gestion des Rendez-vous & Séances ANPP (Jalon 1.7 Phase 4)
+			if appointmentHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/appointments", appointmentHandler.ListAppointments)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/appointments", appointmentHandler.CreateAppointment)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/appointments/{appId}", appointmentHandler.GetAppointment)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Put("/api/v1/appointments/{appId}/status", appointmentHandler.UpdateAppointmentStatus)
+			}
+
+			// Veille Réglementaire & Corpus Juridique Pharmaceutique (Jalon 1.7 Phase 4)
+			if regulatoryWatchHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch", regulatoryWatchHandler.ListRegulatoryWatch)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermUserManage)).Post("/api/v1/regulatory-watch", regulatoryWatchHandler.CreateRegulatoryWatchItem)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}", regulatoryWatchHandler.GetRegulatoryWatchItem)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Put("/api/v1/regulatory-watch/{itemId}/analysis", regulatoryWatchHandler.UpdateRegulatoryWatchAnalysis)
 			}
 		})
 	}
