@@ -1673,6 +1673,182 @@
         </div>
     </div>
 
+    <!-- Modal Nouveau Collaborateur & Habilitation BPF (21 CFR Part 11 / PSSI) -->
+    <div class="modal-overlay" id="modal-new-user" onclick="if(event.target === this) closeModal('modal-new-user')">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">👤</span>
+                    <span>Nouveau Collaborateur &amp; Habilitation BPF (PSSI / 21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-new-user')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-user" onsubmit="handleCreateUserSubmit(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Prénom * :</label>
+                            <input type="text" id="new-user-firstname" required placeholder="ex: Yasmine" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nom * :</label>
+                            <input type="text" id="new-user-lastname" required placeholder="ex: Benali" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Adresse Email Professionnelle * :</label>
+                        <input type="email" id="new-user-email" required placeholder="yasmine.b@sanadpharma.dz" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Rôle Officiel BPF * :</label>
+                        <select id="new-user-role" required onchange="handleRoleSelectionChange(this.value)" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:600;">
+                            <!-- Injecté dynamiquement par admin.js -->
+                        </select>
+                    </div>
+                    <div id="new-user-contract-container" style="display:none; background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.3); border-radius:4px; padding:10px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:700; font-size:11px; color:var(--accent-blue);">📅 Date d'Échéance du Contrat d'Expertise (Obligatoire PSSI / BPF) * :</label>
+                        <input type="datetime-local" id="new-user-contract-exp" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        <span style="font-size:10px; color:var(--text-dim); display:block; margin-top:3px;">À expiration, les habilitations du consultant externe sont automatiquement suspendues.</span>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Mot de Passe Temporaire Initial (Argon2id) * :</label>
+                        <div style="position:relative;">
+                            <input type="password" id="new-user-password" required placeholder="Min. 12 caractères (Maj, Min, Chiffre, Spécial)" style="width:100%; padding:6px 30px 6px 6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            <button type="button" onclick="togglePasswordVisibility('new-user-password')" style="position:absolute; right:6px; top:6px; background:none; border:none; color:var(--text-muted); cursor:pointer;">👁️</button>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
+                            Politique OWASP / BPF : min. 12 car., 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial (@$!%*?&#).
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-new-user')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;">Créer le Collaborateur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Activation / Suspension Compte (21 CFR Part 11 - Zéro Hard Delete) -->
+    <div class="modal-overlay" id="modal-user-status" onclick="if(event.target === this) closeModal('modal-user-status')">
+        <div class="modal modal-md">
+            <div class="modal-header" id="user-status-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="user-status-icon">🛡️</span>
+                    <span id="user-status-title">Modifier le Statut d'un Compte (BPF / 21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-user-status')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.5; color:var(--text-main);">
+                    <strong>⚖️ Garantie d'Intégrité 21 CFR Part 11 :</strong> Aucun compte n'est supprimé physiquement (Hard Delete). En cas de départ ou de suspension, l'accès est désactivé et l'ensemble des sessions actives est révoqué immédiatement, préservant ainsi l'opposabilité juridique de toutes les signatures électroniques historiques du collaborateur.
+                </div>
+                <form id="form-user-status" onsubmit="handleUserStatusSubmit(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="status-user-id">
+                    <input type="hidden" id="status-target-active">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Collaborateur Ciblé :</label>
+                        <input type="text" id="status-user-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Action demandée :</label>
+                        <div id="status-action-desc" style="font-weight:700; font-size:12px; padding:6px; border-radius:4px;"></div>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Circonstancié (Enregistré dans l'Audit Trail) * :</label>
+                        <textarea id="status-reason" rows="3" required placeholder="ex: Départ définitif de l'entreprise vers un autre établissement ou suspension conservatoire..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-user-status')">Annuler</button>
+                        <button type="submit" id="btn-submit-status" class="btn-pill" style="border:none; font-weight:700; color:white;">Confirmer la Modification</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Réinitialisation Mot de Passe Sécurisée -->
+    <div class="modal-overlay" id="modal-reset-user-password" onclick="if(event.target === this) closeModal('modal-reset-user-password')">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span>🔑</span>
+                    <span>Réinitialisation Sécurisée de Mot de Passe (21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-reset-user-password')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; color:var(--text-main);">
+                    <strong>⚠️ Révocation Automatique :</strong> Cette action détruit instantanément toutes les sessions actives de l'utilisateur et le force à s'authentifier avec son nouveau mot de passe.
+                </div>
+                <form id="form-reset-password" onsubmit="handleResetPasswordSubmit(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="reset-user-id">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Collaborateur :</label>
+                        <input type="text" id="reset-user-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nouveau Mot de Passe Provisoire (Argon2id) * :</label>
+                        <div style="position:relative;">
+                            <input type="password" id="reset-new-password" required placeholder="Min. 12 caractères (Maj, Min, Chiffre, Spécial)" style="width:100%; padding:6px 30px 6px 6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            <button type="button" onclick="togglePasswordVisibility('reset-new-password')" style="position:absolute; right:6px; top:6px; background:none; border:none; color:var(--text-muted); cursor:pointer;">👁️</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Réglementaire de la Réinitialisation * :</label>
+                        <textarea id="reset-reason" rows="2" required placeholder="ex: Demande expresse du collaborateur suite à perte d'identifiants..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-reset-user-password')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-amber); color:#1c1917; font-weight:700; border:none;">Réinitialiser &amp; Révoquer Sessions</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Dérogations & Surcharges Individuelles des Permissions -->
+    <div class="modal-overlay" id="modal-user-permissions" onclick="if(event.target === this) closeModal('modal-user-permissions')">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span>🔐</span>
+                    <span>Gestion des Dérogations Individuelles de Permissions (Table user_permissions)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-user-permissions')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); padding:8px 12px; border-radius:6px; margin-bottom:12px;">
+                    <div>
+                        <div id="perm-user-name" style="font-weight:700; color:var(--accent-blue); font-size:13px;"></div>
+                        <div id="perm-user-role" style="font-size:11px; color:var(--text-muted);"></div>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-dim); text-align:right;">
+                        Les dérogations surchargent la matrice par défaut du rôle.<br>
+                        <strong>Incrémentation automatique de permissions_version</strong>
+                    </div>
+                </div>
+
+                <form id="form-user-permissions" onsubmit="handleUserPermissionsSubmit(event)">
+                    <input type="hidden" id="perm-modal-user-id">
+                    <div id="perm-checklist-container" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; max-height:360px; overflow-y:auto; padding-right:6px;">
+                        <!-- Injecté dynamiquement par admin.js -->
+                    </div>
+
+                    <div style="margin-top:12px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Justificatif de Dérogation (Audit Trail PSSI) * :</label>
+                        <textarea id="perm-override-reason" rows="2" required placeholder="ex: Mandat temporaire pour la revue du référentiel ou remplacement d'astreinte..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-user-permissions')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none;">Enregistrer les Dérogations BPF</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.14.3"></script>
