@@ -962,29 +962,36 @@
         </div>
     </div>
 
-    <!-- Modal Nouveau Dispositif Médical (Jalon 1.3 - Décret 20-324) -->
+    <!-- Modal Nouveau / Mise à jour Dispositif Médical (Décret 20-324 & Arrêté 10/05/2021) -->
     <div class="modal-overlay" id="modal-new-dm" onclick="if(event.target === this) closeModal('modal-new-dm')">
         <div class="modal modal-lg">
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:16px;">💉</span>
-                    <span>Nouveau Dispositif Médical (Arrêté du 10 Mai 2021 &amp; Décret 20-324)</span>
+                    <span id="modal-dm-title">Nouveau Dispositif Médical (Arrêté du 10 Mai 2021 &amp; Décret 20-324)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-new-dm')">✕</button>
             </div>
             <div class="modal-body">
                 <form id="form-new-dm" onsubmit="handleCreateDevice(event)" style="display:flex; flex-direction:column; gap:12px;">
-                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:10px;">
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Typologie Réglementaire (Décret 20-324) * :</label>
+                            <select id="dm-origin" onchange="toggleDMEcoFields()" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px; font-size:12px; font-weight:600;">
+                                <option value="fabrication_locale">Fabrication Locale (Volet Éco : PCSU DZD)</option>
+                                <option value="importe">Dispositif Médical Importé (Marquage CE, CLV &amp; CIF)</option>
+                            </select>
+                        </div>
                         <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nom Commercial du DM * :</label>
                             <input type="text" id="dm-name" required placeholder="Ex: Cathéter Intraveineux de Sécurité 20G" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                         <div>
-                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Référence Fabricant * :</label>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Référence Fabricant (Catalogue) * :</label>
                             <input type="text" id="dm-ref" required placeholder="Ex: LPA-IVC-20G" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
                         <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Classe de Risque ANPP * :</label>
                             <select id="dm-class" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--accent-blue); border-radius:4px; font-size:12px; font-weight:600;">
@@ -996,25 +1003,179 @@
                             </select>
                         </div>
                         <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Nomenclature GMDN / EMDN :</label>
+                            <input type="text" id="dm-gmdn" placeholder="Ex: 34978 (Cathéter IV périphérique)" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:10px;">
+                        <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Règle de Classification (Arrêté 10/05/2021) :</label>
                             <input type="text" id="dm-rule" value="Règle 2 (Dispositif invasif chirurgical temporaire)" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         </div>
+                        <div>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Méthode de Stérilisation :</label>
+                            <select id="dm-sterilization-method" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="Oxyde d'éthylène (ETO)">Oxyde d'éthylène (ETO)</option>
+                                <option value="Rayonnement Gamma (25 kGy)">Rayonnement Gamma (25 kGy)</option>
+                                <option value="Vapeur saturée (Autoclave)">Vapeur saturée (Autoclave)</option>
+                                <option value="Faisceau d'électrons (E-beam)">Faisceau d'électrons (E-beam)</option>
+                                <option value="Non applicable (Non stérile)">Non applicable (Non stérile)</option>
+                            </select>
+                        </div>
                     </div>
+
                     <div style="display:flex; gap:20px; align-items:center;">
                         <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
-                            <input type="checkbox" id="dm-sterile" checked> Dispositif Stérile
+                            <input type="checkbox" id="dm-sterile" checked onchange="document.getElementById('dm-sterilization-method').disabled = !this.checked"> Dispositif Stérile
                         </label>
                         <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
                             <input type="checkbox" id="dm-single-use" checked> Dispositif à Usage Unique
                         </label>
                     </div>
+
+                    <!-- Volet Économique DM Conditionnel -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <h4 style="font-size:11px; margin-bottom:8px; color:var(--accent-blue);" id="dm-eco-title">💰 Volet Économique DM (PCSU Fabrication Locale)</h4>
+                        <div id="dm-pcsu-group" style="display:flex; gap:10px; align-items:center;">
+                            <label style="font-size:11px; font-weight:600;">Prix Sortie Usine (PCSU) en DZD :</label>
+                            <input type="number" step="0.01" id="dm-pcsu" placeholder="Ex: 45.00" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; width:150px;">
+                            <span style="font-size:11px; color:var(--text-dim);">(Coûts directs matières premières, assemblage salle propre ISO 7 &amp; stérilisation)</span>
+                        </div>
+                        <div id="dm-cif-group" style="display:none; gap:10px; align-items:center;">
+                            <label style="font-size:11px; font-weight:600;">Prix CIF unitaire :</label>
+                            <input type="number" step="0.01" id="dm-cif" placeholder="Ex: 1.85" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; width:120px;">
+                            <select id="dm-cif-currency" style="padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="EUR">EUR (€)</option>
+                                <option value="USD">USD ($)</option>
+                            </select>
+                            <span style="font-size:11px; color:var(--text-dim); margin-left:10px;">(Prix d'importation déclaré au dossier d'homologation ANPP)</span>
+                        </div>
+                    </div>
+
+                    <!-- Volet Traçabilité Fabricant Étranger & Conformité CE / CLV (Décret 20-324) -->
+                    <div id="dm-foreign-group" style="display:none; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <h4 style="font-size:11px; margin-bottom:8px; color:var(--accent-blue);">🌍 Fabricant Légal Étranger, Marquage CE &amp; Certificat CLV/FSC</h4>
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Fabricant Légal Étranger (Legal Manufacturer) :</label>
+                                <input type="text" id="dm-legal-manufacturer" placeholder="Ex: B. Braun Melsungen AG, Terumo Corporation" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Pays d'Origine (Code ISO-2) :</label>
+                                <input type="text" id="dm-manufacturer-country" maxlength="2" placeholder="Ex: DE, FR, JP, US" style="width:100%; padding:6px; text-transform:uppercase; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Site Fabricant Réel / Stérilisation (1.M) :</label>
+                                <select id="dm-manufacturer-site-id" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                    <option value="">-- Aucun ou site non répertorié --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Établissement Mandataire / Déclarant Local (MIPH) :</label>
+                                <select id="dm-est-id" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                    <option value="">-- Sélectionner l'établissement agréé --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1.2fr 1.2fr 0.8fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° Certificat Marquage CE :</label>
+                                <input type="text" id="dm-ce-number" placeholder="Ex: CE-0123-MDR-2023-7749" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Organisme Notifié (Notified Body) :</label>
+                                <input type="text" id="dm-notified-body-name" placeholder="Ex: TÜV SÜD Product Service GmbH" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° ON :</label>
+                                <input type="text" id="dm-notified-body-number" placeholder="Ex: 0123" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date d'Expiration Certificat CE :</label>
+                                <input type="date" id="dm-ce-expiry" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Certificat Système Qualité ISO 13485 :</label>
+                                <input type="text" id="dm-iso-number" placeholder="Ex: ISO13485-DE-TUV-9921" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1.2fr 0.8fr; gap:10px;">
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">N° Certificat Libre Vente (CLV / FSC) :</label>
+                                <input type="text" id="dm-clv-number" placeholder="Ex: FSC-DE-BFARM-2023-4410" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Autorité Émettrice du CLV :</label>
+                                <input type="text" id="dm-clv-authority" placeholder="Ex: BfArM (Allemagne), ANSM (France)" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Date Délivrance CLV :</label>
+                                <input type="date" id="dm-clv-date" style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Destination d'Usage &amp; Indications Cliniques :</label>
                         <textarea id="dm-intended-use" rows="2" placeholder="Accès vasculaire périphérique court terme pour administration intraveineuse de fluides thérapeutiques." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
                     </div>
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-dm')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le DM (Base SQL)</button>
+                        <button type="submit" id="modal-dm-submit-btn" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">Enregistrer le DM (Base SQL)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Archivage Réglementaire Dispositif Médical (21 CFR Part 11 & Décret 20-324) -->
+    <div class="modal-overlay" id="modal-archive-dm" onclick="if(event.target === this) closeModal('modal-archive-dm')">
+        <div class="modal modal-md">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-amber);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">📦</span>
+                    <span style="color:var(--accent-amber); font-weight:700;">Retrait &amp; Archivage Réglementaire DM (21 CFR Part 11)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-archive-dm')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.5; color:var(--text-main);">
+                    <strong>⚖️ Garantie d'Intégrité ALCOA+ &amp; Décret 20-324 :</strong> Aucune suppression physique n'est effectuée. Conformément à la réglementation pharmaceutique (BPF / 21 CFR Part 11), le dossier technique d'homologation et l'historique sont intégralement conservés. Le DM passera au statut <code>ARCHIVÉ / RETIRÉ</code> avec scellement de la signature nominative du Pharmacien DT dans l'Audit Trail immuable.
+                </div>
+                <form id="form-archive-dm" onsubmit="handleArchiveDevice(event)" style="display:flex; flex-direction:column; gap:12px;">
+                    <input type="hidden" id="archive-dm-id">
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Dispositif Médical Ciblé :</label>
+                        <input type="text" id="archive-dm-name" readonly style="width:100%; padding:6px; background:var(--bg-panel); border:1px solid var(--border-color); color:var(--accent-blue); font-weight:700; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Motif Réglementaire de Retrait * :</label>
+                        <select id="archive-dm-reason-select" onchange="document.getElementById('archive-dm-reason').value = this.value" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px; font-weight:600;">
+                            <option value="">-- Sélectionner un motif réglementaire motivé --</option>
+                            <option value="Arrêt définitif de production ou de commercialisation par le fabricant légal">Arrêt définitif de production / commercialisation</option>
+                            <option value="Non-renouvellement ou expiration de la décision d'homologation ANPP">Expiration de la décision d'homologation ANPP</option>
+                            <option value="Expiration ou révocation du certificat CE ou ISO 13485 par l'organisme notifié">Expiration ou retrait du marquage CE / ISO 13485</option>
+                            <option value="Notification de matériovigilance / Mesure corrective de sécurité FSCA">Matériovigilance / Mesure corrective de sécurité (FSCA)</option>
+                            <option value="Remplacement par une nouvelle génération de dispositif médical">Remplacement par nouvelle génération de DM</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Détail &amp; Justification circonstanciée * :</label>
+                        <textarea id="archive-dm-reason" rows="2" required placeholder="Précisez la référence de notification ANPP, le PV de matériovigilance ou la décision interne..." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;"></textarea>
+                    </div>
+                    <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                        <label style="display:block; margin-bottom:4px; font-weight:700; font-size:11px; color:var(--accent-amber);">🔐 Signature Électronique Nominative (21 CFR Part 11) * :</label>
+                        <p style="font-size:10px; color:var(--text-dim); margin-bottom:6px;">Veuillez ressaisir votre mot de passe utilisateur pour apposer votre signature cryptographique sur cette opération de retrait irréversible.</p>
+                        <input type="password" id="archive-dm-password" required placeholder="Mot de passe du Pharmacien DT / Signataire" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-archive-dm')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-amber); color:#1c1917; font-weight:700; border:none;">Sceller le Retrait Réglementaire</button>
                     </div>
                 </form>
             </div>
@@ -1514,12 +1675,12 @@
 
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.14.2"></script>
-    <script src="/js/auth.js?v=2026.11.14.2"></script>
-    <script src="/js/admin.js?v=2026.11.14.2"></script>
-    <script src="/js/referential.js?v=2026.11.14.2"></script>
-    <script src="/js/variations.js?v=2026.11.14.2"></script>
-    <script src="/js/ged.js?v=2026.11.14.2"></script>
-    <script src="/js/dossiers.js?v=2026.11.14.2"></script>
+    <script src="/js/app.js?v=2026.11.14.3"></script>
+    <script src="/js/auth.js?v=2026.11.14.3"></script>
+    <script src="/js/admin.js?v=2026.11.14.3"></script>
+    <script src="/js/referential.js?v=2026.11.14.3"></script>
+    <script src="/js/variations.js?v=2026.11.14.3"></script>
+    <script src="/js/ged.js?v=2026.11.14.3"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.3"></script>
 </body>
 </html>

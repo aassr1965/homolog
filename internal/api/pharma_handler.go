@@ -695,6 +695,133 @@ func (h *PharmaHandler) ListMedicalDevices(w http.ResponseWriter, r *http.Reques
 	})
 }
 
+// UpdateMedicalDevice met à jour un dispositif médical et enregistre la piste d'audit ALCOA+
+func (h *PharmaHandler) UpdateMedicalDevice(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant invalide")
+		return
+	}
+
+	var dm domain.MedicalDevice
+	if err := json.NewDecoder(r.Body).Decode(&dm); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	dm.ID = id
+	dm.OrganizationID = user.OrganizationID
+
+	if err := h.repo.UpdateMedicalDevice(r.Context(), &dm); err != nil {
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+		OrganizationID: user.OrganizationID,
+		UserID:         &user.UserID,
+		UserEmail:      user.Email,
+		UserRole:       user.Role,
+		Action:         "MEDICAL_DEVICE_UPDATE",
+		EntityType:     "medical_device",
+		EntityID:       dm.ID.String(),
+		Details: map[string]any{
+			"commercial_name_fr":     dm.CommercialNameFR,
+			"manufacturer_reference": dm.ManufacturerReference,
+			"origin_type":            dm.OriginType,
+			"dm_class":               dm.DMClass,
+		},
+		IPAddress: getClientIP(r),
+		UserAgent: r.UserAgent(),
+	})
+
+	writeJSON(w, http.StatusOK, dm)
+}
+
+// MedicalDeviceArchiveRequest requête de retrait/archivage DM conforme 21 CFR Part 11
+type MedicalDeviceArchiveRequest struct {
+	Reason   string `json:"reason"`
+	Password string `json:"password"`
+}
+
+// ArchiveMedicalDevice effectue un soft-delete réglementaire du DM avec signature nominative (21 CFR Part 11)
+func (h *PharmaHandler) ArchiveMedicalDevice(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dispositif médical invalide")
+		return
+	}
+
+	var req MedicalDeviceArchiveRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	req.Reason = strings.TrimSpace(req.Reason)
+	if req.Reason == "" {
+		writeJSONError(w, http.StatusBadRequest, "Le motif réglementaire du retrait / archivage DM est obligatoire (21 CFR Part 11 / Décret 20-324)")
+		return
+	}
+
+	if strings.TrimSpace(req.Password) == "" {
+		writeJSONError(w, http.StatusUnauthorized, "La signature électronique nominative (mot de passe) est obligatoire pour confirmer l'archivage réglementaire (21 CFR Part 11)")
+		return
+	}
+
+	if err := h.repo.ArchiveMedicalDevice(r.Context(), user.OrganizationID, id, user.UserID, req.Reason, req.Password); err != nil {
+		if strings.Contains(err.Error(), "signature électronique invalide") {
+			writeJSONError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+		OrganizationID: user.OrganizationID,
+		UserID:         &user.UserID,
+		UserEmail:      user.Email,
+		UserRole:       user.Role,
+		Action:         "MEDICAL_DEVICE_ARCHIVE",
+		EntityType:     "medical_device",
+		EntityID:       id.String(),
+		Details: map[string]any{
+			"reason":        req.Reason,
+			"archived_by":   user.Email,
+			"archived_role": user.Role,
+			"compliance":    "21 CFR Part 11 / Décret 20-324 / ALCOA+",
+		},
+		IPAddress: getClientIP(r),
+		UserAgent: r.UserAgent(),
+	})
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"message": "Dispositif médical archivé et retiré du catalogue avec succès",
+		"id":      id,
+		"status":  "archive",
+	})
+}
+
+// DeleteMedicalDevice bloque toute suppression physique conformément à 21 CFR Part 11
+func (h *PharmaHandler) DeleteMedicalDevice(w http.ResponseWriter, r *http.Request) {
+	writeJSONError(w, http.StatusMethodNotAllowed, "Suppression physique interdite par la réglementation pharmaceutique (21 CFR Part 11 / BPF / Décret 20-324). Utilisez le point d'archivage réglementaire POST /api/v1/medical-devices/{id}/archive avec justification et signature électronique.")
+}
+
 // Helper writeJSON
 func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
