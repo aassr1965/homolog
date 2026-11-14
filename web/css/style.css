@@ -510,6 +510,17 @@
             letter-spacing: 0.5px;
             white-space: nowrap;
         }
+        thead.two-tier tr:first-child th {
+            top: 0;
+            z-index: 12;
+        }
+        thead.two-tier tr:nth-child(2) th {
+            top: 28px;
+            z-index: 11;
+        }
+        thead.two-tier tr:first-child th[rowspan] {
+            z-index: 13;
+        }
         td {
             padding: 8px 10px;
             border-bottom: 1px solid var(--border-color);
