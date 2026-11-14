@@ -242,6 +242,9 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medicines", pharmaHandler.ListMedicines)
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medicines", pharmaHandler.CreateMedicine)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medicines/{id}", pharmaHandler.GetMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/medicines/{id}", pharmaHandler.UpdateMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medicines/{id}/archive", pharmaHandler.ArchiveMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Delete("/api/v1/medicines/{id}", pharmaHandler.ArchiveMedicine)
 
 				// Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices", pharmaHandler.ListMedicalDevices)

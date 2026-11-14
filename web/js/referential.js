@@ -177,7 +177,10 @@ var currentRefSection = window.currentRefSection || 'establishments';
                     };
                     let tagClass = "status-ok";
                     let tagLabel = "GÉNÉRIQUE LOCAL";
-                    if (item.origin_type === 'princeps') {
+                    if (item.status === 'archive' || item.status === 'retire') {
+                        tagClass = "status-rej";
+                        tagLabel = "ARCHIVÉ / RETIRÉ";
+                    } else if (item.origin_type === 'princeps') {
                         tagClass = "status-rev";
                         tagLabel = "PRINCEPS RÉF.";
                     } else if (item.origin_type === 'generique_importe') {
@@ -330,8 +333,27 @@ var currentRefSection = window.currentRefSection || 'establishments';
                         <div class="meta-row"><span class="meta-label">Spécialité :</span><span class="meta-val">${item.brand_name_fr}</span></div>
                         <div class="meta-row"><span class="meta-label">DCI :</span><span class="meta-val">${item.dci_fr}</span></div>
                         <div class="meta-row"><span class="meta-label">Typologie :</span><span class="meta-val">${item.origin_type}</span></div>
+                        <div class="meta-row"><span class="meta-label">Statut Catalogue :</span><span class="meta-val" style="font-weight:700; color:${item.status === 'archive' || item.status === 'retire' ? 'var(--accent-red)' : 'var(--accent-emerald)'};">${item.status === 'archive' || item.status === 'retire' ? 'ARCHIVÉ / RETIRÉ' : (item.status || 'EN PRÉPARATION').toUpperCase()}</span></div>
                         <div class="meta-row"><span class="meta-label">Monographie Ph. Eur. :</span><span class="meta-val">${item.has_pharmacopoeia_monograph ? 'Oui' : 'Non'}</span></div>
                         <div class="meta-row"><span class="meta-label">CEP EDQM :</span><span class="meta-val">${item.cep_number || 'Non requis'}</span></div>
+                    </div>
+
+                    ${item.status === 'archive' || item.status === 'retire' ? `
+                    <div style="margin-top:10px; padding:8px 12px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px; color:var(--accent-red); font-size:11px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <span>⚠️</span>
+                        <span>Spécialité Archivée &amp; Retirée du Référentiel Actif (Conformité 21 CFR Part 11 / BPF)</span>
+                    </div>
+                    ` : ''}
+
+                    <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; gap:8px;">
+                        <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none; flex:1; justify-content:center; padding:7px 12px; font-weight:600;" onclick="openEditMedicineModal()">
+                            ✏️ Mettre à jour la Spécialité
+                        </button>
+                        ${item.status !== 'archive' && item.status !== 'retire' ? `
+                        <button class="btn-pill" data-perm="REF_EDIT" style="background:rgba(239,68,68,0.12); color:var(--accent-red); border:1px solid rgba(239,68,68,0.3); justify-content:center; padding:7px 12px; font-weight:600;" onclick="openArchiveMedicineModal()" title="Retrait réglementaire avec signature électronique 21 CFR Part 11">
+                            📦 Retirer / Archiver
+                        </button>
+                        ` : ''}
                     </div>
                 `;
             } else if (section === 'devices') {
@@ -365,6 +387,7 @@ var currentRefSection = window.currentRefSection || 'establishments';
 
         let editingEstID = null;
         let editingSiteID = null;
+        let editingMedID = null;
 
         async function populateEstablishmentsDropdown(selectedID) {
             const select = document.getElementById("site-est-id");
@@ -408,6 +431,13 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 populateEstablishmentsDropdown();
                 document.getElementById("modal-new-site").classList.add("open");
             } else if (currentRefSection === 'medicines') {
+                editingMedID = null;
+                document.getElementById("form-new-med").reset();
+                const title = document.getElementById("modal-med-title");
+                if (title) title.innerText = "Nouveau Médicament (Guide Enregistrement ANPP 2025)";
+                const btn = document.getElementById("modal-med-submit-btn");
+                if (btn) btn.innerText = "Enregistrer le Médicament (Base SQL)";
+                toggleEcoFields();
                 document.getElementById("modal-new-med").classList.add("open");
             } else if (currentRefSection === 'devices') {
                 document.getElementById("modal-new-dm").classList.add("open");
@@ -557,9 +587,85 @@ var currentRefSection = window.currentRefSection || 'establishments';
             }
         }
 
+        function openEditMedicineModal() {
+            const item = currentRefList[selectedRefIndex];
+            if (!item) return;
+            closeAllModals();
+            editingMedID = item.id;
+            document.getElementById("med-origin").value = item.origin_type || 'generique_local';
+            document.getElementById("med-brand-name").value = item.brand_name_fr || '';
+            document.getElementById("med-dci").value = item.dci_fr || '';
+            document.getElementById("med-dosage").value = item.dosage_fr || '';
+            document.getElementById("med-form").value = item.pharmaceutical_form_fr || '';
+            document.getElementById("med-route").value = item.administration_route_fr || 'Voie orale';
+            document.getElementById("med-atc").value = item.atc_code || '';
+            document.getElementById("med-shelf-life").value = item.shelf_life_months || 36;
+            if (item.origin_type === 'generique_local') {
+                document.getElementById("med-pcsu").value = item.pcsu_amount || '';
+            } else {
+                document.getElementById("med-fob").value = item.fob_price || '';
+                document.getElementById("med-currency").value = item.fob_currency || 'EUR';
+                document.getElementById("med-visa-cc").checked = !!item.has_chamber_of_commerce_visa;
+            }
+            toggleEcoFields();
+            const title = document.getElementById("modal-med-title");
+            if (title) title.innerText = "Mise à jour de la Spécialité Pharmaceutique";
+            const btn = document.getElementById("modal-med-submit-btn");
+            if (btn) btn.innerText = "Enregistrer les Modifications (Base SQL)";
+            document.getElementById("modal-new-med").classList.add("open");
+        }
+
+        function openArchiveMedicineModal() {
+            const item = currentRefList[selectedRefIndex];
+            if (!item) return;
+            closeAllModals();
+            document.getElementById("archive-med-id").value = item.id;
+            document.getElementById("archive-med-name").value = `${item.brand_name_fr} (${item.dci_fr} ${item.dosage_fr})`;
+            document.getElementById("archive-med-reason-select").value = "";
+            document.getElementById("archive-med-reason").value = "";
+            document.getElementById("archive-med-password").value = "";
+            document.getElementById("modal-archive-med").classList.add("open");
+        }
+
+        async function handleArchiveMedicine(e) {
+            if (e) e.preventDefault();
+            const id = document.getElementById("archive-med-id").value;
+            const reason = document.getElementById("archive-med-reason").value.trim();
+            const password = document.getElementById("archive-med-password").value;
+
+            if (!reason) {
+                showNotifyModal("Justification Requise", "Le motif réglementaire du retrait est obligatoire.", "⚠️");
+                return;
+            }
+            if (!password) {
+                showNotifyModal("Signature Électronique Requise", "Veuillez saisir votre mot de passe pour sceller l'opération (21 CFR Part 11).", "⚠️");
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/medicines/${id}/archive`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeModal('modal-archive-med');
+                    showNotifyModal("Archivage Réglementaire Scellé (21 CFR Part 11)", "La spécialité a été retirée du catalogue actif. Toutes les données historiques, dossiers CTD et pistes d'audit ALCOA+ sont intégralement préservés sans destruction physique.", "📦");
+                    loadRefSection('medicines');
+                } else {
+                    showNotifyModal("Échec de Signature / Retrait", data.error || "Erreur lors de l'archivage", "⚠️");
+                }
+            } catch(err) {
+                showNotifyModal("Erreur Réseau", err.message, "⚠️");
+            }
+        }
+
         async function handleCreateMedicine(e) {
             if (e) e.preventDefault();
             const origin = document.getElementById("med-origin").value;
+            const isEdit = !!editingMedID;
+            const currentItem = isEdit ? currentRefList.find(m => m.id === editingMedID) : null;
             const payload = {
                 origin_type: origin,
                 brand_name_fr: document.getElementById("med-brand-name").value.trim(),
@@ -574,17 +680,23 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 fob_price: origin !== 'generique_local' ? parseFloat(document.getElementById("med-fob").value) || 0 : null,
                 fob_currency: document.getElementById("med-currency").value,
                 has_chamber_of_commerce_visa: origin !== 'generique_local' ? document.getElementById("med-visa-cc").checked : false,
-                status: 'en_preparation'
+                status: currentItem ? currentItem.status : 'en_preparation'
             };
+
+            const url = isEdit ? `/api/v1/medicines/${editingMedID}` : '/api/v1/medicines';
+            const method = isEdit ? 'PUT' : 'POST';
+
             try {
-                const res = await fetch('/api/v1/medicines', {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     closeModal('modal-new-med');
-                    showNotifyModal("Médicament Enregistré", "La spécialité pharmaceutique a été enregistrée avec ses données médico-économiques selon la typologie ANPP 2025.", "💊");
+                    const msg = isEdit ? "La spécialité pharmaceutique a été mise à jour avec succès dans PostgreSQL." : "La spécialité pharmaceutique a été enregistrée avec ses données médico-économiques selon la typologie ANPP 2025.";
+                    showNotifyModal(isEdit ? "Médicament Mis à Jour" : "Médicament Enregistré", msg, "💊");
+                    editingMedID = null;
                     loadRefSection('medicines');
                 } else {
                     const err = await res.json();
