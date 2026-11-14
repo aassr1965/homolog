@@ -219,7 +219,13 @@ func main() {
 			// Console Dédiée d'Administration Laboratoire & Matrice RBAC (USER_MANAGE)
 			if adminHandler != nil {
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/users", adminHandler.ListUsers)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Post("/api/v1/admin/users", adminHandler.CreateUser)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/users/{id}/role", adminHandler.UpdateUserRole)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/users/{id}/status", adminHandler.UpdateUserStatus)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Post("/api/v1/admin/users/{id}/reset-password", adminHandler.ResetUserPassword)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Post("/api/v1/admin/users/{id}/reset-totp", adminHandler.ResetUserTOTP)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/users/{id}/permissions", adminHandler.UpdateUserPermissions)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Delete("/api/v1/admin/users/{id}", adminHandler.DisallowDeleteUser)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/roles", adminHandler.ListRoles)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/permissions", adminHandler.ListPermissions)
 			}

@@ -115,6 +115,16 @@ async function loadAdminSection(section) {
     }
 }
 
+function escapeAdminHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // 1. Tableau des Collaborateurs du Laboratoire
 function renderAdminUsersTable() {
     const thead = document.getElementById("table-head");
@@ -123,13 +133,13 @@ function renderAdminUsersTable() {
 
     thead.innerHTML = `
         <tr>
-            <th style="width: 80px;">Statut</th>
+            <th style="width: 100px;">Statut</th>
             <th>Collaborateur</th>
             <th>Email</th>
             <th>Rôle Métier Attribué</th>
             <th>Droits Effectifs</th>
             <th style="width: 90px;">2FA BPF</th>
-            <th style="width: 140px; text-align:center;">Action Dev</th>
+            <th style="width: 220px; text-align:center;">Actions Administration</th>
         </tr>
     `;
 
@@ -145,8 +155,8 @@ function renderAdminUsersTable() {
         if (idx === selectedAdminUserIndex) tr.classList.add("selected");
         
         tr.onclick = (e) => {
-            // Ne pas déclencher si on clique directement sur le select ou le bouton
-            if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+            // Ne pas déclencher si on clique directement sur un select, bouton ou badge interactif
+            if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.closest('.status-tag-interactive')) return;
             selectedAdminUserIndex = idx;
             document.querySelectorAll("#doc-tbody tr").forEach(r => r.classList.remove("selected"));
             tr.classList.add("selected");
@@ -165,9 +175,15 @@ function renderAdminUsersTable() {
         const isPDT = u.role === 'directeur_technique';
         const isZeroTrust = u.role === 'admin_systeme_local' || u.role === 'super_admin_editeur';
 
-        let badgeStatus = '<span class="status-tag status-ok">ACTIF</span>';
+        const fullNameEsc = escapeAdminHtml(`${u.first_name} ${u.last_name}`);
+        const emailEsc = escapeAdminHtml(u.email);
+
+        let badgeStatus = u.is_active 
+            ? `<span class="status-tag status-ok status-tag-interactive" style="cursor:pointer;" onclick="openUserStatusModal('${u.id}', false, '${fullNameEsc}', '${emailEsc}')" title="Compte Actif. Cliquer pour suspendre / désactiver">ACTIF 🟢</span>`
+            : `<span class="status-tag status-tag-interactive" style="background:#ef4444; color:white; cursor:pointer;" onclick="openUserStatusModal('${u.id}', true, '${fullNameEsc}', '${emailEsc}')" title="Compte Suspendu. Cliquer pour réactiver">SUSPENDU 🔴</span>`;
+
         if (isCurrentActiveUser) {
-            badgeStatus = '<span class="status-tag" style="background:#0284c7; color:white; font-weight:700;">VOUS</span>';
+            badgeStatus = `<span class="status-tag" style="background:#0284c7; color:white; font-weight:700;">VOUS ${u.is_active ? '🟢' : '🔴'}</span>`;
         }
 
         tr.innerHTML = `
@@ -176,6 +192,7 @@ function renderAdminUsersTable() {
                 ${u.first_name} ${u.last_name}
                 ${isPDT ? '<span title="Pharmacien Directeur Technique titulaire de l\'agrément nominatif (1.A.7)" style="margin-left:4px; font-size:12px;">💊</span>' : ''}
                 ${isZeroTrust ? '<span title="Profil Technique soumis au Zero-Trust strict" style="margin-left:4px; font-size:12px;">🛡️</span>' : ''}
+                ${!u.is_active ? '<span title="Accès suspendu" style="margin-left:4px; font-size:11px; color:#ef4444;">(Désactivé)</span>' : ''}
             </td>
             <td style="font-family:monospace; font-size:11px; color:var(--text-muted);">${u.email}</td>
             <td>
@@ -185,9 +202,10 @@ function renderAdminUsersTable() {
                 </select>
             </td>
             <td>
-                <span class="status-tag" style="background:var(--badge-bg); color:var(--accent-blue); font-weight:600; cursor:help;" 
-                      title="${(u.permissions || []).join(', ')}">
-                    ${permsCount}/14 droits (v${u.permissions_version || 1})
+                <span class="status-tag" style="background:var(--badge-bg); color:var(--accent-blue); font-weight:600; cursor:pointer;" 
+                      onclick="openUserPermissionsModal('${u.id}')"
+                      title="Cliquer pour gérer les dérogations de permissions : ${(u.permissions || []).join(', ')}">
+                    ${permsCount}/14 droits ${(u.overrides && u.overrides.length > 0) ? `<strong style="color:var(--accent-amber);">(${u.overrides.length} dérog.)</strong>` : ''} (v${u.permissions_version || 1})
                 </span>
             </td>
             <td>
@@ -195,12 +213,30 @@ function renderAdminUsersTable() {
                     ? '<span style="color:var(--accent-emerald); font-weight:600; font-size:11px;">✓ TOTP Actif</span>' 
                     : '<span style="color:var(--text-dim); font-size:11px;">Non activé</span>'}
             </td>
-            <td style="text-align:center;">
-                <button class="btn-pill" style="font-size:10px; padding:2px 8px; border-color:#0284c7; color:#0284c7;" 
-                        onclick="devSwitchRole('${u.email}')" 
-                        title="Basculer instantanément sur ce compte pour vérifier les masquages">
-                    🧪 Tester rôle
-                </button>
+            <td style="text-align:center; white-space:nowrap;">
+                <div style="display:inline-flex; gap:3px;">
+                    <button class="btn-pill" style="font-size:10px; padding:2px 6px; border-color:var(--accent-blue); color:var(--accent-blue);" 
+                            onclick="openUserPermissionsModal('${u.id}')" 
+                            title="Gérer les dérogations unitaires (Table user_permissions)">
+                        🔐 Droits
+                    </button>
+                    <button class="btn-pill" style="font-size:10px; padding:2px 6px; border-color:var(--accent-amber); color:var(--accent-amber);" 
+                            onclick="openResetPasswordModal('${u.id}', '${emailEsc}', '${fullNameEsc}')" 
+                            title="Réinitialiser le mot de passe (21 CFR Part 11)">
+                        🔑 Pwd
+                    </button>
+                    ${u.totp_enabled ? `
+                    <button class="btn-pill" style="font-size:10px; padding:2px 6px; border-color:var(--accent-emerald); color:var(--accent-emerald);" 
+                            onclick="handleResetTOTP('${u.id}', '${emailEsc}')" 
+                            title="Réinitialiser le 2FA TOTP (Perte de terminal)">
+                        📱 2FA
+                    </button>` : ''}
+                    <button class="btn-pill" style="font-size:10px; padding:2px 6px; border-color:#64748b; color:#64748b;" 
+                            onclick="devSwitchRole('${u.email}')" 
+                            title="Basculer instantanément sur ce compte pour vérifier les masquages">
+                        🧪 Test
+                    </button>
+                </div>
             </td>
         `;
 
@@ -280,7 +316,18 @@ function renderAdminUserPreview(user) {
                 <strong>Rôle Officiel BPF :</strong> <span style="font-weight:700; color:var(--accent-blue);">${roleLabel}</span><br>
                 <strong>Version des Permissions :</strong> <code>v${user.permissions_version || 1}</code> (Incrémentation automatique sur modification)<br>
                 <strong>Authentification 2FA TOTP :</strong> ${user.totp_enabled ? '<span style="color:var(--accent-emerald); font-weight:600;">✓ Activée (21 CFR Part 11)</span>' : 'Non activée'}<br>
+                <strong>Statut du Compte :</strong> ${user.is_active ? '<span style="color:var(--accent-emerald); font-weight:700;">🟢 Actif</span>' : '<span style="color:#ef4444; font-weight:700;">🔴 Suspendu / Inactif</span>'}<br>
+                ${user.contract_expires_at ? `<strong>Échéance Contrat Expert :</strong> <code>${new Date(user.contract_expires_at).toLocaleDateString()}</code><br>` : ''}
             </div>
+        </div>
+
+        <div style="display:flex; gap:6px; margin: 10px 0;">
+            <button class="btn-pill" style="flex:1; background:var(--accent-blue); color:white; border:none; padding:6px; font-size:11px; font-weight:600;" onclick="openUserPermissionsModal('${user.id}')">
+                🔐 Gérer Dérogations
+            </button>
+            <button class="btn-pill" style="flex:1; background:var(--bg-surface); border:1px solid var(--accent-amber); color:var(--accent-amber); padding:6px; font-size:11px; font-weight:600;" onclick="openResetPasswordModal('${user.id}', '${escapeAdminHtml(user.email)}', '${escapeAdminHtml(user.first_name + ' ' + user.last_name)}')">
+                🔑 Mot de Passe
+            </button>
         </div>
 
         ${isPDT ? `
@@ -597,33 +644,390 @@ async function handleUserRoleChange(userId, newRole, email) {
     }
 }
 
-// Modal d'invitation de nouveau collaborateur
+// Bascule d'affichage mot de passe
+function togglePasswordVisibility(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+// 1. Modal Nouveau Collaborateur
 function openNewUserModal() {
-    showNotifyModal(
-        "Inviter un Nouveau Collaborateur",
-        `<div style="display:flex; flex-direction:column; gap:10px; font-size:12px;">
-            <div>Pour inviter un nouveau membre d'équipe, renseignez son profil et assignez-lui son rôle BPF initial :</div>
-            <div>
-                <label style="display:block; font-weight:600; margin-bottom:4px;">Nom complet :</label>
-                <input type="text" id="invite-name" placeholder="ex: Dr. Nassim B." style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main);">
-            </div>
-            <div>
-                <label style="display:block; font-weight:600; margin-bottom:4px;">Adresse email professionnelle :</label>
-                <input type="email" id="invite-email" placeholder="nassim.b@pharma.dz" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main);">
-            </div>
-            <div>
-                <label style="display:block; font-weight:600; margin-bottom:4px;">Rôle réglementaire :</label>
-                <select id="invite-role" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main);">
-                    ${adminRoles.map(r => `<option value="${r.id}">${r.name_fr}</option>`).join('')}
-                </select>
-            </div>
-            <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
-                * Le collaborateur recevra ses identifiants temporaires et devra activer le 2FA TOTP lors de sa première connexion.
-            </div>
-        </div>`,
-        "➕",
-        "Envoyer l'Invitation"
-    );
+    const roleSelect = document.getElementById("new-user-role");
+    if (roleSelect) {
+        roleSelect.innerHTML = adminRoles.map(r => `
+            <option value="${r.id}">${r.name_fr}</option>
+        `).join('');
+    }
+    const form = document.getElementById("form-new-user");
+    if (form) form.reset();
+
+    const expContainer = document.getElementById("new-user-contract-container");
+    if (expContainer) expContainer.style.display = 'none';
+
+    const modal = document.getElementById("modal-new-user");
+    if (modal) modal.classList.add("open");
+}
+
+function handleRoleSelectionChange(roleId) {
+    const expContainer = document.getElementById("new-user-contract-container");
+    const expInput = document.getElementById("new-user-contract-exp");
+    if (expContainer) {
+        if (roleId === 'consultant_externe') {
+            expContainer.style.display = 'block';
+            if (expInput) expInput.required = true;
+        } else {
+            expContainer.style.display = 'none';
+            if (expInput) {
+                expInput.required = false;
+                expInput.value = '';
+            }
+        }
+    }
+}
+
+async function handleCreateUserSubmit(event) {
+    event.preventDefault();
+    const firstName = document.getElementById("new-user-firstname").value.trim();
+    const lastName = document.getElementById("new-user-lastname").value.trim();
+    const email = document.getElementById("new-user-email").value.trim();
+    const role = document.getElementById("new-user-role").value;
+    const password = document.getElementById("new-user-password").value;
+    const expInput = document.getElementById("new-user-contract-exp");
+
+    const payload = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        role: role,
+        password: password
+    };
+
+    if (role === 'consultant_externe' && expInput && expInput.value) {
+        payload.contract_expires_at = new Date(expInput.value).toISOString();
+    }
+
+    try {
+        const res = await fetch("/api/v1/admin/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showNotifyModal("Échec Création Collaborateur", data.error || "Impossible de créer l'utilisateur", "⚠️", "Fermer");
+            return;
+        }
+
+        closeModal("modal-new-user");
+        showNotifyModal(
+            "Collaborateur Créé avec Succès",
+            `<div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="color:var(--accent-emerald); font-weight:700;">
+                    ✓ Le compte de ${escapeAdminHtml(firstName + ' ' + lastName)} est actif
+                </div>
+                <div style="font-size:11px; line-height:1.5;">
+                    Identifiant : <code>${escapeAdminHtml(email)}</code><br>
+                    Rôle BPF : <strong>${escapeAdminHtml(role)}</strong><br>
+                    Mot de passe haché avec <strong>Argon2id</strong> (Conformité OWASP / BPF).
+                </div>
+            </div>`,
+            "👤",
+            "Terminer"
+        );
+        loadAdminSection('users');
+    } catch (e) {
+        console.error("Erreur création utilisateur:", e);
+        showNotifyModal("Erreur Réseau", e.message, "⚠️", "Fermer");
+    }
+}
+
+// 2. Modal Activation / Suspension Compte
+function openUserStatusModal(userId, targetIsActive, name, email) {
+    const modal = document.getElementById("modal-user-status");
+    if (!modal) return;
+
+    document.getElementById("status-user-id").value = userId;
+    document.getElementById("status-target-active").value = targetIsActive ? "true" : "false";
+    document.getElementById("status-user-name").value = `${name} (${email})`;
+    document.getElementById("status-reason").value = "";
+
+    const descEl = document.getElementById("status-action-desc");
+    const submitBtn = document.getElementById("btn-submit-status");
+    const titleEl = document.getElementById("user-status-title");
+    const iconEl = document.getElementById("user-status-icon");
+
+    if (targetIsActive) {
+        titleEl.innerText = "Réactiver le Compte Collaborateur (BPF)";
+        iconEl.innerText = "🟢";
+        descEl.style.background = "rgba(16, 185, 129, 0.1)";
+        descEl.style.color = "var(--accent-emerald)";
+        descEl.innerHTML = "✓ Réactivation de l'accès au système avec conservation des droits antérieurs.";
+        submitBtn.style.background = "var(--accent-emerald)";
+        submitBtn.innerText = "Réactiver le Compte";
+    } else {
+        titleEl.innerText = "Suspendre / Désactiver le Compte (21 CFR Part 11)";
+        iconEl.innerText = "🔴";
+        descEl.style.background = "rgba(239, 68, 68, 0.1)";
+        descEl.style.color = "#ef4444";
+        descEl.innerHTML = "⚠️ Suspension de l'accès et révocation immédiate de toutes les sessions. Zéro suppression physique pour préserver les signatures.";
+        submitBtn.style.background = "#ef4444";
+        submitBtn.innerText = "Suspendre l'Accès";
+    }
+
+    modal.classList.add("open");
+}
+
+async function handleUserStatusSubmit(event) {
+    event.preventDefault();
+    const userId = document.getElementById("status-user-id").value;
+    const targetIsActive = document.getElementById("status-target-active").value === "true";
+    const reason = document.getElementById("status-reason").value.trim();
+
+    try {
+        const res = await fetch(`/api/v1/admin/users/${userId}/status`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                is_active: targetIsActive,
+                reason: reason
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showNotifyModal("Erreur Statut Utilisateur", data.error || "Impossible de modifier le statut", "⚠️", "Fermer");
+            return;
+        }
+
+        closeModal("modal-user-status");
+        showNotifyModal(
+            "Statut Mis à Jour (Audit Trail Scellé)",
+            `<div style="font-size:12px;">
+                Le compte a été <strong>${targetIsActive ? 'réactivé' : 'suspendu'}</strong> avec succès.<br>
+                Motif réglementaire scellé dans l'Audit Trail immuable ALCOA+.
+            </div>`,
+            targetIsActive ? "🟢" : "🔒",
+            "Compris"
+        );
+        loadAdminSection('users');
+    } catch (e) {
+        console.error("Erreur statut utilisateur:", e);
+        showNotifyModal("Erreur Réseau", e.message, "⚠️", "Fermer");
+    }
+}
+
+// 3. Modal Réinitialisation Mot de Passe
+function openResetPasswordModal(userId, email, name) {
+    const modal = document.getElementById("modal-reset-user-password");
+    if (!modal) return;
+
+    document.getElementById("reset-user-id").value = userId;
+    document.getElementById("reset-user-name").value = `${name} (${email})`;
+    document.getElementById("reset-new-password").value = "";
+    document.getElementById("reset-reason").value = "";
+
+    modal.classList.add("open");
+}
+
+async function handleResetPasswordSubmit(event) {
+    event.preventDefault();
+    const userId = document.getElementById("reset-user-id").value;
+    const newPassword = document.getElementById("reset-new-password").value;
+    const reason = document.getElementById("reset-reason").value.trim();
+
+    try {
+        const res = await fetch(`/api/v1/admin/users/${userId}/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                new_password: newPassword,
+                reason: reason
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showNotifyModal("Erreur Réinitialisation", data.error || "Impossible de réinitialiser le mot de passe", "⚠️", "Fermer");
+            return;
+        }
+
+        closeModal("modal-reset-user-password");
+        showNotifyModal(
+            "Mot de Passe Réinitialisé",
+            `<div style="font-size:12px;">
+                Le mot de passe a été mis à jour avec hachage Argon2id.<br>
+                Toutes les sessions antérieures ont été révoquées pour contraindre à une reconnexion immédiate.
+            </div>`,
+            "🔑",
+            "Compris"
+        );
+        loadAdminSection('users');
+    } catch (e) {
+        console.error("Erreur reset password:", e);
+        showNotifyModal("Erreur Réseau", e.message, "⚠️", "Fermer");
+    }
+}
+
+// 4. Réinitialisation TOTP (2FA)
+async function handleResetTOTP(userId, email) {
+    const reason = prompt(`Confirmez-vous la réinitialisation du 2FA TOTP pour ${email} ?\n\nVeuillez saisir le motif réglementaire (ex: perte ou remplacement de smartphone) :`, "Perte déclarée du terminal d'authentification");
+    if (!reason || reason.trim().length < 3) {
+        if (reason !== null) {
+            showNotifyModal("Action Annulée", "Un motif circonstancié est obligatoire pour réinitialiser le 2FA (BPF / PSSI).", "⚠️", "Fermer");
+        }
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/v1/admin/users/${userId}/reset-totp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: reason.trim() })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showNotifyModal("Erreur Réinitialisation 2FA", data.error || "Impossible de réinitialiser le double facteur", "⚠️", "Fermer");
+            return;
+        }
+
+        showNotifyModal(
+            "2FA Réinitialisé avec Succès",
+            `<div style="font-size:12px;">
+                Le secret TOTP de <code>${escapeAdminHtml(email)}</code> a été révoqué.<br>
+                Le collaborateur pourra enregistrer une nouvelle clé 2FA lors de sa prochaine connexion.
+            </div>`,
+            "📱",
+            "Compris"
+        );
+        loadAdminSection('users');
+    } catch (e) {
+        console.error("Erreur reset TOTP:", e);
+        showNotifyModal("Erreur Réseau", e.message, "⚠️", "Fermer");
+    }
+}
+
+// 5. Modal Dérogations & Surcharges de Permissions
+function openUserPermissionsModal(userId) {
+    const user = adminUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    const modal = document.getElementById("modal-user-permissions");
+    if (!modal) return;
+
+    document.getElementById("perm-modal-user-id").value = userId;
+    document.getElementById("perm-user-name").innerText = `${user.first_name} ${user.last_name} (${user.email})`;
+
+    const roleObj = adminRoles.find(r => r.id === user.role);
+    document.getElementById("perm-user-role").innerText = `Rôle BPF : ${roleObj ? roleObj.name_fr : user.role}`;
+    document.getElementById("perm-override-reason").value = "";
+
+    const rolePerms = new Set((roleObj ? roleObj.permissions : []) || []);
+    const overridesMap = new Map();
+    (user.overrides || []).forEach(o => overridesMap.set(o.permission_id, o.granted));
+
+    const categories = {
+        "Référentiel": ["REF_VIEW", "REF_EDIT"],
+        "Dossiers ANPP (CTD)": ["DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT", "VARIATION_MANAGE"],
+        "Coffre-Fort GED & Approbation": ["DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "EXPORT_LEGAL"],
+        "Système & Audit": ["AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"]
+    };
+
+    const container = document.getElementById("perm-checklist-container");
+    container.innerHTML = "";
+
+    for (const [catName, permCodes] of Object.entries(categories)) {
+        const catBox = document.createElement("div");
+        catBox.style.background = "var(--bg-panel)";
+        catBox.style.padding = "8px";
+        catBox.style.borderRadius = "6px";
+        catBox.style.border = "1px solid var(--border-color)";
+
+        let catHtml = `<div style="font-size:11px; font-weight:700; color:var(--text-main); margin-bottom:6px; border-bottom:1px solid var(--border-color); padding-bottom:3px;">${catName}</div>`;
+        catHtml += `<div style="display:flex; flex-direction:column; gap:6px;">`;
+
+        permCodes.forEach(code => {
+            const hasByRole = rolePerms.has(code);
+            const overrideVal = overridesMap.has(code) ? overridesMap.get(code) : null;
+
+            catHtml += `
+                <div style="background:var(--bg-surface); padding:6px; border-radius:4px; font-size:11px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                        <span style="font-family:monospace; font-weight:700; color:var(--text-main);">${code}</span>
+                        <span style="font-size:10px; color:${hasByRole ? 'var(--accent-emerald)' : 'var(--text-dim)'};">
+                            Rôle : ${hasByRole ? '✓ Inclus' : '✗ Non inclus'}
+                        </span>
+                    </div>
+                    <select class="perm-override-select" data-perm="${code}" style="width:100%; font-size:10px; padding:3px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:3px;">
+                        <option value="default" ${overrideVal === null ? 'selected' : ''}>Droit par défaut du rôle (${hasByRole ? 'Autorisé' : 'Refusé'})</option>
+                        <option value="granted" ${overrideVal === true ? 'selected' : ''} style="color:var(--accent-blue); font-weight:700;">✓ Dérogation : Forcer Accordé (+)</option>
+                        <option value="revoked" ${overrideVal === false ? 'selected' : ''} style="color:#ef4444; font-weight:700;">✗ Dérogation : Forcer Révoqué (-)</option>
+                    </select>
+                </div>
+            `;
+        });
+
+        catHtml += `</div>`;
+        catBox.innerHTML = catHtml;
+        container.appendChild(catBox);
+    }
+
+    modal.classList.add("open");
+}
+
+async function handleUserPermissionsSubmit(event) {
+    event.preventDefault();
+    const userId = document.getElementById("perm-modal-user-id").value;
+    const reason = document.getElementById("perm-override-reason").value.trim();
+
+    const selects = document.querySelectorAll(".perm-override-select");
+    const overrides = [];
+
+    selects.forEach(sel => {
+        const permId = sel.getAttribute("data-perm");
+        const val = sel.value;
+        if (val === 'granted') {
+            overrides.push({ permission_id: permId, granted: true });
+        } else if (val === 'revoked') {
+            overrides.push({ permission_id: permId, granted: false });
+        } else if (val === 'default') {
+            overrides.push({ permission_id: permId, granted: null });
+        }
+    });
+
+    try {
+        const res = await fetch(`/api/v1/admin/users/${userId}/permissions`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                overrides: overrides,
+                reason: reason
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showNotifyModal("Erreur Dérogations", data.error || "Impossible d'enregistrer les surcharges", "⚠️", "Fermer");
+            return;
+        }
+
+        closeModal("modal-user-permissions");
+        showNotifyModal(
+            "Dérogations Enregistrées (PSSI)",
+            `<div style="font-size:12px;">
+                Les permissions unitaires du collaborateur ont été mises à jour.<br>
+                La version des permissions a été incrémentée pour invalider immédiatement le cache de session.
+            </div>`,
+            "🔐",
+            "Compris"
+        );
+        loadAdminSection('users');
+    } catch (e) {
+        console.error("Erreur permissions overrides:", e);
+        showNotifyModal("Erreur Réseau", e.message, "⚠️", "Fermer");
+    }
 }
 
 // Exportation de la matrice des habilitations en CSV certifié
