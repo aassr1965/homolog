@@ -1,5 +1,5 @@
 // ============================================================================
-// GESTION DES RENDEZ-VOUS & SÉANCES DE DÉPÔT ANPP (JALON 1.7 - PHASE 4)
+// GESTION DES RENDEZ-VOUS & SÉANCES DE DÉPÔT ANPP
 // Planification des dépôts physiques, commissions et expertises LNCM
 // ============================================================================
 

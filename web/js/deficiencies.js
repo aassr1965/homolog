@@ -1,5 +1,5 @@
 /**
- * Studio de Compléments ANPP & Traçabilité des Réponses Réglementaires (Jalon 1.7)
+ * Studio de Compléments ANPP & Traçabilité des Réponses Réglementaires
  * Conforme au Guide CTD ANPP 2025 et aux exigences BPF / 21 CFR Part 11
  */
 
@@ -465,22 +465,24 @@ function addQuestionRowToLetterModal() {
             <span style="font-weight:700; font-size:11px; color:var(--accent-blue);">Question #${count}</span>
             ${count > 1 ? `<button type="button" class="btn-pill" style="font-size:10px; padding:2px 6px; color:var(--accent-red);" onclick="this.closest('.question-input-row').remove()">✕ Supprimer</button>` : ''}
         </div>
-        <textarea class="q-text" rows="2" required placeholder="Libellé exact de la question notifiée par la commission ANPP..." style="width:100%; padding:6px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;"></textarea>
+        <textarea class="q-text" rows="3" required placeholder="Libellé exact ou extrait officiel de la question/réserve notifiée par l'ANPP..." style="width:100%; padding:8px; font-size:12px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical; min-height:64px; font-family:inherit; line-height:1.4;"></textarea>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <div>
                 <label style="font-size:10px; font-weight:600;">Module Cible :</label>
-                <select class="q-module" style="width:100%; padding:4px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                <select class="q-module" style="width:100%; padding:6px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
                     <option value="Module 1">Module 1 (Admin & Spécificités Algérie)</option>
                     <option value="Module 2">Module 2 (Résumés & Overviews)</option>
                     <option value="Module 3" selected>Module 3 (Qualité / CMC)</option>
                     <option value="Module 4">Module 4 (Non-Clinique)</option>
                     <option value="Module 5">Module 5 (Clinique & Bioéquivalence)</option>
                     <option value="Notice/Étiquetage">Notice & Étiquetage (1.M.1)</option>
+                    <option value="Dossier Technique DM">Dossier Technique DM (Arrêté 10/05/2021)</option>
+                    <option value="Variation Post-AMM">Variation Post-AMM (LD-DEPP07/V01)</option>
                 </select>
             </div>
             <div>
                 <label style="font-size:10px; font-weight:600;">Priorité :</label>
-                <select class="q-priority" style="width:100%; padding:4px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                <select class="q-priority" style="width:100%; padding:6px; font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
                     <option value="normale">Normale</option>
                     <option value="haute">Haute</option>
                     <option value="urgente">Urgente</option>

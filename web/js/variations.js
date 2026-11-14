@@ -1,5 +1,5 @@
 // ============================================================================
-// MOTEUR DE VARIATIONS ANPP (Jalon 2.2 - Ligne Directrice LD-DEPP07/V01)
+// MOTEUR DE VARIATIONS ANPP (Ligne Directrice LD-DEPP07/V01)
 // ============================================================================
 
 let selectedVarIndex = 0;

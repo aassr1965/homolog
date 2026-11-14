@@ -1,5 +1,5 @@
 /**
- * Calculateur Officiel des Redevances ANPP & Générateur de Bordereaux BV1/BV2 (Jalon 1.7 Phase 2)
+ * Calculateur Officiel des Redevances ANPP & Générateur de Bordereaux BV1/BV2
  * Conforme aux décrets d'homologation et arrêtés interministériels des redevances
  */
 

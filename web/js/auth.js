@@ -64,7 +64,7 @@ const mockAuditTrail = [
             }
         }
 
-        // Helper functions pour le contrôle d'accès RBAC (Jalon 1.2)
+        // Helper functions pour le contrôle d'accès RBAC
         function hasPermission(permission) {
             if (!currentUser || !currentUser.permissions) return false;
             return currentUser.permissions.includes(permission);
@@ -111,7 +111,7 @@ const mockAuditTrail = [
             }
         }
 
-        // Bascule de rôle instantanée pour l'environnement de développement (Jalon 1.2)
+        // Bascule de rôle instantanée pour l'environnement de développement
         async function devSwitchRole(email) {
             if (!email) return;
             try {
@@ -332,7 +332,7 @@ const mockAuditTrail = [
 
             switchDomainModule(targetDomain);
 
-            // Rafraîchissement discret des alertes de compléments ANPP (Jalon 1.7)
+            // Rafraîchissement discret des alertes de compléments ANPP
             if (typeof updateDeficiencyBadgeCount === 'function' && typeof hasPermission === 'function' && hasPermission('DOSSIER_VIEW')) {
                 fetch('/api/v1/deficiencies/dashboard')
                     .then(r => r.json())

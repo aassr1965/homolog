@@ -1,5 +1,5 @@
 // ============================================================================
-// CONSOLE D'ADMINISTRATION LABORATOIRE & MATRICE DES HABILITATIONS RBAC (Jalon 1.2)
+// CONSOLE D'ADMINISTRATION LABORATOIRE & MATRICE DES HABILITATIONS RBAC
 // Conformité PSSI, BPF Algérie (Décret 21-82) & 21 CFR Part 11
 // ============================================================================
 

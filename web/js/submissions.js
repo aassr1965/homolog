@@ -1,5 +1,5 @@
 // ============================================================================
-// ASSISTANT DE SOUMISSION E-SERVICES ANPP & VALIDATION PRÉ-DÉPÔT (JALON 1.7 - PHASE 3)
+// ASSISTANT DE SOUMISSION E-SERVICES ANPP & VALIDATION PRÉ-DÉPÔT
 // Contrôle de complétude réglementaire, générateur de manifeste & verrouillage
 // ============================================================================
 

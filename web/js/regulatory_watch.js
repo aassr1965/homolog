@@ -1,6 +1,6 @@
 // ============================================================================
 // MODULE VEILLE RÉGLEMENTAIRE & CORPUS JURIDIQUE ALGÉRIEN (JORADP / ANPP)
-// Jalon 1.7 - Phase 4 : Suivi des textes légaux, décrets et conformité BPF
+// Suivi des textes légaux, décrets et conformité BPF
 // ============================================================================
 
 async function openRegulatoryWatchModal() {
