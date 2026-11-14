@@ -32,6 +32,10 @@ const mockAuditTrail = [
                     const data = await res.json();
                     currentUser = data.user;
                     currentOrg = data.organization;
+                    if (data.dev_switcher_enabled === false) {
+                        const switcher = document.getElementById("dev-role-switcher-container");
+                        if (switcher) switcher.style.display = "none";
+                    }
                     showAppView(currentUser, currentOrg);
                 } else {
                     showLoginView();
@@ -60,6 +64,238 @@ const mockAuditTrail = [
             }
         }
 
+        // Helper functions pour le contrôle d'accès RBAC (Jalon 1.2)
+        function hasPermission(permission) {
+            if (!currentUser || !currentUser.permissions) return false;
+            return currentUser.permissions.includes(permission);
+        }
+
+        function hasAnyPermission(...permissions) {
+            if (!currentUser || !currentUser.permissions) return false;
+            return permissions.some(p => currentUser.permissions.includes(p));
+        }
+
+        function hasRole(...roles) {
+            if (!currentUser || !currentUser.role) return false;
+            return roles.includes(currentUser.role);
+        }
+
+        function formatRole(role) {
+            switch (role) {
+                case 'directeur_technique':
+                    return isArabic ? 'مدير تقني (1.A.7)' : 'Pharmacien DT (1.A.7)';
+                case 'admin_laboratoire':
+                    return isArabic ? 'مسؤول المخبر' : 'Admin Laboratoire';
+                case 'responsable_affaires_reglementaires':
+                    return isArabic ? 'مدير الشؤون التنظيمية' : 'Manager Affaires Réglem.';
+                case 'charge_affaires_reglementaires':
+                    return isArabic ? 'مكلف بالشؤون التنظيمية' : 'Chargé Affaires Réglem.';
+                case 'responsable_assurance_qualite':
+                    return isArabic ? 'مسؤول ضمان الجودة' : 'Manager Assurance Qualité';
+                case 'responsable_controle_qualite':
+                    return isArabic ? 'مراقبة الجودة والاستقرار' : 'CQ & Stabilités';
+                case 'responsable_production':
+                    return isArabic ? 'مسؤول الإنتاج والتأهيل' : 'Production & Validation';
+                case 'consultant_externe':
+                case 'consultant_cro_externe':
+                    return isArabic ? 'مستشار خارجي (نطاق مخصص)' : 'Consultant Externe (CRO - Cloisonné)';
+                case 'auditeur_inspecteur':
+                case 'auditeur_qualite_anpp':
+                    return isArabic ? 'مدقق الجودة / ANPP' : 'Auditeur Qualité ANPP';
+                case 'admin_systeme_local':
+                    return isArabic ? 'مسؤول النظام (Zero-Trust)' : 'Admin Système (Zero-Trust)';
+                case 'super_admin_editeur':
+                    return isArabic ? 'المشرف العام للبرمجية' : 'SuperAdmin Éditeur SaaS';
+                default:
+                    return role || '-';
+            }
+        }
+
+        // Bascule de rôle instantanée pour l'environnement de développement (Jalon 1.2)
+        async function devSwitchRole(email) {
+            if (!email) return;
+            try {
+                const res = await fetch('/api/v1/auth/dev-switch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                if (res.status === 404) {
+                    showNotifyModal(
+                        "Fonctionnalité Verrouillée",
+                        `<div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="color:var(--accent-red); font-weight:700;">
+                                🛡️ Commutateur strictement désactivé en environnement de production
+                            </div>
+                            <div style="font-size:11px; color:var(--text-main);">
+                                Conformément aux principes d'intégrité ALCOA+ et aux exigences 21 CFR Part 11, la bascule de session sans mot de passe n'est pas autorisée sur ce serveur.
+                            </div>
+                        </div>`,
+                        "🛡️",
+                        "Compris"
+                    );
+                    const switcher = document.getElementById("dev-role-switcher-container");
+                    if (switcher) switcher.style.display = "none";
+                    return;
+                }
+
+                const data = await res.json();
+                if (res.ok) {
+                    currentUser = data.user;
+                    currentOrg = data.organization;
+                    showAppView(currentUser, currentOrg);
+                    
+                    showNotifyModal(
+                        "🧪 Bascule de Rôle Active (Environnement Dev)",
+                        `<div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="color:var(--accent-blue); font-weight:700;">
+                                ✓ Connecté en tant que : ${data.user.first_name} ${data.user.last_name}
+                            </div>
+                            <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; padding:10px; font-size:11px; display:flex; flex-direction:column; gap:4px;">
+                                <div><strong>Email :</strong> <code>${data.user.email}</code></div>
+                                <div><strong>Rôle BPF :</strong> <span style="font-weight:600; color:var(--accent-emerald);">${formatRole(data.user.role)}</span></div>
+                                <div><strong>Permissions Version :</strong> v${data.user.permissions_version || 1}</div>
+                                <div><strong>Droits Effectifs (${(data.user.permissions || []).length}/14) :</strong></div>
+                                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">
+                                    ${(data.user.permissions || []).map(p => `<span style="background:var(--badge-bg); color:var(--accent-blue); font-size:9px; padding:1px 5px; border-radius:3px; font-family:monospace;">${p}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-dim);">
+                                L'interface graphique a été dynamiquement reconfigurée selon les habilitations strictes du rôle.
+                            </div>
+                        </div>`,
+                        "🧪",
+                        "Fermer"
+                    );
+                } else {
+                    showNotifyModal("Erreur de Bascule Dev", data.error || "Impossible de basculer de rôle", "⚠️", "Fermer");
+                    // Rétablir la valeur précédente du sélecteur
+                    const devSelect = document.getElementById("dev-role-select");
+                    if (devSelect && currentUser && currentUser.email) {
+                        devSelect.value = currentUser.email;
+                    }
+                }
+            } catch (e) {
+                console.error("Erreur devSwitchRole:", e);
+                showNotifyModal("Erreur de Connexion", "Erreur réseau lors de la bascule de rôle", "⚠️", "Fermer");
+            }
+        }
+
+        // Application dynamique des habilitations RBAC et des garde-fous Zero-Trust sur le DOM
+        function applyPermissionsUI() {
+            if (!currentUser) return;
+
+            // Synchroniser le sélecteur Dev dans le header
+            const devSelect = document.getElementById("dev-role-select");
+            if (devSelect && currentUser.email) {
+                devSelect.value = currentUser.email;
+            }
+
+            // Éléments assujettis à une permission unitaire data-perm
+            document.querySelectorAll('[data-perm]').forEach(el => {
+                const perm = el.getAttribute('data-perm');
+                if (perm) {
+                    if (hasPermission(perm)) {
+                        el.style.display = '';
+                        el.removeAttribute('disabled');
+                    } else {
+                        el.style.display = 'none';
+                    }
+                }
+            });
+
+            // Éléments assujettis à l'une des permissions data-perm-any
+            document.querySelectorAll('[data-perm-any]').forEach(el => {
+                const raw = el.getAttribute('data-perm-any');
+                if (raw) {
+                    const perms = raw.split(',').map(s => s.trim());
+                    if (hasAnyPermission(...perms)) {
+                        el.style.display = '';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                }
+            });
+
+            // Garde-Fou Zero-Trust : Masquage des actions de téléchargement de pièces confidentielles pour les admins IT
+            const isZeroTrustAdmin = hasRole('admin_systeme_local', 'super_admin_editeur');
+            document.querySelectorAll('.btn-zero-trust-pharma-doc').forEach(el => {
+                if (isZeroTrustAdmin) {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = '';
+                }
+            });
+
+            // SoD Guardrail UI : Signature PDT réservée strictement au pharmacien directeur technique (1.A.7)
+            const btnSignPDT = document.getElementById('tb-btn-sign-pdt');
+            if (btnSignPDT) {
+                btnSignPDT.style.display = hasPermission('DOC_APPROVE_PDT') ? '' : 'none';
+            }
+
+            // Dépôt ANPP : nécessite DOSSIER_SUBMIT
+            const btnDepositANPP = document.getElementById('tb-btn-deposit-anpp');
+            if (btnDepositANPP) {
+                btnDepositANPP.style.display = hasPermission('DOSSIER_SUBMIT') ? '' : 'none';
+            }
+
+            // Garde-Fou Cloisonnement Tiers / Consultant Externe (CDC Section 7.2.2) :
+            const isConsultant = hasRole('consultant_externe', 'consultant_cro_externe');
+            if (isConsultant) {
+                // Masquer tous les univers transverses (Référentiel, GED, Variations, DM, Admin, Audit)
+                ['act-ref', 'act-variations', 'act-dm', 'act-ged', 'act-admin', 'act-audit'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                ['mob-act-ref', 'mob-act-variations', 'mob-act-dm', 'mob-act-ged', 'mob-act-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                ['mobnav-ref', 'mobnav-variations', 'mobnav-dm', 'mobnav-ged', 'mobnav-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+
+                // Masquage des actions réservées dans les barres d'outils
+                const btnNewD = document.getElementById('tb-btn-new-dossier');
+                if (btnNewD) btnNewD.style.display = 'none';
+                const btnExp = document.getElementById('tb-btn-export');
+                if (btnExp) btnExp.style.display = 'none';
+            }
+
+            // Garde-Fou Zero-Trust & Univers Dédié Administrateur Système (SYS_MAINT / CDC Section 7.1) :
+            const isSystemAdmin = hasRole('admin_systeme_local', 'super_admin_editeur');
+            if (isSystemAdmin) {
+                // Masquer tous les univers métier pharmaceutiques pour l'administrateur IT (Zero-Trust strict)
+                ['act-ref', 'act-ctd', 'act-variations', 'act-dm', 'act-ged', 'act-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+                ['mob-act-ref', 'mob-act-ctd', 'mob-act-variations', 'mob-act-dm', 'mob-act-ged', 'mob-act-admin'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+
+                // Afficher le bouton Cockpit IT
+                const actSys = document.getElementById('act-sys');
+                if (actSys) actSys.style.display = '';
+                const mobSys = document.getElementById('mob-act-sys');
+                if (mobSys) mobSys.style.display = '';
+
+                // Rediriger automatiquement vers l'univers IT si l'utilisateur est sur un module pharma
+                if (currentDomain !== 'sys' && currentDomain !== 'audit') {
+                    setTimeout(() => switchDomainModule('sys'), 10);
+                }
+            } else {
+                // Pour les profils non-IT, masquer le Cockpit IT
+                const actSys = document.getElementById('act-sys');
+                if (actSys) actSys.style.display = 'none';
+                const mobSys = document.getElementById('mob-act-sys');
+                if (mobSys) mobSys.style.display = 'none';
+            }
+        }
+
         function showAppView(user, org) {
             document.getElementById("screen-login").style.display = "none";
             document.getElementById("screen-app").style.display = "flex";
@@ -76,17 +312,25 @@ const mockAuditTrail = [
                 document.getElementById("u-drop-org").innerText = org.name;
             }
 
-            // Charger les données du domaine actif uniquement après authentification
-            switchDomainModule(currentDomain || 'ref');
-        }
+            // Appliquer les masquages d'interface selon les permissions effectives
+            applyPermissionsUI();
 
-        function formatRole(role) {
-            switch (role) {
-                case 'directeur_technique': return isArabic ? 'مدير تقني' : 'Pharmacien DT';
-                case 'admin_laboratoire': return isArabic ? 'مسؤول المخبر' : 'Admin Labo';
-                case 'responsable_affaires_reglementaires': return isArabic ? 'شؤون تنظيمية' : 'Affaires Réglem.';
-                default: return role;
+            // Vérification de sécurité de routage : Si le domaine actif est interdit, basculer vers un univers autorisé
+            const isConsultant = hasRole('consultant_externe', 'consultant_cro_externe');
+            let targetDomain = currentDomain || 'ref';
+            if (isConsultant) {
+                targetDomain = 'ctd';
+            } else if (targetDomain === 'admin' && !hasPermission('USER_MANAGE')) {
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'ged');
+            } else if (targetDomain === 'ged' && !hasPermission('DOC_READ')) {
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'admin');
+            } else if ((targetDomain === 'ctd' || targetDomain === 'variations') && !hasPermission('DOSSIER_VIEW')) {
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOC_READ') ? 'ged' : 'admin');
+            } else if ((targetDomain === 'ref' || targetDomain === 'dm') && !hasPermission('REF_VIEW')) {
+                targetDomain = hasPermission('DOC_READ') ? 'ged' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'admin');
             }
+
+            switchDomainModule(targetDomain);
         }
 
         function toggleUserDropdown(e) {
@@ -122,6 +366,10 @@ const mockAuditTrail = [
                         btn.disabled = false;
                         btn.innerText = "Valider le code 2FA ➔";
                         return;
+                    }
+                    if (data.dev_switcher_enabled === false) {
+                        const switcher = document.getElementById("dev-role-switcher-container");
+                        if (switcher) switcher.style.display = "none";
                     }
                     showAppView(data.user, data.organization);
                     btn.disabled = false;

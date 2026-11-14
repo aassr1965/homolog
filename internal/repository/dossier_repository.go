@@ -90,12 +90,12 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 				id, dossier_id, module_number, sub_module, item_code,
 				title_fr, title_ar, description_fr, requirement_level,
 				is_mandatory, ged_document_id, status, validation_notes,
-				sort_order, created_at, updated_at
+				sort_order, security_classification, created_at, updated_at
 			) VALUES (
 				$1, $2, $3, $4, $5,
 				$6, $7, $8, $9,
 				$10, $11, $12, $13,
-				$14, $15, $16
+				$14, $15, $16, $17
 			)
 		`
 		for i := range items {
@@ -107,6 +107,15 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 			if item.Status == "" {
 				item.Status = domain.ItemStatusMissing
 			}
+			if item.SecurityClassification == "" {
+				if item.ItemCode == "1.A.4" || item.ItemCode == "1.H.4" || item.ItemCode == "1.H.5" {
+					item.SecurityClassification = domain.ClassificationSecretCommercial
+				} else if strings.HasPrefix(item.ItemCode, "3.2.S") || strings.HasPrefix(item.ItemCode, "3.2.P") || item.SubModule == "3.2.S" || item.SubModule == "3.2.P" {
+					item.SecurityClassification = domain.ClassificationSecretIndustriel
+				} else {
+					item.SecurityClassification = domain.ClassificationStandard
+				}
+			}
 			item.CreatedAt = now
 			item.UpdatedAt = now
 
@@ -114,7 +123,7 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 				item.ID, item.DossierID, item.ModuleNumber, item.SubModule, item.ItemCode,
 				item.TitleFR, item.TitleAR, item.DescriptionFR, string(item.RequirementLevel),
 				item.IsMandatory, item.GEDDocumentID, string(item.Status), item.ValidationNotes,
-				item.SortOrder, item.CreatedAt, item.UpdatedAt,
+				item.SortOrder, string(item.SecurityClassification), item.CreatedAt, item.UpdatedAt,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("échec insertion item de checklist [%s] : %w", item.ItemCode, err)
@@ -213,7 +222,8 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 			i.id, i.dossier_id, i.module_number, i.sub_module, i.item_code,
 			i.title_fr, COALESCE(i.title_ar, ''), COALESCE(i.description_fr, ''),
 			i.requirement_level, i.is_mandatory, i.ged_document_id, i.status,
-			i.validation_notes, i.sort_order, i.created_at, i.updated_at,
+			i.validation_notes, i.sort_order, COALESCE(i.security_classification, 'STANDARD'),
+			i.created_at, i.updated_at,
 			g.id, g.title_fr, g.document_code, g.current_version, g.status, g.taxonomy_path
 		FROM dossier_checklist_items i
 		LEFT JOIN ged_documents g ON i.ged_document_id = g.id
@@ -229,7 +239,7 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 	var items []domain.ChecklistItem
 	for rows.Next() {
 		var it domain.ChecklistItem
-		var reqLvlStr, itStatusStr string
+		var reqLvlStr, itStatusStr, secClassStr string
 		var titleAR, descFR string
 		var gedID *uuid.UUID
 		var gTitle, gCode, gVer, gStatus, gTaxo *string
@@ -238,7 +248,7 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 			&it.ID, &it.DossierID, &it.ModuleNumber, &it.SubModule, &it.ItemCode,
 			&it.TitleFR, &titleAR, &descFR,
 			&reqLvlStr, &it.IsMandatory, &it.GEDDocumentID, &itStatusStr,
-			&it.ValidationNotes, &it.SortOrder, &it.CreatedAt, &it.UpdatedAt,
+			&it.ValidationNotes, &it.SortOrder, &secClassStr, &it.CreatedAt, &it.UpdatedAt,
 			&gedID, &gTitle, &gCode, &gVer, &gStatus, &gTaxo,
 		)
 		if err != nil {
@@ -249,6 +259,7 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 		it.DescriptionFR = descFR
 		it.RequirementLevel = domain.RequirementLevel(reqLvlStr)
 		it.Status = domain.ChecklistItemStatus(itStatusStr)
+		it.SecurityClassification = domain.SecurityClassification(secClassStr)
 
 		if gedID != nil && gTitle != nil {
 			docCode := ""
@@ -288,8 +299,8 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 	return &d, nil
 }
 
-// ListDossiers liste tous les dossiers d'une organisation avec filtres optionnels
-func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, procFilter string, statusFilter string) ([]domain.Dossier, error) {
+// ListDossiers liste tous les dossiers d'une organisation avec filtres optionnels et cloisonnement strict (Need-to-Know)
+func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, restrictedUserID *uuid.UUID, procFilter string, statusFilter string) ([]domain.Dossier, error) {
 	baseQuery := `
 		SELECT
 			d.id, d.organization_id, d.medicine_id, d.medical_device_id, d.product_type,
@@ -310,6 +321,16 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, p
 
 	args := []interface{}{orgID}
 	argIdx := 2
+
+	if restrictedUserID != nil {
+		baseQuery += fmt.Sprintf(` AND d.id IN (
+			SELECT dossier_id FROM dossier_assignments WHERE user_id = $%d AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+			UNION
+			SELECT dossier_id FROM dossier_consultants WHERE user_id = $%d AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+		)`, argIdx, argIdx)
+		args = append(args, *restrictedUserID)
+		argIdx++
+	}
 
 	if strings.TrimSpace(procFilter) != "" {
 		baseQuery += fmt.Sprintf(" AND d.procedure_code = $%d", argIdx)
@@ -694,4 +715,112 @@ func (r *DossierRepository) recalculateCompletenessTx(ctx context.Context, tx pg
 		return 100, nil
 	}
 	return (fulfilledMandatory * 100) / totalMandatory, nil
+}
+
+// GetDossierAssignment retourne l'affectation nominative et les prérogatives de secret d'un utilisateur sur un dossier
+func (r *DossierRepository) GetDossierAssignment(ctx context.Context, dossierID, userID uuid.UUID) (*domain.DossierAssignment, error) {
+	query := `
+		SELECT 
+			a.id, a.dossier_id, a.user_id, a.role_in_dossier, 
+			a.can_view_financials, a.can_view_industrial_secret, 
+			a.assigned_at, a.expires_at, a.notes, a.created_at,
+			u.email, u.first_name, u.last_name, u.role
+		FROM dossier_assignments a
+		JOIN users u ON a.user_id = u.id
+		WHERE a.dossier_id = $1 AND a.user_id = $2 AND (a.expires_at IS NULL OR a.expires_at > CURRENT_TIMESTAMP)
+	`
+	var a domain.DossierAssignment
+	var email, fn, ln, role string
+	err := r.pool.QueryRow(ctx, query, dossierID, userID).Scan(
+		&a.ID, &a.DossierID, &a.UserID, &a.RoleInDossier,
+		&a.CanViewFinancials, &a.CanViewIndustrialSecret,
+		&a.AssignedAt, &a.ExpiresAt, &a.Notes, &a.CreatedAt,
+		&email, &fn, &ln, &role,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("erreur lecture affectation dossier: %w", err)
+	}
+	a.UserEmail = email
+	a.UserFirstName = fn
+	a.UserLastName = ln
+	a.UserRole = role
+	return &a, nil
+}
+
+// ListDossierMembers liste tous les membres affectés à un dossier avec leurs détails d'identité
+func (r *DossierRepository) ListDossierMembers(ctx context.Context, dossierID uuid.UUID) ([]domain.DossierAssignment, error) {
+	query := `
+		SELECT 
+			a.id, a.dossier_id, a.user_id, a.role_in_dossier, 
+			a.can_view_financials, a.can_view_industrial_secret, 
+			a.assigned_at, a.expires_at, a.notes, a.created_at,
+			u.email, u.first_name, u.last_name, u.role
+		FROM dossier_assignments a
+		JOIN users u ON a.user_id = u.id
+		WHERE a.dossier_id = $1
+		ORDER BY a.created_at ASC
+	`
+	rows, err := r.pool.Query(ctx, query, dossierID)
+	if err != nil {
+		return nil, fmt.Errorf("erreur listage membres dossier: %w", err)
+	}
+	defer rows.Close()
+
+	var members []domain.DossierAssignment
+	for rows.Next() {
+		var m domain.DossierAssignment
+		var email, fn, ln, role string
+		err := rows.Scan(
+			&m.ID, &m.DossierID, &m.UserID, &m.RoleInDossier,
+			&m.CanViewFinancials, &m.CanViewIndustrialSecret,
+			&m.AssignedAt, &m.ExpiresAt, &m.Notes, &m.CreatedAt,
+			&email, &fn, &ln, &role,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("erreur scan membre dossier: %w", err)
+		}
+		m.UserEmail = email
+		m.UserFirstName = fn
+		m.UserLastName = ln
+		m.UserRole = role
+		members = append(members, m)
+	}
+	return members, nil
+}
+
+// AssignDossierMember ajoute ou met à jour une affectation nominative à un dossier
+func (r *DossierRepository) AssignDossierMember(ctx context.Context, a *domain.DossierAssignment) error {
+	query := `
+		INSERT INTO dossier_assignments (
+			dossier_id, user_id, role_in_dossier, can_view_financials, can_view_industrial_secret, expires_at, notes
+		) VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (dossier_id, user_id) DO UPDATE SET
+			role_in_dossier = EXCLUDED.role_in_dossier,
+			can_view_financials = EXCLUDED.can_view_financials,
+			can_view_industrial_secret = EXCLUDED.can_view_industrial_secret,
+			expires_at = EXCLUDED.expires_at,
+			notes = EXCLUDED.notes;
+	`
+	_, err := r.pool.Exec(ctx, query,
+		a.DossierID, a.UserID, a.RoleInDossier,
+		a.CanViewFinancials, a.CanViewIndustrialSecret,
+		a.ExpiresAt, a.Notes,
+	)
+	if err != nil {
+		return fmt.Errorf("erreur assignation membre dossier: %w", err)
+	}
+	return nil
+}
+
+// RemoveDossierMember révoque l'affectation d'un membre à un dossier
+func (r *DossierRepository) RemoveDossierMember(ctx context.Context, dossierID, userID uuid.UUID) error {
+	query := `DELETE FROM dossier_assignments WHERE dossier_id = $1 AND user_id = $2`
+	_, err := r.pool.Exec(ctx, query, dossierID, userID)
+	if err != nil {
+		return fmt.Errorf("erreur révocation membre dossier: %w", err)
+	}
+	return nil
 }

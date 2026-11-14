@@ -44,7 +44,7 @@ func NewDossierHandler(
 	}
 }
 
-// ListDossiers retourne tous les dossiers réglementaires de l'organisation
+// ListDossiers retourne tous les dossiers réglementaires de l'organisation (avec cloisonnement pour les consultants)
 func (h *DossierHandler) ListDossiers(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
 	if user == nil {
@@ -55,7 +55,16 @@ func (h *DossierHandler) ListDossiers(w http.ResponseWriter, r *http.Request) {
 	procFilter := r.URL.Query().Get("procedure_code")
 	statusFilter := r.URL.Query().Get("status")
 
-	dossiers, err := h.repo.ListDossiers(r.Context(), user.OrganizationID, procFilter, statusFilter)
+	var restrictedUserID *uuid.UUID
+	// Principe du "Besoin d'en connaître" (Need-to-Know) : Les contributeurs opérationnels et consultants
+	// ne voient que les dossiers auxquels ils sont expressément affectés
+	if user.Role == string(domain.RoleConsultantExterne) ||
+		user.Role == string(domain.RoleContributeurQualiteBPF) ||
+		user.Role == string(domain.RoleContributeurRDProd) {
+		restrictedUserID = &user.UserID
+	}
+
+	dossiers, err := h.repo.ListDossiers(r.Context(), user.OrganizationID, restrictedUserID, procFilter, statusFilter)
 	if err != nil {
 		log.Printf("[ERROR] ListDossiers: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les dossiers")
@@ -87,6 +96,21 @@ func (h *DossierHandler) GetDossier(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 1. Cloisonnement strict "Besoin d'en connaître" (Need-to-Know) pour les contributeurs et consultants
+	isOperational := user.Role == string(domain.RoleConsultantExterne) ||
+		user.Role == string(domain.RoleContributeurQualiteBPF) ||
+		user.Role == string(domain.RoleContributeurRDProd)
+
+	var assignment *domain.DossierAssignment
+	if isOperational && h.repo != nil {
+		asgn, err := h.repo.GetDossierAssignment(r.Context(), dossierID, user.UserID)
+		if err != nil || asgn == nil {
+			writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Vous n'êtes pas affecté à ce dossier (Principe du Secret & Besoin d'en connaître)")
+			return
+		}
+		assignment = asgn
+	}
+
 	dossier, err := h.repo.GetDossierByID(r.Context(), user.OrganizationID, dossierID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
@@ -96,6 +120,39 @@ func (h *DossierHandler) GetDossier(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ERROR] GetDossierByID %s: %v", dossierID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger le dossier")
 		return
+	}
+
+	// 2. Secret Commercial (1.A.4, 1.H.4, 1.H.5) : Réservé exclusivement à la Direction (PDT, RA)
+	// ou aux collaborateurs disposant de l'habilitation can_view_financials
+	isDirectorOrRA := user.Role == string(domain.RoleDirecteurTechnique) || user.Role == string(domain.RoleResponsableAffairesReg)
+	canViewFinancials := isDirectorOrRA || (assignment != nil && assignment.CanViewFinancials)
+
+	// 3. Secret Industriel (3.2.S, 3.2.P) : Réservé aux équipes internes du laboratoire
+	// Les prestataires externes (CRO) sont masqués sauf habilitation expresse can_view_industrial_secret
+	canViewIndustrial := user.Role != string(domain.RoleConsultantExterne) || (assignment != nil && assignment.CanViewIndustrialSecret)
+
+	if dossier != nil {
+		for i := range dossier.Items {
+			secClass := dossier.Items[i].SecurityClassification
+			code := dossier.Items[i].ItemCode
+			subMod := dossier.Items[i].SubModule
+
+			// Masquage Secret Commercial
+			if (secClass == domain.ClassificationSecretCommercial || code == "1.A.4" || code == "1.H.4" || code == "1.H.5") && !canViewFinancials {
+				dossier.Items[i].TitleFR = "[SECRET COMMERCIAL] Données financières confidentielles réservées à la direction"
+				dossier.Items[i].DescriptionFR = "Pièce protégée par le secret des affaires du laboratoire (Section 7.2.2)."
+				dossier.Items[i].GEDDocumentID = nil
+				dossier.Items[i].GEDDocument = nil
+			}
+
+			// Masquage Secret Industriel pour les prestataires externes
+			if (secClass == domain.ClassificationSecretIndustriel || strings.HasPrefix(code, "3.2.S") || strings.HasPrefix(code, "3.2.P") || subMod == "3.2.S" || subMod == "3.2.P") && !canViewIndustrial {
+				dossier.Items[i].TitleFR = "[SECRET INDUSTRIEL] Synthèse et procédé de fabrication réservés aux équipes internes"
+				dossier.Items[i].DescriptionFR = "Propriété intellectuelle et secret industriel breveté du fabricant (Section 7.2.2)."
+				dossier.Items[i].GEDDocumentID = nil
+				dossier.Items[i].GEDDocument = nil
+			}
+		}
 	}
 
 	writeJSON(w, http.StatusOK, dossier)
@@ -434,10 +491,9 @@ func (h *DossierHandler) SignPDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Vérification de rôle : Directeur Technique ou Pharmacien Responsable ou Admin
-	normRole := strings.ToLower(user.Role)
-	if normRole != "pharmacien_responsable" && normRole != "admin" && normRole != "directeur_technique" {
-		writeJSONError(w, http.StatusForbidden, "Action réservée exclusivement au Pharmacien Directeur Technique (PDT) ou Responsable")
+	// Vérification de rôle : Exclusivement réservé au Pharmacien Directeur Technique (PDT - 1.A.7)
+	if user.Role != string(domain.RoleDirecteurTechnique) {
+		writeJSONError(w, http.StatusForbidden, "Le visa légal et le scellement réglementaire du dossier sont réservés exclusivement au Pharmacien Directeur Technique titulaire de la décision ministérielle (1.A.7)")
 		return
 	}
 
@@ -628,4 +684,195 @@ func (h *DossierHandler) logPDTSignFail(r *http.Request, user *auth.SessionUser,
 		UserAgent: r.UserAgent(),
 	})
 	return err
+}
+
+// ListMembers retourne les collaborateurs et consultants affectés au dossier
+func (h *DossierHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	members, err := h.repo.ListDossierMembers(r.Context(), dossierID)
+	if err != nil {
+		log.Printf("[ERROR] ListMembers %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger l'équipe du dossier")
+		return
+	}
+
+	if members == nil {
+		members = []domain.DossierAssignment{}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"members": members,
+		"count":   len(members),
+	})
+}
+
+// AssignMemberRequest payload pour affecter un collaborateur au dossier
+type AssignMemberRequest struct {
+	UserID                  uuid.UUID `json:"user_id"`
+	RoleInDossier           string    `json:"role_in_dossier"`
+	CanViewFinancials       bool      `json:"can_view_financials"`
+	CanViewIndustrialSecret bool      `json:"can_view_industrial_secret"`
+	ExpiresAt               *string   `json:"expires_at,omitempty"` // format ISO YYYY-MM-DD
+	Notes                   *string   `json:"notes,omitempty"`
+}
+
+// AssignMember affecte un collaborateur au dossier avec ses prérogatives de secret
+func (h *DossierHandler) AssignMember(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	// Seuls le Pharmacien Directeur Technique, le Responsable Affaires Réglementaires ou l'Admin Labo peuvent gérer les habilitations
+	if user.Role != string(domain.RoleDirecteurTechnique) &&
+		user.Role != string(domain.RoleResponsableAffairesReg) &&
+		user.Role != string(domain.RoleAdminLaboratoire) {
+		writeJSONError(w, http.StatusForbidden, "Seuls le Pharmacien Directeur Technique et le Responsable Réglementaire peuvent affecter des collaborateurs (Section 7.2.2)")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	var req AssignMemberRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	if req.UserID == uuid.Nil {
+		writeJSONError(w, http.StatusBadRequest, "L'identifiant de l'utilisateur est obligatoire")
+		return
+	}
+
+	roleInDossier := strings.TrimSpace(req.RoleInDossier)
+	if roleInDossier == "" {
+		roleInDossier = "contributeur"
+	}
+
+	var expTime *time.Time
+	if req.ExpiresAt != nil && *req.ExpiresAt != "" {
+		t, err := time.Parse("2006-01-02", *req.ExpiresAt)
+		if err == nil {
+			expTime = &t
+		}
+	}
+
+	assignment := &domain.DossierAssignment{
+		DossierID:               dossierID,
+		UserID:                  req.UserID,
+		RoleInDossier:           roleInDossier,
+		CanViewFinancials:       req.CanViewFinancials,
+		CanViewIndustrialSecret: req.CanViewIndustrialSecret,
+		ExpiresAt:               expTime,
+		Notes:                   req.Notes,
+	}
+
+	if err := h.repo.AssignDossierMember(r.Context(), assignment); err != nil {
+		log.Printf("[ERROR] AssignDossierMember: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible d'affecter le membre")
+		return
+	}
+
+	// Audit trail
+	if h.auditService != nil {
+		_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         "DOSSIER_MEMBER_ASSIGNED",
+			EntityType:     "dossier",
+			EntityID:       dossierID.String(),
+			Details: map[string]any{
+				"target_user_id":             req.UserID,
+				"role_in_dossier":            roleInDossier,
+				"can_view_financials":        req.CanViewFinancials,
+				"can_view_industrial_secret": req.CanViewIndustrialSecret,
+			},
+			IPAddress: getClientIP(r),
+			UserAgent: r.UserAgent(),
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":  "ok",
+		"message": "Collaborateur affecté au dossier avec succès (Habilitation Secret enregistrée)",
+	})
+}
+
+// RemoveMember révoque l'affectation d'un collaborateur
+func (h *DossierHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	if user.Role != string(domain.RoleDirecteurTechnique) &&
+		user.Role != string(domain.RoleResponsableAffairesReg) &&
+		user.Role != string(domain.RoleAdminLaboratoire) {
+		writeJSONError(w, http.StatusForbidden, "Permissions insuffisantes")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	targetUserIDStr := chi.URLParam(r, "userId")
+	targetUserID, err := uuid.Parse(targetUserIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant utilisateur invalide")
+		return
+	}
+
+	if err := h.repo.RemoveDossierMember(r.Context(), dossierID, targetUserID); err != nil {
+		log.Printf("[ERROR] RemoveDossierMember: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de révoquer l'affectation")
+		return
+	}
+
+	// Audit trail
+	if h.auditService != nil {
+		_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         "DOSSIER_MEMBER_REMOVED",
+			EntityType:     "dossier",
+			EntityID:       dossierID.String(),
+			Details: map[string]any{
+				"revoked_user_id": targetUserID,
+			},
+			IPAddress: getClientIP(r),
+			UserAgent: r.UserAgent(),
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":  "ok",
+		"message": "Affectation révoquée avec succès",
+	})
 }

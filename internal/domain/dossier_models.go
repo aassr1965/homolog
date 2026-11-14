@@ -95,25 +95,53 @@ type Dossier struct {
 	UpdatedAt             time.Time       `json:"updated_at"`
 }
 
+// SecurityClassification représente le niveau de secret industriel ou commercial d'une exigence
+type SecurityClassification string
+
+const (
+	ClassificationStandard         SecurityClassification = "STANDARD"
+	ClassificationSecretCommercial SecurityClassification = "SECRET_COMMERCIAL"
+	ClassificationSecretIndustriel SecurityClassification = "SECRET_INDUSTRIEL"
+)
+
 // ChecklistItem represents an atomic documentary requirement of an ANPP dossier
 type ChecklistItem struct {
-	ID               uuid.UUID           `json:"id"`
-	DossierID        uuid.UUID           `json:"dossier_id"`
-	ModuleNumber     int                 `json:"module_number"` // 1-5 pour CTD Médicament, 0 pour Dispositif Médical
-	SubModule        string              `json:"sub_module"`    // '1.A', '1.H', '1.M', '1.P', '3.2.S', '5.3.1.2', etc.
-	ItemCode         string              `json:"item_code"`     // '1.A.1', '1.H.4', '1.P.8', '5.3.1.2'
-	TitleFR          string              `json:"title_fr"`
-	TitleAR          string              `json:"title_ar,omitempty"`
-	DescriptionFR    string              `json:"description_fr,omitempty"`
-	RequirementLevel RequirementLevel    `json:"requirement_level"` // E, F, P, NA
-	IsMandatory      bool                `json:"is_mandatory"`
-	GEDDocumentID    *uuid.UUID          `json:"ged_document_id,omitempty"`
-	GEDDocument      *GEDDocument        `json:"ged_document,omitempty"`
-	Status           ChecklistItemStatus `json:"status"` // manquant, rattache, valide_qualite, approuve_dt, rejete
-	ValidationNotes  *string             `json:"validation_notes,omitempty"`
-	SortOrder        int                 `json:"sort_order"`
-	CreatedAt        time.Time           `json:"created_at"`
-	UpdatedAt        time.Time           `json:"updated_at"`
+	ID                     uuid.UUID              `json:"id"`
+	DossierID              uuid.UUID              `json:"dossier_id"`
+	ModuleNumber           int                    `json:"module_number"` // 1-5 pour CTD Médicament, 0 pour Dispositif Médical
+	SubModule              string                 `json:"sub_module"`    // '1.A', '1.H', '1.M', '1.P', '3.2.S', '5.3.1.2', etc.
+	ItemCode               string                 `json:"item_code"`     // '1.A.1', '1.H.4', '1.P.8', '5.3.1.2'
+	TitleFR                string                 `json:"title_fr"`
+	TitleAR                string                 `json:"title_ar,omitempty"`
+	DescriptionFR          string                 `json:"description_fr,omitempty"`
+	RequirementLevel       RequirementLevel       `json:"requirement_level"` // E, F, P, NA
+	IsMandatory            bool                   `json:"is_mandatory"`
+	GEDDocumentID          *uuid.UUID             `json:"ged_document_id,omitempty"`
+	GEDDocument            *GEDDocument           `json:"ged_document,omitempty"`
+	Status                 ChecklistItemStatus    `json:"status"` // manquant, rattache, valide_qualite, approuve_dt, rejete
+	ValidationNotes        *string                `json:"validation_notes,omitempty"`
+	SortOrder              int                    `json:"sort_order"`
+	SecurityClassification SecurityClassification `json:"security_classification"`
+	CreatedAt              time.Time              `json:"created_at"`
+	UpdatedAt              time.Time              `json:"updated_at"`
+}
+
+// DossierAssignment représente l'affectation nominative d'un collaborateur ou consultant à un dossier (Need-to-Know)
+type DossierAssignment struct {
+	ID                      uuid.UUID  `json:"id"`
+	DossierID               uuid.UUID  `json:"dossier_id"`
+	UserID                  uuid.UUID  `json:"user_id"`
+	UserEmail               string     `json:"user_email,omitempty"`
+	UserFirstName           string     `json:"user_first_name,omitempty"`
+	UserLastName            string     `json:"user_last_name,omitempty"`
+	UserRole                string     `json:"user_role,omitempty"`
+	RoleInDossier           string     `json:"role_in_dossier"`
+	CanViewFinancials       bool       `json:"can_view_financials"`
+	CanViewIndustrialSecret bool       `json:"can_view_industrial_secret"`
+	AssignedAt              time.Time  `json:"assigned_at"`
+	ExpiresAt               *time.Time `json:"expires_at,omitempty"`
+	Notes                   *string    `json:"notes,omitempty"`
+	CreatedAt               time.Time  `json:"created_at"`
 }
 
 // ValidateDossier checks core integrity of the dossier before creation

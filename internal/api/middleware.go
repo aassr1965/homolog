@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"homolog/internal/auth"
+	"homolog/internal/config"
 	"homolog/internal/domain"
 )
 
@@ -15,6 +16,45 @@ const (
 	UserContextKey contextKey = "homolog_session_user"
 	CookieName                = "homolog_session"
 )
+
+// IsRequestHTTPS returns true if the incoming request was received over HTTPS
+// either directly (TLS) or through a secure reverse proxy (X-Forwarded-Proto, etc.).
+func IsRequestHTTPS(r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+	if r.TLS != nil {
+		return true
+	}
+	proto := r.Header.Get("X-Forwarded-Proto")
+	if strings.EqualFold(proto, "https") {
+		return true
+	}
+	if strings.EqualFold(r.Header.Get("X-Forwarded-Scheme"), "https") {
+		return true
+	}
+	if strings.EqualFold(r.Header.Get("X-Forwarded-Ssl"), "on") {
+		return true
+	}
+	if strings.EqualFold(r.Header.Get("Front-End-Https"), "on") {
+		return true
+	}
+	return false
+}
+
+// DetermineCookieSecure determines whether a session cookie must carry the Secure flag.
+// Cookies are marked Secure when:
+// 1. The configuration specifies production (cfg.IsProduction() == true)
+// 2. CookieSecure is explicitly forced via config (cfg.CookieSecure == true)
+// 3. The incoming HTTP request is over TLS/HTTPS directly or via reverse proxy.
+func DetermineCookieSecure(r *http.Request, cfg *config.Config) bool {
+	if cfg != nil {
+		if cfg.IsProduction() || cfg.CookieSecure {
+			return true
+		}
+	}
+	return IsRequestHTTPS(r)
+}
 
 // AuthMiddleware vérifie le cookie HttpOnly ou l'en-tête Authorization
 func AuthMiddleware(sm *auth.SessionManager) func(next http.Handler) http.Handler {

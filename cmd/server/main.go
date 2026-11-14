@@ -19,6 +19,7 @@ import (
 	"homolog/internal/auth"
 	"homolog/internal/config"
 	"homolog/internal/database"
+	"homolog/internal/domain"
 	"homolog/internal/repository"
 	"homolog/internal/storage"
 	"homolog/web"
@@ -50,6 +51,8 @@ func main() {
 	var sessionManager *auth.SessionManager
 	var auditService *audit.Service
 	var authHandler *api.AuthHandler
+	var adminHandler *api.AdminHandler
+	var systemHandler *api.SystemHandler
 	var pharmaHandler *api.PharmaHandler
 	var gedHandler *api.GEDHandler
 	var dossierHandler *api.DossierHandler
@@ -74,7 +77,9 @@ func main() {
 
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
-		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService)
+		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService, cfg)
+		adminHandler = api.NewAdminHandler(db.Pool, sessionManager, auditService, cfg)
+		systemHandler = api.NewSystemHandler(db.Pool, sessionManager, auditService, cfg)
 
 		pharmaRepo := repository.NewPharmaRepository(db.Pool)
 		pharmaHandler = api.NewPharmaHandler(pharmaRepo, auditService)
@@ -117,6 +122,20 @@ func main() {
 		w.Write(content)
 	})
 
+	// Présentation Commerciale Haute Fidélité (Pitch Deck 10 Diapositives)
+	r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+		content, err := web.Files.ReadFile("presentation.html")
+		if err != nil {
+			http.Error(w, "Support de présentation introuvable", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(content)
+	})
+	r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/presentation", http.StatusMovedPermanently)
+	})
+
 	// Favicon Caducée officiel Sanad Pharma
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		ico, err := web.Files.ReadFile("favicon.ico")
@@ -157,8 +176,8 @@ func main() {
 		if db == nil {
 			dbStatus = "disconnected"
 		}
-		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","database":"%s","time_utc":"%s","version":"0.7.0"}`,
-			cfg.DeploymentMode, dbStatus, time.Now().UTC().Format(time.RFC3339))
+		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","environment":"%s","dev_switcher_enabled":%t,"database":"%s","time_utc":"%s","version":"0.7.0"}`,
+			cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), dbStatus, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(jsonResp))
 	})
 
@@ -168,12 +187,14 @@ func main() {
 			"app": "Sanad Pharma",
 			"version": "0.7.0",
 			"deployment_mode": "%s",
+			"environment": "%s",
+			"dev_switcher_enabled": %t,
 			"org_slug": "%s",
 			"org_name": "%s",
 			"idle_timeout_min": %d,
 			"max_upload_bytes": %d,
 			"timestamp_utc": "%s"
-		}`, cfg.DeploymentMode, cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
+		}`, cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(resp))
 	})
 
@@ -182,69 +203,113 @@ func main() {
 		r.Post("/api/v1/auth/login", authHandler.Login)
 		r.Post("/api/v1/auth/logout", authHandler.Logout)
 
-		// Routes protégées par session HttpOnly
+		// Role Switcher de développement (Environnement non-production / Dev rapide)
+		// Strictement gardé : ne s'enregistre que si cfg.DevSwitcherEnabled() est vrai (désactivé d'office en production)
+		if adminHandler != nil && cfg.DevSwitcherEnabled() {
+			r.Post("/api/v1/auth/dev-switch", adminHandler.DevSwitchRole)
+		}
+
+		// Routes protégées par session HttpOnly et RBAC (CDC Section 7.2 / Jalon 1.2)
 		r.Group(func(protected chi.Router) {
 			protected.Use(api.AuthMiddleware(sessionManager))
 			protected.Get("/api/v1/auth/me", authHandler.Me)
 			protected.Post("/api/v1/auth/reauth-sign", authHandler.ReauthSign)
-			protected.Get("/api/v1/audit/logs", authHandler.GetAuditLogs)
+
+			// Piste d'audit immuable (AUDIT_VIEW)
+			protected.With(api.RequirePermission(auditService, domain.PermAuditView)).Get("/api/v1/audit/logs", authHandler.GetAuditLogs)
+
+			// Console Dédiée d'Administration Laboratoire & Matrice RBAC (USER_MANAGE)
+			if adminHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/users", adminHandler.ListUsers)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Post("/api/v1/admin/users", adminHandler.CreateUser)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/users/{id}/role", adminHandler.UpdateUserRole)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/users/{id}/status", adminHandler.UpdateUserStatus)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Post("/api/v1/admin/users/{id}/reset-password", adminHandler.ResetUserPassword)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Post("/api/v1/admin/users/{id}/reset-totp", adminHandler.ResetUserTOTP)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/users/{id}/permissions", adminHandler.UpdateUserPermissions)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Delete("/api/v1/admin/users/{id}", adminHandler.DisallowDeleteUser)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/roles", adminHandler.ListRoles)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/permissions", adminHandler.ListPermissions)
+			}
+
+			// Console Dédiée Administrateur Système & Maintenance IT (SYS_MAINT / PSSI)
+			if systemHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Get("/api/v1/system/metrics", systemHandler.GetSystemMetrics)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Get("/api/v1/system/sessions", systemHandler.ListActiveSessions)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Delete("/api/v1/system/sessions/{id}", systemHandler.RevokeSession)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/sessions/emergency-lockdown", systemHandler.EmergencyLockdown)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/backup", systemHandler.TriggerBackup)
+				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/verify-integrity", systemHandler.VerifyCASIntegrity)
+			}
 
 			// Référentiel Établissements, Sites & Produits (Jalon 1.3 - Guide ANPP 2025)
 			if pharmaHandler != nil {
 				// Établissements
-				protected.Get("/api/v1/establishments", pharmaHandler.ListEstablishments)
-				protected.Post("/api/v1/establishments", pharmaHandler.CreateEstablishment)
-				protected.Get("/api/v1/establishments/{id}", pharmaHandler.GetEstablishment)
-				protected.Put("/api/v1/establishments/{id}", pharmaHandler.UpdateEstablishment)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/establishments", pharmaHandler.ListEstablishments)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/establishments", pharmaHandler.CreateEstablishment)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/establishments/{id}", pharmaHandler.GetEstablishment)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/establishments/{id}", pharmaHandler.UpdateEstablishment)
 
 				// Sites intervenants (1.H.8)
-				protected.Get("/api/v1/manufacturing-sites", pharmaHandler.ListManufacturingSites)
-				protected.Post("/api/v1/manufacturing-sites", pharmaHandler.CreateManufacturingSite)
-				protected.Get("/api/v1/manufacturing-sites/{id}", pharmaHandler.GetManufacturingSite)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/manufacturing-sites", pharmaHandler.ListManufacturingSites)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/manufacturing-sites", pharmaHandler.CreateManufacturingSite)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/manufacturing-sites/{id}", pharmaHandler.GetManufacturingSite)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/manufacturing-sites/{id}", pharmaHandler.UpdateManufacturingSite)
 
 				// Médicaments (Princeps, Générique importé, Générique local)
-				protected.Get("/api/v1/medicines", pharmaHandler.ListMedicines)
-				protected.Post("/api/v1/medicines", pharmaHandler.CreateMedicine)
-				protected.Get("/api/v1/medicines/{id}", pharmaHandler.GetMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medicines", pharmaHandler.ListMedicines)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medicines", pharmaHandler.CreateMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medicines/{id}", pharmaHandler.GetMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/medicines/{id}", pharmaHandler.UpdateMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medicines/{id}/archive", pharmaHandler.ArchiveMedicine)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Delete("/api/v1/medicines/{id}", pharmaHandler.ArchiveMedicine)
 
 				// Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)
-				protected.Get("/api/v1/medical-devices", pharmaHandler.ListMedicalDevices)
-				protected.Post("/api/v1/medical-devices", pharmaHandler.CreateMedicalDevice)
-				protected.Get("/api/v1/medical-devices/{id}", pharmaHandler.GetMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices", pharmaHandler.ListMedicalDevices)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medical-devices", pharmaHandler.CreateMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices/{id}", pharmaHandler.GetMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/medical-devices/{id}", pharmaHandler.UpdateMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medical-devices/{id}/archive", pharmaHandler.ArchiveMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Delete("/api/v1/medical-devices/{id}", pharmaHandler.ArchiveMedicalDevice)
 			}
 
 			// Coffre-Fort GED Pharmaceutique (Jalon 1.4 - BPF & ALCOA+)
 			if gedHandler != nil {
 				// Taxonomie en 5 branches maîtresses
-				protected.Get("/api/v1/ged/taxonomy", gedHandler.GetTaxonomy)
+				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/taxonomy", gedHandler.GetTaxonomy)
 
 				// Documents & Versions
-				protected.Get("/api/v1/ged/documents", gedHandler.ListDocuments)
-				protected.Post("/api/v1/ged/documents", gedHandler.CreateDocument)
-				protected.Get("/api/v1/ged/documents/{id}", gedHandler.GetDocument)
-				protected.Get("/api/v1/ged/documents/{id}/versions", gedHandler.GetDocumentVersions)
-				protected.Post("/api/v1/ged/documents/{id}/versions", gedHandler.UploadNewVersion)
-				protected.Get("/api/v1/ged/documents/{id}/download", gedHandler.DownloadVersion)
+				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents", gedHandler.ListDocuments)
+				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/ged/documents", gedHandler.CreateDocument)
+				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}", gedHandler.GetDocument)
+				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}/versions", gedHandler.GetDocumentVersions)
+				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/ged/documents/{id}/versions", gedHandler.UploadNewVersion)
+				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}/download", gedHandler.DownloadVersion)
 
 				// Cycle de vie & Verrouillage
-				protected.Post("/api/v1/ged/documents/{id}/checkout", gedHandler.CheckOut)
-				protected.Post("/api/v1/ged/documents/{id}/cancel-checkout", gedHandler.CancelCheckOut)
-				protected.Post("/api/v1/ged/documents/{id}/status", gedHandler.UpdateStatus)
+				protected.With(api.RequirePermission(auditService, domain.PermDocLockCheckout)).Post("/api/v1/ged/documents/{id}/checkout", gedHandler.CheckOut)
+				protected.With(api.RequirePermission(auditService, domain.PermDocLockCheckout)).Post("/api/v1/ged/documents/{id}/cancel-checkout", gedHandler.CancelCheckOut)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview, domain.PermDocArchive)).Post("/api/v1/ged/documents/{id}/status", gedHandler.UpdateStatus)
 
-				// Signature électronique officielle du Pharmacien Directeur Technique (PDT)
-				protected.Post("/api/v1/ged/documents/{id}/sign-dt", gedHandler.SignDocumentDT)
+				// Signature électronique officielle du Pharmacien Directeur Technique (PDT - 1.A.7)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/ged/documents/{id}/sign-dt", gedHandler.SignDocumentDT)
 			}
 
 			// Moteur de Dossiers ANPP & Checklists Dynamiques (Jalon 1.5 - Guide CTD Juillet 2025)
 			if dossierHandler != nil {
-				protected.Get("/api/v1/dossiers", dossierHandler.ListDossiers)
-				protected.Post("/api/v1/dossiers", dossierHandler.CreateDossier)
-				protected.Get("/api/v1/dossiers/{id}", dossierHandler.GetDossier)
-				protected.Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
-				protected.Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
-				protected.Post("/api/v1/dossiers/{id}/items/{itemId}/status", dossierHandler.UpdateItemStatus)
-				protected.Post("/api/v1/dossiers/{id}/sign-pdt", dossierHandler.SignPDT)
-				protected.Post("/api/v1/dossiers/{id}/status", dossierHandler.UpdateDossierStatus)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers", dossierHandler.ListDossiers)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierCreate)).Post("/api/v1/dossiers", dossierHandler.CreateDossier)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}", dossierHandler.GetDossier)
+				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
+				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/status", dossierHandler.UpdateItemStatus)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/sign-pdt", dossierHandler.SignPDT)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/status", dossierHandler.UpdateDossierStatus)
+
+				// Équipe & Habilitations de Sécurité du Dossier (Need-to-Know & Secret Défense Industrielle)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/members", dossierHandler.ListMembers)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Post("/api/v1/dossiers/{id}/members", dossierHandler.AssignMember)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Delete("/api/v1/dossiers/{id}/members/{userId}", dossierHandler.RemoveMember)
 			}
 		})
 	}

@@ -27,7 +27,7 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 		log.Printf("[Init] Organisation créée : %s (%s)", orgName, orgSlug)
 	}
 
-	// 2. Utilisateurs par défaut
+	// 2. Utilisateurs et Rôles Réglementaires BPF (Jalon 1.2 / CDC Section 7.1)
 	initialUsers := []struct {
 		Email     string
 		Password  string
@@ -35,12 +35,92 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 		FirstName string
 		LastName  string
 	}{
+		// Comptes Démonstration & Matrice des 9 Rôles BPF
+		{
+			Email:     "admin.lab@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleAdminLaboratoire,
+			FirstName: "Karim",
+			LastName:  "Mokrani (Admin Lab)",
+		},
+		{
+			Email:     "pdt@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleDirecteurTechnique,
+			FirstName: "Dr. Yacine",
+			LastName:  "Benkhalid (PDT 1.A.7)",
+		},
+		{
+			Email:     "ra.lead@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleResponsableAffairesReg,
+			FirstName: "Sarah",
+			LastName:  "Benali (RA Lead)",
+		},
+		{
+			Email:     "ra.assoc@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleResponsableAffairesReg,
+			FirstName: "Sofiane",
+			LastName:  "Hamidi (RA Associate)",
+		},
+		{
+			Email:     "qa.lead@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleContributeurQualiteBPF,
+			FirstName: "Nadir",
+			LastName:  "Touati (QA Manager)",
+		},
+		{
+			Email:     "qc.lead@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleContributeurRDProd,
+			FirstName: "Leila",
+			LastName:  "Mansouri (QC & Stabilités)",
+		},
+		{
+			Email:     "prod.lead@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleContributeurRDProd,
+			FirstName: "Omar",
+			LastName:  "Belkacem (Production & Validation)",
+		},
+		{
+			Email:     "consultant.ext@cro.com",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleConsultantExterne,
+			FirstName: "David",
+			LastName:  "Moreau (Expert CRO Bioéquivalence)",
+		},
+		{
+			Email:     "auditeur.insp@anpp.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleAuditeurInspecteur,
+			FirstName: "Inspecteur",
+			LastName:  "ANPP (Auditeur Qualité)",
+		},
+		{
+			Email:     "admin.sys@cloud.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleAdminSystemeLocal,
+			FirstName: "Ahmed",
+			LastName:  "Ziani (Admin Système Zero-Trust)",
+		},
+		{
+			Email:     "super.admin@homolog.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RoleSuperAdminEditeur,
+			FirstName: "SuperAdmin",
+			LastName:  "Éditeur SaaS",
+		},
+
+		// Comptes de compatibilité historique Sanad Pharma
 		{
 			Email:     "dt@sanadpharma.dz",
 			Password:  "P@ssw0rdPharma2026!",
 			Role:      domain.RoleDirecteurTechnique,
 			FirstName: "Amine",
-			LastName:  "K.",
+			LastName:  "K. (PDT)",
 		},
 		{
 			Email:     "admin@sanadpharma.dz",
@@ -97,6 +177,9 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 				return err
 			}
 			log.Printf("[Init] Compte créé : %s (%s) - Rôle: %s", u.Email, u.FirstName+" "+u.LastName, u.Role)
+		} else {
+			// S'assurer que le rôle correspond au seed
+			_, _ = pool.Exec(ctx, "UPDATE users SET role = $1 WHERE organization_id = $2 AND email = $3 AND role != $1", string(u.Role), orgID, u.Email)
 		}
 	}
 

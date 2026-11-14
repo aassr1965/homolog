@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"homolog/internal/auth"
 	"homolog/internal/domain"
 )
 
@@ -256,6 +257,36 @@ func (r *PharmaRepository) GetManufacturingSiteByID(ctx context.Context, orgID, 
 	return &s, nil
 }
 
+func (r *PharmaRepository) UpdateManufacturingSite(ctx context.Context, s *domain.ManufacturingSite) error {
+	if err := s.Validate(); err != nil {
+		return err
+	}
+	s.UpdatedAt = time.Now().UTC()
+	query := `
+		UPDATE manufacturing_sites SET
+			establishment_id = $3, site_name_fr = $4, site_name_ar = $5,
+			country_code = $6, address = $7, site_role = $8,
+			manufacturing_license_number = $9, gmp_certificate_number = $10,
+			gmp_grant_date = $11, gmp_expiry_date = $12, gmp_issuing_authority = $13,
+			is_active = $14, updated_at = $15
+		WHERE organization_id = $1 AND id = $2
+	`
+	ct, err := r.pool.Exec(ctx, query,
+		s.OrganizationID, s.ID, s.EstablishmentID, s.SiteNameFR, s.SiteNameAR,
+		s.CountryCode, s.Address, s.SiteRole,
+		s.ManufacturingLicenseNumber, s.GMPCertificateNumber,
+		s.GMPGrantDate, s.GMPExpiryDate, s.GMPIssuingAuthority,
+		s.IsActive, s.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (r *PharmaRepository) ListManufacturingSites(ctx context.Context, orgID uuid.UUID, roleFilter string, limit, offset int) ([]domain.ManufacturingSite, int, error) {
 	if limit <= 0 {
 		limit = 50
@@ -376,6 +407,7 @@ func (r *PharmaRepository) CreateMedicine(ctx context.Context, m *domain.Medicin
 			apimf_dmf_number, polymorphic_form, particle_size_criticality,
 			storage_conditions_fr, storage_conditions_ar, shelf_life_months, in_use_shelf_life, validation_batch_files_held,
 			economic_file_type, pcsu_amount, fob_price, fob_currency, has_chamber_of_commerce_visa, has_benchmark_dossier,
+			foreign_mah_name, foreign_mah_country, cpp_number, cpp_issuing_authority, cpp_issue_date, manufacturer_site_id,
 			registration_decision_number, registration_date, expiry_date, status, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4,
@@ -386,7 +418,8 @@ func (r *PharmaRepository) CreateMedicine(ctx context.Context, m *domain.Medicin
 			$21, $22, $23,
 			$24, $25, $26, $27, $28,
 			$29, $30, $31, $32, $33, $34,
-			$35, $36, $37, $38, $39, $40
+			$35, $36, $37, $38, $39, $40,
+			$41, $42, $43, $44, $45, $46
 		)
 	`
 	_, err = tx.Exec(ctx, medQuery,
@@ -398,6 +431,7 @@ func (r *PharmaRepository) CreateMedicine(ctx context.Context, m *domain.Medicin
 		m.APIMFNumber, m.PolymorphicForm, m.ParticleSizeCriticality,
 		m.StorageConditionsFR, m.StorageConditionsAR, m.ShelfLifeMonths, m.InUseShelfLife, m.ValidationBatchFilesHeld,
 		m.EconomicFileType, m.PCSUAmount, m.FOBPrice, m.FOBCurrency, m.HasChamberOfCommerceVisa, m.HasBenchmarkDossier,
+		m.ForeignMAHName, m.ForeignMAHCountry, m.CPPNumber, m.CPPIssuingAuthority, m.CPPIssueDate, m.ManufacturerSiteID,
 		m.RegistrationDecisionNumber, m.RegistrationDate, m.ExpiryDate, m.Status, m.CreatedAt, m.UpdatedAt,
 	)
 	if err != nil {
@@ -453,6 +487,12 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 			COALESCE(fob_currency, ''),
 			has_chamber_of_commerce_visa,
 			has_benchmark_dossier,
+			COALESCE(foreign_mah_name, ''),
+			COALESCE(foreign_mah_country, ''),
+			COALESCE(cpp_number, ''),
+			COALESCE(cpp_issuing_authority, ''),
+			cpp_issue_date,
+			manufacturer_site_id,
 			COALESCE(registration_decision_number, ''),
 			registration_date,
 			expiry_date,
@@ -470,6 +510,7 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 		&m.APIMFNumber, &m.PolymorphicForm, &m.ParticleSizeCriticality,
 		&m.StorageConditionsFR, &m.StorageConditionsAR, &m.ShelfLifeMonths, &m.InUseShelfLife, &m.ValidationBatchFilesHeld,
 		&m.EconomicFileType, &m.PCSUAmount, &m.FOBPrice, &m.FOBCurrency, &m.HasChamberOfCommerceVisa, &m.HasBenchmarkDossier,
+		&m.ForeignMAHName, &m.ForeignMAHCountry, &m.CPPNumber, &m.CPPIssuingAuthority, &m.CPPIssueDate, &m.ManufacturerSiteID,
 		&m.RegistrationDecisionNumber, &m.RegistrationDate, &m.ExpiryDate, &m.Status, &m.CreatedAt, &m.UpdatedAt,
 	)
 	if err != nil {
@@ -477,6 +518,13 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 			return nil, ErrNotFound
 		}
 		return nil, err
+	}
+
+	// Récupération des données du site producteur si spécifié (1.H.8 & 1.M.P)
+	if m.ManufacturerSiteID != nil {
+		if site, err := r.GetManufacturingSiteByID(ctx, orgID, *m.ManufacturerSiteID); err == nil {
+			m.ManufacturerSite = site
+		}
 	}
 
 	// Récupération des sites intervenants associés (1.H.8)
@@ -515,6 +563,135 @@ func (r *PharmaRepository) GetMedicineByID(ctx context.Context, orgID, id uuid.U
 	}
 
 	return &m, nil
+}
+
+// UpdateMedicine met à jour les informations d'un médicament et synchronise le produit parent
+func (r *PharmaRepository) UpdateMedicine(ctx context.Context, m *domain.Medicine, siteIDs []uuid.UUID) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	now := time.Now()
+	m.UpdatedAt = now
+
+	// 1. Mise à jour de la table medicines
+	query := `
+		UPDATE medicines SET
+			origin_type = $3,
+			brand_name_fr = $4,
+			brand_name_ar = $5,
+			dci_fr = $6,
+			dci_ar = $7,
+			dosage_fr = $8,
+			dosage_ar = $9,
+			pharmaceutical_form_fr = $10,
+			pharmaceutical_form_ar = $11,
+			administration_route_fr = $12,
+			administration_route_ar = $13,
+			atc_code = $14,
+			has_pharmacopoeia_monograph = $15,
+			pharmacopoeia_name = $16,
+			has_cep = $17,
+			cep_number = $18,
+			cep_access_letter_held = $19,
+			apimf_dmf_number = $20,
+			polymorphic_form = $21,
+			particle_size_criticality = $22,
+			storage_conditions_fr = $23,
+			storage_conditions_ar = $24,
+			shelf_life_months = $25,
+			in_use_shelf_life = $26,
+			validation_batch_files_held = $27,
+			economic_file_type = $28,
+			pcsu_amount = $29,
+			fob_price = $30,
+			fob_currency = $31,
+			has_chamber_of_commerce_visa = $32,
+			has_benchmark_dossier = $33,
+			foreign_mah_name = $34,
+			foreign_mah_country = $35,
+			cpp_number = $36,
+			cpp_issuing_authority = $37,
+			cpp_issue_date = $38,
+			manufacturer_site_id = $39,
+			status = $40,
+			updated_at = $41
+		WHERE organization_id = $1 AND id = $2
+	`
+	tag, err := tx.Exec(ctx, query,
+		m.OrganizationID, m.ID, m.OriginType,
+		m.BrandNameFR, m.BrandNameAR, m.DCIFR, m.DCIAR,
+		m.DosageFR, m.DosageAR, m.PharmaceuticalFormFR, m.PharmaceuticalFormAR,
+		m.AdministrationRouteFR, m.AdministrationRouteAR, m.ATCCode,
+		m.HasPharmacopoeiaMonograph, m.PharmacopoeiaName, m.HasCEP, m.CEPNumber, m.CEPAccessLetterHeld,
+		m.APIMFNumber, m.PolymorphicForm, m.ParticleSizeCriticality,
+		m.StorageConditionsFR, m.StorageConditionsAR, m.ShelfLifeMonths, m.InUseShelfLife, m.ValidationBatchFilesHeld,
+		m.EconomicFileType, m.PCSUAmount, m.FOBPrice, m.FOBCurrency, m.HasChamberOfCommerceVisa, m.HasBenchmarkDossier,
+		m.ForeignMAHName, m.ForeignMAHCountry, m.CPPNumber, m.CPPIssuingAuthority, m.CPPIssueDate, m.ManufacturerSiteID,
+		m.Status, m.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("mise à jour médicament échouée: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("médicament introuvable ou non autorisé")
+	}
+
+	// 2. Mise à jour du produit parent
+	if m.ProductID != uuid.Nil {
+		_, err = tx.Exec(ctx, `
+			UPDATE products SET
+				brand_name_fr = $1,
+				brand_name_ar = $2,
+				dci = $3,
+				dosage = $4,
+				pharmaceutical_form = $5,
+				administration_route = $6,
+				updated_at = $7
+			WHERE id = $8 AND organization_id = $9
+		`, m.BrandNameFR, m.BrandNameAR, m.DCIFR, m.DosageFR, m.PharmaceuticalFormFR, m.AdministrationRouteFR, now, m.ProductID, m.OrganizationID)
+		if err != nil {
+			return fmt.Errorf("mise à jour produit parent échouée: %w", err)
+		}
+	}
+
+	// 3. Mise à jour des sites associés si une liste est explicitement fournie
+	if len(siteIDs) > 0 {
+		_, _ = tx.Exec(ctx, "DELETE FROM medicine_manufacturing_sites WHERE medicine_id = $1", m.ID)
+		for _, siteID := range siteIDs {
+			linkQuery := `
+				INSERT INTO medicine_manufacturing_sites (medicine_id, site_id, role_in_product)
+				VALUES ($1, $2, 'intervenant')
+				ON CONFLICT (medicine_id, site_id, role_in_product) DO NOTHING
+			`
+			if _, err := tx.Exec(ctx, linkQuery, m.ID, siteID); err != nil {
+				return fmt.Errorf("liaison site échouée: %w", err)
+			}
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+// ArchiveMedicine applique un soft delete réglementaire avec traçabilité 21 CFR Part 11 / BPF
+func (r *PharmaRepository) ArchiveMedicine(ctx context.Context, orgID, id uuid.UUID, reason, archivedBy string) error {
+	now := time.Now()
+	query := `
+		UPDATE medicines SET
+			status = 'archive',
+			updated_at = $3
+		WHERE organization_id = $1 AND id = $2
+	`
+	tag, err := r.pool.Exec(ctx, query, orgID, id, now)
+	if err != nil {
+		return fmt.Errorf("archivage médicament échoué: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("médicament introuvable ou non autorisé")
+	}
+	return nil
 }
 
 func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, originFilter, search string, limit, offset int) ([]domain.Medicine, int, error) {
@@ -563,6 +740,12 @@ func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, o
 			COALESCE(fob_currency, ''),
 			has_chamber_of_commerce_visa,
 			has_benchmark_dossier,
+			COALESCE(foreign_mah_name, ''),
+			COALESCE(foreign_mah_country, ''),
+			COALESCE(cpp_number, ''),
+			COALESCE(cpp_issuing_authority, ''),
+			cpp_issue_date,
+			manufacturer_site_id,
 			COALESCE(registration_decision_number, ''),
 			registration_date,
 			expiry_date,
@@ -611,6 +794,7 @@ func (r *PharmaRepository) ListMedicines(ctx context.Context, orgID uuid.UUID, o
 			&m.APIMFNumber, &m.PolymorphicForm, &m.ParticleSizeCriticality,
 			&m.StorageConditionsFR, &m.StorageConditionsAR, &m.ShelfLifeMonths, &m.InUseShelfLife, &m.ValidationBatchFilesHeld,
 			&m.EconomicFileType, &m.PCSUAmount, &m.FOBPrice, &m.FOBCurrency, &m.HasChamberOfCommerceVisa, &m.HasBenchmarkDossier,
+			&m.ForeignMAHName, &m.ForeignMAHCountry, &m.CPPNumber, &m.CPPIssuingAuthority, &m.CPPIssueDate, &m.ManufacturerSiteID,
 			&m.RegistrationDecisionNumber, &m.RegistrationDate, &m.ExpiryDate, &m.Status, &m.CreatedAt, &m.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
@@ -643,6 +827,10 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 	if dm.ProductID == uuid.Nil {
 		dm.ProductID = uuid.New()
 	}
+	mName := dm.ManufacturerReference
+	if dm.OriginType == domain.DMOriginImporte && dm.LegalManufacturerName != "" {
+		mName = dm.LegalManufacturerName
+	}
 	prodQuery := `
 		INSERT INTO products (
 			id, organization_id, product_type, brand_name_fr, brand_name_ar,
@@ -653,7 +841,7 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 	_, err = tx.Exec(ctx, prodQuery,
 		dm.ProductID, dm.OrganizationID, domain.ProductTypeDispositifMedical, dm.CommercialNameFR, dm.CommercialNameAR,
 		dm.DMClass, dm.IsSterile, dm.ClassificationRule,
-		dm.ManufacturerReference, dm.Status, now, now,
+		mName, dm.Status, now, now,
 	)
 	if err != nil {
 		return fmt.Errorf("création produit DM parent échouée: %w", err)
@@ -665,21 +853,39 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 	}
 	dmQuery := `
 		INSERT INTO medical_devices (
-			id, organization_id, product_id, commercial_name_fr, commercial_name_ar,
-			manufacturer_reference, dm_class, classification_rule, is_sterile, is_single_use,
-			intended_use_fr, intended_use_ar, homologation_decision_number, homologation_date, homologation_expiry_date,
+			id, organization_id, product_id, origin_type,
+			commercial_name_fr, commercial_name_ar, manufacturer_reference,
+			dm_class, classification_rule, is_sterile, sterilization_method, is_single_use,
+			intended_use_fr, intended_use_ar, gmdn_code,
+			legal_manufacturer_name, legal_manufacturer_country, manufacturer_site_id, establishment_id,
+			ce_certificate_number, notified_body_name, notified_body_number, ce_expiry_date,
+			iso_13485_certificate_number, clv_fsc_number, clv_issuing_authority, clv_issue_date,
+			economic_file_type, pcsu_amount, cif_price, cif_currency,
+			homologation_decision_number, homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5,
-			$6, $7, $8, $9, $10,
-			$11, $12, $13, $14, $15,
-			$16, $17, $18
+			$1, $2, $3, $4,
+			$5, $6, $7,
+			$8, $9, $10, $11, $12,
+			$13, $14, $15,
+			$16, $17, $18, $19,
+			$20, $21, $22, $23,
+			$24, $25, $26, $27,
+			$28, $29, $30, $31,
+			$32, $33, $34,
+			$35, $36, $37
 		)
 	`
 	_, err = tx.Exec(ctx, dmQuery,
-		dm.ID, dm.OrganizationID, dm.ProductID, dm.CommercialNameFR, dm.CommercialNameAR,
-		dm.ManufacturerReference, dm.DMClass, dm.ClassificationRule, dm.IsSterile, dm.IsSingleUse,
-		dm.IntendedUseFR, dm.IntendedUseAR, dm.HomologationDecisionNumber, dm.HomologationDate, dm.HomologationExpiryDate,
+		dm.ID, dm.OrganizationID, dm.ProductID, dm.OriginType,
+		dm.CommercialNameFR, dm.CommercialNameAR, dm.ManufacturerReference,
+		dm.DMClass, dm.ClassificationRule, dm.IsSterile, dm.SterilizationMethod, dm.IsSingleUse,
+		dm.IntendedUseFR, dm.IntendedUseAR, dm.GMDNCode,
+		dm.LegalManufacturerName, dm.LegalManufacturerCountry, dm.ManufacturerSiteID, dm.EstablishmentID,
+		dm.CECertificateNumber, dm.NotifiedBodyName, dm.NotifiedBodyNumber, dm.CEExpiryDate,
+		dm.ISO13485CertificateNumber, dm.CLVFSCNumber, dm.CLVIssuingAuthority, dm.CLVIssueDate,
+		dm.EconomicFileType, dm.PCSUAmount, dm.CIFPrice, dm.CIFCurrency,
+		dm.HomologationDecisionNumber, dm.HomologationDate, dm.HomologationExpiryDate,
 		dm.Status, dm.CreatedAt, dm.UpdatedAt,
 	)
 	if err != nil {
@@ -692,13 +898,32 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id uuid.UUID) (*domain.MedicalDevice, error) {
 	query := `
 		SELECT 
-			id, organization_id, product_id, commercial_name_fr,
+			id, organization_id, product_id, origin_type,
+			commercial_name_fr,
 			COALESCE(commercial_name_ar, ''),
 			manufacturer_reference, dm_class,
 			COALESCE(classification_rule, ''),
-			is_sterile, is_single_use,
+			is_sterile,
+			COALESCE(sterilization_method, ''),
+			is_single_use,
 			COALESCE(intended_use_fr, ''),
 			COALESCE(intended_use_ar, ''),
+			COALESCE(gmdn_code, ''),
+			COALESCE(legal_manufacturer_name, ''),
+			COALESCE(legal_manufacturer_country, ''),
+			manufacturer_site_id,
+			establishment_id,
+			COALESCE(ce_certificate_number, ''),
+			COALESCE(notified_body_name, ''),
+			COALESCE(notified_body_number, ''),
+			ce_expiry_date,
+			COALESCE(iso_13485_certificate_number, ''),
+			COALESCE(clv_fsc_number, ''),
+			COALESCE(clv_issuing_authority, ''),
+			clv_issue_date,
+			COALESCE(economic_file_type, 'pcsu'),
+			pcsu_amount, cif_price,
+			COALESCE(cif_currency, 'EUR'),
 			COALESCE(homologation_decision_number, ''),
 			homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
@@ -707,9 +932,20 @@ func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id u
 	`
 	var dm domain.MedicalDevice
 	err := r.pool.QueryRow(ctx, query, orgID, id).Scan(
-		&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.CommercialNameFR, &dm.CommercialNameAR,
-		&dm.ManufacturerReference, &dm.DMClass, &dm.ClassificationRule, &dm.IsSterile, &dm.IsSingleUse,
-		&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
+		&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.OriginType,
+		&dm.CommercialNameFR, &dm.CommercialNameAR,
+		&dm.ManufacturerReference, &dm.DMClass,
+		&dm.ClassificationRule,
+		&dm.IsSterile, &dm.SterilizationMethod, &dm.IsSingleUse,
+		&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.GMDNCode,
+		&dm.LegalManufacturerName, &dm.LegalManufacturerCountry,
+		&dm.ManufacturerSiteID, &dm.EstablishmentID,
+		&dm.CECertificateNumber, &dm.NotifiedBodyName, &dm.NotifiedBodyNumber,
+		&dm.CEExpiryDate,
+		&dm.ISO13485CertificateNumber, &dm.CLVFSCNumber, &dm.CLVIssuingAuthority,
+		&dm.CLVIssueDate,
+		&dm.EconomicFileType, &dm.PCSUAmount, &dm.CIFPrice, &dm.CIFCurrency,
+		&dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
 		&dm.Status, &dm.CreatedAt, &dm.UpdatedAt,
 	)
 	if err != nil {
@@ -718,6 +954,21 @@ func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id u
 		}
 		return nil, err
 	}
+
+	// Récupération du site fabricant lié
+	if dm.ManufacturerSiteID != nil {
+		if site, err := r.GetManufacturingSiteByID(ctx, orgID, *dm.ManufacturerSiteID); err == nil {
+			dm.ManufacturerSite = site
+		}
+	}
+
+	// Récupération de l'établissement demandeur/mandataire lié
+	if dm.EstablishmentID != nil {
+		if est, err := r.GetEstablishmentByID(ctx, orgID, *dm.EstablishmentID); err == nil {
+			dm.Establishment = est
+		}
+	}
+
 	return &dm, nil
 }
 
@@ -736,13 +987,32 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 	countQuery.WriteString(`SELECT COUNT(*) FROM medical_devices WHERE organization_id = $1`)
 	listQuery.WriteString(`
 		SELECT 
-			id, organization_id, product_id, commercial_name_fr,
+			id, organization_id, product_id, origin_type,
+			commercial_name_fr,
 			COALESCE(commercial_name_ar, ''),
 			manufacturer_reference, dm_class,
 			COALESCE(classification_rule, ''),
-			is_sterile, is_single_use,
+			is_sterile,
+			COALESCE(sterilization_method, ''),
+			is_single_use,
 			COALESCE(intended_use_fr, ''),
 			COALESCE(intended_use_ar, ''),
+			COALESCE(gmdn_code, ''),
+			COALESCE(legal_manufacturer_name, ''),
+			COALESCE(legal_manufacturer_country, ''),
+			manufacturer_site_id,
+			establishment_id,
+			COALESCE(ce_certificate_number, ''),
+			COALESCE(notified_body_name, ''),
+			COALESCE(notified_body_number, ''),
+			ce_expiry_date,
+			COALESCE(iso_13485_certificate_number, ''),
+			COALESCE(clv_fsc_number, ''),
+			COALESCE(clv_issuing_authority, ''),
+			clv_issue_date,
+			COALESCE(economic_file_type, 'pcsu'),
+			pcsu_amount, cif_price,
+			COALESCE(cif_currency, 'EUR'),
 			COALESCE(homologation_decision_number, ''),
 			homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
@@ -782,9 +1052,20 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 	for rows.Next() {
 		var dm domain.MedicalDevice
 		if err := rows.Scan(
-			&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.CommercialNameFR, &dm.CommercialNameAR,
-			&dm.ManufacturerReference, &dm.DMClass, &dm.ClassificationRule, &dm.IsSterile, &dm.IsSingleUse,
-			&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
+			&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.OriginType,
+			&dm.CommercialNameFR, &dm.CommercialNameAR,
+			&dm.ManufacturerReference, &dm.DMClass,
+			&dm.ClassificationRule,
+			&dm.IsSterile, &dm.SterilizationMethod, &dm.IsSingleUse,
+			&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.GMDNCode,
+			&dm.LegalManufacturerName, &dm.LegalManufacturerCountry,
+			&dm.ManufacturerSiteID, &dm.EstablishmentID,
+			&dm.CECertificateNumber, &dm.NotifiedBodyName, &dm.NotifiedBodyNumber,
+			&dm.CEExpiryDate,
+			&dm.ISO13485CertificateNumber, &dm.CLVFSCNumber, &dm.CLVIssuingAuthority,
+			&dm.CLVIssueDate,
+			&dm.EconomicFileType, &dm.PCSUAmount, &dm.CIFPrice, &dm.CIFCurrency,
+			&dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
 			&dm.Status, &dm.CreatedAt, &dm.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
@@ -792,4 +1073,163 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 		list = append(list, dm)
 	}
 	return list, total, nil
+}
+
+// UpdateMedicalDevice met à jour un dispositif médical et synchronise le catalogue parent
+func (r *PharmaRepository) UpdateMedicalDevice(ctx context.Context, dm *domain.MedicalDevice) error {
+	if err := dm.Validate(); err != nil {
+		return err
+	}
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	now := time.Now().UTC()
+	dm.UpdatedAt = now
+
+	query := `
+		UPDATE medical_devices SET
+			origin_type = $3,
+			commercial_name_fr = $4,
+			commercial_name_ar = $5,
+			manufacturer_reference = $6,
+			dm_class = $7,
+			classification_rule = $8,
+			is_sterile = $9,
+			sterilization_method = $10,
+			is_single_use = $11,
+			intended_use_fr = $12,
+			intended_use_ar = $13,
+			gmdn_code = $14,
+			legal_manufacturer_name = $15,
+			legal_manufacturer_country = $16,
+			manufacturer_site_id = $17,
+			establishment_id = $18,
+			ce_certificate_number = $19,
+			notified_body_name = $20,
+			notified_body_number = $21,
+			ce_expiry_date = $22,
+			iso_13485_certificate_number = $23,
+			clv_fsc_number = $24,
+			clv_issuing_authority = $25,
+			clv_issue_date = $26,
+			economic_file_type = $27,
+			pcsu_amount = $28,
+			cif_price = $29,
+			cif_currency = $30,
+			status = $31,
+			updated_at = $32
+		WHERE organization_id = $1 AND id = $2
+	`
+	tag, err := tx.Exec(ctx, query,
+		dm.OrganizationID, dm.ID, dm.OriginType,
+		dm.CommercialNameFR, dm.CommercialNameAR, dm.ManufacturerReference,
+		dm.DMClass, dm.ClassificationRule, dm.IsSterile, dm.SterilizationMethod, dm.IsSingleUse,
+		dm.IntendedUseFR, dm.IntendedUseAR, dm.GMDNCode,
+		dm.LegalManufacturerName, dm.LegalManufacturerCountry, dm.ManufacturerSiteID, dm.EstablishmentID,
+		dm.CECertificateNumber, dm.NotifiedBodyName, dm.NotifiedBodyNumber, dm.CEExpiryDate,
+		dm.ISO13485CertificateNumber, dm.CLVFSCNumber, dm.CLVIssuingAuthority, dm.CLVIssueDate,
+		dm.EconomicFileType, dm.PCSUAmount, dm.CIFPrice, dm.CIFCurrency,
+		dm.Status, dm.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("mise à jour DM échouée: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("dispositif médical introuvable ou non autorisé")
+	}
+
+	// Synchronisation du produit parent
+	if dm.ProductID != uuid.Nil {
+		mName := dm.ManufacturerReference
+		if dm.OriginType == domain.DMOriginImporte && dm.LegalManufacturerName != "" {
+			mName = dm.LegalManufacturerName
+		}
+		_, err = tx.Exec(ctx, `
+			UPDATE products SET
+				brand_name_fr = $1,
+				brand_name_ar = $2,
+				dm_class = $3,
+				is_sterile = $4,
+				dm_classification_rule = $5,
+				manufacturer_name = $6,
+				updated_at = $7
+			WHERE id = $8 AND organization_id = $9
+		`, dm.CommercialNameFR, dm.CommercialNameAR, dm.DMClass, dm.IsSterile, dm.ClassificationRule, mName, now, dm.ProductID, dm.OrganizationID)
+		if err != nil {
+			return fmt.Errorf("mise à jour produit DM parent échouée: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+// ArchiveMedicalDevice archive réglementairement un DM avec signature électronique 21 CFR Part 11
+func (r *PharmaRepository) ArchiveMedicalDevice(ctx context.Context, orgID, id, userID uuid.UUID, reason, password string) error {
+	if strings.TrimSpace(reason) == "" {
+		return errors.New("le motif d'archivage est obligatoire (21 CFR Part 11)")
+	}
+	if strings.TrimSpace(password) == "" {
+		return errors.New("le mot de passe de signature électronique est obligatoire (21 CFR Part 11)")
+	}
+
+	// 1. Vérification nominative de l'identité du signataire
+	valid, err := r.VerifyUserPassword(ctx, userID, password)
+	if err != nil {
+		return fmt.Errorf("erreur de vérification de signature: %w", err)
+	}
+	if !valid {
+		return errors.New("signature électronique invalide : mot de passe incorrect")
+	}
+
+	// 2. Vérification existence et statut actuel
+	var status string
+	var prodID uuid.UUID
+	err = r.pool.QueryRow(ctx, "SELECT status, product_id FROM medical_devices WHERE organization_id = $1 AND id = $2", orgID, id).Scan(&status, &prodID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+	if status == "archive" || status == "retire" {
+		return errors.New("ce dispositif médical est déjà archivé")
+	}
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	now := time.Now().UTC()
+
+	// 3. Archivage logique dans medical_devices
+	_, err = tx.Exec(ctx, "UPDATE medical_devices SET status = 'archive', updated_at = $1 WHERE id = $2", now, id)
+	if err != nil {
+		return fmt.Errorf("archivage DM échoué: %w", err)
+	}
+
+	// 4. Synchronisation statut produit
+	if prodID != uuid.Nil {
+		_, err = tx.Exec(ctx, "UPDATE products SET marketing_status = 'retire', updated_at = $1 WHERE id = $2", now, prodID)
+		if err != nil {
+			return fmt.Errorf("retrait produit DM parent échoué: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+// VerifyUserPassword vérifie le mot de passe de l'utilisateur pour la signature 21 CFR Part 11
+func (r *PharmaRepository) VerifyUserPassword(ctx context.Context, userID uuid.UUID, password string) (bool, error) {
+	var pwdHash string
+	err := r.pool.QueryRow(ctx, "SELECT password_hash FROM users WHERE id = $1", userID).Scan(&pwdHash)
+	if err != nil {
+		return false, err
+	}
+	return auth.VerifyPassword(password, pwdHash)
 }

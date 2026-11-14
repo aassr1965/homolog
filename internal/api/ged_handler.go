@@ -48,6 +48,12 @@ func (h *GEDHandler) GetTaxonomy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cloisonnement strict : Les consultants externes n'ont pas accès à la GED transverse d'entreprise (CDC 7.2.2)
+	if user.Role == string(domain.RoleConsultantExterne) {
+		writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Les consultants externes n'ont pas accès à la GED transverse de l'entreprise (CDC Section 7.2.2)")
+		return
+	}
+
 	branches, err := h.repo.GetTaxonomyWithCounts(r.Context(), user.OrganizationID)
 	if err != nil {
 		log.Printf("[ERREUR] GetTaxonomy: %v", err)
@@ -66,6 +72,12 @@ func (h *GEDHandler) ListDocuments(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
 	if user == nil {
 		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	// Cloisonnement strict : Les consultants externes n'ont pas accès à la GED transverse d'entreprise (CDC 7.2.2)
+	if user.Role == string(domain.RoleConsultantExterne) {
+		writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Les consultants externes n'ont pas accès à la GED transverse de l'entreprise (CDC Section 7.2.2)")
 		return
 	}
 
@@ -413,6 +425,102 @@ func (h *GEDHandler) DownloadVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Garde-fou BPF Zero-Trust : Interdiction d'accès aux fichiers pour administrateurs techniques
+	if user.Role == string(domain.RoleAdminSystemeLocal) || user.Role == string(domain.RoleSuperAdminEditeur) {
+		if h.auditService != nil {
+			_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+				OrganizationID: user.OrganizationID,
+				UserID:         &user.UserID,
+				UserEmail:      user.Email,
+				UserRole:       user.Role,
+				Action:         "AUDIT_SECURITY_ZEROTRUST_BLOCKED",
+				EntityType:     "DOCUMENT_CONFIDENTIAL",
+				EntityID:       docID.String(),
+				IPAddress:      getClientIP(r),
+				UserAgent:      r.UserAgent(),
+				Details: map[string]any{
+					"reason": "Règle Zero-Trust : Les administrateurs techniques n'ont pas accès aux données de santé et pièces pharmaceutiques",
+					"role":   user.Role,
+				},
+			})
+		}
+		writeJSONError(w, http.StatusForbidden, "Accès Zero-Trust refusé : Les administrateurs techniques n'ont pas accès au contenu des pièces pharmaceutiques")
+		return
+	}
+
+	// Protection Secret Commercial, Secret Industriel et Cloisonnement "Besoin d'en connaître" (Need-to-Know)
+	if h.pool != nil {
+		var secClass string
+		var itemCode string
+		checkSecQuery := `
+			SELECT COALESCE(dci.security_classification, 'STANDARD'), dci.item_code
+			FROM dossier_checklist_items dci
+			WHERE dci.ged_document_id = $1
+			LIMIT 1
+		`
+		_ = h.pool.QueryRow(r.Context(), checkSecQuery, docID).Scan(&secClass, &itemCode)
+
+		// 1. Secret commercial : Seul le PDT ou RA (ou habilitation can_view_financials) peut télécharger
+		if secClass == "SECRET_COMMERCIAL" || itemCode == "1.A.4" || itemCode == "1.H.4" || itemCode == "1.H.5" {
+			isDirectorOrRA := user.Role == string(domain.RoleDirecteurTechnique) || user.Role == string(domain.RoleResponsableAffairesReg)
+			if !isDirectorOrRA {
+				var canFin bool
+				_ = h.pool.QueryRow(r.Context(), `
+					SELECT EXISTS(
+						SELECT 1 FROM dossier_checklist_items dci
+						JOIN dossier_assignments da ON da.dossier_id = dci.dossier_id
+						WHERE dci.ged_document_id = $1 AND da.user_id = $2 AND da.can_view_financials = TRUE
+					)
+				`, docID, user.UserID).Scan(&canFin)
+				if !canFin {
+					writeJSONError(w, http.StatusForbidden, "Accès refusé : Document classifié SECRET COMMERCIAL réservé à la direction du laboratoire (Section 7.2.2)")
+					return
+				}
+			}
+		}
+
+		// 2. Secret Industriel : Prestataire externe interdit sauf habilitation can_view_industrial_secret
+		if secClass == "SECRET_INDUSTRIEL" && user.Role == string(domain.RoleConsultantExterne) {
+			var canInd bool
+			_ = h.pool.QueryRow(r.Context(), `
+				SELECT EXISTS(
+					SELECT 1 FROM dossier_checklist_items dci
+					JOIN dossier_assignments da ON da.dossier_id = dci.dossier_id
+					WHERE dci.ged_document_id = $1 AND da.user_id = $2 AND da.can_view_industrial_secret = TRUE
+				)
+			`, docID, user.UserID).Scan(&canInd)
+			if !canInd {
+				writeJSONError(w, http.StatusForbidden, "Accès refusé : Document classifié SECRET INDUSTRIEL réservé aux équipes internes du laboratoire (Section 7.2.2)")
+				return
+			}
+		}
+
+		// 3. Cloisonnement par affectation : Contributeurs opérationnels & consultants
+		isOperational := user.Role == string(domain.RoleConsultantExterne) ||
+			user.Role == string(domain.RoleContributeurQualiteBPF) ||
+			user.Role == string(domain.RoleContributeurRDProd)
+
+		if isOperational {
+			var isAssigned bool
+			checkAssignedQuery := `
+				SELECT EXISTS(
+					SELECT 1 FROM dossier_checklist_items dci
+					WHERE dci.ged_document_id = $1
+					  AND (
+						dci.dossier_id IN (SELECT dossier_id FROM dossier_assignments WHERE user_id = $2 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP))
+						OR
+						dci.dossier_id IN (SELECT dossier_id FROM dossier_consultants WHERE user_id = $2 AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP))
+					  )
+				)
+			`
+			_ = h.pool.QueryRow(r.Context(), checkAssignedQuery, docID, user.UserID).Scan(&isAssigned)
+			if !isAssigned {
+				writeJSONError(w, http.StatusForbidden, "Accès réglementaire refusé : Cette pièce n'appartient à aucun dossier auquel vous êtes affecté (Principe du Secret & Besoin d'en connaître)")
+				return
+			}
+		}
+	}
+
 	versionIDStr := r.URL.Query().Get("version_id")
 	var v *domain.GEDVersionDetail
 
@@ -629,9 +737,9 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Seul le PDT ou l'Admin de labo a ce pouvoir légal
-	if user.Role != string(domain.RoleDirecteurTechnique) && user.Role != string(domain.RoleAdminLaboratoire) {
-		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique est habilité à sceller légalement ce document")
+	// Seul le Pharmacien Directeur Technique titulaire de la décision 1.A.7 a ce pouvoir légal
+	if user.Role != string(domain.RoleDirecteurTechnique) {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire de la décision ministérielle (1.A.7) est habilité à apposer ce visa légal")
 		return
 	}
 
@@ -690,6 +798,29 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 	v, err := h.repo.GetVersionByID(r.Context(), versionID)
 	if err != nil {
 		writeJSONError(w, http.StatusNotFound, "Version introuvable")
+		return
+	}
+
+	// Garde-fou BPF SoD : Auto-approbation formellement interdite (Maker != Approver)
+	if v.AuthorID != nil && *v.AuthorID == user.UserID {
+		if h.auditService != nil {
+			_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+				OrganizationID: user.OrganizationID,
+				UserID:         &user.UserID,
+				UserEmail:      user.Email,
+				UserRole:       user.Role,
+				Action:         "AUDIT_SECURITY_SOD_BLOCKED",
+				EntityType:     "GED_DOCUMENT",
+				EntityID:       docID.String(),
+				IPAddress:      getClientIP(r),
+				UserAgent:      r.UserAgent(),
+				Details: map[string]any{
+					"reason":     "Tentative d'auto-approbation BPF (SoD) : Le Pharmacien Directeur Technique est également l'auteur/rédacteur de cette version",
+					"version_id": versionID.String(),
+				},
+			})
+		}
+		writeJSONError(w, http.StatusForbidden, "ALERTE BPF / SoD : Auto-approbation interdite. Le Pharmacien Directeur Technique ne peut pas approuver un document dont il est lui-même le rédacteur (Maker) sans visa intermédiaire indépendant (Checker).")
 		return
 	}
 

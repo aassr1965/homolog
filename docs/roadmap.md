@@ -21,7 +21,7 @@ gantt
     dateFormat  YYYY-MM-DD
     section Phase 1 : Socle & GED
     Infra, Base PostgreSQL & CAS Dédupliqué (1.1)    :done, p1_1, 2026-11-10, 1d
-    Auth 2FA, PSSI, RBAC 14 Perms & SoD (1.2)        :active, p1_2, 2026-11-10, 4d
+    Auth 2FA, PSSI, RBAC 14 Perms & SoD (1.2)        :done, p1_2, 2026-11-10, 4d
     Référentiel Produits & Établissements ANPP (1.3) :done, p1_3, 2026-11-11, 1d
     Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :done, p1_4, after p1_3, 4d
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :done, p1_5, after p1_4, 4d
@@ -56,7 +56,7 @@ gantt
 - [x] Mettre en place le `StorageProvider` (Driver CAS local sur disque chiffré avec hachage SHA-256 et déduplication physique)
 - [x] Valider la suite de tests unitaires du stockage CAS (`storage_test.go`)
 
-### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11) — *[En cours d'extension RBAC / SoD]*
+### Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, Rôles & Audit Trail (21 CFR Part 11) — *[Terminé : RBAC 14 Perms, SoD & Console Admin]*
 - [x] **Socle d'authentification et gestion des sessions BPF :**
   - [x] Implémenter le hachage sécurisé des mots de passe avec **Argon2id** (mémoire 64 Mo, 3 itérations) et politique de complexité (min. 12 car., minuscules, majuscules, chiffres, caractères spéciaux).
   - [x] Développer la gestion des sessions par **Cookies HttpOnly sécurisés** (SameSite=Strict, HTTPS) avec table de sessions PostgreSQL pour révocation instantanée.
@@ -70,25 +70,24 @@ gantt
     - Re-saisie du mot de passe ou validation TOTP avec la déclaration solennelle obligatoire :  
       *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
     - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
-- [ ] **Mise en conformité PSSI, RBAC Dynamique & Console Dédiée (Sections 6.3, 7.1 & 7.2 du CDC) :**
-  - [x] Définir les 9 profils utilisateurs stricts dans le domaine métier (`internal/domain/models.go`).
-  - [ ] **Modèle de Données PostgreSQL Dynamique (Migration `000004_rbac_dynamic_permissions.up.sql`) :**
+- [x] **Mise en conformité PSSI, RBAC Dynamique & Console Dédiée (Sections 6.3, 7.1 & 7.2 du CDC) :**
+  - [x] Définir les 9 profils utilisateurs stricts dans le domaine métier (`internal/domain/rbac.go`).
+  - [x] **Modèle de Données PostgreSQL Dynamique (Migration `005_rbac_and_dynamic_permissions.sql`) :**
     - Tables `roles`, `permissions`, `role_permissions`, `user_permissions`.
     - Pré-remplissage des 14 permissions unitaires et de la matrice par défaut des 9 rôles sans perturber les données existantes.
-  - [ ] **Moteur RBAC Backend Go & Garde-fous BPF Inviolables :**
-    - Service `RBACService` et middleware `RequirePermission(perm)`.
-    - Garde-fous réglementaires inviolables en code Go : exercice du visa PDT réservé exclusivement au DT titulaire de la décision ministérielle (1.A.7), filtre Zero-Trust bloquant le téléchargement de documents pour les admins techniques, et non-auto-approbation SoD par pièce (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
-    - Système de cache mémoire à invalidation instantanée par versioning de permissions (`permissions_version`) pour répercussion immédiate sur sessions actives.
-    - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte automatique dans `audit_logs` (IP, UserID, URI sollicitée, méthode HTTP).
-  - [ ] **Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :**
-    - Interface autonome dédiée pour l'Administrateur de Laboratoire (gestion collaborateurs, matrice interactive des permissions dynamiques, rattachement PDT 1.A.7, sites de fabrication 1.H.8, surveillance audit trail, quotas de stockage CAS).
-    - Commutateur d'espace Workspace Switcher pour les profils disposant d'un double mandat.
-  - [ ] **Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :**
-    - Route Guards frontend interceptant les accès directs non autorisés par URL avec redirection et écran institutionnel sécurisé 403 Pharma.
-    - Moteur de rendu conditionnel masquant les composants non autorisés (bouton signature PDT, menus admin, volets de prix 1.H.4/5, audit trail).
-    - Arborescence filtrée et cloisonnée en mode *Guest* pour les **Consultants Externes** (affichage exclusif des dossiers assignés et révocation automatique à échéance).
-    - Gestion ergonomique des actions de workflow désactivées avec infobulles contextuelles explicatives (*Disabled + Tooltip*).
-  - [ ] Développer et valider la suite de tests unitaires et d'intégration RBAC/SoD/Route Guards (`rbac_test.go`, `sod_test.go`, `routes_test.go`).
+  - [x] **Moteur RBAC Backend Go & Garde-fous BPF Inviolables :**
+    - Service `RBACService` et middleware `RequirePermission(perm)` / `RequireAnyPermission(perms...)`.
+    - Garde-fous réglementaires inviolables en code Go : exercice du visa PDT réservé exclusivement au DT titulaire de la décision ministérielle (1.A.7), filtre Zero-Trust bloquant le téléchargement de documents pour les admins techniques (`admin_systeme_local`, `super_admin_editeur`), et non-auto-approbation SoD par pièce (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
+    - Système d'invalidation instantanée par versioning de permissions (`permissions_version`) pour répercussion immédiate sur sessions actives.
+    - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte automatique dans `audit_logs` (`AUDIT_SECURITY_403_BLOCKED`).
+  - [x] **Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :**
+    - Interface autonome dédiée pour l'Administrateur de Laboratoire (`web/js/admin.js`, gestion collaborateurs, modification interactive de rôle, matrice dynamique des 14 permissions unitaires, 4 politiques visuelles de garde-fous BPF/PSSI, export CSV certifié).
+    - Commutateur de test instantané **Dev Role Switcher** dans la barre supérieure (`POST /api/v1/auth/dev-switch`, verrouillé strictement et désactivé en production `APP_ENV=production`, cookies avec attribut `Secure` dynamique TLS/proxy).
+  - [x] **Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :**
+    - Route Guards frontend interceptant les accès directs non autorisés par domaine avec popups sécurisées d'interdiction.
+    - Moteur de rendu conditionnel masquant les composants non autorisés (`data-perm`, `data-perm-any`, bouton signature PDT, console admin, boutons téléchargement Zero-Trust).
+    - Provisionnement de 9 collaborateurs réalistes avec mot de passe universel `Homolog2026!Dev` pour les tests complets.
+  - [x] Développer et valider la suite de tests unitaires RBAC / Zero-Trust / Session (`internal/api/rbac_test.go`).
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Conforme Guide ANPP 2025)
 - [x] **Modèle et tables PostgreSQL pour les Établissements :**
