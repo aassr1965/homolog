@@ -190,8 +190,8 @@ function renderDeficienciesDashboardView(data) {
                         <div style="font-weight:700; color:var(--accent-blue);">${escapeHTML(l.reference_number)}</div>
                         ${l.document_id ? `
                             <div style="margin-top:2px;">
-                                <a href="/api/v1/ged/documents/${l.document_id}/download" target="_blank" onclick="event.stopPropagation();" title="Télécharger le scan officiel GED (${escapeHTML(l.document_title || 'Document GED')})" style="text-decoration:none; font-size:10px; color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:3px;">
-                                    <span>📄</span> <span>Scan ANPP scellé</span>
+                                <a href="javascript:void(0)" onclick="event.stopPropagation(); openDocumentViewerModal('${l.document_id}', '${escapeHTML(l.document_title || l.reference_number)}')" title="Aperçu du scan officiel GED (${escapeHTML(l.document_title || 'Document GED')})" style="text-decoration:none; font-size:10px; color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:3px; cursor:pointer;">
+                                    <span>👁️</span> <span>Aperçu Scan ANPP</span>
                                 </a>
                             </div>
                         ` : `
@@ -290,9 +290,9 @@ function renderDeficiencyLetterDetailModal(letter) {
                         </div>
                     </div>
                     <div style="display:flex; gap:6px; align-items:center;">
-                        <a href="/api/v1/ged/documents/${letter.document_id}/download" target="_blank" class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; text-decoration:none; padding:4px 10px; display:inline-flex; align-items:center; gap:4px; font-weight:600;">
-                            <span>📥</span> <span>Visualiser / Télécharger le Scan</span>
-                        </a>
+                        <button type="button" class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; padding:4px 12px; display:inline-flex; align-items:center; gap:5px; font-weight:700; border:none; cursor:pointer;" onclick="openDocumentViewerModal('${letter.document_id}', '${escapeHTML(letter.document_title || letter.reference_number)}')">
+                            <span>👁️</span> <span>Aperçu du Scan Officiel (Modale)</span>
+                        </button>
                         <button type="button" class="btn-pill" style="font-size:11px; padding:4px 8px;" onclick="promptAttachDeficiencyDocument('${letter.id}')" title="Remplacer par un nouveau scan ou photo">
                             🔄 Remplacer
                         </button>

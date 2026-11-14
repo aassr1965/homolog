@@ -719,6 +719,10 @@
         .modal-fullscreen .modal-body {
             max-height: calc(94vh - 120px) !important;
         }
+        .modal-fullscreen #doc-preview-body {
+            max-height: calc(94vh - 55px) !important;
+            height: calc(94vh - 55px) !important;
+        }
         .modal-fullscreen #def-questions-rows {
             max-height: calc(94vh - 350px) !important;
         }

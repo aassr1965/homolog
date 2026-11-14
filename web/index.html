@@ -13,7 +13,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23ffffff'/%3E%3Cpath d='M 52 3 C 25 3, 3 24, 3 50 C 3 76, 25 97, 52 97 C 40 93, 26 84, 18 73 C 10 62, 10 38, 18 27 C 26 16, 40 7, 52 3 Z' fill='%2300a651'/%3E%3Cpath d='M 27 91 C 32 89, 44 88, 52 88 C 60 88, 72 89, 77 91 L 31 93 Z' fill='%2300a651'/%3E%3Cpath d='M 50.5 54 L 50.5 89 L 53.5 89 L 53.5 54 Z' fill='%2300a651'/%3E%3Cpath d='M 22 43 L 82 43 C 78 47, 68 56, 54 57 L 50 57 C 36 56, 26 47, 22 43 Z' fill='%2300a651'/%3E%3Cg fill='%23e52421' stroke='%23e52421' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M 59 86 C 54 87, 46 86, 44 82 C 42 78, 48 76, 52 75 C 57 74, 62 76, 61 80 C 60 83, 55 84, 52 84' stroke-width='5' fill='none'/%3E%3Cpath d='M 44 80 C 40 76, 42 66, 48 64 C 54 62, 62 65, 62 71 C 62 77, 54 80, 48 79' stroke-width='5' fill='none'/%3E%3Cpath d='M 52 75 C 57 74, 64 68, 64 58 C 64 48, 58 43, 52 38 C 47 34, 44 26, 45 20' stroke-width='5.5' fill='none'/%3E%3Cpath d='M 45 20 C 46 13, 50 8, 57 8 C 64 8, 67 14, 64 21 C 63 23, 61 24, 60 25' stroke-width='5' fill='none'/%3E%3Cpath d='M 60 25 C 61 23, 63 21, 65 23 C 67 25, 66 29, 63 32 C 60 30, 59 27, 60 25 Z' fill='%23e52421' stroke='none'/%3E%3Ccircle cx='63.5' cy='25.5' r='1.2' fill='%23ffffff' stroke='none'/%3E%3C/g%3E%3C/svg%3E">
     <link rel="alternate icon" type="image/png" href="/img/favicon.png?v=5">
     <link rel="shortcut icon" href="/favicon.ico?v=5">
-    <link rel="stylesheet" href="/css/style.css?v=2026.11.14.8">
+    <link rel="stylesheet" href="/css/style.css?v=2026.11.14.9">
 
     <!-- Open Graph -->
     <meta property="og:title" content="SANAD PHARMA — Cockpit Réglementaire ANPP & GED">
@@ -2049,6 +2049,34 @@
         </div>
     </div>
 
+    <!-- Modal Visualiseur de Document & Scan (Aperçu In-App Agrandissable) -->
+    <div class="modal-overlay" id="modal-doc-preview" onclick="if(event.target === this) closeDocPreviewModal()">
+        <div class="modal modal-xl" style="width:1100px; max-width:min(1100px, calc(100vw - 20px)); height:90vh; max-height:calc(100vh - 24px); display:flex; flex-direction:column; padding:0; overflow:hidden; border-radius:8px;">
+            <div class="modal-header" style="padding:10px 16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); flex-shrink:0;">
+                <div style="display:flex; align-items:center; gap:8px; overflow:hidden; margin-right:12px;">
+                    <span style="font-size:16px;">📄</span>
+                    <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        <span id="doc-preview-title" style="font-size:13px; font-weight:700; color:var(--text-main);">Aperçu du Document</span>
+                        <span id="doc-preview-badge" style="font-size:10px; background:var(--badge-bg); color:var(--accent-blue); padding:1px 6px; border-radius:3px; margin-left:6px; font-weight:600;">GED ALCOA+</span>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                    <a id="doc-preview-download-btn" href="#" target="_blank" class="btn-pill" style="font-size:11px; padding:3px 10px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);" title="Télécharger le fichier original">
+                        <span>📥</span> <span>Télécharger</span>
+                    </a>
+                    <button type="button" class="btn-pill btn-modal-expand" onclick="toggleModalFullscreen('modal-doc-preview')" title="Agrandir en plein écran" style="height:26px; padding:2px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                        <span class="expand-icon">⛶</span>
+                        <span class="expand-label">Agrandir</span>
+                    </button>
+                    <button class="close-btn" onclick="closeDocPreviewModal()" title="Fermer (Échap)">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" id="doc-preview-body" style="flex:1; padding:0; margin:0; background:#0f172a; display:flex; flex-direction:column; overflow:hidden; position:relative;">
+                <iframe id="doc-preview-iframe" src="about:blank" style="width:100%; height:100%; flex:1; border:none; background:white;" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Génération Bordereau BV1 / BV2 -->
     <div class="modal-overlay" id="modal-generate-slip" onclick="if(event.target === this) closeModal('modal-generate-slip')">
         <div class="modal" style="width:540px; max-width:min(540px, calc(100vw - 24px));">
@@ -2550,18 +2578,18 @@
     </div>
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.14.8"></script>
-    <script src="/js/auth.js?v=2026.11.14.8"></script>
-    <script src="/js/admin.js?v=2026.11.14.8"></script>
-    <script src="/js/system_admin.js?v=2026.11.14.8"></script>
-    <script src="/js/referential.js?v=2026.11.14.8"></script>
-    <script src="/js/variations.js?v=2026.11.14.8"></script>
-    <script src="/js/ged.js?v=2026.11.14.8"></script>
-    <script src="/js/dossiers.js?v=2026.11.14.8"></script>
-    <script src="/js/deficiencies.js?v=2026.11.14.8"></script>
-    <script src="/js/fees.js?v=2026.11.14.8"></script>
-    <script src="/js/submissions.js?v=2026.11.14.8"></script>
-    <script src="/js/appointments.js?v=2026.11.14.8"></script>
-    <script src="/js/regulatory_watch.js?v=2026.11.14.8"></script>
+    <script src="/js/app.js?v=2026.11.14.9"></script>
+    <script src="/js/auth.js?v=2026.11.14.9"></script>
+    <script src="/js/admin.js?v=2026.11.14.9"></script>
+    <script src="/js/system_admin.js?v=2026.11.14.9"></script>
+    <script src="/js/referential.js?v=2026.11.14.9"></script>
+    <script src="/js/variations.js?v=2026.11.14.9"></script>
+    <script src="/js/ged.js?v=2026.11.14.9"></script>
+    <script src="/js/dossiers.js?v=2026.11.14.9"></script>
+    <script src="/js/deficiencies.js?v=2026.11.14.9"></script>
+    <script src="/js/fees.js?v=2026.11.14.9"></script>
+    <script src="/js/submissions.js?v=2026.11.14.9"></script>
+    <script src="/js/appointments.js?v=2026.11.14.9"></script>
+    <script src="/js/regulatory_watch.js?v=2026.11.14.9"></script>
 </body>
 </html>
