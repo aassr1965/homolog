@@ -464,7 +464,7 @@
                     <button class="btn-pill" id="tb-btn-eservices" style="background:linear-gradient(135deg, #2563eb, #10b981); color:white; border:none; font-weight:700;" onclick="openPreSubmissionAuditModal(selectedDossierId)">🚀 E-Services ANPP</button>
                     <button class="btn-pill" id="tb-btn-fees" onclick="openGenerateFeeSlipModal(selectedDossierId)">💰 Bordereau BV1/BV2</button>
                     <button class="btn-pill" id="tb-btn-schedules" onclick="openFeeSchedulesModal()">⚖️ Barème ANPP</button>
-                    <button class="btn-pill" id="tb-btn-deficiency" onclick="openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Notifier Complément ANPP</button>
+                    <button class="btn-pill" id="tb-btn-deficiency" onclick="openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Enregistrer Complément ANPP</button>
                     <button class="btn-pill" id="tb-btn-appointments" onclick="openAppointmentsModal()">📅 Séances ANPP</button>
                     <button class="btn-pill" id="tb-btn-reg-watch" onclick="openRegulatoryWatchModal()">📜 Veille Juridique</button>
                     <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_LEGAL" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
@@ -477,7 +477,7 @@
                 `;
             } else if (domain === 'deficiencies') {
                 tb.innerHTML = `
-                    <button class="btn-pill" data-perm="DOSSIER_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer Complément</button>
+                    <button class="btn-pill" data-perm="DOSSIER_EDIT" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
                     <button class="btn-pill" onclick="loadDeficienciesDashboard()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
