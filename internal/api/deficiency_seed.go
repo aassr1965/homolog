@@ -51,6 +51,13 @@ func SeedInitialDeficiencies(ctx context.Context, pool *pgxpool.Pool, orgSlug st
 	receivedDate := now.AddDate(0, 0, -76)
 	dueDate := receivedDate.AddDate(0, 0, 90)
 
+	var docID *string
+	var existingDocID uuid.UUID
+	if err := pool.QueryRow(ctx, "SELECT id FROM ged_documents WHERE organization_id = $1 ORDER BY created_at ASC LIMIT 1", orgID).Scan(&existingDocID); err == nil {
+		s := existingDocID.String()
+		docID = &s
+	}
+
 	letter := domain.ANPPDeficiencyLetter{
 		ID:                uuid.New().String(),
 		OrganizationID:    orgID.String(),
@@ -60,6 +67,7 @@ func SeedInitialDeficiencies(ctx context.Context, pool *pgxpool.Pool, orgSlug st
 		LegalDeadlineDays: 90,
 		DueDate:           dueDate,
 		Status:            domain.DeficiencyLetterStatusPartiallyAnswered,
+		DocumentID:        docID,
 		Notes:             "Commission technique d'enregistrement du médicament — Séance plénière du 12 Septembre 2026. Notification impérative avec mise en demeure sous peine de rejet définitif du dossier.",
 	}
 
