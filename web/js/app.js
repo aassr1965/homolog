@@ -147,13 +147,13 @@
             const backdrop = document.getElementById('preview-backdrop');
             if (!preview) return;
             
-            // Sur desktop large >= 1400px (ancré dans le flux)
-            if (window.innerWidth >= 1400) {
+            // Sur desktop et laptop >= 992px (ancré dans le flux, sans superposition ni backdrop bloquant)
+            if (window.innerWidth >= 992) {
                 const hidden = (typeof force === 'boolean') ? !force : !preview.classList.contains('hidden');
                 preview.classList.toggle('hidden', hidden);
                 if (backdrop) backdrop.classList.remove('active');
             } else {
-                // Sur laptops / tablettes / mobiles : mode slide-over drawer
+                // Sur tablettes / mobiles (< 992px) : mode slide-over drawer
                 const open = (typeof force === 'boolean') ? force : !preview.classList.contains('slide-open');
                 preview.classList.toggle('slide-open', open);
                 if (backdrop) backdrop.classList.toggle('active', open);

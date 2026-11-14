@@ -200,7 +200,7 @@ function renderAdminUsersTable() {
             document.querySelectorAll("#doc-tbody tr").forEach(r => r.classList.remove("selected"));
             tr.classList.add("selected");
             renderAdminUserPreview(u);
-            if (window.innerWidth < 1400) togglePreviewPane(true);
+            if (window.innerWidth < 992) togglePreviewPane(true);
         };
 
         const permsCount = (u.permissions || []).length;
@@ -293,108 +293,139 @@ function renderAdminUserPreview(user) {
     const preview = document.getElementById("preview-body");
     if (!preview || !user) return;
 
+    const tabsContainer = document.getElementById("preview-tabs-container");
+    if (tabsContainer) {
+        tabsContainer.innerHTML = `<span style="font-weight:700; font-size:12px; color:var(--accent-blue); display:flex; align-items:center; gap:6px;">👤 Fiche Collaborateur BPF</span>`;
+    }
+
     const roleObj = adminRoles.find(r => r.id === user.role);
     const roleLabel = roleObj ? roleObj.name_fr : user.role;
     const isPDT = user.role === 'directeur_technique';
     const isZeroTrust = user.role === 'admin_systeme_local' || user.role === 'super_admin_editeur';
-
     const userPerms = new Set(user.permissions || []);
+    const initials = (((user.first_name || 'U').charAt(0)) + ((user.last_name || 'L').charAt(0))).toUpperCase();
 
-    const categories = {
-        "Référentiel": ["REF_VIEW", "REF_EDIT"],
-        "Dossiers ANPP (CTD)": ["DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT", "VARIATION_MANAGE"],
-        "Coffre-Fort GED & Approbation": ["DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "EXPORT_LEGAL"],
-        "Système, PSSI & Audit": ["AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"]
-    };
+    const categories = [
+        { name: "🏢 Référentiel MIPH", perms: ["REF_VIEW", "REF_EDIT"] },
+        { name: "📋 Dossiers CTD & Soumission", perms: ["DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT", "VARIATION_MANAGE"] },
+        { name: "📄 Coffre-Fort GED & Visa", perms: ["DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "EXPORT_LEGAL"] },
+        { name: "🔒 Sécurité & Administration", perms: ["AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"] }
+    ];
 
     let permsBreakdownHtml = '';
-    for (const [cat, perms] of Object.entries(categories)) {
+    categories.forEach(cat => {
         permsBreakdownHtml += `
-            <div style="margin-top:10px;">
-                <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">${cat}</div>
-                <div style="display:flex; flex-direction:column; gap:3px;">
-                    ${perms.map(p => {
+            <div style="margin-bottom:6px;">
+                <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:3px; letter-spacing:0.3px;">${cat.name}</div>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    ${cat.perms.map(p => {
                         const has = userPerms.has(p);
                         const meta = RBAC_PERM_METADATA[p] || { icon: "🔹", label: p, fullTitle: p };
                         const isSpecialPDT = p === 'DOC_APPROVE_PDT';
                         const isDocReadBlocked = p === 'DOC_READ' && isZeroTrust;
 
-                        let statusBadge = has 
-                            ? `<span style="color:var(--accent-emerald); font-weight:700;">✓ Habilité</span>`
-                            : `<span style="color:var(--text-dim);">✗ Non attribué</span>`;
+                        let badge = has 
+                            ? `<span style="color:var(--accent-emerald); font-weight:700; font-size:10px;">✓ Accordé</span>`
+                            : `<span style="color:var(--text-dim); font-size:10px;">—</span>`;
 
                         if (isSpecialPDT && has) {
-                            statusBadge = `<span style="color:#d97706; font-weight:700;">✍️ Visa Exclusif 1.A.7</span>`;
+                            badge = `<span style="color:#d97706; font-weight:700; font-size:10px;">✍️ Visa 1.A.7</span>`;
                         } else if (isDocReadBlocked) {
-                            statusBadge = `<span style="color:var(--accent-red); font-weight:700;">🚫 Bloqué Zero-Trust</span>`;
+                            badge = `<span style="color:var(--accent-red); font-weight:700; font-size:10px;">🚫 Zero-Trust</span>`;
                         }
 
                         return `
-                            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface); padding:4px 8px; border-radius:3px; font-size:11px;">
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span>${meta.icon}</span>
-                                    <span style="font-weight:600; color:${has ? 'var(--text-main)' : 'var(--text-dim)'};">${meta.fullTitle}</span>
-                                    <span style="font-family:monospace; font-size:9px; color:var(--text-dim); opacity:0.7;">(${p})</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); padding:3px 6px; border-radius:3px; font-size:11px;">
+                                <div style="display:flex; align-items:center; gap:5px; min-width:0; overflow:hidden;">
+                                    <span style="font-size:12px; flex-shrink:0;">${meta.icon}</span>
+                                    <span style="font-weight:600; color:${has ? 'var(--text-main)' : 'var(--text-dim)'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${meta.label}</span>
+                                    <span style="font-family:monospace; font-size:8px; color:var(--text-dim); opacity:0.6; flex-shrink:0;">${p}</span>
                                 </div>
-                                <div>${statusBadge}</div>
+                                <div style="flex-shrink:0; margin-left:6px;">${badge}</div>
                             </div>
                         `;
                     }).join('')}
                 </div>
             </div>
         `;
-    }
+    });
 
     preview.innerHTML = `
-        <div class="pdf-sim-page">
-            <div class="pdf-sim-header">
-                RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE<br>
-                SYSTÈME D'INFORMATION PHARMACEUTIQUE SOUTERRAIN SANAD PHARMA
+        <!-- Card 1 : Identité & Actions (hauteur minimale requise par son contenu) -->
+        <div class="admin-preview-card">
+            <div class="admin-preview-header">
+                <div class="admin-user-avatar">${initials}</div>
+                <div style="min-width:0; flex:1;">
+                    <div style="font-weight:700; font-size:13px; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        ${escapeAdminHtml(user.first_name)} ${escapeAdminHtml(user.last_name)}
+                    </div>
+                    <div style="font-family:monospace; font-size:10px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        ${escapeAdminHtml(user.email)}
+                    </div>
+                </div>
             </div>
-            <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
-                FICHE D'HABILITATION ET DE CONTRÔLE D'ACCÈS (BPF / PSSI)
+
+            <!-- Badges statut -->
+            <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                <span class="status-tag ${user.is_active ? 'status-ok' : 'status-err'}" style="font-size:9.5px; padding:2px 6px;">
+                    ${user.is_active ? '🟢 Actif' : '🔴 Suspendu'}
+                </span>
+                <span class="status-tag ${user.totp_enabled ? 'status-ok' : 'status-req'}" style="font-size:9.5px; padding:2px 6px;">
+                    ${user.totp_enabled ? '📱 2FA BPF' : '📱 2FA Non Configuré'}
+                </span>
+                <span class="status-tag" style="background:var(--bg-panel); color:var(--text-muted); font-size:9.5px; padding:2px 6px;">
+                    v${user.permissions_version || 1}
+                </span>
             </div>
-            <div style="font-size:11px; line-height:1.6;">
-                <strong>Collaborateur :</strong> ${user.first_name} ${user.last_name}<br>
-                <strong>Identifiant Email :</strong> <code>${user.email}</code><br>
-                <strong>Rôle Officiel BPF :</strong> <span style="font-weight:700; color:var(--accent-blue);">${roleLabel}</span><br>
-                <strong>Version des Permissions :</strong> <code>v${user.permissions_version || 1}</code> (Incrémentation automatique sur modification)<br>
-                <strong>Authentification 2FA TOTP :</strong> ${user.totp_enabled ? '<span style="color:var(--accent-emerald); font-weight:600;">✓ Activée (21 CFR Part 11)</span>' : 'Non activée'}<br>
-                <strong>Statut du Compte :</strong> ${user.is_active ? '<span style="color:var(--accent-emerald); font-weight:700;">🟢 Actif</span>' : '<span style="color:#ef4444; font-weight:700;">🔴 Suspendu / Inactif</span>'}<br>
-                ${user.contract_expires_at ? `<strong>Échéance Contrat Expert :</strong> <code>${new Date(user.contract_expires_at).toLocaleDateString()}</code><br>` : ''}
+
+            <!-- Rôle BPF -->
+            <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:5px; padding:6px 8px;">
+                <div style="font-size:9px; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Rôle Métier BPF</div>
+                <div style="font-size:11.5px; font-weight:700; color:var(--accent-blue); margin-top:1px;">${escapeAdminHtml(roleLabel)}</div>
+                ${user.contract_expires_at ? `<div style="font-size:10px; color:var(--accent-amber); margin-top:2px;">⏳ Échéance : <strong>${new Date(user.contract_expires_at).toLocaleDateString()}</strong></div>` : ''}
+            </div>
+
+            <!-- Boutons d'Action (pleine largeur avec marges nettes) -->
+            <div style="display:flex; gap:6px; margin-top:2px;">
+                <button class="btn-pill" style="flex:1; background:var(--accent-blue); color:white; border:none; padding:6px 8px; font-size:11px; font-weight:700; text-align:center;" onclick="openUserPermissionsModal('${user.id}')">
+                    🔐 Dérogations
+                </button>
+                <button class="btn-pill" style="flex:1; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); padding:6px 8px; font-size:11px; font-weight:600; text-align:center;" onclick="openResetPasswordModal('${user.id}', '${escapeAdminHtml(user.email)}', '${escapeAdminHtml(user.first_name + ' ' + user.last_name)}')">
+                    🔑 Mot de Passe
+                </button>
             </div>
         </div>
 
-        <div style="display:flex; gap:6px; margin: 10px 0;">
-            <button class="btn-pill" style="flex:1; background:var(--accent-blue); color:white; border:none; padding:6px; font-size:11px; font-weight:600;" onclick="openUserPermissionsModal('${user.id}')">
-                🔐 Gérer Dérogations
-            </button>
-            <button class="btn-pill" style="flex:1; background:var(--bg-surface); border:1px solid var(--accent-amber); color:var(--accent-amber); padding:6px; font-size:11px; font-weight:600;" onclick="openResetPasswordModal('${user.id}', '${escapeAdminHtml(user.email)}', '${escapeAdminHtml(user.first_name + ' ' + user.last_name)}')">
-                🔑 Mot de Passe
-            </button>
-        </div>
-
+        <!-- Card 2 (si applicable) : Mises en garde réglementaires (hauteur minimale requise) -->
         ${isPDT ? `
-            <div style="background:rgba(217, 119, 6, 0.1); border:1px solid #d97706; border-radius:4px; padding:10px; font-size:11px; color:var(--text-main); margin-bottom:12px;">
-                <strong>💊 Titulaire du Visa Réglementaire (1.A.7) :</strong> Ce compte est le seul habilité par la réglementation algérienne à sceller les dossiers d'AMM et les pièces opposables à l'ANPP (Annexe 11 BPF).
+            <div class="admin-preview-card" style="background:rgba(217, 119, 6, 0.08); border-color:#d97706; padding:8px 10px;">
+                <div style="font-size:10.5px; color:var(--text-main); line-height:1.4;">
+                    <strong style="color:#d97706;">✍️ Titulaire du Visa Légal (1.A.7) :</strong> Seul compte habilité à signer et sceller les dossiers d'AMM opposables à l'ANPP (Annexe 11 BPF).
+                </div>
             </div>
         ` : ''}
 
         ${isZeroTrust ? `
-            <div style="background:rgba(239, 68, 68, 0.1); border:1px solid #ef4444; border-radius:4px; padding:10px; font-size:11px; color:var(--text-main); margin-bottom:12px;">
-                <strong>🛡️ Isolation Zero-Trust Obligatoire :</strong> En vertu du principe de moindre privilège pharmaceutique, ce compte d'administration système ne peut en aucun cas télécharger les fichiers contenant les formules secrètes ou les données cliniques (Blocage 403 <code>ERR_ZERO_TRUST_DENIED</code>).
+            <div class="admin-preview-card" style="background:rgba(239, 68, 68, 0.08); border-color:#ef4444; padding:8px 10px;">
+                <div style="font-size:10.5px; color:var(--text-main); line-height:1.4;">
+                    <strong style="color:var(--accent-red);">🛡️ Isolation Zero-Trust :</strong> Accès interdit aux formules secrètes et dossiers cliniques (Blocage 403 <code>ERR_ZERO_TRUST_DENIED</code>).
+                </div>
             </div>
         ` : ''}
 
         ${user.role === 'consultant_externe' ? `
-            <div style="background:rgba(2, 132, 199, 0.1); border:1px solid #0284c7; border-radius:4px; padding:10px; font-size:11px; color:var(--text-main); margin-bottom:12px;">
-                <strong>🤝 Accès Tiers Cloisonné (CRO / Expert) :</strong> Ce compte invité ne possède aucun accès transverse (GED et Référentiel masqués). Il est strictement confiné au dossier d'enregistrement assigné par la table <code>dossier_consultants</code> avec masquage automatique des rubriques de prix et données financières (1.A.4, 1.H.4, 1.H.5).
+            <div class="admin-preview-card" style="background:rgba(2, 132, 199, 0.08); border-color:#0284c7; padding:8px 10px;">
+                <div style="font-size:10.5px; color:var(--text-main); line-height:1.4;">
+                    <strong style="color:var(--accent-blue);">🤝 Accès Tiers Cloisonné :</strong> Confiné au seul dossier assigné, sans accès transverse ni visibilité des prix.
+                </div>
             </div>
         ` : ''}
 
-        <div class="meta-box">
-            <div style="font-size:11px; font-weight:700; color:var(--text-main); margin-bottom:6px;">
-                Détail des 14 Habilitations Unitaires RBAC
+        <!-- Card 3 : Détail des Habilitations Classées par Domaine (hauteur minimale requise) -->
+        <div class="admin-preview-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+                <span style="font-size:11px; font-weight:700; color:var(--text-main);">Habilitations Effectives</span>
+                <span style="font-size:10px; color:var(--accent-blue); font-weight:700;">${(user.permissions || []).length} / 14</span>
             </div>
             ${permsBreakdownHtml}
         </div>
@@ -485,7 +516,7 @@ function renderAdminMatrixTable() {
 
         tr.onclick = () => {
             renderRolePreview(role, permsList);
-            if (window.innerWidth < 1400) togglePreviewPane(true);
+            if (window.innerWidth < 992) togglePreviewPane(true);
         };
 
         tbody.appendChild(tr);
@@ -496,63 +527,126 @@ function renderAdminMatrixTable() {
     }
 }
 
-// Aperçu d'un rôle dans le volet latéral
+// Aperçu d'un rôle dans le volet latéral (cards avec hauteur minimale naturelle)
 function renderRolePreview(role, permsList) {
     const preview = document.getElementById("preview-body");
     if (!preview || !role) return;
 
+    const tabsContainer = document.getElementById("preview-tabs-container");
+    if (tabsContainer) {
+        tabsContainer.innerHTML = `<span style="font-weight:700; font-size:12px; color:#d97706; display:flex; align-items:center; gap:6px;">🔐 Fiche Profil de Rôle BPF</span>`;
+    }
+
     const rolePerms = new Set(role.permissions || []);
+    const isPDT = role.id === 'directeur_technique';
     const isZeroTrust = role.id === 'admin_systeme_local' || role.id === 'super_admin_editeur';
+    const permCount = (role.permissions || []).length;
+    const permPct = Math.round((permCount / 14) * 100);
+
+    const categories = [
+        { name: "🏢 Référentiel MIPH", perms: ["REF_VIEW", "REF_EDIT"] },
+        { name: "📋 Dossiers CTD & Soumission", perms: ["DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT", "VARIATION_MANAGE"] },
+        { name: "📄 Coffre-Fort GED & Visa", perms: ["DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "EXPORT_LEGAL"] },
+        { name: "🔒 Sécurité & Administration", perms: ["AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"] }
+    ];
+
+    let permsBreakdownHtml = '';
+    categories.forEach(cat => {
+        permsBreakdownHtml += `
+            <div style="margin-bottom:6px;">
+                <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:3px; letter-spacing:0.3px;">${cat.name}</div>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    ${cat.perms.map(p => {
+                        const has = rolePerms.has(p);
+                        const meta = RBAC_PERM_METADATA[p] || { icon: "🔹", label: p, fullTitle: p };
+                        const isSpecialPDT = p === 'DOC_APPROVE_PDT';
+                        const isDocReadBlocked = p === 'DOC_READ' && isZeroTrust;
+
+                        let badge = has 
+                            ? `<span style="color:var(--accent-emerald); font-weight:700; font-size:10px;">✓ Accordée</span>`
+                            : `<span style="color:var(--text-dim); font-size:10px;">—</span>`;
+
+                        if (isSpecialPDT && has) {
+                            badge = `<span style="color:#d97706; font-weight:700; font-size:10px;">✍️ Visa 1.A.7</span>`;
+                        } else if (isDocReadBlocked) {
+                            badge = `<span style="color:var(--accent-red); font-weight:700; font-size:10px;">🚫 Zero-Trust</span>`;
+                        }
+
+                        return `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); padding:3px 6px; border-radius:3px; font-size:11px;">
+                                <div style="display:flex; align-items:center; gap:5px; min-width:0; overflow:hidden;">
+                                    <span style="font-size:12px; flex-shrink:0;">${meta.icon}</span>
+                                    <span style="font-weight:600; color:${has ? 'var(--text-main)' : 'var(--text-dim)'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${meta.label}</span>
+                                    <span style="font-family:monospace; font-size:8px; color:var(--text-dim); opacity:0.6; flex-shrink:0;">${p}</span>
+                                </div>
+                                <div style="flex-shrink:0; margin-left:6px;">${badge}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    });
 
     preview.innerHTML = `
-        <div class="pdf-sim-page">
-            <div class="pdf-sim-header">
-                RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE<br>
-                RÉFÉRENTIEL D'HABILITATION DES MÉTIERS PHARMACEUTIQUES
+        <!-- Card 1 : Définition du Rôle (hauteur minimale requise par son contenu) -->
+        <div class="admin-preview-card">
+            <div>
+                <div style="font-size:9.5px; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Profil Réglementaire BPF</div>
+                <div style="font-size:13.5px; font-weight:800; color:${isPDT ? '#d97706' : 'var(--accent-blue)'}; margin-top:2px;">
+                    ${role.name_fr}
+                </div>
+                ${role.name_ar ? `
+                    <div dir="rtl" style="font-size:12px; font-weight:600; color:var(--text-muted); margin-top:2px; font-family:'Segoe UI', Tahoma, sans-serif;">
+                        ${role.name_ar}
+                    </div>
+                ` : ''}
+                <div style="font-family:monospace; font-size:10px; color:var(--text-dim); margin-top:2px;">
+                    <code>${role.id}</code>
+                </div>
             </div>
-            <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
-                DÉFINITION DU RÔLE : ${role.name_fr.toUpperCase()}
+
+            <!-- Jauge d'habilitations -->
+            <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:5px; padding:6px 8px;">
+                <div style="display:flex; justify-content:space-between; font-size:10.5px; margin-bottom:3px;">
+                    <span style="color:var(--text-muted);">Périmètre accordé :</span>
+                    <strong style="color:var(--text-main);">${permCount} / 14 droits (${permPct}%)</strong>
+                </div>
+                <div style="height:5px; background:var(--border-color); border-radius:3px; overflow:hidden;">
+                    <div style="width:${permPct}%; height:100%; background:${isPDT ? '#d97706' : 'var(--accent-blue)'}; border-radius:3px;"></div>
+                </div>
             </div>
-            <div style="font-size:11px; line-height:1.6;">
-                <strong>Identifiant Système :</strong> <code>${role.id}</code><br>
-                <strong>Nom en Arabe :</strong> ${role.name_ar || '-'}<br>
-                <strong>Description :</strong> ${role.description || '-'}<br>
-                <strong>Habilitations Attribuées :</strong> ${(role.permissions || []).length} / 14 permissions unitaires<br>
+
+            <!-- Description Métier -->
+            <div style="font-size:11px; color:var(--text-main); line-height:1.4; background:var(--bg-panel); padding:6px 8px; border-radius:5px;">
+                ${role.description || 'Rôle standard du référentiel pharmaceutique.'}
             </div>
         </div>
 
-        <div class="meta-box">
-            <div style="font-size:11px; font-weight:700; color:var(--text-main); margin-bottom:8px;">
-                Matrice des Habilitations par Défaut
+        <!-- Card 2 (si applicable) : Mises en garde spécifiques (hauteur minimale requise) -->
+        ${isPDT ? `
+            <div class="admin-preview-card" style="background:rgba(217, 119, 6, 0.08); border-color:#d97706; padding:8px 10px;">
+                <div style="font-size:10.5px; color:var(--text-main); line-height:1.4;">
+                    <strong style="color:#d97706;">✍️ Exclusivité Nominative 1.A.7 :</strong> Ce rôle est le seul à posséder la permission <code>DOC_APPROVE_PDT</code>.
+                </div>
             </div>
-            <div style="display:flex; flex-direction:column; gap:4px;">
-                ${permsList.map(p => {
-                    const has = rolePerms.has(p.code);
-                    const isSpecialPDT = p.code === 'DOC_APPROVE_PDT';
-                    const isDocReadBlocked = p.code === 'DOC_READ' && isZeroTrust;
+        ` : ''}
 
-                    let badge = has 
-                        ? `<span style="color:var(--accent-emerald); font-weight:700;">✓ Accordée</span>`
-                        : `<span style="color:var(--text-dim);">— Refusée</span>`;
-
-                    if (isSpecialPDT && has) {
-                        badge = `<span style="color:#d97706; font-weight:700;">✍️ Visa Exclusif 1.A.7</span>`;
-                    } else if (isDocReadBlocked) {
-                        badge = `<span style="color:var(--accent-red); font-weight:700;">🚫 Bloqué Zero-Trust</span>`;
-                    }
-
-                    return `
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface); padding:5px 8px; border-radius:3px; font-size:11px;">
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <span style="font-size:13px;">${p.icon}</span>
-                                <span style="font-weight:600; color:${has ? 'var(--text-main)' : 'var(--text-dim)'};">${p.fullTitle}</span>
-                                <span style="font-family:monospace; font-size:9px; color:var(--text-dim); opacity:0.7;">(${p.code})</span>
-                            </div>
-                            <div>${badge}</div>
-                        </div>
-                    `;
-                }).join('')}
+        ${isZeroTrust ? `
+            <div class="admin-preview-card" style="background:rgba(239, 68, 68, 0.08); border-color:#ef4444; padding:8px 10px;">
+                <div style="font-size:10.5px; color:var(--text-main); line-height:1.4;">
+                    <strong style="color:var(--accent-red);">🛡️ Zero-Trust Actif :</strong> Ce rôle technique a la permission <code>DOC_READ</code> strictement verrouillée et bloquée.
+                </div>
             </div>
+        ` : ''}
+
+        <!-- Card 3 : Matrice des Droits par Défaut (hauteur minimale requise) -->
+        <div class="admin-preview-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+                <span style="font-size:11px; font-weight:700; color:var(--text-main);">Droits Attribués au Rôle</span>
+                <span style="font-size:10px; color:${isPDT ? '#d97706' : 'var(--accent-blue)'}; font-weight:700;">${permCount} / 14</span>
+            </div>
+            ${permsBreakdownHtml}
         </div>
     `;
 }
