@@ -375,14 +375,53 @@ var currentRefSection = window.currentRefSection || 'establishments';
                             ${item.commercial_name_fr}
                         </div>
                         <div style="font-size:11px; line-height:1.6;">
-                            <strong>Classe de risque :</strong> Classe ${item.dm_class}<br>
+                            <strong>Classe de risque :</strong> Classe ${item.dm_class} | <strong>Règle :</strong> ${item.classification_rule || 'Arrêté 10/05/2021'}<br>
                             <strong>Référence Fabricant :</strong> <code>${item.manufacturer_reference}</code><br>
-                            <strong>Règle de classification :</strong> ${item.classification_rule || 'Arrêté 10/05/2021'}<br>
-                            <strong>Stérilité :</strong> ${item.is_sterile ? '✓ Stérile' : 'Non stérile'}<br>
+                            <strong>Typologie :</strong> <code>${item.origin_type === 'importe' ? 'Importé' : 'Fabrication Locale'}</code><br>
+                            ${item.gmdn_code ? `<strong>Code Nomenclature GMDN :</strong> <code>${item.gmdn_code}</code><br>` : ''}
+                            <strong>Stérilité :</strong> ${item.is_sterile ? `✓ Stérile (${item.sterilization_method || 'Méthode validée'})` : 'Non stérile'}<br>
                             <strong>Usage unique :</strong> ${item.is_single_use ? '✓ Usage unique' : 'Réutilisable'}<br><br>
-                            <strong>Indication Clinique :</strong><br>
+                            <strong>Volet Économique DM :</strong><br>
+                            ${item.origin_type === 'fabrication_locale' ? `PCSU Sortie Usine : <strong>${item.pcsu_amount || '0'} DZD</strong> (Production Nationale)` : `Prix CIF unitaire : <strong>${item.cif_price || '0'} ${item.cif_currency || 'EUR'}</strong> (Importation)`}
+                            ${item.origin_type === 'importe' || item.legal_manufacturer_name ? `
+                            <br><br><strong>Fabricant Légal &amp; Marquage CE (Décret 20-324) :</strong><br>
+                            Fabricant Légal : <strong>${item.legal_manufacturer_name || 'Non renseigné'}</strong> (${item.legal_manufacturer_country || '-'})<br>
+                            ${item.ce_certificate_number ? `Certificat Marquage CE : <strong>${item.ce_certificate_number}</strong> (Organisme Notifié: ${item.notified_body_name || '-'} [${item.notified_body_number || '-'}])<br>` : ''}
+                            ${item.ce_expiry_date ? `Échéance Marquage CE : ${item.ce_expiry_date.slice(0, 10)}<br>` : ''}
+                            ${item.iso_13485_certificate_number ? `Certificat ISO 13485 : <strong>${item.iso_13485_certificate_number}</strong><br>` : ''}
+                            ${item.clv_fsc_number ? `Certificat Libre Vente (CLV) : <strong>${item.clv_fsc_number}</strong> (Émetteur: ${item.clv_issuing_authority || '-'})<br>` : ''}
+                            ` : ''}
+                            <br><strong>Destination &amp; Indications Cliniques :</strong><br>
                             ${item.intended_use_fr || 'Non renseignée'}
                         </div>
+                    </div>
+                    <div class="meta-box">
+                        <div class="meta-row"><span class="meta-label">Dispositif Médical :</span><span class="meta-val">${item.commercial_name_fr}</span></div>
+                        <div class="meta-row"><span class="meta-label">Réf. Fabricant :</span><span class="meta-val"><code>${item.manufacturer_reference}</code></span></div>
+                        <div class="meta-row"><span class="meta-label">Classe ANPP :</span><span class="meta-val">Classe ${item.dm_class}</span></div>
+                        <div class="meta-row"><span class="meta-label">Typologie :</span><span class="meta-val">${item.origin_type === 'importe' ? 'Importé' : 'Fabrication Locale'}</span></div>
+                        <div class="meta-row"><span class="meta-label">Statut Catalogue :</span><span class="meta-val" style="font-weight:700; color:${item.status === 'archive' || item.status === 'retire' ? 'var(--accent-red)' : 'var(--accent-emerald)'};">${item.status === 'archive' || item.status === 'retire' ? 'ARCHIVÉ / RETIRÉ' : (item.status || 'EN COURS').toUpperCase()}</span></div>
+                        ${item.legal_manufacturer_name ? `<div class="meta-row"><span class="meta-label">Fabricant Légal :</span><span class="meta-val">${item.legal_manufacturer_name} (${item.legal_manufacturer_country})</span></div>` : ''}
+                        ${item.ce_certificate_number ? `<div class="meta-row"><span class="meta-label">Marquage CE :</span><span class="meta-val"><code>${item.ce_certificate_number}</code> (ON ${item.notified_body_number || '-'})</span></div>` : ''}
+                        ${item.clv_fsc_number ? `<div class="meta-row"><span class="meta-label">Certificat CLV :</span><span class="meta-val"><code>${item.clv_fsc_number}</code></span></div>` : ''}
+                    </div>
+
+                    ${item.status === 'archive' || item.status === 'retire' ? `
+                    <div style="margin-top:10px; padding:8px 12px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px; color:var(--accent-red); font-size:11px; font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <span>⚠️</span>
+                        <span>Dispositif Médical Archivé &amp; Retiré du Référentiel Actif (Conformité 21 CFR Part 11 / Décret 20-324)</span>
+                    </div>
+                    ` : ''}
+
+                    <div style="margin-top:14px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; gap:8px;">
+                        <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none; flex:1; justify-content:center; padding:7px 12px; font-weight:600;" onclick="openEditDeviceModal()">
+                            ✏️ Mettre à jour le DM
+                        </button>
+                        ${item.status !== 'archive' && item.status !== 'retire' ? `
+                        <button class="btn-pill" data-perm="REF_EDIT" style="background:rgba(239,68,68,0.12); color:var(--accent-red); border:1px solid rgba(239,68,68,0.3); justify-content:center; padding:7px 12px; font-weight:600;" onclick="openArchiveDeviceModal()" title="Retrait réglementaire avec signature électronique 21 CFR Part 11">
+                            📦 Retirer / Archiver
+                        </button>
+                        ` : ''}
                     </div>
                 `;
             }
@@ -396,6 +435,74 @@ var currentRefSection = window.currentRefSection || 'establishments';
         let editingEstID = null;
         let editingSiteID = null;
         let editingMedID = null;
+        let editingDeviceID = null;
+
+        async function populateDMSitesDropdown(selectedID) {
+            const select = document.getElementById("dm-manufacturer-site-id");
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Aucun ou site non répertorié --</option>';
+            try {
+                const res = await fetch('/api/v1/manufacturing-sites');
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = data.manufacturing_sites || data.items || [];
+                    list.forEach(site => {
+                        const opt = document.createElement("option");
+                        opt.value = site.id;
+                        opt.textContent = `${site.site_name_fr} (${site.country_code}) - ${site.site_role}`;
+                        if (selectedID && site.id === selectedID) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        async function populateDMEstablishmentsDropdown(selectedID) {
+            const select = document.getElementById("dm-est-id");
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Sélectionner l\'établissement mandataire --</option>';
+            try {
+                const res = await fetch('/api/v1/establishments');
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = data.establishments || data.items || [];
+                    list.forEach(est => {
+                        const opt = document.createElement("option");
+                        opt.value = est.id;
+                        opt.textContent = `${est.name_fr} (${est.miph_license_number || 'Agréé'})`;
+                        if (selectedID && est.id === selectedID) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        function toggleDMEcoFields() {
+            const origin = document.getElementById("dm-origin").value;
+            const pcsuGroup = document.getElementById("dm-pcsu-group");
+            const cifGroup = document.getElementById("dm-cif-group");
+            const foreignGroup = document.getElementById("dm-foreign-group");
+            const title = document.getElementById("dm-eco-title");
+            if (origin === 'fabrication_locale') {
+                if (pcsuGroup) pcsuGroup.style.display = 'flex';
+                if (cifGroup) cifGroup.style.display = 'none';
+                if (foreignGroup) foreignGroup.style.display = 'none';
+                if (title) title.innerText = "💰 Volet Économique DM (PCSU Fabrication Locale)";
+            } else {
+                if (pcsuGroup) pcsuGroup.style.display = 'none';
+                if (cifGroup) cifGroup.style.display = 'flex';
+                if (foreignGroup) {
+                    foreignGroup.style.display = 'block';
+                    populateDMSitesDropdown();
+                    populateDMEstablishmentsDropdown();
+                }
+                if (title) title.innerText = "💰 Volet Économique DM (Prix CIF & Facture d'Importation)";
+            }
+        }
 
         async function populateForeignSitesDropdown(selectedID) {
             const select = document.getElementById("med-manufacturer-site-id");
@@ -470,6 +577,13 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 toggleEcoFields();
                 document.getElementById("modal-new-med").classList.add("open");
             } else if (currentRefSection === 'devices') {
+                editingDeviceID = null;
+                document.getElementById("form-new-dm").reset();
+                const title = document.getElementById("modal-dm-title");
+                if (title) title.innerText = "Nouveau Dispositif Médical (Arrêté du 10 Mai 2021 & Décret 20-324)";
+                const btn = document.getElementById("modal-dm-submit-btn");
+                if (btn) btn.innerText = "Enregistrer le DM (Base SQL)";
+                toggleDMEcoFields();
                 document.getElementById("modal-new-dm").classList.add("open");
             } else {
                 document.getElementById("modal-new-est").classList.add("open");
@@ -764,27 +878,163 @@ var currentRefSection = window.currentRefSection || 'establishments';
             }
         }
 
+        function openEditDeviceModal() {
+            const item = currentRefList[selectedRefIndex];
+            if (!item) return;
+            closeAllModals();
+            editingDeviceID = item.id;
+            document.getElementById("dm-origin").value = item.origin_type || 'fabrication_locale';
+            document.getElementById("dm-name").value = item.commercial_name_fr || '';
+            document.getElementById("dm-ref").value = item.manufacturer_reference || '';
+            document.getElementById("dm-class").value = item.dm_class || 'IIa';
+            document.getElementById("dm-gmdn").value = item.gmdn_code || '';
+            document.getElementById("dm-rule").value = item.classification_rule || '';
+            document.getElementById("dm-sterile").checked = !!item.is_sterile;
+            document.getElementById("dm-sterilization-method").value = item.sterilization_method || "Oxyde d'éthylène (ETO)";
+            document.getElementById("dm-sterilization-method").disabled = !item.is_sterile;
+            document.getElementById("dm-single-use").checked = !!item.is_single_use;
+            document.getElementById("dm-intended-use").value = item.intended_use_fr || '';
+
+            if (item.origin_type === 'fabrication_locale') {
+                document.getElementById("dm-pcsu").value = item.pcsu_amount || '';
+            } else {
+                document.getElementById("dm-cif").value = item.cif_price || '';
+                document.getElementById("dm-cif-currency").value = item.cif_currency || 'EUR';
+            }
+
+            document.getElementById("dm-legal-manufacturer").value = item.legal_manufacturer_name || '';
+            document.getElementById("dm-manufacturer-country").value = item.legal_manufacturer_country || '';
+            document.getElementById("dm-ce-number").value = item.ce_certificate_number || '';
+            document.getElementById("dm-notified-body-name").value = item.notified_body_name || '';
+            document.getElementById("dm-notified-body-number").value = item.notified_body_number || '';
+            document.getElementById("dm-ce-expiry").value = item.ce_expiry_date ? item.ce_expiry_date.slice(0, 10) : '';
+            document.getElementById("dm-iso-number").value = item.iso_13485_certificate_number || '';
+            document.getElementById("dm-clv-number").value = item.clv_fsc_number || '';
+            document.getElementById("dm-clv-authority").value = item.clv_issuing_authority || '';
+            document.getElementById("dm-clv-date").value = item.clv_issue_date ? item.clv_issue_date.slice(0, 10) : '';
+
+            toggleDMEcoFields();
+            populateDMSitesDropdown(item.manufacturer_site_id);
+            populateDMEstablishmentsDropdown(item.establishment_id);
+
+            const title = document.getElementById("modal-dm-title");
+            if (title) title.innerText = "Mise à jour du Dispositif Médical";
+            const btn = document.getElementById("modal-dm-submit-btn");
+            if (btn) btn.innerText = "Enregistrer les Modifications (Base SQL)";
+            document.getElementById("modal-new-dm").classList.add("open");
+        }
+
+        function openArchiveDeviceModal() {
+            const item = currentRefList[selectedRefIndex];
+            if (!item) return;
+            closeAllModals();
+            document.getElementById("archive-dm-id").value = item.id;
+            document.getElementById("archive-dm-name").value = `${item.commercial_name_fr} (Réf: ${item.manufacturer_reference} - Cl. ${item.dm_class})`;
+            document.getElementById("archive-dm-reason-select").value = "";
+            document.getElementById("archive-dm-reason").value = "";
+            document.getElementById("archive-dm-password").value = "";
+            document.getElementById("modal-archive-dm").classList.add("open");
+        }
+
+        async function handleArchiveDevice(e) {
+            if (e) e.preventDefault();
+            const id = document.getElementById("archive-dm-id").value;
+            const reason = document.getElementById("archive-dm-reason").value.trim();
+            const password = document.getElementById("archive-dm-password").value;
+
+            if (!reason) {
+                showNotifyModal("Justification Requise", "Le motif réglementaire du retrait du DM est obligatoire.", "⚠️");
+                return;
+            }
+            if (!password) {
+                showNotifyModal("Signature Électronique Requise", "Veuillez saisir votre mot de passe pour sceller l'opération (21 CFR Part 11).", "⚠️");
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/medical-devices/${id}/archive`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeModal('modal-archive-dm');
+                    showNotifyModal("Archivage Réglementaire Scellé (21 CFR Part 11)", "Le dispositif médical a été retiré du catalogue actif. Toutes les données techniques, attestations CE/ISO et pistes d'audit ALCOA+ sont intégralement préservées sans destruction physique.", "📦");
+                    loadRefSection('devices');
+                } else {
+                    showNotifyModal("Échec de Signature / Retrait", data.error || "Erreur lors de l'archivage", "⚠️");
+                }
+            } catch(err) {
+                showNotifyModal("Erreur Réseau", err.message, "⚠️");
+            }
+        }
+
         async function handleCreateDevice(e) {
             if (e) e.preventDefault();
+            const origin = document.getElementById("dm-origin").value;
+            const isEdit = !!editingDeviceID;
+            const currentItem = isEdit ? currentRefList.find(d => d.id === editingDeviceID) : null;
+
+            const legalMfg = origin !== 'fabrication_locale' ? document.getElementById("dm-legal-manufacturer").value.trim() : null;
+            const mfgCountry = origin !== 'fabrication_locale' ? document.getElementById("dm-manufacturer-country").value.trim().toUpperCase() : null;
+            const siteID = (origin !== 'fabrication_locale' && document.getElementById("dm-manufacturer-site-id").value) ? document.getElementById("dm-manufacturer-site-id").value : null;
+            const estID = (origin !== 'fabrication_locale' && document.getElementById("dm-est-id").value) ? document.getElementById("dm-est-id").value : null;
+            const ceNum = origin !== 'fabrication_locale' ? document.getElementById("dm-ce-number").value.trim() : null;
+            const nbName = origin !== 'fabrication_locale' ? document.getElementById("dm-notified-body-name").value.trim() : null;
+            const nbNum = origin !== 'fabrication_locale' ? document.getElementById("dm-notified-body-number").value.trim() : null;
+            const ceExp = (origin !== 'fabrication_locale' && document.getElementById("dm-ce-expiry").value) ? new Date(document.getElementById("dm-ce-expiry").value).toISOString() : null;
+            const isoNum = origin !== 'fabrication_locale' ? document.getElementById("dm-iso-number").value.trim() : null;
+            const clvNum = origin !== 'fabrication_locale' ? document.getElementById("dm-clv-number").value.trim() : null;
+            const clvAuth = origin !== 'fabrication_locale' ? document.getElementById("dm-clv-authority").value.trim() : null;
+            const clvDate = (origin !== 'fabrication_locale' && document.getElementById("dm-clv-date").value) ? new Date(document.getElementById("dm-clv-date").value).toISOString() : null;
+
+            const isSterile = document.getElementById("dm-sterile").checked;
+
             const payload = {
+                origin_type: origin,
                 commercial_name_fr: document.getElementById("dm-name").value.trim(),
                 manufacturer_reference: document.getElementById("dm-ref").value.trim(),
                 dm_class: document.getElementById("dm-class").value,
                 classification_rule: document.getElementById("dm-rule").value.trim(),
-                is_sterile: document.getElementById("dm-sterile").checked,
+                is_sterile: isSterile,
+                sterilization_method: isSterile ? document.getElementById("dm-sterilization-method").value : "Non applicable",
                 is_single_use: document.getElementById("dm-single-use").checked,
                 intended_use_fr: document.getElementById("dm-intended-use").value.trim(),
-                status: 'en_cours'
+                gmdn_code: document.getElementById("dm-gmdn").value.trim() || null,
+                economic_file_type: origin === 'fabrication_locale' ? 'pcsu' : 'cif_benchmark',
+                pcsu_amount: origin === 'fabrication_locale' ? parseFloat(document.getElementById("dm-pcsu").value) || 0 : null,
+                cif_price: origin !== 'fabrication_locale' ? parseFloat(document.getElementById("dm-cif").value) || 0 : null,
+                cif_currency: document.getElementById("dm-cif-currency").value,
+                legal_manufacturer_name: legalMfg,
+                legal_manufacturer_country: mfgCountry,
+                manufacturer_site_id: siteID,
+                establishment_id: estID,
+                ce_certificate_number: ceNum,
+                notified_body_name: nbName,
+                notified_body_number: nbNum,
+                ce_expiry_date: ceExp,
+                iso_13485_certificate_number: isoNum,
+                clv_fsc_number: clvNum,
+                clv_issuing_authority: clvAuth,
+                clv_issue_date: clvDate,
+                status: currentItem ? currentItem.status : 'en_cours'
             };
+
+            const url = isEdit ? `/api/v1/medical-devices/${editingDeviceID}` : '/api/v1/medical-devices';
+            const method = isEdit ? 'PUT' : 'POST';
+
             try {
-                const res = await fetch('/api/v1/medical-devices', {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     closeModal('modal-new-dm');
-                    showNotifyModal("Dispositif Médical Enregistré", "Le dossier d'homologation DM a été créé conformément au Décret 20-324 et à l'Arrêté du 10 mai 2021.", "💉");
+                    const msg = isEdit ? "Le dispositif médical a été mis à jour avec succès dans PostgreSQL." : "Le dossier d'homologation DM a été créé conformément au Décret 20-324 et à l'Arrêté du 10 mai 2021.";
+                    showNotifyModal(isEdit ? "DM Mis à Jour" : "DM Enregistré", msg, "💉");
+                    editingDeviceID = null;
                     loadRefSection('devices');
                 } else {
                     const err = await res.json();

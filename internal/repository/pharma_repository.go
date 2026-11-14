@@ -827,6 +827,10 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 	if dm.ProductID == uuid.Nil {
 		dm.ProductID = uuid.New()
 	}
+	mName := dm.ManufacturerReference
+	if dm.OriginType == domain.DMOriginImporte && dm.LegalManufacturerName != "" {
+		mName = dm.LegalManufacturerName
+	}
 	prodQuery := `
 		INSERT INTO products (
 			id, organization_id, product_type, brand_name_fr, brand_name_ar,
@@ -837,7 +841,7 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 	_, err = tx.Exec(ctx, prodQuery,
 		dm.ProductID, dm.OrganizationID, domain.ProductTypeDispositifMedical, dm.CommercialNameFR, dm.CommercialNameAR,
 		dm.DMClass, dm.IsSterile, dm.ClassificationRule,
-		dm.ManufacturerReference, dm.Status, now, now,
+		mName, dm.Status, now, now,
 	)
 	if err != nil {
 		return fmt.Errorf("création produit DM parent échouée: %w", err)
@@ -849,21 +853,39 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 	}
 	dmQuery := `
 		INSERT INTO medical_devices (
-			id, organization_id, product_id, commercial_name_fr, commercial_name_ar,
-			manufacturer_reference, dm_class, classification_rule, is_sterile, is_single_use,
-			intended_use_fr, intended_use_ar, homologation_decision_number, homologation_date, homologation_expiry_date,
+			id, organization_id, product_id, origin_type,
+			commercial_name_fr, commercial_name_ar, manufacturer_reference,
+			dm_class, classification_rule, is_sterile, sterilization_method, is_single_use,
+			intended_use_fr, intended_use_ar, gmdn_code,
+			legal_manufacturer_name, legal_manufacturer_country, manufacturer_site_id, establishment_id,
+			ce_certificate_number, notified_body_name, notified_body_number, ce_expiry_date,
+			iso_13485_certificate_number, clv_fsc_number, clv_issuing_authority, clv_issue_date,
+			economic_file_type, pcsu_amount, cif_price, cif_currency,
+			homologation_decision_number, homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5,
-			$6, $7, $8, $9, $10,
-			$11, $12, $13, $14, $15,
-			$16, $17, $18
+			$1, $2, $3, $4,
+			$5, $6, $7,
+			$8, $9, $10, $11, $12,
+			$13, $14, $15,
+			$16, $17, $18, $19,
+			$20, $21, $22, $23,
+			$24, $25, $26, $27,
+			$28, $29, $30, $31,
+			$32, $33, $34,
+			$35, $36, $37
 		)
 	`
 	_, err = tx.Exec(ctx, dmQuery,
-		dm.ID, dm.OrganizationID, dm.ProductID, dm.CommercialNameFR, dm.CommercialNameAR,
-		dm.ManufacturerReference, dm.DMClass, dm.ClassificationRule, dm.IsSterile, dm.IsSingleUse,
-		dm.IntendedUseFR, dm.IntendedUseAR, dm.HomologationDecisionNumber, dm.HomologationDate, dm.HomologationExpiryDate,
+		dm.ID, dm.OrganizationID, dm.ProductID, dm.OriginType,
+		dm.CommercialNameFR, dm.CommercialNameAR, dm.ManufacturerReference,
+		dm.DMClass, dm.ClassificationRule, dm.IsSterile, dm.SterilizationMethod, dm.IsSingleUse,
+		dm.IntendedUseFR, dm.IntendedUseAR, dm.GMDNCode,
+		dm.LegalManufacturerName, dm.LegalManufacturerCountry, dm.ManufacturerSiteID, dm.EstablishmentID,
+		dm.CECertificateNumber, dm.NotifiedBodyName, dm.NotifiedBodyNumber, dm.CEExpiryDate,
+		dm.ISO13485CertificateNumber, dm.CLVFSCNumber, dm.CLVIssuingAuthority, dm.CLVIssueDate,
+		dm.EconomicFileType, dm.PCSUAmount, dm.CIFPrice, dm.CIFCurrency,
+		dm.HomologationDecisionNumber, dm.HomologationDate, dm.HomologationExpiryDate,
 		dm.Status, dm.CreatedAt, dm.UpdatedAt,
 	)
 	if err != nil {
@@ -876,13 +898,32 @@ func (r *PharmaRepository) CreateMedicalDevice(ctx context.Context, dm *domain.M
 func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id uuid.UUID) (*domain.MedicalDevice, error) {
 	query := `
 		SELECT 
-			id, organization_id, product_id, commercial_name_fr,
+			id, organization_id, product_id, origin_type,
+			commercial_name_fr,
 			COALESCE(commercial_name_ar, ''),
 			manufacturer_reference, dm_class,
 			COALESCE(classification_rule, ''),
-			is_sterile, is_single_use,
+			is_sterile,
+			COALESCE(sterilization_method, ''),
+			is_single_use,
 			COALESCE(intended_use_fr, ''),
 			COALESCE(intended_use_ar, ''),
+			COALESCE(gmdn_code, ''),
+			COALESCE(legal_manufacturer_name, ''),
+			COALESCE(legal_manufacturer_country, ''),
+			manufacturer_site_id,
+			establishment_id,
+			COALESCE(ce_certificate_number, ''),
+			COALESCE(notified_body_name, ''),
+			COALESCE(notified_body_number, ''),
+			ce_expiry_date,
+			COALESCE(iso_13485_certificate_number, ''),
+			COALESCE(clv_fsc_number, ''),
+			COALESCE(clv_issuing_authority, ''),
+			clv_issue_date,
+			COALESCE(economic_file_type, 'pcsu'),
+			pcsu_amount, cif_price,
+			COALESCE(cif_currency, 'EUR'),
 			COALESCE(homologation_decision_number, ''),
 			homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
@@ -891,9 +932,20 @@ func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id u
 	`
 	var dm domain.MedicalDevice
 	err := r.pool.QueryRow(ctx, query, orgID, id).Scan(
-		&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.CommercialNameFR, &dm.CommercialNameAR,
-		&dm.ManufacturerReference, &dm.DMClass, &dm.ClassificationRule, &dm.IsSterile, &dm.IsSingleUse,
-		&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
+		&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.OriginType,
+		&dm.CommercialNameFR, &dm.CommercialNameAR,
+		&dm.ManufacturerReference, &dm.DMClass,
+		&dm.ClassificationRule,
+		&dm.IsSterile, &dm.SterilizationMethod, &dm.IsSingleUse,
+		&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.GMDNCode,
+		&dm.LegalManufacturerName, &dm.LegalManufacturerCountry,
+		&dm.ManufacturerSiteID, &dm.EstablishmentID,
+		&dm.CECertificateNumber, &dm.NotifiedBodyName, &dm.NotifiedBodyNumber,
+		&dm.CEExpiryDate,
+		&dm.ISO13485CertificateNumber, &dm.CLVFSCNumber, &dm.CLVIssuingAuthority,
+		&dm.CLVIssueDate,
+		&dm.EconomicFileType, &dm.PCSUAmount, &dm.CIFPrice, &dm.CIFCurrency,
+		&dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
 		&dm.Status, &dm.CreatedAt, &dm.UpdatedAt,
 	)
 	if err != nil {
@@ -902,6 +954,21 @@ func (r *PharmaRepository) GetMedicalDeviceByID(ctx context.Context, orgID, id u
 		}
 		return nil, err
 	}
+
+	// Récupération du site fabricant lié
+	if dm.ManufacturerSiteID != nil {
+		if site, err := r.GetManufacturingSiteByID(ctx, orgID, *dm.ManufacturerSiteID); err == nil {
+			dm.ManufacturerSite = site
+		}
+	}
+
+	// Récupération de l'établissement demandeur/mandataire lié
+	if dm.EstablishmentID != nil {
+		if est, err := r.GetEstablishmentByID(ctx, orgID, *dm.EstablishmentID); err == nil {
+			dm.Establishment = est
+		}
+	}
+
 	return &dm, nil
 }
 
@@ -920,13 +987,32 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 	countQuery.WriteString(`SELECT COUNT(*) FROM medical_devices WHERE organization_id = $1`)
 	listQuery.WriteString(`
 		SELECT 
-			id, organization_id, product_id, commercial_name_fr,
+			id, organization_id, product_id, origin_type,
+			commercial_name_fr,
 			COALESCE(commercial_name_ar, ''),
 			manufacturer_reference, dm_class,
 			COALESCE(classification_rule, ''),
-			is_sterile, is_single_use,
+			is_sterile,
+			COALESCE(sterilization_method, ''),
+			is_single_use,
 			COALESCE(intended_use_fr, ''),
 			COALESCE(intended_use_ar, ''),
+			COALESCE(gmdn_code, ''),
+			COALESCE(legal_manufacturer_name, ''),
+			COALESCE(legal_manufacturer_country, ''),
+			manufacturer_site_id,
+			establishment_id,
+			COALESCE(ce_certificate_number, ''),
+			COALESCE(notified_body_name, ''),
+			COALESCE(notified_body_number, ''),
+			ce_expiry_date,
+			COALESCE(iso_13485_certificate_number, ''),
+			COALESCE(clv_fsc_number, ''),
+			COALESCE(clv_issuing_authority, ''),
+			clv_issue_date,
+			COALESCE(economic_file_type, 'pcsu'),
+			pcsu_amount, cif_price,
+			COALESCE(cif_currency, 'EUR'),
 			COALESCE(homologation_decision_number, ''),
 			homologation_date, homologation_expiry_date,
 			status, created_at, updated_at
@@ -966,9 +1052,20 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 	for rows.Next() {
 		var dm domain.MedicalDevice
 		if err := rows.Scan(
-			&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.CommercialNameFR, &dm.CommercialNameAR,
-			&dm.ManufacturerReference, &dm.DMClass, &dm.ClassificationRule, &dm.IsSterile, &dm.IsSingleUse,
-			&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
+			&dm.ID, &dm.OrganizationID, &dm.ProductID, &dm.OriginType,
+			&dm.CommercialNameFR, &dm.CommercialNameAR,
+			&dm.ManufacturerReference, &dm.DMClass,
+			&dm.ClassificationRule,
+			&dm.IsSterile, &dm.SterilizationMethod, &dm.IsSingleUse,
+			&dm.IntendedUseFR, &dm.IntendedUseAR, &dm.GMDNCode,
+			&dm.LegalManufacturerName, &dm.LegalManufacturerCountry,
+			&dm.ManufacturerSiteID, &dm.EstablishmentID,
+			&dm.CECertificateNumber, &dm.NotifiedBodyName, &dm.NotifiedBodyNumber,
+			&dm.CEExpiryDate,
+			&dm.ISO13485CertificateNumber, &dm.CLVFSCNumber, &dm.CLVIssuingAuthority,
+			&dm.CLVIssueDate,
+			&dm.EconomicFileType, &dm.PCSUAmount, &dm.CIFPrice, &dm.CIFCurrency,
+			&dm.HomologationDecisionNumber, &dm.HomologationDate, &dm.HomologationExpiryDate,
 			&dm.Status, &dm.CreatedAt, &dm.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
@@ -976,6 +1073,155 @@ func (r *PharmaRepository) ListMedicalDevices(ctx context.Context, orgID uuid.UU
 		list = append(list, dm)
 	}
 	return list, total, nil
+}
+
+// UpdateMedicalDevice met à jour un dispositif médical et synchronise le catalogue parent
+func (r *PharmaRepository) UpdateMedicalDevice(ctx context.Context, dm *domain.MedicalDevice) error {
+	if err := dm.Validate(); err != nil {
+		return err
+	}
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	now := time.Now().UTC()
+	dm.UpdatedAt = now
+
+	query := `
+		UPDATE medical_devices SET
+			origin_type = $3,
+			commercial_name_fr = $4,
+			commercial_name_ar = $5,
+			manufacturer_reference = $6,
+			dm_class = $7,
+			classification_rule = $8,
+			is_sterile = $9,
+			sterilization_method = $10,
+			is_single_use = $11,
+			intended_use_fr = $12,
+			intended_use_ar = $13,
+			gmdn_code = $14,
+			legal_manufacturer_name = $15,
+			legal_manufacturer_country = $16,
+			manufacturer_site_id = $17,
+			establishment_id = $18,
+			ce_certificate_number = $19,
+			notified_body_name = $20,
+			notified_body_number = $21,
+			ce_expiry_date = $22,
+			iso_13485_certificate_number = $23,
+			clv_fsc_number = $24,
+			clv_issuing_authority = $25,
+			clv_issue_date = $26,
+			economic_file_type = $27,
+			pcsu_amount = $28,
+			cif_price = $29,
+			cif_currency = $30,
+			status = $31,
+			updated_at = $32
+		WHERE organization_id = $1 AND id = $2
+	`
+	tag, err := tx.Exec(ctx, query,
+		dm.OrganizationID, dm.ID, dm.OriginType,
+		dm.CommercialNameFR, dm.CommercialNameAR, dm.ManufacturerReference,
+		dm.DMClass, dm.ClassificationRule, dm.IsSterile, dm.SterilizationMethod, dm.IsSingleUse,
+		dm.IntendedUseFR, dm.IntendedUseAR, dm.GMDNCode,
+		dm.LegalManufacturerName, dm.LegalManufacturerCountry, dm.ManufacturerSiteID, dm.EstablishmentID,
+		dm.CECertificateNumber, dm.NotifiedBodyName, dm.NotifiedBodyNumber, dm.CEExpiryDate,
+		dm.ISO13485CertificateNumber, dm.CLVFSCNumber, dm.CLVIssuingAuthority, dm.CLVIssueDate,
+		dm.EconomicFileType, dm.PCSUAmount, dm.CIFPrice, dm.CIFCurrency,
+		dm.Status, dm.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("mise à jour DM échouée: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("dispositif médical introuvable ou non autorisé")
+	}
+
+	// Synchronisation du produit parent
+	if dm.ProductID != uuid.Nil {
+		mName := dm.ManufacturerReference
+		if dm.OriginType == domain.DMOriginImporte && dm.LegalManufacturerName != "" {
+			mName = dm.LegalManufacturerName
+		}
+		_, err = tx.Exec(ctx, `
+			UPDATE products SET
+				brand_name_fr = $1,
+				brand_name_ar = $2,
+				dm_class = $3,
+				is_sterile = $4,
+				dm_classification_rule = $5,
+				manufacturer_name = $6,
+				updated_at = $7
+			WHERE id = $8 AND organization_id = $9
+		`, dm.CommercialNameFR, dm.CommercialNameAR, dm.DMClass, dm.IsSterile, dm.ClassificationRule, mName, now, dm.ProductID, dm.OrganizationID)
+		if err != nil {
+			return fmt.Errorf("mise à jour produit DM parent échouée: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+// ArchiveMedicalDevice archive réglementairement un DM avec signature électronique 21 CFR Part 11
+func (r *PharmaRepository) ArchiveMedicalDevice(ctx context.Context, orgID, id, userID uuid.UUID, reason, password string) error {
+	if strings.TrimSpace(reason) == "" {
+		return errors.New("le motif d'archivage est obligatoire (21 CFR Part 11)")
+	}
+	if strings.TrimSpace(password) == "" {
+		return errors.New("le mot de passe de signature électronique est obligatoire (21 CFR Part 11)")
+	}
+
+	// 1. Vérification nominative de l'identité du signataire
+	valid, err := r.VerifyUserPassword(ctx, userID, password)
+	if err != nil {
+		return fmt.Errorf("erreur de vérification de signature: %w", err)
+	}
+	if !valid {
+		return errors.New("signature électronique invalide : mot de passe incorrect")
+	}
+
+	// 2. Vérification existence et statut actuel
+	var status string
+	var prodID uuid.UUID
+	err = r.pool.QueryRow(ctx, "SELECT status, product_id FROM medical_devices WHERE organization_id = $1 AND id = $2", orgID, id).Scan(&status, &prodID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+	if status == "archive" || status == "retire" {
+		return errors.New("ce dispositif médical est déjà archivé")
+	}
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	now := time.Now().UTC()
+
+	// 3. Archivage logique dans medical_devices
+	_, err = tx.Exec(ctx, "UPDATE medical_devices SET status = 'archive', updated_at = $1 WHERE id = $2", now, id)
+	if err != nil {
+		return fmt.Errorf("archivage DM échoué: %w", err)
+	}
+
+	// 4. Synchronisation statut produit
+	if prodID != uuid.Nil {
+		_, err = tx.Exec(ctx, "UPDATE products SET marketing_status = 'retire', updated_at = $1 WHERE id = $2", now, prodID)
+		if err != nil {
+			return fmt.Errorf("retrait produit DM parent échoué: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 // VerifyUserPassword vérifie le mot de passe de l'utilisateur pour la signature 21 CFR Part 11

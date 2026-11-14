@@ -226,26 +226,61 @@ func (m *Medicine) Validate() error {
 	return nil
 }
 
+// Constantes d'origine DM (Décret 20-324)
+const (
+	DMOriginLocal   = "fabrication_locale"
+	DMOriginImporte = "importe"
+)
+
 // MedicalDevice représente un dispositif médical selon le Décret 20-324 et l'Arrêté du 10/05/2021
 type MedicalDevice struct {
-	ID                         uuid.UUID  `json:"id"`
-	OrganizationID             uuid.UUID  `json:"organization_id"`
-	ProductID                  uuid.UUID  `json:"product_id"`
-	CommercialNameFR           string     `json:"commercial_name_fr"`
-	CommercialNameAR           string     `json:"commercial_name_ar,omitempty"`
-	ManufacturerReference      string     `json:"manufacturer_reference"`
-	DMClass                    string     `json:"dm_class"` // "I", "IIa", "IIb", "III", "DMDIV"
-	ClassificationRule         string     `json:"classification_rule,omitempty"`
-	IsSterile                  bool       `json:"is_sterile"`
-	IsSingleUse                bool       `json:"is_single_use"`
-	IntendedUseFR              string     `json:"intended_use_fr,omitempty"`
-	IntendedUseAR              string     `json:"intended_use_ar,omitempty"`
-	HomologationDecisionNumber string     `json:"homologation_decision_number,omitempty"`
-	HomologationDate           *time.Time `json:"homologation_date,omitempty"`
-	HomologationExpiryDate     *time.Time `json:"homologation_expiry_date,omitempty"`
-	Status                     string     `json:"status"`
-	CreatedAt                  time.Time  `json:"created_at"`
-	UpdatedAt                  time.Time  `json:"updated_at"`
+	ID                         uuid.UUID          `json:"id"`
+	OrganizationID             uuid.UUID          `json:"organization_id"`
+	ProductID                  uuid.UUID          `json:"product_id"`
+	OriginType                 string             `json:"origin_type"` // 'fabrication_locale' ou 'importe'
+	CommercialNameFR           string             `json:"commercial_name_fr"`
+	CommercialNameAR           string             `json:"commercial_name_ar,omitempty"`
+	ManufacturerReference      string             `json:"manufacturer_reference"`
+	DMClass                    string             `json:"dm_class"` // "I", "IIa", "IIb", "III", "DMDIV"
+	ClassificationRule         string             `json:"classification_rule,omitempty"`
+	IsSterile                  bool               `json:"is_sterile"`
+	SterilizationMethod        string             `json:"sterilization_method,omitempty"`
+	IsSingleUse                bool               `json:"is_single_use"`
+	IntendedUseFR              string             `json:"intended_use_fr,omitempty"`
+	IntendedUseAR              string             `json:"intended_use_ar,omitempty"`
+	GMDNCode                   string             `json:"gmdn_code,omitempty"`
+
+	// Fabricant Légal & Traçabilité Importation (Décret 20-324)
+	LegalManufacturerName      string             `json:"legal_manufacturer_name,omitempty"`
+	LegalManufacturerCountry   string             `json:"legal_manufacturer_country,omitempty"`
+	ManufacturerSiteID         *uuid.UUID         `json:"manufacturer_site_id,omitempty"`
+	ManufacturerSite           *ManufacturingSite `json:"manufacturer_site,omitempty"`
+	EstablishmentID            *uuid.UUID         `json:"establishment_id,omitempty"`
+	Establishment              *Establishment     `json:"establishment,omitempty"`
+
+	// Conformité Réglementaire Internationale
+	CECertificateNumber        string             `json:"ce_certificate_number,omitempty"`
+	NotifiedBodyName           string             `json:"notified_body_name,omitempty"`
+	NotifiedBodyNumber         string             `json:"notified_body_number,omitempty"`
+	CEExpiryDate               *time.Time         `json:"ce_expiry_date,omitempty"`
+	ISO13485CertificateNumber  string             `json:"iso_13485_certificate_number,omitempty"`
+	CLVFSCNumber               string             `json:"clv_fsc_number,omitempty"`
+	CLVIssuingAuthority        string             `json:"clv_issuing_authority,omitempty"`
+	CLVIssueDate               *time.Time         `json:"clv_issue_date,omitempty"`
+
+	// Volet Économique DM
+	EconomicFileType           string             `json:"economic_file_type,omitempty"` // 'pcsu' ou 'cif_benchmark'
+	PCSUAmount                 *float64           `json:"pcsu_amount,omitempty"`
+	CIFPrice                   *float64           `json:"cif_price,omitempty"`
+	CIFCurrency                string             `json:"cif_currency,omitempty"`
+
+	// Références Réglementaires ANPP
+	HomologationDecisionNumber string             `json:"homologation_decision_number,omitempty"`
+	HomologationDate           *time.Time         `json:"homologation_date,omitempty"`
+	HomologationExpiryDate     *time.Time         `json:"homologation_expiry_date,omitempty"`
+	Status                     string             `json:"status"`
+	CreatedAt                  time.Time          `json:"created_at"`
+	UpdatedAt                  time.Time          `json:"updated_at"`
 }
 
 // Validate valide les attributs du dispositif médical
@@ -261,6 +296,17 @@ func (dm *MedicalDevice) Validate() error {
 		// valide
 	default:
 		return errors.New("classe de DM non reconnue : doit être 'I', 'IIa', 'IIb', 'III' ou 'DMDIV'")
+	}
+	if dm.OriginType == "" {
+		dm.OriginType = DMOriginLocal
+	}
+	if dm.OriginType != DMOriginLocal && dm.OriginType != DMOriginImporte {
+		return errors.New("l'origine du DM doit être 'fabrication_locale' ou 'importe'")
+	}
+	if dm.OriginType == DMOriginImporte {
+		if dm.LegalManufacturerCountry != "" && len(strings.TrimSpace(dm.LegalManufacturerCountry)) != 2 {
+			return errors.New("le code pays du fabricant légal étranger doit comporter 2 lettres (ISO-3166-1 alpha-2)")
+		}
 	}
 	return nil
 }

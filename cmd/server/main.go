@@ -250,6 +250,9 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices", pharmaHandler.ListMedicalDevices)
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medical-devices", pharmaHandler.CreateMedicalDevice)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices/{id}", pharmaHandler.GetMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/medical-devices/{id}", pharmaHandler.UpdateMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/medical-devices/{id}/archive", pharmaHandler.ArchiveMedicalDevice)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Delete("/api/v1/medical-devices/{id}", pharmaHandler.ArchiveMedicalDevice)
 			}
 
 			// Coffre-Fort GED Pharmaceutique (Jalon 1.4 - BPF & ALCOA+)
