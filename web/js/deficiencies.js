@@ -5,6 +5,7 @@
 
 let activeDeficienciesDashboard = null;
 let currentDeficiencyLetterDetail = null;
+let currentDashboardLetters = [];
 
 if (typeof escapeHTML !== 'function') {
     function escapeHTML(str) {
@@ -93,6 +94,7 @@ function renderDeficienciesDashboardView(data) {
     if (tableHead) tableHead.innerHTML = '';
 
     const letters = data.recent_letters || [];
+    currentDashboardLetters = letters;
 
     let html = `
         <div style="padding:16px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; height:100%;">
@@ -167,6 +169,7 @@ function renderDeficienciesDashboardView(data) {
                         <tr style="background:var(--bg-sub); border-bottom:1px solid var(--border-color); color:var(--text-dim); font-size:10.5px; text-transform:uppercase;">
                             <th style="padding:8px 12px;">Réf. Notification ANPP</th>
                             <th style="padding:8px 12px;">Dossier &amp; Produit</th>
+                            <th style="padding:8px 12px; text-align:center;">Pièce Officielle GED</th>
                             <th style="padding:8px 12px;">Date Réception</th>
                             <th style="padding:8px 12px;">Délai Légal</th>
                             <th style="padding:8px 12px;">Compte à Rebours</th>
@@ -187,23 +190,34 @@ function renderDeficienciesDashboardView(data) {
             html += `
                 <tr style="background:${rowBg}; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="openDeficiencyLetterDetail('${l.id}')">
                     <td style="padding:10px 12px;">
-                        <div style="font-weight:700; color:var(--accent-blue);">${escapeHTML(l.reference_number)}</div>
+                        <div style="font-weight:700; color:var(--accent-blue); font-size:12px;">${escapeHTML(l.reference_number)}</div>
                         ${l.document_id ? `
-                            <div style="margin-top:2px;">
-                                <a href="javascript:void(0)" onclick="event.stopPropagation(); openDocumentViewerModal('${l.document_id}', '${escapeHTML(l.document_title || l.reference_number)}')" title="Aperçu du scan officiel GED (${escapeHTML(l.document_title || 'Document GED')})" style="text-decoration:none; font-size:10px; color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:3px; cursor:pointer;">
+                            <div style="margin-top:3px;">
+                                <a href="javascript:void(0)" onclick="event.stopPropagation(); openDocumentViewerModal('${l.document_id}', '${escapeHTML(l.document_title || l.reference_number)}')" title="Aperçu du scan officiel GED (${escapeHTML(l.document_title || 'Document GED')})" style="text-decoration:none; font-size:10.5px; color:#047857; font-weight:700; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
                                     <span>👁️</span> <span>Aperçu Scan ANPP</span>
                                 </a>
                             </div>
                         ` : `
-                            <div style="margin-top:2px; font-size:9.5px; color:var(--text-dim);">
+                            <div style="margin-top:3px; font-size:10px; color:var(--text-dim); display:inline-flex; align-items:center; gap:4px;">
                                 <span>⚠️ Sans scan GED</span>
                             </div>
                         `}
-                        <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">${l.notes ? escapeHTML(l.notes).substring(0, 45) + '...' : 'Notification officielle'}</div>
+                        <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">${l.notes ? escapeHTML(l.notes).substring(0, 45) + '...' : 'Notification officielle'}</div>
                     </td>
                     <td style="padding:10px 12px;">
                         <div style="font-weight:600; color:var(--text-main);">${escapeHTML(l.product_brand_name || l.dossier_reference || 'Dossier ANPP')}</div>
                         <div style="font-size:10px; color:var(--text-dim); font-family:monospace;">${escapeHTML(l.dossier_reference || '')}</div>
+                    </td>
+                    <td style="padding:10px 12px; text-align:center; white-space:nowrap;" onclick="event.stopPropagation();">
+                        ${l.document_id ? `
+                            <button type="button" class="btn-pill" style="background:#ecfdf5; color:#047857; border:1px solid #10b981; font-weight:700; font-size:11.5px; padding:5px 12px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.06); transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" onclick="openDocumentViewerModal('${l.document_id}', '${escapeHTML(l.document_title || l.reference_number)}')" title="Aperçu du scan officiel numérisé dans la modale intégrée">
+                                <span style="font-size:13px;">👁️</span> <span>Aperçu Scan ANPP</span>
+                            </button>
+                        ` : `
+                            <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--bg-sub); color:var(--text-muted); border:1px dashed var(--border-color); cursor:pointer; display:inline-flex; align-items:center; gap:5px;" onclick="promptAttachDeficiencyDocument('${l.id}')" title="Numériser ou joindre la lettre ANPP (PDF ou Image)">
+                                <span>📎</span> <span>Joindre Scan</span>
+                            </button>
+                        `}
                     </td>
                     <td style="padding:10px 12px; white-space:nowrap;">
                         ${(l.received_date || '').substring(0, 10)}
@@ -224,7 +238,18 @@ function renderDeficienciesDashboardView(data) {
                         </div>
                     </td>
                     <td style="padding:10px 12px; text-align:right; white-space:nowrap;" onclick="event.stopPropagation();">
-                        <button class="btn-pill" style="font-size:10.5px; padding:3px 8px;" onclick="openDeficiencyLetterDetail('${l.id}')">🔍 Ouvrir Studio</button>
+                        ${l.document_id ? `
+                            <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; background:#ecfdf5; color:#047857; border:1px solid #10b981; font-weight:700; margin-right:6px; cursor:pointer;" onclick="openDocumentViewerModal('${l.document_id}', '${escapeHTML(l.document_title || l.reference_number)}')" title="Aperçu du scan officiel numérisé">
+                                👁️ Scan
+                            </button>
+                        ` : `
+                            <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; margin-right:6px; cursor:pointer;" onclick="promptAttachDeficiencyDocument('${l.id}')" title="Joindre un scan numérisé">
+                                📎 Scan
+                            </button>
+                        `}
+                        <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-blue); color:white; border:none; font-weight:600; cursor:pointer;" onclick="openDeficiencyLetterDetail('${l.id}')">
+                            🔍 Ouvrir Studio
+                        </button>
                     </td>
                 </tr>
             `;
@@ -849,8 +874,13 @@ function promptAttachDeficiencyDocument(letterId) {
 async function executeAttachScanFileToLetter(input) {
     if (!input.files || input.files.length === 0 || !targetLetterIdForUpload) return;
     const file = input.files[0];
-    const letter = currentDeficiencyLetterDetail;
-    const refNumber = letter ? letter.reference_number : 'ANPP';
+    let refNumber = 'ANPP';
+    if (currentDeficiencyLetterDetail && currentDeficiencyLetterDetail.id === targetLetterIdForUpload) {
+        refNumber = currentDeficiencyLetterDetail.reference_number || 'ANPP';
+    } else if (currentDashboardLetters && currentDashboardLetters.length > 0) {
+        const found = currentDashboardLetters.find(l => l.id === targetLetterIdForUpload);
+        if (found) refNumber = found.reference_number || 'ANPP';
+    }
 
     try {
         if (typeof showToast === 'function') {
@@ -896,8 +926,11 @@ async function executeAttachScanFileToLetter(input) {
             alert("Scan officiel archivé et rattaché avec succès");
         }
 
-        // Recharger le détail et le dashboard
-        openDeficiencyLetterDetail(targetLetterIdForUpload);
+        // Si le modal détail est ouvert pour cette lettre, rafraîchir le détail
+        const detailModal = document.getElementById("modal-deficiency-detail");
+        if (detailModal && detailModal.classList.contains("open")) {
+            openDeficiencyLetterDetail(targetLetterIdForUpload);
+        }
         if (typeof currentDomain !== 'undefined' && currentDomain === 'deficiencies') {
             loadDeficienciesDashboard();
         }
