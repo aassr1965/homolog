@@ -71,9 +71,9 @@ func TestComputeMetrics(t *testing.T) {
 	now := time.Date(2026, 11, 14, 12, 0, 0, 0, time.UTC)
 
 	letter := domain.ANPPDeficiencyLetter{
-		ID:        "test-letter-1",
-		DueDate:   now.AddDate(0, 0, 10),
-		Status:    domain.DeficiencyLetterStatusOpen,
+		ID:      "test-letter-1",
+		DueDate: now.AddDate(0, 0, 10),
+		Status:  domain.DeficiencyLetterStatusOpen,
 		Tasks: []domain.ANPPDeficiencyTask{
 			{
 				ID:      "t1",

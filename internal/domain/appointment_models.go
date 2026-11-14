@@ -10,10 +10,10 @@ import (
 type AppointmentType string
 
 const (
-	AppointmentTypeDepotInitial    AppointmentType = "depot_initial"    // Dépôt initial Direction de l'Enregistrement
+	AppointmentTypeDepotInitial    AppointmentType = "depot_initial"     // Dépôt initial Direction de l'Enregistrement
 	AppointmentTypeCommission      AppointmentType = "seance_commission" // Séance plénière de la Commission d'Enregistrement
-	AppointmentTypeExpertiseLNCM   AppointmentType = "expertise_lncm"   // Dépôt d'échantillons et étalons au LNCM
-	AppointmentTypeRecoursAudition AppointmentType = "recours_audition" // Audition contradictoire / Recours technique
+	AppointmentTypeExpertiseLNCM   AppointmentType = "expertise_lncm"    // Dépôt d'échantillons et étalons au LNCM
+	AppointmentTypeRecoursAudition AppointmentType = "recours_audition"  // Audition contradictoire / Recours technique
 	AppointmentTypeComplements     AppointmentType = "depot_complements" // Remise physique des réponses aux compléments
 )
 

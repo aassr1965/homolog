@@ -11,9 +11,9 @@ type RegulatoryCategory string
 
 const (
 	RegCatEnregistrementAMM RegulatoryCategory = "enregistrement_amm"   // Décret 20-325, CTD, AMM
-	RegCatDispositifsMed   RegulatoryCategory = "dispositifs_medicaux" // Décret 20-324, Homologation DM
-	RegCatRedevancesTarifs RegulatoryCategory = "redevances_tarifs"    // Arrêtés interministériels tarifs ANPP
-	RegCatBPFInspection    RegulatoryCategory = "bpf_inspection"       // Arrêté 16/02/2021 BPF
+	RegCatDispositifsMed    RegulatoryCategory = "dispositifs_medicaux" // Décret 20-324, Homologation DM
+	RegCatRedevancesTarifs  RegulatoryCategory = "redevances_tarifs"    // Arrêtés interministériels tarifs ANPP
+	RegCatBPFInspection     RegulatoryCategory = "bpf_inspection"       // Arrêté 16/02/2021 BPF
 	RegCatPharmacovigilance RegulatoryCategory = "pharmacovigilance"    // PV, Matériovigilance
 	RegCatEssaisCliniquesBE RegulatoryCategory = "essais_cliniques_be"  // Bioéquivalence, Essais cliniques
 )
@@ -31,10 +31,10 @@ const (
 type RegulatoryComplianceStatus string
 
 const (
-	ComplianceStatusEnVigueur       RegulatoryComplianceStatus = "en_vigueur"
-	ComplianceStatusEnCoursAnalyse  RegulatoryComplianceStatus = "en_cours_analyse"
+	ComplianceStatusEnVigueur        RegulatoryComplianceStatus = "en_vigueur"
+	ComplianceStatusEnCoursAnalyse   RegulatoryComplianceStatus = "en_cours_analyse"
 	ComplianceStatusPlanActionRequis RegulatoryComplianceStatus = "plan_action_requis"
-	ComplianceStatusConforme        RegulatoryComplianceStatus = "conforme"
+	ComplianceStatusConforme         RegulatoryComplianceStatus = "conforme"
 )
 
 // RegulatoryWatchItem texte officiel du corpus juridique pharmaceutique algérien
@@ -43,7 +43,7 @@ type RegulatoryWatchItem struct {
 	OrganizationID   uuid.UUID                  `json:"organization_id"`
 	TitleFR          string                     `json:"title_fr"`
 	TitleAR          string                     `json:"title_ar,omitempty"`
-	LegalReference   string                     `json:"legal_reference"`   // ex: Décret Exécutif N° 20-325
+	LegalReference   string                     `json:"legal_reference"`         // ex: Décret Exécutif N° 20-325
 	JORADPNumber     string                     `json:"joradp_number,omitempty"` // ex: JORADP N° 78 du 28/11/2020
 	PublishedDate    time.Time                  `json:"published_date"`
 	EffectiveDate    time.Time                  `json:"effective_date"`

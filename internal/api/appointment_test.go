@@ -137,8 +137,8 @@ func TestAppointmentAndRegulatoryWatchAPI(t *testing.T) {
 
 	var listAppResp struct {
 		Appointments []domain.ANPPAppointment `json:"appointments"`
-		Total        int                       `json:"total"`
-		UrgentCount  int                       `json:"urgent_count"`
+		Total        int                      `json:"total"`
+		UrgentCount  int                      `json:"urgent_count"`
 	}
 	json.Unmarshal(rr.Body.Bytes(), &listAppResp)
 

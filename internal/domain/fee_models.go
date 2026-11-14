@@ -24,7 +24,7 @@ const (
 type ANPPFeeSchedule struct {
 	ID             string     `json:"id"`
 	Category       string     `json:"category"`       // medicament, dispositif_medical, variation, autre
-	ProcedureCode  string     `json:"procedure_code"`  // princeps, generique_local, generique_importe, etc.
+	ProcedureCode  string     `json:"procedure_code"` // princeps, generique_local, generique_importe, etc.
 	LabelFR        string     `json:"label_fr"`
 	LabelAR        string     `json:"label_ar,omitempty"`
 	LegalReference string     `json:"legal_reference"` // Journal Officiel / Arrêté interministériel
@@ -81,8 +81,8 @@ type CreateFeeScheduleRequest struct {
 
 // GeneratePaymentSlipRequest représente la demande de génération d'un bordereau BV1/BV2
 type GeneratePaymentSlipRequest struct {
-	SlipType       string  `json:"slip_type"` // BV1 ou BV2
-	PaymentPurpose string  `json:"payment_purpose,omitempty"`
+	SlipType       string   `json:"slip_type"` // BV1 ou BV2
+	PaymentPurpose string   `json:"payment_purpose,omitempty"`
 	CustomAmount   *float64 `json:"custom_amount,omitempty"` // Optionnel : surcharge manuelle si dérogation légale
 }
 
