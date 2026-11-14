@@ -686,7 +686,7 @@
             justify-content: center;
             z-index: 100000;
         }
-        .modal-overlay.open { display: flex; }
+        .modal-overlay.open { display: flex !important; }
         .modal {
             background: var(--bg-panel);
             border: 1px solid var(--border-color);

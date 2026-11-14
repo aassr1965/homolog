@@ -869,7 +869,7 @@
         function closeAllModals() {
             document.querySelectorAll('.modal-overlay').forEach(m => {
                 m.classList.remove('open');
-                m.style.display = "none";
+                m.style.display = "";
                 const modal = m.querySelector('.modal');
                 if (modal) modal.classList.remove('modal-fullscreen');
             });
@@ -879,7 +879,7 @@
             const el = document.getElementById(id);
             if (el) {
                 el.classList.remove("open");
-                el.style.display = "none";
+                el.style.display = "";
                 const modal = el.querySelector('.modal');
                 if (modal) modal.classList.remove('modal-fullscreen');
                 const btn = el.querySelector('.btn-modal-expand');
