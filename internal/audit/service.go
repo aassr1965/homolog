@@ -35,6 +35,9 @@ const (
 	ActionSysBackup         = "SYS_BACKUP"
 	ActionRoleChange        = "ROLE_CHANGE"
 	ActionUserCreated       = "USER_CREATED"
+	ActionDeficiencyLetterCreate = "DEFICIENCY_LETTER_CREATE"
+	ActionDeficiencyTaskUpdate   = "DEFICIENCY_TASK_UPDATE"
+	ActionDeficiencyTaskSignDT   = "DEFICIENCY_TASK_SIGN_DT"
 )
 
 // Entry représente les données à consigner dans l'Audit Trail

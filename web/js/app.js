@@ -360,6 +360,9 @@
                 if (domain === 'ctd') {
                     icon = "📋";
                     text = isArabic ? "ملفات التسجيل ANPP (CTD)" : "Dossiers d'Enregistrement (CTD)";
+                } else if (domain === 'deficiencies') {
+                    icon = "⏱️";
+                    text = isArabic ? "استوديو الاستكمالات ANPP" : "Studio de Compléments ANPP & Délais";
                 } else if (domain === 'variations') {
                     icon = "🔄";
                     text = isArabic ? "تعديلات ما بعد التسجيل" : "Variations & Post-AMM (12 Items)";
@@ -391,6 +394,14 @@
                 document.getElementById("bc-prod").innerText = "Catalogue des Dossiers";
                 document.getElementById("bc-mod").innerText = "Checklists Réglementaires";
                 loadDossiers();
+            } else if (domain === 'deficiencies') {
+                document.getElementById("bc-root").innerText = "COMPLÉMENTS_ANPP";
+                document.getElementById("bc-sec").innerText = "Veille_Réglementaire";
+                document.getElementById("bc-prod").innerText = "Décret_20-325";
+                document.getElementById("bc-mod").innerText = "Traçabilité_Délais_Légaux";
+                if (typeof loadDeficienciesDashboard === 'function') {
+                    loadDeficienciesDashboard();
+                }
             } else if (domain === 'variations') {
                 document.getElementById("bc-root").innerText = "POST-AMM";
                 document.getElementById("bc-sec").innerText = "Variations";
@@ -450,12 +461,23 @@
                     <button class="btn-pill" id="tb-btn-members" onclick="openDossierMembersModal()">👥 Équipe &amp; Secret</button>
                     <button class="btn-pill" id="tb-btn-sign-pdt" onclick="openSignPDTModal()">✍️ Visa PDT (21 CFR Part 11)</button>
                     <button class="btn-pill" id="tb-btn-deposit-anpp" onclick="openRecordDepositModal()">🏛️ Enregistrer Dépôt ANPP</button>
+                    <button class="btn-pill" id="tb-btn-deficiency" onclick="openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Notifier Complément ANPP</button>
                     <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_LEGAL" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
                     <button class="btn-pill" onclick="loadDossiers()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Complétude : <strong id="kpi-dossier-completeness" style="color:var(--accent-blue);">0%</strong>
+                    </div>
+                `;
+            } else if (domain === 'deficiencies') {
+                tb.innerHTML = `
+                    <button class="btn-pill" data-perm="DOSSIER_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer Complément</button>
+                    <button class="btn-pill" onclick="loadDeficienciesDashboard()">🔄 Actualiser</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Délais Légaux : <strong style="color:var(--accent-blue);">Compte à Rebours J-X (Guide 2025)</strong>
                     </div>
                 `;
             } else if (domain === 'variations') {
@@ -554,6 +576,23 @@
                 `;
             } else if (domain === 'ctd') {
                 renderDossiersTree();
+            } else if (domain === 'deficiencies') {
+                container.innerHTML = `
+                    <div class="tree-node selected" onclick="loadDeficienciesDashboard()">
+                        <span class="chevron">⏱️</span>
+                        <span>Toutes les Notifications ANPP</span>
+                        <span class="count-badge req">Guide 2025</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                        <span>🚨 Alertes Critiques (J ≤ 15)</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                        <span>⚠️ Urgences Réglementaires (J ≤ 30)</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                        <span>✍️ Visées Pharmacien DT (1.A.7)</span>
+                    </div>
+                `;
             } else if (domain === 'variations') {
                 container.innerHTML = `
                     <div class="tree-node selected" onclick="toggleSub('sub-var-active')">
