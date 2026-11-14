@@ -453,3 +453,21 @@ func (r *DeficiencyRepository) ValidateTaskDT(ctx context.Context, orgID, taskID
 	}
 	return nil
 }
+
+// AttachDocumentToLetter rattache ou met à jour le document officiel GED (scan/décharge) sur une lettre
+func (r *DeficiencyRepository) AttachDocumentToLetter(ctx context.Context, orgID, letterID, documentID string) error {
+	now := time.Now().UTC()
+	query := `
+		UPDATE anpp_deficiency_letters
+		SET document_id = $1, updated_at = $2
+		WHERE id = $3 AND organization_id = $4
+	`
+	res, err := r.pool.Exec(ctx, query, documentID, now, letterID, orgID)
+	if err != nil {
+		return fmt.Errorf("rattachement pièce GED sur lettre échoué: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrLetterNotFound
+	}
+	return nil
+}
