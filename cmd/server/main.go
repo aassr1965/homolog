@@ -308,10 +308,10 @@ func main() {
 
 				// Documents & Versions
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents", gedHandler.ListDocuments)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/ged/documents", gedHandler.CreateDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/ged/documents", gedHandler.CreateDocument)
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}", gedHandler.GetDocument)
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}/versions", gedHandler.GetDocumentVersions)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/ged/documents/{id}/versions", gedHandler.UploadNewVersion)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/ged/documents/{id}/versions", gedHandler.UploadNewVersion)
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}/download", gedHandler.DownloadVersion)
 
 				// Cycle de vie & Verrouillage
@@ -328,8 +328,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers", dossierHandler.ListDossiers)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierCreate)).Post("/api/v1/dossiers", dossierHandler.CreateDossier)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}", dossierHandler.GetDossier)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/status", dossierHandler.UpdateItemStatus)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/sign-pdt", dossierHandler.SignPDT)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/status", dossierHandler.UpdateDossierStatus)
