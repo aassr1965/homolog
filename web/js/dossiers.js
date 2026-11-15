@@ -320,6 +320,64 @@
             }
         }
 
+        // Navigation universelle vers un dossier et un module CTD spécifique
+        async function openDossierModule(dossierHint, modNumber = 1) {
+            if (typeof closeAllModals === 'function') closeAllModals();
+            if (typeof closeModal === 'function') closeModal('modal-alerts');
+
+            // 1. Définir le module cible avant tout
+            currentDossierModuleFilter = modNumber;
+            currentDossierSubModuleFilter = 'all';
+
+            // 2. Basculer vers le domaine CTD
+            if (typeof switchDomainModule === 'function') {
+                switchDomainModule('ctd');
+            }
+
+            // 3. Charger ou trouver le dossier
+            try {
+                let dossiersList = currentDossiers;
+                if (!dossiersList || dossiersList.length === 0) {
+                    const res = await fetch('/api/v1/dossiers');
+                    if (res.ok) {
+                        const data = await res.json();
+                        dossiersList = data.dossiers || [];
+                        currentDossiers = dossiersList;
+                    }
+                }
+
+                let target = null;
+                if (dossierHint && dossiersList && dossiersList.length > 0) {
+                    const hintLower = String(dossierHint).toLowerCase();
+                    target = dossiersList.find(d => 
+                        (d.dossier_code && d.dossier_code.toLowerCase().includes(hintLower)) ||
+                        (d.internal_reference && d.internal_reference.toLowerCase().includes(hintLower)) ||
+                        (d.medicine && d.medicine.brand_name_fr && d.medicine.brand_name_fr.toLowerCase().includes(hintLower)) ||
+                        (d.medicine && d.medicine.dci_fr && d.medicine.dci_fr.toLowerCase().includes(hintLower)) ||
+                        (d.medical_device && d.medical_device.commercial_name_fr && d.medical_device.commercial_name_fr.toLowerCase().includes(hintLower))
+                    );
+                }
+
+                if (!target && dossiersList && dossiersList.length > 0) {
+                    target = dossiersList[0];
+                }
+
+                if (target) {
+                    selectedDossierId = target.id;
+                    expandedDossierTreeIds.add(target.id);
+                    await selectDossier(target.id);
+                    currentDossierModuleFilter = modNumber;
+                    currentDossierSubModuleFilter = 'all';
+                    if (currentDossierDetail) {
+                        renderDossierCenterView(currentDossierDetail);
+                    }
+                }
+            } catch(err) {
+                console.error("Erreur openDossierModule:", err);
+            }
+        }
+        window.openDossierModule = openDossierModule;
+
         function formatDossierStatusBadge(st) {
             switch(st) {
                 case 'brouillon':

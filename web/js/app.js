@@ -291,6 +291,25 @@
 
         function selectAddressLocation(loc) {
             closeAddressBar();
+            if (!loc) return;
+            if (loc.target && loc.target.startsWith("ctd-para-")) {
+                const modNum = parseInt(loc.target.replace("ctd-para-", ""), 10) || 1;
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule('parac', modNum);
+                    return;
+                }
+            } else if (loc.target && loc.target.startsWith("dm-")) {
+                const hint = loc.target.replace("dm-", "");
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule(hint, 0);
+                    return;
+                }
+            } else if (loc.target && loc.target.startsWith("ged-")) {
+                if (typeof switchDomainModule === 'function') {
+                    switchDomainModule('ged');
+                    return;
+                }
+            }
             document.getElementById("bc-root").innerText = "GED";
             document.getElementById("bc-sec").innerText = "Affaires Réglementaires";
             document.getElementById("bc-prod").innerText = loc.title.split("—")[0].trim();
@@ -948,6 +967,24 @@
 
 
         function goToLocation(targetKey) {
+            if (targetKey && targetKey.startsWith("ctd-para-")) {
+                const modNum = parseInt(targetKey.replace("ctd-para-", ""), 10) || 1;
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule('parac', modNum);
+                    return;
+                }
+            } else if (targetKey && targetKey.startsWith("dm-")) {
+                const hint = targetKey.replace("dm-", "");
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule(hint, 0);
+                    return;
+                }
+            } else if (targetKey && targetKey.startsWith("ged-")) {
+                if (typeof switchDomainModule === 'function') {
+                    switchDomainModule('ged');
+                    return;
+                }
+            }
             const loc = addressLocations.find(l => l.target === targetKey);
             if (loc) {
                 selectAddressLocation(loc);
