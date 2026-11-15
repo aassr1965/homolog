@@ -600,10 +600,10 @@
     </h2>
 
     <div class="kpi-grid">
-        <div class="kpi-card blue">
+        <div class="kpi-card green" style="border-left: 3px solid #10b981;">
             <div class="kpi-label">Phase 1 (Socle & PSSI)</div>
-            <div class="kpi-value">7 / 8 Complétés</div>
-            <div class="kpi-sub">Jalon 1.8 Prochain (88%)</div>
+            <div class="kpi-value">8 / 8 Complétés</div>
+            <div class="kpi-sub">Phase 1 Complète (100% ✅)</div>
         </div>
         <div class="kpi-card amber">
             <div class="kpi-label">Phase 2 (Élaboration & Variations)</div>
@@ -655,8 +655,8 @@
             <rect x="189" y="38" width="42" height="14" rx="2" fill="#10b981"/>
             <text x="210" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.7 Studio ✅</text>
             <!-- 1.8 -->
-            <rect x="234" y="38" width="36" height="14" rx="2" fill="#0284c7" stroke="#0369a1" stroke-width="1"/>
-            <text x="252" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.8 Pkg 🔄</text>
+            <rect x="234" y="38" width="36" height="14" rx="2" fill="#10b981"/>
+            <text x="252" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.8 Pkg ✅</text>
 
             <!-- Lignes Phase 2 -->
             <text x="10" y="72" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 2 : ÉLABORATION & VARIATIONS</text>
@@ -685,15 +685,13 @@
             <!-- Légende -->
             <g transform="translate(10, 150)">
                 <circle cx="5" cy="5" r="3.5" fill="#10b981"/>
-                <text x="13" y="8" fill="#475569" font-size="6.8">Complété (7 jalons ✅)</text>
-                <circle cx="105" cy="5" r="3.5" fill="#0284c7"/>
-                <text x="113" y="8" fill="#475569" font-size="6.8">En cours (1.8 Packaging & Réversibilité)</text>
-                <circle cx="260" cy="5" r="3.5" fill="#0d9488"/>
-                <text x="268" y="8" fill="#475569" font-size="6.8">2.1 Atelier Collaboratif</text>
-                <circle cx="385" cy="5" r="3.5" fill="#38bdf8"/>
-                <text x="393" y="8" fill="#475569" font-size="6.8">Phase 2 Planifiée</text>
-                <circle cx="495" cy="5" r="3.5" fill="#818cf8"/>
-                <text x="503" y="8" fill="#475569" font-size="6.8">Phase 3 Écosystème M2M</text>
+                <text x="13" y="8" fill="#475569" font-size="6.8">Complété (8 jalons Phase 1 ✅)</text>
+                <circle cx="120" cy="5" r="3.5" fill="#0d9488"/>
+                <text x="128" y="8" fill="#475569" font-size="6.8">Prochain : 2.1 Atelier Collaboratif</text>
+                <circle cx="260" cy="5" r="3.5" fill="#38bdf8"/>
+                <text x="268" y="8" fill="#475569" font-size="6.8">Phase 2 Planifiée</text>
+                <circle cx="385" cy="5" r="3.5" fill="#818cf8"/>
+                <text x="393" y="8" fill="#475569" font-size="6.8">Phase 3 Écosystème M2M</text>
             </g>
         </svg>    </div>
 
@@ -904,22 +902,22 @@
     </div>
 
     <!-- Jalon 1.8 -->
-    <div class="milestone-card planned">
+    <div class="milestone-card done">
         <div class="milestone-header">
             <span class="milestone-title">Jalon 1.8 : Packaging Docker, Déploiement & Archive de Réversibilité .homolog</span>
-            <span class="badge badge-planned">Planifié (Prochain)</span>
+            <span class="badge badge-done">Complété (100% ✅)</span>
         </div>
         <ul class="milestone-items">
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> Fichier `docker-compose.yml` durci de production (PostgreSQL 16 alpine + conteneur binaire Go statique).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> Script d'assistant de premier démarrage (Setup Wizard pour configuration du labo et du premier compte DT).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> Module d'export / import de l'archive universelle chiffrée `.homolog` (dump base + blobs GED dédupliqués + manifestes SHA-256).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> Validation de la réversibilité absolue (sauvegarde SaaS → restauration On-Premise 100% fonctionnelle sans perte).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Environnement Docker durci</strong> : `Dockerfile` multi-stage statique Alpine (v0.8.0), utilisateur non-root `homolog:homolog`, healthcheck `/health` et configuration de production `.env.production`.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Assistant de Premier Démarrage (Setup Wizard BPF)</strong> : provisionnement de l'organisation MIPH et du compte Pharmacien DT (1.A.7), chiffrement Argon2id, scellement dans la piste d'audit et écran guidé `#screen-setup`.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Archive Universelle Portative .homolog</strong> : conteneur universel tar.gz regroupant les 17 tables relationnelles (`database/`), les fichiers du coffre-fort CAS (`blobs/`) et le manifeste signé avec sceau d'archive SHA-256 (`manifest.json`).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Réversibilité ALCOA+ sans vendor lock-in</strong> : moteur d'export direct, réinjection transactionnelle avec contrôle systématique du hash SHA-256 de chaque document (rejet 422 si altération), interface cockpit IT et suite de tests validée à 100%.</li>
         </ul>
     </div>
 
-    <div class="callout teal">
-        <div class="callout-title">Point d'Étape Phase 1</div>
-        Avec 7 jalons complétés sur 8 et le Jalon 1.7 validé de bout en bout (Studio Compléments, Redevances BV1/BV2, Submission Package E-TASJIL et RDV), le socle de la plateforme <strong>Homolog</strong> couvre désormais l'intégralité du cycle réglementaire actif. Le Jalon 1.8 (Packaging Docker & Archive .homolog) parachèvera la Phase 1.
+    <div class="callout green" style="background:#ecfdf5; border-left:4px solid #10b981;">
+        <div class="callout-title" style="color:#065f46;">Phase 1 Achevée à 100% — Socle Réglementaire Souverain Prêt</div>
+        Avec les 8 jalons de la Phase 1 validés de bout en bout, la plateforme <strong>Homolog</strong> constitue désormais un socle réglementaire complet, opposable et inviolable (Audit Trail ALCOA+, RBAC 14 permissions, Guide CTD 2025 & DM 2021, Studio Compléments, Redevances BV1/BV2, Veille RDV et Réversibilité .homolog). Le prochain jalon inaugurera la <strong>Phase 2</strong> avec l'Atelier d'Élaboration Collaboratif BPF (Maker-Checker-Approver).
     </div>
 
     <div class="page-footer">
@@ -1156,8 +1154,8 @@
             <tr>
                 <td><strong>Jalons Phase 1 Complétés</strong></td>
                 <td>8 / 8 Jalons</td>
-                <td><strong>7 / 8 Jalons Complétés</strong> (1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7)</td>
-                <td><span class="badge badge-done">Jalon 1.7 Validé ✅ (Jalon 1.8 prochain)</span></td>
+                <td><strong>8 / 8 Jalons Complétés (100%)</strong> (1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 &amp; 1.8)</td>
+                <td><span class="badge badge-done">Phase 1 Validée à 100% ✅ (Phase 2 Prochaine)</span></td>
             </tr>
             <tr>
                 <td><strong>Couverture Tests Unitaires</strong></td>

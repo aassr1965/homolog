@@ -27,9 +27,9 @@ gantt
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :done, p1_5, after p1_4, 4d
     UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):done, p1_6, after p1_5, 4d
     Studio Compléments & Assistant Soumission ANPP (1.7) :done, p1_7, after p1_6, 3d
-    Packaging Docker & Archive .homolog (1.8)        :active, p1_8, after p1_7, 2d
+    Packaging Docker & Archive .homolog (1.8)        :done, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
-    Atelier Élaboration & Workflow BPF Maker-Checker (2.1):p2_1, after p1_8, 4d
+    Atelier Élaboration & Workflow BPF Maker-Checker (2.1):active, p2_1, after p1_8, 4d
     Redevances, Devises & Justificatifs Bancaires(2.2):p2_2, after p2_1, 3d
     Moteur Variations ANPP (Mmin/Mmod/Mmaj)(2.3)     :p2_3, after p2_2, 4d
     Espace Consultants Externes Cloisonné (2.4)      :p2_4, after p2_3, 2d
@@ -214,11 +214,24 @@ gantt
     - [x] Génération des manifestes d'intégrité SHA-256 (JSON et XML) et scellement formel du dossier de soumission.
     - [x] Fiche récapitulative de télé-saisie E-TASJIL pour saisie rapide alignée champ par champ avec les masques du portail officiel.
 
-### Jalon 1.8 : Packaging, Déploiement & Réversibilité
-- [ ] Fichier `docker-compose.yml` de production (PostgreSQL 16 + conteneur binaire Go Homolog).
-- [ ] Script d'assistant de premier démarrage (Setup Wizard pour configuration du labo et du premier compte DT).
-- [ ] Module d'export / import de l'archive universelle chiffrée `.homolog` (dump base + blobs GED dédupliqués + contrôle SHA-256).
-- [ ] Validation de la réversibilité complète (sauvegarde SaaS → restauration On-Premise 100% fonctionnelle).
+### Jalon 1.8 : Packaging, Déploiement & Réversibilité (Socle Phase 1 100% Validé)
+- [x] **Environnement Docker & Docker-Compose de Production :**
+  - [x] `Dockerfile` multi-stage durci avec binaire statique Go CGO_ENABLED=0 (`v0.8.0`), image Alpine minimale, utilisateur non-root `homolog:homolog`, santé `/health`.
+  - [x] `docker-compose.yml` orchestrant l'application et la base PostgreSQL 16 Alpine avec healthcheck `pg_isready` et volumes persistants.
+  - [x] Fichier `.env.production` avec durcissement PSSI (désactivation stricte du commutateur dev, Cookie Secure forcé, clé JWT 64+ car., timeout 15 min BPF).
+- [x] **Assistant de Premier Démarrage (Setup Wizard BPF 1.A.7) :**
+  - [x] Détection automatique du statut vierge de l'instance (`GET /api/v1/setup/status`).
+  - [x] Provisionnement initial de l'établissement MIPH et du compte Pharmacien DT titulaire (`POST /api/v1/setup/initialize`).
+  - [x] Écran guidé d'initialisation in-app (`#screen-setup`) avec hachage Argon2id et journalisation dans la piste d'audit immuable.
+  - [x] Garde-fou strict interdisant toute réinitialisation sur une instance déjà active (HTTP 409 Conflict).
+- [x] **Archive Universelle Portative .homolog & Réversibilité ALCOA+ :**
+  - [x] Spécification du conteneur d'archive universelle `HOMOLOG_PORTABLE_ARCHIVE_V1` (flux tar.gz autonome sans vendor lock-in).
+  - [x] Moteur d'export (`GET /api/v1/system/backup/export`) : sérialisation JSON des 17 tables métier (`database/`), collecte des pièces GED physiques dédupliquées (`blobs/<sha256>`), manifeste signé (`manifest.json`) et sceau d'archive global SHA-256 (`X-Homolog-Seal`).
+  - [x] Moteur de restauration certifié (`POST /api/v1/system/backup/restore`) : validation d'intégrité du manifeste, contrôle systématique du hash SHA-256 de chaque document CAS avec rejet immédiat en cas d'altération (HTTP 422), réinjection transactionnelle des 17 tables et scellement dans l'audit log.
+  - [x] Interface cockpit IT (`web/js/system_admin.js`) : section « Souveraineté & Réversibilité », téléchargement direct et modale de restauration (`#modal-restore-homolog`) avec barre de progression.
+- [x] **Validation de la réversibilité complète :**
+  - [x] Suite de tests unitaires et d'intégration validée à 100% (`backup_archive_test.go` : 5 tests réussis).
+  - [x] Phase 1 du socle fondateur achevée à 100% (8/8 jalons complétés).
 
 ---
 

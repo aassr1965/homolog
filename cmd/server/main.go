@@ -61,6 +61,7 @@ func main() {
 	var submissionHandler *api.SubmissionHandler
 	var appointmentHandler *api.AppointmentHandler
 	var regulatoryWatchHandler *api.RegulatoryWatchHandler
+	var setupHandler *api.SetupHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -117,6 +118,8 @@ func main() {
 
 		regulatoryWatchRepo := repository.NewRegulatoryWatchRepository(db.Pool)
 		regulatoryWatchHandler = api.NewRegulatoryWatchHandler(regulatoryWatchRepo, auditService)
+
+		setupHandler = api.NewSetupHandler(db.Pool, sessionManager, auditService, cfg)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -227,6 +230,11 @@ func main() {
 	})
 
 	// Routes API Authentification, 2FA, Signature DT et Audit Trail
+	if setupHandler != nil {
+		r.Get("/api/v1/setup/status", setupHandler.GetSetupStatus)
+		r.Post("/api/v1/setup/initialize", setupHandler.InitializeInstance)
+	}
+
 	if authHandler != nil {
 		r.Post("/api/v1/auth/login", authHandler.Login)
 		r.Post("/api/v1/auth/logout", authHandler.Logout)
@@ -268,6 +276,10 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/sessions/emergency-lockdown", systemHandler.EmergencyLockdown)
 				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/backup", systemHandler.TriggerBackup)
 				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/verify-integrity", systemHandler.VerifyCASIntegrity)
+
+				// Archive Universelle .homolog & Réversibilité BPF (Jalon 1.8)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermSysMaint, domain.PermDocApprovePDT)).Get("/api/v1/system/backup/export", systemHandler.ExportHomologArchive)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermSysMaint, domain.PermDocApprovePDT)).Post("/api/v1/system/backup/restore", systemHandler.RestoreHomologArchive)
 			}
 
 			// Référentiel Établissements, Sites & Produits (Jalon 1.3 - Guide ANPP 2025)
