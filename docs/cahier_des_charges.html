@@ -559,8 +559,8 @@
             <tr>
                 <td><strong>10</strong></td>
                 <td><strong>Spécifications Exhaustives des États de Sortie & Reporting Réglementaire</strong></td>
-                <td>15 états BPF/ANPP : bordereaux BV1/BV2, dépôts CTD, Audit Trail ALCOA+, QR-Code d'intégrité, PDF/A.</td>
-                <td><strong>Matrice des 15 États</strong></td>
+                <td>23 états documentaires : 15 états réglementaires finaux (BV1/BV2, CTD, Audit Trail) + 8 états intermédiaires de suivi d'avancement &amp; pilotage.</td>
+                <td><strong>Référentiel des 23 États</strong></td>
             </tr>
             <tr>
                 <td><strong>11</strong></td>
@@ -2955,9 +2955,110 @@ type ANPPService interface {
     </tbody>
 </table>
 
-<h3>10.3 Spécifications Détaillées des 4 Maquettes Maîtresses Réglementaires</h3>
+<h3>10.3 Matrice des 8 États Intermédiaires de Suivi d'Avancement &amp; Pilotage Opérationnel</h3>
+<p>La constitution d'un dossier CTD s'étalant sur plusieurs mois et mobilisant des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&amp;D, Production, Assurance Qualité, Partenaires façonniers et CROs), la plateforme <strong>Homolog</strong> fournit <strong>huit états intermédiaires de liaison et de suivi</strong>. Contrairement aux états réglementaires finaux destinés à l'administration sanitaire, ces états constituent des <strong>outils de pilotage interne, d'arbitrage qualité et de levée préventive des goulets d'étranglement</strong> :</p>
 
-<h4>10.3.1 ES-REG-01 : Bordereau de Dépôt / Transmission Officiel CTD</h4>
+<table>
+    <thead>
+        <tr>
+            <th style="width: 10%;">Code Réf.</th>
+            <th style="width: 25%;">Dénomination de l'État Intermédiaire</th>
+            <th style="width: 15%;">Format Cible</th>
+            <th style="width: 20%;">Déclencheur &amp; Fréquence</th>
+            <th style="width: 15%;">Responsable Émetteur</th>
+            <th style="width: 15%;">Destinataire / Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- SUIVI MONTAGE & GATING -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #0284c7; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Volet 1 : Suivi de Montage CTD &amp; Contrôle d'Étape (Maker-Checker)</td>
+        </tr>
+        <tr>
+            <td><strong>EI-AVT-01</strong></td>
+            <td><strong>Fiche Navette d'Avancement CTD / DM (Dossier Progress Sheet)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Vue 360° du montage : % par module (M1-M5), statuts Maker-Checker et verrous actifs</span></td>
+            <td>PDF + Écran interactif</td>
+            <td>Hebdomadaire / Revue de projet</td>
+            <td>Chef de Projet Affaires Réglem.</td>
+            <td>Pharmacien DT &amp; CoDir Labo</td>
+        </tr>
+        <tr>
+            <td><strong>EI-AVT-02</strong></td>
+            <td><strong>Relevé des Écarts &amp; Pièces Manquantes (Gap Analysis Matrix)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Inventaire des pièces [E] manquantes/rejetées, ventilé par service responsable et dates butoirs</span></td>
+            <td>PDF + XLSX</td>
+            <td>À chaque sprint de montage / Revue mensuelle</td>
+            <td>Responsable Affaires Réglem.</td>
+            <td>Rédacteurs (Makers) &amp; Chefs de Départements</td>
+        </tr>
+        <tr>
+            <td><strong>EI-AVT-03</strong></td>
+            <td><strong>Fiche de Revue &amp; d'Annotation Checker (Quality Review Card)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Relevé d'arbitrage émis lors d'un rejet : écarts constatés vs BPF/ICH et actions correctives</span></td>
+            <td>PDF généré in-app</td>
+            <td>À chaque rejet ou demande d'ajustement</td>
+            <td>Relecteur Qualité (*Checker*)</td>
+            <td>Rédacteur (*Maker*) &amp; Assurance Qualité</td>
+        </tr>
+
+        <!-- EPREUVES TEMPORELLES -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #d97706; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Volet 2 : Suivi Chronologique des Épreuves Incompressibles</td>
+        </tr>
+        <tr>
+            <td><strong>EI-CHR-01</strong></td>
+            <td><strong>Fiche de Suivi des Stabilités Zone IVb (Stability Milestone Card)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Suivi des échéances d'étuves M0, M3, M6 (seuil légal dépôt), M9, M12, M24 et conformité CoA</span></td>
+            <td>PDF + XLSX</td>
+            <td>Mensuel / À chaque échéance de prélèvement</td>
+            <td>Responsable Stabilités / CQ</td>
+            <td>Directeur Technique &amp; R&amp;D</td>
+        </tr>
+        <tr>
+            <td><strong>EI-CHR-02</strong></td>
+            <td><strong>Rapport d'Étape de l'Étude de Bioéquivalence (BE Study Tracker)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Suivi des jalons CRO : éthique, phase clinique, dosage bioanalytique BPL et calculs IC 90%</span></td>
+            <td>PDF</td>
+            <td>Mensuel / À réception d'un livrable CRO</td>
+            <td>Chef de Projet Galénique / R&amp;D</td>
+            <td>Directeur Technique</td>
+        </tr>
+
+        <!-- INSTRUCTION COMPLEMENTS & PIPELINE -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #4f46e5; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Volet 3 : Instruction Opérationnelle des Compléments &amp; Pilotage Pipeline</td>
+        </tr>
+        <tr>
+            <td><strong>EI-VIG-01</strong></td>
+            <td><strong>Fiche d'Instruction des Compléments &amp; Plan d'Action Interne</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Découpage des questions de la lettre de carence, jalons internes (J-15, J-5) et chronomètre 60j/90j</span></td>
+            <td>PDF + Fiche active</td>
+            <td>Dès notification d'une lettre ANPP</td>
+            <td>Coordinateur Réglementaire</td>
+            <td>Équipe Projet Compléments ANPP</td>
+        </tr>
+        <tr>
+            <td><strong>EI-CHG-01</strong></td>
+            <td><strong>Fiche d'Évaluation d'Impact Réglementaire (Change Control Assessment)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Évaluation préalable avant changement usine : rubrique 1-34 LD-DEPP07/V01, conditions, coût/délai</span></td>
+            <td>PDF</td>
+            <td>À l'initiation d'un Change Control interne</td>
+            <td>Assurance Qualité &amp; Affaires Réglem.</td>
+            <td>Comité de Contrôle des Changements (CCB)</td>
+        </tr>
+        <tr>
+            <td><strong>EI-PIP-01</strong></td>
+            <td><strong>Point de Situation Hebdomadaire du Pipeline (Weekly Pipeline Digest)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Synthèse CoDir : dossiers en attente ANPP, délais écoulés vs cibles (120j/180j), relances</span></td>
+            <td>PDF + XLSX</td>
+            <td>Hebdomadaire (Comité de Direction)</td>
+            <td>Responsable Affaires Réglem.</td>
+            <td>Directeur Technique &amp; Direction Générale</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="callout amber">
+    <div class="callout-title">Distinction de Statut : États Réglementaires vs États Intermédiaires</div>
+    Les <strong>15 États Réglementaires (ES-REG/FIN/VIG/QUA/DIR)</strong> constituent des actes officiels scellés, visés obligatoirement par le Pharmacien DT titulaire sous signature qualifiée 2FA, munis du QR-Code de vérification publique en ligne et du filigrane légal <code>OFFICIEL / APPROUVÉ</code>. À l'inverse, les <strong>8 États Intermédiaires (EI-AVT/CHR/VIG/CHG/PIP)</strong> sont des documents de travail internes munis du filigrane <code>DOCUMENT DE TRAVAIL / INTERNE / EN COURS</code>, destinés à la coordination opérationnelle et n'engageant pas la responsabilité légale externe de l'établissement.
+</div>
+
+<h3>10.4 Spécifications Détaillées des 4 Maquettes Maîtresses Réglementaires</h3>
+
+<h4>10.4.1 ES-REG-01 : Bordereau de Dépôt / Transmission Officiel CTD</h4>
 <p>Ce document officiel accompagne obligatoirement le dépôt physique des volumes CTD au niveau du Bureau d'Ordre de l'ANPP :</p>
 <ul>
     <li><strong>Cartouche d'identification de l'établissement :</strong> Raison sociale, adresse du siège, numéro d'agrément MIPH (art. 1.A.6), nom du Pharmacien Directeur Technique et coordonnées du délégué déposant.</li>
@@ -2966,7 +3067,7 @@ type ANPPService interface {
     <li><strong>Cadre réservé à l'ANPP (Guichet d'Accueil) :</strong> Date et heure d'arrivée, cachet humide du bureau d'ordre, signature de l'agent récepteur, numéro d'enregistrement attribué au dépôt, et liste d'émargement des pièces manquantes éventuelles.</li>
 </ul>
 
-<h4>10.3.2 ES-FIN-01 / ES-FIN-02 : Bordereaux de Versement BV1 &amp; BV2</h4>
+<h4>10.4.2 ES-FIN-01 / ES-FIN-02 : Bordereaux de Versement BV1 &amp; BV2</h4>
 <p>Édités conformément aux formulaires normalisés de la Direction de l'Administration et des Finances de l'ANPP :</p>
 <ul>
     <li><strong>Ventilation des prestations tarifées :</strong> Application stricte de la grille tarifaire du Décret Exécutif 21-82 (ex: enregistrement initial princeps 450 000 DZD, générique local 250 000 DZD, variation majeure 120 000 DZD, variation mineure 60 000 DZD, renouvellement 150 000 DZD).</li>
@@ -2974,7 +3075,7 @@ type ANPPService interface {
     <li><strong>Coordonnées bancaires officielles pré-remplies :</strong> Intitulé du compte : Agence Nationale des Produits Pharmaceutiques, Banque d'Algérie / Trésor Public, Numéro d'Identité Bancaire (RIB/RIP), avec champ dédié pour reporter le numéro de virement bancaire et la référence de la quittance émise par la régie des recettes.</li>
 </ul>
 
-<h4>10.3.3 ES-VIG-01 : Bordereau de Réponse aux Demandes de Compléments (Deficiency Letters)</h4>
+<h4>10.4.3 ES-VIG-01 : Bordereau de Réponse aux Demandes de Compléments (Deficiency Letters)</h4>
 <p>Document opposable permettant de formaliser la levée des réserves soulevées par les commissions d'experts de l'ANPP :</p>
 <ul>
     <li><strong>Rappel de la notification initiale :</strong> Référence de la lettre de carence de l'ANPP, date de notification officielle, date de fin de délai réglementaire (respect strict du chronomètre BPF de 60 ou 90 jours).</li>
@@ -3001,7 +3102,7 @@ type ANPPService interface {
     <li><strong>Déclaration solennelle d'engagement :</strong> Attestation signée par le Pharmacien Directeur Technique confirmant qu'aucune autre modification que celles explicitement décrites n'a été introduite dans le dossier.</li>
 </ul>
 
-<h4>10.3.4 ES-QUA-01 : Registre d'Audit Trail BPF Scellé &amp; Traçabilité ALCOA+</h4>
+<h4>10.4.4 ES-QUA-01 : Registre d'Audit Trail BPF Scellé &amp; Traçabilité ALCOA+</h4>
 <p>Ce certificat est édité sur demande lors des inspections des Bonnes Pratiques de Fabrication conduites par la Direction de l'Inspection de l'ANPP ou lors des audits de certification qualité ISO/GAMP 5 :</p>
 <ul>
     <li><strong>Périmètre audité :</strong> Code dossier, plage de dates sélectionnée, identifiant des acteurs intervenus.</li>
@@ -3009,7 +3110,7 @@ type ANPPService interface {
     <li><strong>Signature de scellement cryptographique :</strong> Mention en fin de document de l'empreinte globale SHA-256 du journal d'audit trail et du statut de synchronisation de la séquence PostgreSQL <code>audit_logs_id_seq</code> garantissant l'absence totale de suppression ou d'intercalation de lignes (principe <em>Append-Only</em> BPF).</li>
 </ul>
 
-<h3>10.4 Moteur d'Édition et Architecture Technique d'Exportation</h3>
+<h3>10.5 Moteur d'Édition et Architecture Technique d'Exportation</h3>
 <p>L'implémentation logicielle du sous-système de reporting dans le backend Go d'Homolog repose sur une chaîne de traitement haute performance :</p>
 
 <pre><code class="language-go">// ReportingService gère la production, le scellement et la vérification des états de sortie BPF.

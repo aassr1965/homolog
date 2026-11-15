@@ -804,7 +804,32 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 
 ---
 
-### 10.3 Architecture Technique du Moteur de Rendu et d'Exportation
+### 10.3 Matrice des 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel
+
+La constitution d'un dossier CTD s'étalant sur plusieurs mois et mobilisant des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité, Façonniers et CROs), la plateforme **Homolog** fournit **huit états intermédiaires de liaison et de suivi opérationnel**.
+
+Contrairement aux états réglementaires finaux destinés aux autorités sanitaires, ces états constituent des **instruments internes de pilotage de projet, de coordination transversale et d'arbitrage qualité** :
+
+| Code Réf. | Dénomination de l'État Intermédiaire | Format Cible | Déclencheur & Fréquence | Responsable Émetteur | Destinataire / Usage |
+|---|---|---|---|---|---|
+| **Volet 1 : Suivi de Montage CTD & Contrôle d'Étape (Maker-Checker)** | | | | | |
+| **EI-AVT-01** | **Fiche Navette d'Avancement CTD / DM (Dossier Progress Sheet)** (Vue 360° du montage : % par module M1-M5, statuts Maker-Checker et verrous actifs) | PDF + Écran interactif | Hebdomadaire / Revue de projet | Chef de Projet Affaires Réglem. | Pharmacien DT & CoDir Labo |
+| **EI-AVT-02** | **Relevé des Écarts & Pièces Manquantes (Gap Analysis Matrix)** (Inventaire des pièces [E] manquantes/rejetées, ventilé par service responsable et dates butoirs) | PDF + XLSX | À chaque sprint de montage / Revue mensuelle | Responsable Affaires Réglem. | Rédacteurs (Makers) & Chefs de Départements |
+| **EI-AVT-03** | **Fiche de Revue & d'Annotation Checker (Quality Review Card)** (Relevé d'arbitrage émis lors d'un rejet : écarts constatés vs BPF/ICH et actions correctives) | PDF généré in-app | À chaque rejet ou demande d'ajustement | Relecteur Qualité (*Checker*) | Rédacteur (*Maker*) & Assurance Qualité |
+| **Volet 2 : Suivi Chronologique des Épreuves Incompressibles** | | | | | |
+| **EI-CHR-01** | **Fiche de Suivi des Stabilités Zone IVb (Stability Milestone Card)** (Suivi des échéances d'étuves M0, M3, M6 seuil légal dépôt, M9, M12, M24 et conformité CoA) | PDF + XLSX | Mensuel / À chaque échéance de prélèvement | Responsable Stabilités / CQ | Directeur Technique & R&D |
+| **EI-CHR-02** | **Rapport d'Étape de l'Étude de Bioéquivalence (BE Study Tracker)** (Suivi des jalons CRO : éthique, phase clinique, dosage bioanalytique BPL et calculs IC 90%) | PDF | Mensuel / À réception d'un livrable CRO | Chef de Projet Galénique / R&D | Directeur Technique |
+| **Volet 3 : Instruction Opérationnelle des Compléments & Pilotage Pipeline** | | | | | |
+| **EI-VIG-01** | **Fiche d'Instruction des Compléments & Plan d'Action Interne** (Découpage des questions de la lettre de carence, jalons internes J-15/J-5 et chronomètre 60j/90j) | PDF + Fiche active | Dès notification d'une lettre ANPP | Coordinateur Réglementaire | Équipe Projet Compléments ANPP |
+| **EI-CHG-01** | **Fiche d'Évaluation d'Impact Réglementaire (Change Control Assessment)** (Évaluation préalable avant changement usine : rubrique 1-34 LD-DEPP07/V01, conditions, coût/délai) | PDF | À l'initiation d'un Change Control interne | Assurance Qualité & Affaires Réglem. | Comité de Contrôle des Changements (CCB) |
+| **EI-PIP-01** | **Point de Situation Hebdomadaire du Pipeline (Weekly Pipeline Digest)** (Synthèse CoDir : dossiers en attente ANPP, délais écoulés vs cibles 120j/180j, relances) | PDF + XLSX | Hebdomadaire (Comité de Direction) | Responsable Affaires Réglem. | Directeur Technique & Direction Générale |
+
+> **Distinction de Statut Réglementaire :**  
+> Les **15 États Réglementaires (ES)** sont des actes scellés, visés obligatoirement par le Pharmacien DT sous signature qualifiée 2FA, munis du QR-Code de vérification publique et du filigrane légal `OFFICIEL / APPROUVÉ`. À l'inverse, les **8 États Intermédiaires (EI)** portent le filigrane `DOCUMENT DE TRAVAIL / INTERNE / EN COURS` et servent exclusivement au pilotage opérationnel sans engager la responsabilité légale externe de l'établissement.
+
+---
+
+### 10.4 Architecture Technique du Moteur de Rendu et d'Exportation
 
 L'implémentation logicielle du sous-système de reporting dans le backend Go d'Homolog repose sur une chaîne de traitement haute performance :
 

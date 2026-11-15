@@ -269,17 +269,21 @@ gantt
     - Lettre d'engagement de suivi de stabilité continue post-commercialisation en Zone IVb (1.P.9).
     - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
     - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
-- [ ] **Moteur Universel de Restitution & des 15 États de Sortie BPF / ANPP (Chapitre 10 du Cahier des Charges) :**
+- [ ] **Moteur Universel de Restitution & Référentiel des 23 États Documentaires (Chapitre 10 du Cahier des Charges) :**
   - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
-  - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
+  - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL / EN COURS` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
   - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://homolog.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
   - Paginage légal indélébile **`Page X sur Y`** et cartouche d'identification normalisé (raison sociale, agrément MIPH, DCI, version, horodatage UTC+1 certifié).
-  - **Couverture intégrale des 5 familles d'états de sortie (15 états réglementaires officiels) :**
+  - **Volet A : Les 15 États Réglementaires & Finaux Opposables (ES) :**
     - *Famille 1 (Dépôt & Procédures CTD) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP).
     - *Famille 2 (Redevances & Financier Décret 21-82) :* ES-FIN-01 (Bordereau BV1 initial/DM), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
     - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
     - *Famille 4 (Qualité & Audit Trail BPF) :* ES-QUA-01 (Registre d'Audit Trail scellé ALCOA+), ES-QUA-02 (Manifeste de signature électronique Maker-Checker), ES-QUA-03 (Fiche de contrôle documentaire pré-dépôt).
     - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.homolog`).
+  - **Volet B : Les 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel (EI) :**
+    - *Suivi de montage CTD & Gating :* EI-AVT-01 (Fiche Navette d'avancement 360° et verrous bloquants), EI-AVT-02 (Relevé des écarts et pièces manquantes Gap Analysis par département), EI-AVT-03 (Fiche d'annotation et d'arbitrage Checker / AQ lors d'un rejet).
+    - *Épreuves temporelles incompressibles :* EI-CHR-01 (Fiche de suivi des stabilités Zone IVb M0 à M24 avec alerte seuil légal M6), EI-CHR-02 (Rapport d'étape bioéquivalence CRO avec suivi IC 90%).
+    - *Compléments, Changes & Pipeline :* EI-VIG-01 (Fiche d'instruction des compléments et plan d'action avec jalons internes J-15/J-5), EI-CHG-01 (Fiche d'évaluation d'impact réglementaire Change Control 1-34), EI-PIP-01 (Point hebdomadaire du pipeline de soumissions pour CoDir).
   - Exports tabulaires certifiés **Excel (XLSX) et CSV UTF-8** avec métadonnées d'audit trail (pour comptabilité, finance et analyses de portefeuille).
   - Routes REST API sécurisées (`GET /api/v1/dossiers/{id}/reports/{code}`, `POST .../seal`, `GET /api/v1/public/verify/{sha256}`).
 - [ ] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
@@ -382,4 +386,4 @@ gantt
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth, Produits & Réversibilité validés (100%) | Argon2id, TOTP, Sessions, CAS, RBAC & Backup conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
-| **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC & Décret 21-82 | 15 états spécifiés (5 familles métier, QR-Code d'intégrité, PDF/A, XLSX/CSV) | Valeur probante, anti-falsification et paginage « Page X sur Y » conformes BPF ✅ |
+| **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC & Décret 21-82 | 23 états spécifiés (15 états réglementaires finaux + 8 états intermédiaires de suivi d'avancement) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
