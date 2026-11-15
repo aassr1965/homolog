@@ -1,0 +1,54 @@
+services:
+  homolog_db:
+    image: postgres:16-alpine
+    container_name: homolog_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-homolog}
+      POSTGRES_USER: ${POSTGRES_USER:-homolog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-homolog_secret_2026}
+    volumes:
+      - homolog_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homolog -d homolog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - homolog-net
+
+  homolog_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: homolog_server
+    restart: always
+    depends_on:
+      homolog_db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "8090:8090"
+    volumes:
+      - homolog_storage:/var/lib/homolog/data/storage
+    networks:
+      - homolog-net
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.homolog.entrypoints=websecure"
+      - "traefik.http.routers.homolog.rule=Host(`pharma.dzairdev.com`)"
+      - "traefik.http.routers.homolog.tls.certresolver=myresolver"
+      - "traefik.http.services.homolog.loadbalancer.server.port=8090"
+
+volumes:
+  homolog_pgdata:
+  homolog_storage:
+
+networks:
+  homolog-net:
+    driver: bridge
+  traefik-public:
+    external: true
