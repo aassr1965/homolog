@@ -358,19 +358,44 @@ gantt
 
 ---
 
-## Phase 3 : Extensions & Écosystème (Priorité C)
-> **Objectif :** Étendre la plateforme à la surveillance post-marché, aux interconnexions d'entreprise et à l'interopérabilité directe avec l'ANPP.
+## Phase 3 : Intelligence Artificielle Réglementaire, Extensions & Écosystème (Priorité C / Fin de Développement)
+> **Objectif :** Déployer le copilote d'intelligence artificielle pharmaceutique (rédaction assistée, génération de SOP et audit de cohérence), la surveillance post-marché, les interconnexions d'entreprise et l'interopérabilité directe avec l'ANPP.
 
-### Jalon 3.1 : Registre de Vigilance Post-Marché
+### Jalon 3.1 : Copilote IA Réglementaire & Assistant Pharmaceutique Intégré
+- [ ] **Infrastructure Vectorielle & Connecteur LLM Modulaire (AI-Ready Core) :**
+  - Activation de l'extension `pgvector` dans PostgreSQL pour la recherche sémantique documentaire.
+  - Abstraction Go `LLMProvider` supportant l'alternance transparente entre :
+    - Mode Cloud Haute Performance (Gemini Pro / Claude Enterprise chiffré, sans rétention de données).
+    - Mode Souverain 100% On-Premise (Ollama / vLLM local sur CPU/GPU standard de laboratoire sans fuite de données).
+  - Indexation vectorielle du corpus réglementaire actualisé : Guide CTD ANPP 2025, Décrets 20-324 / 20-325, Ligne Directrice Variations LD-DEPP07/V01, Pharmacopée Européenne, BPF algériennes, Directives ICH Q1 à Q14.
+- [ ] **Assistant Intelligent de Rédaction Scientifique & Réglementaire par Rubrique :**
+  - Actions contextuelles intégrées à chaque rubrique CTD et fiche technique DM :
+    - *Générer un premier projet (Draft v0.1)* à partir des données structurées du produit (DCI, formule, dosage, stabilité, spécifications, sites).
+    - *Rédiger les sections critiques* : introductions, présentations produits, justifications scientifiques et galéniques (3.2.P.2), procédés de fabrication et contrôles en cours (3.2.P.3), protocoles et méthodes analytiques (3.2.P.5), revues de stabilités et synthèses globales QOS (Module 2.3).
+    - *Reformuler et améliorer* : harmonisation en style réglementaire institutionnel ANPP.
+    - *Développer une argumentation scientifique* : réponse argumentée face aux exigences techniques.
+- [ ] **Générateur Automatique de Procédures Opératoires Normalisées (SOP BPF) :**
+  - Canevas normé qualité BPF / GAMP 5 comprenant 7 sections maîtresses : *Objet, Domaine d'application, Définitions, Responsabilités (Ségrégation des tâches), Description détaillée du mode opératoire pas-à-pas, Documents associés et Enregistrements / Traçabilité ALCOA+*.
+  - Bibliothèque de modèles pour les procédures courantes : libération de lots, gestion des déviations et CAPA, revue de stabilités, maintenance/qualification d'équipements, contrôle analytique.
+- [ ] **Assistant de Vérification Réglementaire & Détection Précoce des Incohérences :**
+  - Analyse croisée multi-rubriques : identification des contradictions entre la formule déclarée, les certificats d'analyse (CoA), les tailles de lot industrielles et les maquettes de notices.
+  - Détection préventive des pièces obligatoires manquantes ou expirées avant soumission.
+  - Proposition de corrections et suggestions d'enrichissement motivées.
+- [ ] **Garde-fous ALCOA+ & Gouvernance « Human-in-the-Loop » :**
+  - Marqueur d'origine obligatoire sur tout texte généré (`Draft v0.1 - Suggestion IA`).
+  - Interdiction absolue d'auto-approbation : le pharmacien modifie, retouche et valide obligatoirement chaque texte.
+  - Traçabilité complète dans l'Audit Trail BPF (`audit_logs`) : modèle utilisé, prompt hash, utilisateur ayant déclenché et modifications apportées avant visa légal du Pharmacien Directeur Technique.
+
+### Jalon 3.2 : Registre de Vigilance Post-Marché
 - [ ] Module de Pharmacovigilance (suivi des PSUR, déclarations d'effets indésirables, fiches de notification officielles).
 - [ ] Module de Matériovigilance des DM (déclaration d'incidents, signalements de défaillances de dispositifs).
 - [ ] Suivi des enquêtes de lot et gestion des rappels/retraits ordonnés par l'ANPP ou initiés par le laboratoire.
 
-### Jalon 3.2 : Intégrations d'Entreprise
+### Jalon 3.3 : Intégrations d'Entreprise
 - [ ] Authentification unique SSO d'entreprise (SAML 2.0 / OpenID Connect) et synchronisation d'annuaire LDAP / Active Directory.
 - [ ] Flux de calendrier réglementaire iCal (synchronisation Outlook/Google Calendar des dates d'échéance ANPP et des renouvellements).
 
-### Jalon 3.3 : Passerelle Officielle API ANPP (Télétransmission Directe M2M)
+### Jalon 3.4 : Passerelle Officielle API ANPP (Télétransmission Directe M2M)
 - [ ] Connecteur d'interopérabilité API (`internal/anpp`) dès publication des spécifications techniques de télé-procédure ou webhook par l'ANPP.
 - [ ] Télétransmission automatisée sécurisée des paquets de soumission CTD scellés (Submission Packages) avec accusé de réception cryptographique.
 - [ ] Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Homolog.
@@ -381,9 +406,10 @@ gantt
 
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
-| **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0 - 11 Domaines) | Aligné Guide CTD ANPP 2025, LD Modifications 2026 & Chapitre 10 États de Sortie ✅ |
+| **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0 - 12 Domaines) | Aligné Guide CTD ANPP 2025, LD Modifications 2026, États de Sortie & Copilote IA ✅ |
 | **Jalons Phase 1 complétés** | 8 / 8 jalons | 8 / 8 jalons complétés (100 %) (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 & 1.8 ✅) | Phase 1 validée à 100% : socle souverain, GED BPF, compléments ANPP, BV1/BV2 et réversibilité .homolog ✅ |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth, Produits & Réversibilité validés (100%) | Argon2id, TOTP, Sessions, CAS, RBAC & Backup conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
 | **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC & Décret 21-82 | 23 états spécifiés (15 états réglementaires finaux + 8 états intermédiaires de suivi d'avancement) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
+| **Copilote IA Réglementaire (Phase 3)** | Spécifié (RAG pgvector, SOP, Rédaction & Audit) | Consigné au CDC (Chapitre 11) & Architecture AI-Ready | 100% Souverain / Cloud sécurisé, Human-in-the-Loop & Traçabilité ALCOA+ ⏳ |

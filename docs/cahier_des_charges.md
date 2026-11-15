@@ -879,6 +879,150 @@ Les routes API associées au reporting sont protégées par les permissions gran
 
 ---
 
-## 11. Conclusion et Validation
+## 11. Spécifications du Copilote IA & Intelligence Réglementaire Pharmaceutique (Phase 3)
+
+Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (**ANPP**), la constitution d'un dossier d'enregistrement CTD ou d'homologation de dispositif médical ne se résume pas à l'archivage passif de pièces administratives. Elle exige une intense activité de **rédaction scientifique**, de **justification technico-réglementaire** et de **croisement critique des données** (200 à plus de 1 000 pages).
+
+La plateforme **Homolog** intègre un sous-système d'intelligence artificielle spécialisée dans le domaine pharmaceutique et réglementaire, conçu pour agir comme un véritable copilote métier au service exclusif du Pharmacien et des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité).
+
+---
+
+### 11.1 Principes Directeurs, Secret Industriel et Responsabilité Légale (Human-in-the-Loop)
+
+L'implémentation de l'IA dans Homolog est encadrée par trois piliers stricts garantissant la conformité aux Bonnes Pratiques de Fabrication (BPF), au 21 CFR Part 11 et au principe d'intégrité **ALCOA+** :
+
+1. **Responsabilité Pénale Exclusive & Gouvernance « Human-in-the-Loop » :**
+   - L'IA n'est jamais autonome et ne prend aucune décision réglementaire. Elle agit exclusivement comme un **assistant de proposition et de rédaction préliminaire**.
+   - Tout contenu produit par l'IA est initialisé au statut **`Brouillon v0.1 — Suggestion IA`**.
+   - Le pharmacien rédacteur (*Maker*), le relecteur qualité (*Checker*) et le Pharmacien Directeur Technique titulaire (*Approver*) conservent la maîtrise totale : chaque paragraphe doit être relu, modifiable au clavier et formellement validé avant toute intégration définitive au dossier scellé.
+2. **Secret Industriel, Souveraineté & Protection des Formulations R&D :**
+   - Les formules galéniques, les procédés de synthèse de principes actifs, les profils de dissolution et les méthodes analytiques constituent des actifs industriels confidentiels majeurs.
+   - L'architecture garantit l'étanchéité absolue des données :
+     - Cloisonnement strict multi-tenant (`tenant_id`) au niveau de la base de données et des contextes de requêtes.
+     - Prise en charge du déploiement **100% On-Premise / Hors-ligne** (moteur local sans aucune connexion internet) pour les laboratoires soumis au secret défense ou à des impératifs stricts de souveraineté.
+     - En mode connecté, recours exclusif à des passerelles d'entreprise sécurisées garantissant par contrat qu'aucune donnée client n'est conservée, journalisée à des fins tierces ou utilisée pour réentraîner des modèles publics.
+3. **Traçabilité ALCOA+ & Marquage dans l'Audit Trail :**
+   - Chaque appel aux fonctions d'intelligence artificielle est consigné dans la table immuable `audit_logs` avec les métadonnées suivantes : identifiant de l'opérateur, horodatage UTC+1 certifié, rubrique concernée, modèle LLM sollicité, empreinte SHA-256 du prompt et du texte généré.
+   - L'historique des modifications conserve l'état initial proposé par l'IA et les retouches manuelles apportées par le pharmacien.
+
+---
+
+### 11.2 Assistant Intelligent de Rédaction Scientifique & Réglementaire par Rubrique
+
+L'assistant de rédaction est accessible au niveau de chaque section du dossier CTD (Modules 1 à 5) et du dossier technique de dispositif médical :
+
+1. **Génération Contextualisée de Projets Textuels (*Draft v0.1*) :**
+   À partir des données de référence renseignées dans le dossier (DCI, formule centésimale, dosage, forme galénique, spécifications de contrôle, données de stabilité Zone IVb, coordonnées des sites de fabrication), l'IA élabore des propositions textuelles hautement structurées :
+   - **Introductions & Fiches synthétiques :** Présentation globale du produit, historique et justification du statut (princeps, générique local, générique importé, DM).
+   - **Développement pharmaceutique (Module 3.2.P.2) :** Justification du choix de la forme galénique, compatibilité principe actif / excipients, sélection de l'emballage primaire et démonstration du rationnel scientifique.
+   - **Procédés de fabrication (Module 3.2.P.3) :** Description narrative chronologique des étapes de fabrication, paramètres critiques de procédé (CPP) et contrôles en cours (IPC).
+   - **Contrôle Qualité & Validation analytique (Module 3.2.P.5) :** Explications relatives aux méthodes de dosage, justification des limites de spécification selon les monographies de la Pharmacopée Européenne ou USP, et synthèse des paramètres de validation ICH Q2(R1).
+   - **Profils de dissolution & Justification de Biowaiver (Modules 1.M.P.3 / 5.3.1.2) :** Argumentation scientifique pour l'exonération des études de bioéquivalence in vivo basée sur la solubilité et la perméabilité (BCS).
+   - **Notices et résumés des caractéristiques du produit (RCP 1.P.1 / 1.P.2) :** Structuration des textes réglementaires bilingues conformes aux recommandations de l'ANPP.
+2. **Actions Rédactionnelles Unitaires In-App :**
+   Pour chaque bloc de texte, le rédacteur dispose d'actions rapides en un clic :
+   - *🪄 Rédiger cette rubrique* : Premier jet complet à partir des paramètres du dossier.
+   - *🔄 Reformuler en style réglementaire* : Élévation du niveau de langage vers le standard institutionnel ANPP.
+   - *📝 Développer l'argumentation* : Approfondissement d'un point technique ou d'une justification scientifique.
+   - *✂️ Synthétiser / Condenser* : Résumé exécutif pour les synthèses de dossiers (Module 2).
+
+---
+
+### 11.3 Générateur Automatique de Procédures Opératoires Normalisées (SOP BPF)
+
+Le module qualité permet de générer des procédures pharmaceutiques et qualité conformes aux exigences des Bonnes Pratiques de Fabrication (BPF algériennes, PIC/S et GAMP 5) :
+
+1. **Structure Standardisée des Procédures Générées :**
+   Toute procédure produite respecte un canevas normé articulé en 7 chapitres obligatoires :
+   - **1. Objet :** Finalité précise et objectifs qualité de la procédure.
+   - **2. Domaine d'application :** Périmètre d'application (départements, sites, lignes de production, formes pharmaceutiques).
+   - **3. Définitions & Abréviations :** Terminologie BPF, acronymes techniques et références scientifiques.
+   - **4. Responsabilités & Ségrégation des Fonctions :** Rôles opérationnels détaillés (Rédacteur, Vérificateur AQ, Approbateur Pharmacien DT, Opérateurs d'exécution).
+   - **5. Mode Opératoire Détaillé :** Description chronologique et exhaustive des étapes d'exécution, précautions de sécurité, conditions opératoires et critères d'acceptation.
+   - **6. Documents Associés & Références :** Normes, textes légaux ANPP, fiches techniques et pharmacopées applicables.
+   - **7. Enregistrements & Traçabilité ALCOA+ :** Modèles de formulaires, feuilles de travail, fiches d'émargement et règles d'archivage pérenne.
+2. **Bibliothèque de Modèles Pré-Paramétrés :**
+   L'IA s'appuie sur une matrice de canevas types couvrant les processus clés du laboratoire :
+   - Gestion des déviations et traitement des CAPA.
+   - Contrôle analytique et libération de lots de médicaments.
+   - Conduite des études de stabilité sous conditions climatiques Zone IVb.
+   - Revue Annuelle de la Qualité Produit (PQR / RQP).
+   - Qualification des équipements de production (QI / QO / QP) et nettoyage industriel.
+   - Gestion des réclamations clients et procédures de retrait / rappel de lots.
+
+---
+
+### 11.4 Assistant de Vérification Réglementaire & Audit de Cohérence Inter-Rubriques
+
+L'IA agit comme un auditeur qualité virtuel permanent, capable d'examiner le dossier dans son ensemble et de croiser les informations entre les différentes rubriques et pièces jointes :
+
+1. **Détection des Incohérences Croisées :**
+   - Contrôle de cohérence entre la formule de fabrication (3.2.P.3), les spécifications du produit fini (3.2.P.5.1) et les certificats d'analyse de lots (CoA 1.P.5).
+   - Vérification de concordance entre les excipients mentionnés dans la formule et les excipients à effet notoire déclarés dans la notice patient (1.P.2) et le RCP (1.P.1).
+   - Détection des écarts de taille de lot entre les lots pilotes de stabilité et la taille de lot industrielle commerciale déclarée en 1.P.8.
+2. **Identification des Pièces Manquantes & Analyse des Écarts (*Gap Analysis*) :**
+   - Comparaison automatique du dossier en cours avec la matrice des exigences du **Guide CTD ANPP Juillet 2025** ou de l'**Arrêté du 10 mai 2021 (DM)** selon la procédure concernée (NI, NF, RI, RF, MI, MF).
+   - Signalement immédiat des pièces obligatoires [E] non encore rattachées ou dont la date de validité est expirée (ex: certificat BPF de fabricant de principe actif 1.M.S.2).
+3. **Recommandations d'Amélioration & Prévention des Carences ANPP :**
+   - Formulation d'avis consultatifs avant soumission officielle : propositions de compléments, alertes sur les formulations ambiguës susceptibles de déclencher une lettre de demande de renseignements de l'ANPP (délais de 60j ou 90j).
+
+---
+
+### 11.5 Architecture Technique Hybride, Base Vectorielle `pgvector` & RAG Souverain
+
+L'intégration de l'intelligence artificielle au cœur d'Homolog repose sur une conception modulaire, évolutive et agnostique du fournisseur d'IA :
+
+```mermaid
+flowchart LR
+    subgraph D["Données Structurées Homolog"]
+        D1["Dossiers & Produits"]
+        D2["Spécifications & Stabilités"]
+        D3["Documents GED CAS"]
+    end
+    subgraph R["RAG Réglementaire (pgvector)"]
+        R1["Guide CTD ANPP 2025"]
+        R2["Décrets 20-324 / 20-325 & BPF"]
+        R3["Ligne Directrice Variations 2026"]
+        R4["Pharmacopée Européenne & ICH"]
+    end
+    subgraph M["Moteur IA Homolog (internal/ai)"]
+        M1["Prompt Orchestrator & BPF Guardrails"]
+    end
+    subgraph P["Fournisseurs LLM Interchangeables"]
+        P1["Mode Cloud Entreprise Sécurisé<br>(Gemini / Claude Pro - Chiffré)"]
+        P2["Mode Souverain 100% Local On-Premise<br>(Ollama / vLLM sur CPU/GPU Labo)"]
+    end
+    subgraph UI["Interface Pharma Explorer"]
+        UI1["Assistant Rédactionnel In-App (v0.1)"]
+        UI2["Audit de Cohérence & Gap Analysis"]
+        UI3["Générateur de SOP Qualité"]
+    end
+
+    D --> M
+    R --> M
+    M <--> P
+    M --> UI
+```
+
+1. **Base de Connaissances Vectorielle Intégrée (`pgvector`) :**
+   - Exploitation de l'extension native **`pgvector`** de PostgreSQL, sans composant serveur externe supplémentaire.
+   - Indexation vectorielle du corpus juridique et technique actualisé (ANPP, Ministère de l'Industrie Pharmaceutique, ICH, Pharmacopée).
+   - Recherche sémantique ultra-rapide (< 10 ms sur CPU standard) permettant de sourcer chaque proposition de l'IA avec la référence réglementaire exacte.
+2. **Abstraction Technique du Fournisseur LLM (`LLMProvider`) :**
+   - Le moteur backend Go expose une interface unique découplée de toute dépendance propriétaire :
+     ```go
+     // LLMProvider définit le contrat d'intégration de l'IA pharmaceutique.
+     type LLMProvider interface {
+         GenerateSectionDraft(ctx context.Context, req SectionPromptRequest) (*SectionDraftResponse, error)
+         AuditDossierConsistency(ctx context.Context, req ConsistencyAuditRequest) (*ConsistencyAuditReport, error)
+         GenerateSOPDraft(ctx context.Context, req SOPPromptRequest) (*SOPDraftResponse, error)
+     }
+     ```
+   - **Mode 1 (Cloud Entreprise Sécurisé) :** Exécution par API chiffrée avec temps de réponse de 1 à 2 secondes, zéro investissement en matériel GPU pour le laboratoire, et garantie stricte de non-conservation des données.
+   - **Mode 2 (Souverain 100% Local On-Premise) :** Exécution hors-ligne via connecteur local (*Ollama / vLLM*) sur serveur d'entreprise existant (CPU multi-cœurs ou GPU dédié), garantissant qu'aucun octet ne transite sur internet.
+
+---
+
+## 12. Conclusion et Validation
 
 Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme **Homolog**. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.

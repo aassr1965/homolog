@@ -1073,23 +1073,37 @@
     <div class="page-break"></div>
     <div class="page-header">
         <span>HOMOLOG • Feuille de Route Stratégique</span>
-        <span>Phase 3 : Surveillance Post-Marché & Écosystème M2M</span>
+        <span>Phase 3 : Intelligence Artificielle & Écosystème M2M</span>
     </div>
 
     <!-- ==================== PHASE 3 ==================== -->
     <h2 class="section-title">
-        <span>4. Phase 3 : Extensions & Écosystème M2M</span>
-        <span class="badge badge-planned">Priorité C (Could Have)</span>
+        <span>4. Phase 3 : Intelligence Artificielle Réglementaire, Extensions & Écosystème M2M</span>
+        <span class="badge badge-planned">Priorité C (Fin de Développement)</span>
     </h2>
 
     <div class="callout">
         <div class="callout-title">Objectif Stratégique de la Phase 3</div>
-        Étendre la plateforme à la surveillance post-marché (Pharmacovigilance et Matériovigilance des DM), aux interconnexions d'entreprise sécurisées (SSO SAML/LDAP et flux iCal) et à l'interopérabilité directe Machine-to-Machine avec les plateformes de l'Agence Nationale des Produits Pharmaceutiques (E-TASJIL / guichet M2M).
+        Déployer le copilote d'intelligence artificielle pharmaceutique (rédaction assistée, génération de SOP et audit de cohérence multi-rubriques), la surveillance post-marché (Pharmacovigilance et Matériovigilance des DM), les interconnexions d'entreprise sécurisées (SSO SAML/LDAP et flux iCal) et l'interopérabilité directe Machine-to-Machine avec l'ANPP (E-TASJIL / guichet M2M).
     </div>
 
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 3.1 : Registre de Vigilance Post-Marché</span>
+            <span class="milestone-title">Jalon 3.1 : Copilote IA Réglementaire & Assistant Pharmaceutique Intégré</span>
+            <span class="badge badge-planned">Planifié (Phase 3)</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Infrastructure Vectorielle & Connecteur LLM Modulaire :</strong> Activation de <code>pgvector</code> dans PostgreSQL, abstraction Go <code>LLMProvider</code> supportant le mode Cloud Entreprise Chiffré et le mode Souverain 100% Local On-Premise (Ollama/vLLM sur CPU standard sans fuite de données). Indexation du Guide CTD 2025, décrets et ICH.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Assistant de Rédaction Scientifique par Rubrique (Draft v0.1) :** Rédaction assistée des introductions, justifications galéniques (3.2.P.2), procédés de fabrication (3.2.P.3), contrôles analytiques (3.2.P.5), revues de stabilités et synthèses QOS Module 2.3.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Générateur Automatique de Procédures Qualité BPF (SOP) :** Canevas normé en 7 chapitres (Objet, Domaine, Définitions, Responsabilités, Mode opératoire détaillé, Documents associés, Traçabilité ALCOA+).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Assistant de Vérification Réglementaire & Détection d'Incohérences :</strong> Détection des contradictions formule/spécifications/CoA/notices, gap analysis des pièces obligatoires [E] et prévention des carences ANPP.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Gouvernance Human-in-the-Loop & ALCOA+ :</strong> Marqueur d'origine IA obligatoire, interdiction d'auto-approbation, relecture et validation humaine obligatoire par le Pharmacien DT avec audit trail complet.</li>
+        </ul>
+    </div>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 3.2 : Registre de Vigilance Post-Marché</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -1101,7 +1115,7 @@
 
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 3.2 : Intégrations d'Entreprise SSO & Calendrier</span>
+            <span class="milestone-title">Jalon 3.3 : Intégrations d'Entreprise SSO & Calendrier</span>
             <span class="badge badge-planned">Planifié</span>
         </div>
         <ul class="milestone-items">
@@ -1112,7 +1126,7 @@
 
     <div class="milestone-card planned">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 3.3 : Passerelle Officielle API ANPP (Télétransmission Directe M2M)</span>
+            <span class="milestone-title">Jalon 3.4 : Passerelle Officielle API ANPP (Télétransmission Directe M2M)</span>
             <span class="badge badge-anpp">Guichet M2M</span>
         </div>
         <ul class="milestone-items">
@@ -1187,6 +1201,12 @@
                 <td>Conforme Chapitre 10 CDC &amp; Décret 21-82</td>
                 <td><strong>23 États Spécifiés</strong> (15 réglementaires + 8 intermédiaires de suivi)</td>
                 <td><span class="badge badge-done">Valeur probante &amp; ALCOA+ ✅</span></td>
+            </tr>
+            <tr>
+                <td><strong>Copilote IA Réglementaire (Phase 3)</strong></td>
+                <td>RAG pgvector, SOP &amp; Audit de cohérence</td>
+                <td><strong>Consigné au CDC (Chapitre 11)</strong> (AI-Ready by Design)</td>
+                <td><span class="badge badge-planned">Human-in-the-Loop &amp; BPF ⏳</span></td>
             </tr>
         </tbody>
     </table>
