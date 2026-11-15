@@ -311,10 +311,10 @@ func (h *SystemHandler) RestoreHomologArchive(w http.ResponseWriter, r *http.Req
 		"tables_restored": len(restoredTables),
 		"blobs_verified":  verifiedBlobsCount,
 		"manifest": map[string]any{
-			"version":           manifest.Version,
-			"source_org":        manifest.OrganizationName,
-			"creation_date":     manifest.CreatedAt.Format(time.RFC3339),
-			"original_author":   manifest.CreatedByEmail,
+			"version":            manifest.Version,
+			"source_org":         manifest.OrganizationName,
+			"creation_date":      manifest.CreatedAt.Format(time.RFC3339),
+			"original_author":    manifest.CreatedByEmail,
 			"cryptographic_seal": manifest.ArchiveSeal,
 		},
 	})
