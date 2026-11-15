@@ -741,7 +741,7 @@ const mockAuditTrail = [
                             Action requise : Valider les pièces administratives du Module 1 (Statut de commercialisation, BPF fabricant actif).
                         </div>
                     </div>
-                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 12px; white-space:nowrap; cursor:pointer;" onclick="goToLocation('ctd-para-1'); closeModal('modal-alerts');">
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 12px; white-space:nowrap; cursor:pointer;" onclick="closeModal('modal-alerts'); if(typeof openDossierModule === 'function') { openDossierModule('parac', 1); } else { goToLocation('ctd-para-1'); }">
                         Accéder au Module 1 ➔
                     </button>
                 </div>
