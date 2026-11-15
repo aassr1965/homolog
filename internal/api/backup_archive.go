@@ -19,6 +19,7 @@ import (
 
 	"github.com/google/uuid"
 	"homolog/internal/audit"
+	"homolog/internal/auth"
 )
 
 // HomologManifest décrit l'inventaire cryptographique et les métadonnées de l'archive .homolog
@@ -53,24 +54,39 @@ func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	now := time.Now().UTC()
-	archiveFilename := fmt.Sprintf("homolog-archive-%s-%s.homolog", user.OrganizationSlug, now.Format("20060102-150405"))
+	// Détermination de l'organisation cible (cloisonnement multi-tenant strict)
+	targetOrgID := user.OrganizationID
+	if reqOrg := r.URL.Query().Get("org_id"); reqOrg != "" && user.HasPermission("SYS_MAINT") {
+		if parsed, err := uuid.Parse(reqOrg); err == nil {
+			targetOrgID = parsed
+		}
+	}
 
-	// 1. Collecte structurée des données de la base
-	tablesData, tableCounts, err := h.dumpTablesData(ctx, user.OrganizationID)
+	var orgSlug, orgName string
+	err := h.pool.QueryRow(ctx, "SELECT slug, legal_name FROM organizations WHERE id = $1", targetOrgID).Scan(&orgSlug, &orgName)
+	if err != nil {
+		orgSlug = user.OrganizationSlug
+		orgName = user.OrganizationName
+	}
+
+	now := time.Now().UTC()
+	archiveFilename := fmt.Sprintf("homolog-archive-%s-%s.homolog", orgSlug, now.Format("20060102-150405"))
+
+	// 1. Collecte structurée des données de la base (filtrée strictement par organisation)
+	tablesData, tableCounts, err := h.dumpTablesData(ctx, targetOrgID)
 	if err != nil {
 		log.Printf("[ERREUR BACKUP] Échec dump tables : %v", err)
 		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur lors de la capture des données de base : %v", err))
 		return
 	}
 
-	// 2. Collecte des métadonnées des fichiers du coffre-fort CAS
+	// 2. Collecte des métadonnées des fichiers du coffre-fort CAS (filtrée strictement par organisation)
 	storagePath := "./data/storage"
 	if h.cfg != nil && h.cfg.StoragePath != "" {
 		storagePath = h.cfg.StoragePath
 	}
 
-	blobsChecksums, casFiles, totalBlobsSize, err := h.collectCASFiles(ctx, user.OrganizationID, storagePath)
+	blobsChecksums, casFiles, totalBlobsSize, err := h.collectCASFiles(ctx, targetOrgID, storagePath)
 	if err != nil {
 		log.Printf("[ERREUR BACKUP] Échec scan CAS : %v", err)
 		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur lors de l'inventaire du stockage CAS : %v", err))
@@ -84,9 +100,9 @@ func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Requ
 		CreatedAt:        now,
 		CreatedByEmail:   user.Email,
 		CreatedByRole:    user.Role,
-		OrganizationID:   user.OrganizationID.String(),
-		OrganizationSlug: user.OrganizationSlug,
-		OrganizationName: user.OrganizationName,
+		OrganizationID:   targetOrgID.String(),
+		OrganizationSlug: orgSlug,
+		OrganizationName: orgName,
 		TableCounts:      tableCounts,
 		FilesCount:       len(casFiles),
 		TotalSizeBytes:   totalBlobsSize,
@@ -243,6 +259,14 @@ func (h *SystemHandler) RestoreHomologArchive(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Contrôle de cloisonnement strict multi-tenant : Un laboratoire ne peut réinjecter que son archive propre
+	if !user.HasPermission("SYS_MAINT") && user.Role != "super_admin_editeur" {
+		if manifest.OrganizationID != "" && manifest.OrganizationID != user.OrganizationID.String() {
+			writeJSONError(w, http.StatusForbidden, "Accès refusé : Tentative de restauration trans-tenant non autorisée (cloisonnement multi-tenant BPF)")
+			return
+		}
+	}
+
 	// 3. Contrôle cryptographique SHA-256 de chaque blob extrait
 	var verifiedBlobsCount int
 	for sha, blobData := range extractedBlobs {
@@ -320,58 +344,152 @@ func (h *SystemHandler) RestoreHomologArchive(w http.ResponseWriter, r *http.Req
 	})
 }
 
-// dumpTablesData sérialise les données métier en JSON
+// dumpTablesData sérialise les données métier en JSON avec cloisonnement strict par organisation (tenant isolation)
+// et masquage cryptographique des données hautement sensibles (ex: password_hash, secrets TOTP).
 func (h *SystemHandler) dumpTablesData(ctx context.Context, orgID uuid.UUID) (map[string][]byte, map[string]int, error) {
-	tables := []string{
-		"organizations",
-		"users",
-		"establishments",
-		"manufacturing_sites",
-		"medicines",
-		"medical_devices",
-		"ged_documents",
-		"ged_versions",
-		"dossiers",
-		"dossier_checklist_items",
-		"anpp_deficiency_letters",
-		"anpp_deficiency_tasks",
-		"anpp_fee_schedules",
-		"anpp_payment_slips",
-		"regulatory_watch_items",
-		"anpp_appointment_campaigns",
-		"audit_logs",
+	// Définition ordonnée des tables et des requêtes cloisonnées par tenant ($1 = orgID)
+	tableQueries := []struct {
+		table       string
+		query       string
+		hasOrgParam bool
+	}{
+		{
+			table:       "organizations",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id, slug, legal_name, miph_license_number, technical_director_name, address, phone, email, storage_quota_bytes, storage_used_bytes, is_active, permissions_version, created_at, updated_at FROM organizations WHERE id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table: "users",
+			// PROTECTION CRITIQUE : Masquage systématique des empreintes de mot de passe et clés 2FA
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id, organization_id, email, '[REDACTED]' AS password_hash, first_name, last_name, role, false AS totp_enabled, NULL::varchar AS totp_secret, '{}'::text[] AS recovery_codes, failed_login_attempts, locked_until, contract_expires_at, is_active, last_login_at, created_at, updated_at FROM users WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "establishments",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM establishments WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "manufacturing_sites",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM manufacturing_sites WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "products",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM products WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "medicines",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM medicines WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "medical_devices",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM medical_devices WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "medicine_manufacturing_sites",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT mms.* FROM medicine_manufacturing_sites mms JOIN medicines m ON mms.medicine_id = m.id WHERE m.organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "ged_documents",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM ged_documents WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "ged_versions",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT gv.* FROM ged_versions gv JOIN ged_documents gd ON gv.document_id = gd.id WHERE gd.organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "dossiers",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM dossiers WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "dossier_checklist_items",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT dci.* FROM dossier_checklist_items dci JOIN dossiers d ON dci.dossier_id = d.id WHERE d.organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "anpp_deficiency_letters",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM anpp_deficiency_letters WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "anpp_deficiency_tasks",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM anpp_deficiency_tasks WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table: "anpp_fee_schedules",
+			// Barèmes officiels interministériels publics de l'ANPP (JORADP)
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM anpp_fee_schedules) t",
+			hasOrgParam: false,
+		},
+		{
+			table:       "anpp_payment_slips",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM anpp_payment_slips WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "regulatory_watch_items",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM regulatory_watch_items WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "anpp_deposit_appointments",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM anpp_deposit_appointments WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
+		{
+			table:       "audit_logs",
+			query:       "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM audit_logs WHERE organization_id = $1) t",
+			hasOrgParam: true,
+		},
 	}
 
 	result := make(map[string][]byte)
 	counts := make(map[string]int)
 
-	for _, tbl := range tables {
-		// Requête d'extraction JSON native PostgreSQL
-		query := fmt.Sprintf("SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT * FROM %s WHERE 1=1) t", tbl)
+	for _, item := range tableQueries {
 		var jsonBytes []byte
-		err := h.pool.QueryRow(ctx, query).Scan(&jsonBytes)
+		var err error
+		if item.hasOrgParam {
+			err = h.pool.QueryRow(ctx, item.query, orgID).Scan(&jsonBytes)
+		} else {
+			err = h.pool.QueryRow(ctx, item.query).Scan(&jsonBytes)
+		}
 		if err != nil {
-			// Si la table n'existe pas encore ou erreur, on met un tableau vide
+			log.Printf("[DUMP TABLES] Avertissement table %s: %v", item.table, err)
 			jsonBytes = []byte("[]")
 		}
 
 		var countSlice []any
 		if err := json.Unmarshal(jsonBytes, &countSlice); err == nil {
-			counts[tbl] = len(countSlice)
+			counts[item.table] = len(countSlice)
 		} else {
-			counts[tbl] = 0
+			counts[item.table] = 0
 		}
 
-		result[tbl] = jsonBytes
+		result[item.table] = jsonBytes
 	}
 
 	return result, counts, nil
 }
 
-// collectCASFiles scanne les versions GED et retourne les chemins physiques des blobs
+// collectCASFiles scanne les versions GED de l'organisation et retourne les chemins physiques des blobs
 func (h *SystemHandler) collectCASFiles(ctx context.Context, orgID uuid.UUID, storageBasePath string) (map[string]string, map[string]string, int64, error) {
-	query := `SELECT DISTINCT file_sha256, storage_path, file_size_bytes FROM ged_versions WHERE file_sha256 IS NOT NULL AND file_sha256 != ''`
-	rows, err := h.pool.Query(ctx, query)
+	query := `
+		SELECT DISTINCT gv.file_sha256, gv.storage_path, gv.file_size_bytes 
+		FROM ged_versions gv
+		JOIN ged_documents gd ON gv.document_id = gd.id
+		WHERE gd.organization_id = $1 AND gv.file_sha256 IS NOT NULL AND gv.file_sha256 != ''
+	`
+	rows, err := h.pool.Query(ctx, query, orgID)
 	if err != nil {
 		return nil, nil, 0, err
 	}
@@ -404,16 +522,50 @@ func (h *SystemHandler) collectCASFiles(ctx context.Context, orgID uuid.UUID, st
 	return checksums, files, totalSize, nil
 }
 
-// restoreTablesData réinjecte les données dans la base de données
+// restoreTablesData réinjecte réellement les données de l'archive dans la base PostgreSQL dans l'ordre des contraintes d'intégrité
 func (h *SystemHandler) restoreTablesData(ctx context.Context, dataFiles map[string][]byte) ([]string, error) {
+	// Ordre strict des dépendances de clés étrangères
+	orderedTables := []string{
+		"organizations",
+		"users",
+		"establishments",
+		"manufacturing_sites",
+		"products",
+		"medicines",
+		"medical_devices",
+		"medicine_manufacturing_sites",
+		"ged_documents",
+		"ged_versions",
+		"dossiers",
+		"dossier_checklist_items",
+		"anpp_deficiency_letters",
+		"anpp_deficiency_tasks",
+		"anpp_fee_schedules",
+		"anpp_payment_slips",
+		"regulatory_watch_items",
+		"anpp_deposit_appointments",
+		"audit_logs",
+	}
+
+	tx, err := h.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("impossible de démarrer la transaction de restauration : %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
 	var restored []string
-	for tblName, jsonBytes := range dataFiles {
-		if len(jsonBytes) == 0 || string(jsonBytes) == "[]" {
+
+	for _, tblName := range orderedTables {
+		jsonBytes, ok := dataFiles[tblName]
+		if !ok || len(jsonBytes) == 0 || string(jsonBytes) == "[]" {
 			continue
 		}
 
 		var rows []map[string]any
 		if err := json.Unmarshal(jsonBytes, &rows); err != nil {
+			log.Printf("[RESTORE TABLE %s] Avertissement format JSON invalide: %v", tblName, err)
 			continue
 		}
 
@@ -421,9 +573,81 @@ func (h *SystemHandler) restoreTablesData(ctx context.Context, dataFiles map[str
 			continue
 		}
 
-		// Pour chaque table, on enregistre les éléments
-		restored = append(restored, fmt.Sprintf("%s (%d entrées)", tblName, len(rows)))
+		insertedCount := 0
+		for _, row := range rows {
+			if len(row) == 0 {
+				continue
+			}
+
+			// Traitement de sécurité pour la table users si le hash a été caviardé
+			if tblName == "users" {
+				if pwd, ok := row["password_hash"].(string); ok && pwd == "[REDACTED]" {
+					// Attribuer un mot de passe temporaire scellé si l'utilisateur n'existe pas encore
+					tempHash, _ := auth.HashPassword("Homolog2026!Restored", nil)
+					row["password_hash"] = tempHash
+				}
+			}
+
+			cols := make([]string, 0, len(row))
+			placeholders := make([]string, 0, len(row))
+			args := make([]any, 0, len(row))
+			idx := 1
+
+			for k, v := range row {
+				cols = append(cols, k)
+				placeholders = append(placeholders, fmt.Sprintf("$%d", idx))
+
+				// Convertir les types complexes pour pgx
+				if k == "tags" || k == "recovery_codes" {
+					if slice, ok := v.([]any); ok {
+						strArr := make([]string, len(slice))
+						for i, item := range slice {
+							strArr[i] = fmt.Sprintf("%v", item)
+						}
+						args = append(args, strArr)
+					} else {
+						args = append(args, []string{})
+					}
+				} else if m, ok := v.(map[string]any); ok {
+					b, _ := json.Marshal(m)
+					args = append(args, string(b))
+				} else if s, ok := v.([]any); ok {
+					b, _ := json.Marshal(s)
+					args = append(args, string(b))
+				} else {
+					args = append(args, v)
+				}
+				idx++
+			}
+
+			conflictClause := "ON CONFLICT DO NOTHING"
+			query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) %s",
+				tblName,
+				strings.Join(cols, ", "),
+				strings.Join(placeholders, ", "),
+				conflictClause,
+			)
+
+			tag, err := tx.Exec(ctx, query, args...)
+			if err != nil {
+				log.Printf("[RESTORE INSERT ERROR] Table %s: %v (Query: %s)", tblName, err, query)
+			} else {
+				insertedCount += int(tag.RowsAffected())
+			}
+		}
+
+		// Réalignement de la séquence pour audit_logs si nécessaire
+		if tblName == "audit_logs" {
+			_, _ = tx.Exec(ctx, "SELECT setval(pg_get_serial_sequence('audit_logs', 'id'), COALESCE(MAX(id), 1)) FROM audit_logs")
+		}
+
+		restored = append(restored, fmt.Sprintf("%s (%d entrées lues, %d réinjectées)", tblName, len(rows), insertedCount))
 	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("échec de validation de la transaction de restauration : %w", err)
+	}
+
 	return restored, nil
 }
 

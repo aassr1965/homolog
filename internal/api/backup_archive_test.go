@@ -50,6 +50,32 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 		t.Fatalf("échec création organisation: %v", err)
 	}
 
+	// Créer une organisation concurrente (Tenant B) pour valider l'étanchéité multi-tenant
+	otherOrgID := uuid.New()
+	otherSlug := "org-concurrent-" + otherOrgID.String()[:8]
+	_, err = db.Pool.Exec(ctx, `
+		INSERT INTO organizations (id, slug, legal_name, miph_license_number, technical_director_name)
+		VALUES ($1, $2, 'Autre Labo Concurrent', 'MIPH-CONCURRENT', 'Dr. Inconnu')
+	`, otherOrgID, otherSlug)
+	if err != nil {
+		t.Fatalf("échec création organisation concurrente: %v", err)
+	}
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), `DELETE FROM organizations WHERE id = $1`, otherOrgID)
+	}()
+
+	testProductID := uuid.New()
+	_, err = db.Pool.Exec(ctx, `
+		INSERT INTO products (id, organization_id, product_type, brand_name_fr, manufacturer_name)
+		VALUES ($1, $2, 'medicament', 'Produit Restauration Reversible', 'Sanad Pharma')
+	`, testProductID, testOrgID)
+	if err != nil {
+		t.Fatalf("échec création produit test: %v", err)
+	}
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), `DELETE FROM products WHERE id = $1`, testProductID)
+	}()
+
 	dtUserID := uuid.New()
 	pwdHash, _ := auth.HashPassword("RevSecret2026!#", nil)
 	_, err = db.Pool.Exec(ctx, `
@@ -159,6 +185,9 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 		tr := tar.NewReader(gzr)
 		hasManifest := false
 		hasDatabase := false
+		var usersList []map[string]any
+		var orgsList []map[string]any
+		var productsList []map[string]any
 
 		for {
 			hdr, err := tr.Next()
@@ -178,9 +207,24 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 				if m.Format != "HOMOLOG_PORTABLE_ARCHIVE_V1" {
 					t.Errorf("format manifest inattendu: %s", m.Format)
 				}
+				if m.OrganizationID != testOrgID.String() {
+					t.Errorf("organisation ID inattendue dans le manifeste: %s (attendu %s)", m.OrganizationID, testOrgID.String())
+				}
 			}
 			if len(hdr.Name) > 9 && hdr.Name[:9] == "database/" {
 				hasDatabase = true
+				if hdr.Name == "database/users.json" {
+					uBytes, _ := io.ReadAll(tr)
+					_ = json.Unmarshal(uBytes, &usersList)
+				}
+				if hdr.Name == "database/organizations.json" {
+					oBytes, _ := io.ReadAll(tr)
+					_ = json.Unmarshal(oBytes, &orgsList)
+				}
+				if hdr.Name == "database/products.json" {
+					pBytes, _ := io.ReadAll(tr)
+					_ = json.Unmarshal(pBytes, &productsList)
+				}
 			}
 		}
 
@@ -191,15 +235,54 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 			t.Errorf("dossier database/ absent de l'archive .homolog")
 		}
 
-		t.Logf("PASS: Archive .homolog générée avec succès (%d octets, Sceau SHA-256: %s)", len(exportedHomologBytes), seal[:16]+"...")
+		// Validation sécurité 1 : Cloisonnement multi-tenant (aucun tenant étranger)
+		if len(orgsList) != 1 || orgsList[0]["id"] != testOrgID.String() {
+			t.Fatalf("FAILLE MULTI-TENANT : %d organisations trouvées au lieu de 1 seule appartenant au tenant", len(orgsList))
+		}
+
+		// Validation sécurité 2 : Masquage cryptographique du password_hash
+		if len(usersList) == 0 {
+			t.Fatalf("aucun utilisateur exporté pour le tenant")
+		}
+		for _, u := range usersList {
+			if u["password_hash"] != "[REDACTED]" {
+				t.Fatalf("FAILLE DE SÉCURITÉ : password_hash non caviardé: %v", u["password_hash"])
+			}
+		}
+
+		// Vérifier que le produit test est présent dans l'archive exportée
+		foundProd := false
+		for _, p := range productsList {
+			if p["id"] == testProductID.String() {
+				foundProd = true
+				break
+			}
+		}
+		if !foundProd {
+			t.Errorf("produit test non trouvé dans database/products.json")
+		}
+
+		t.Logf("PASS: Archive .homolog générée avec succès (%d octets, Sceau SHA-256: %s, Cloisonnement Multi-Tenant vérifié, Password caviardé)", len(exportedHomologBytes), seal[:16]+"...")
 	})
 
 	// =========================================================================
-	// TEST 4 : POST /api/v1/system/backup/restore (Restauration avec succès)
+	// TEST 4 : POST /api/v1/system/backup/restore (Restauration avec succès & réinjection réelle)
 	// =========================================================================
-	t.Run("POST /api/v1/system/backup/restore [Succès intégrité]", func(t *testing.T) {
+	t.Run("POST /api/v1/system/backup/restore [Succès intégrité & réinjection]", func(t *testing.T) {
 		if len(exportedHomologBytes) == 0 {
 			t.Skip("aucun flux d'archive exporté")
+		}
+
+		// Simulation de perte de données : on supprime le produit test de la base
+		_, err := db.Pool.Exec(ctx, "DELETE FROM products WHERE id = $1", testProductID)
+		if err != nil {
+			t.Fatalf("échec suppression préalable: %v", err)
+		}
+
+		var countBefore int
+		_ = db.Pool.QueryRow(ctx, "SELECT count(*) FROM products WHERE id = $1", testProductID).Scan(&countBefore)
+		if countBefore != 0 {
+			t.Fatalf("le produit devrait être supprimé avant restauration")
 		}
 
 		body := &bytes.Buffer{}
@@ -239,14 +322,21 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 		if resp["status"] != "ok" {
 			t.Errorf("statut inattendu: %v", resp)
 		}
-		t.Logf("PASS: Archive .homolog restaurée avec succès et intégrité certifiée 100%%")
+
+		// Validation CRITIQUE : Vérifier que le produit supprimé a été RÉELLEMENT réinjecté dans PostgreSQL
+		var countAfter int
+		_ = db.Pool.QueryRow(ctx, "SELECT count(*) FROM products WHERE id = $1", testProductID).Scan(&countAfter)
+		if countAfter != 1 {
+			t.Fatalf("ÉCHEC RESTAURATION : Le produit test n'a pas été réinjecté dans la base PostgreSQL (trouvé %d)", countAfter)
+		}
+
+		t.Logf("PASS: Archive .homolog restaurée avec succès et réinjection effective dans PostgreSQL validée")
 	})
 
 	// =========================================================================
 	// TEST 5 : POST /api/v1/system/backup/restore [Rejet sur altération / falsification]
 	// =========================================================================
 	t.Run("POST /api/v1/system/backup/restore [Rejet altération SHA-256]", func(t *testing.T) {
-		// Fabrication d'une fausse archive contenant un blob dont le hash ne correspond pas
 		tamperedBuf := &bytes.Buffer{}
 		gw := gzip.NewWriter(tamperedBuf)
 		tw := tar.NewWriter(gw)
@@ -260,7 +350,6 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 		mBytes, _ := json.Marshal(manifest)
 		_ = addBytesToTar(tw, "manifest.json", mBytes, time.Now())
 
-		// Ajout d'un blob avec contenu altéré
 		fakeBlobName := "blobs/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 		_ = addBytesToTar(tw, fakeBlobName, []byte("contenu_falsifie_non_conforme_au_hash"), time.Now())
 
@@ -293,5 +382,54 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 			t.Fatalf("attendu 422 Unprocessable Entity pour blob altéré, reçu %d: %s", rr.Code, rr.Body.String())
 		}
 		t.Logf("PASS: Garde-fou d'intégrité validé (rejet immédiat d'une archive falsifiée)")
+	})
+
+	// =========================================================================
+	// TEST 6 : POST /api/v1/system/backup/restore [Rejet Restauration Trans-Tenant]
+	// =========================================================================
+	t.Run("POST /api/v1/system/backup/restore [Rejet Trans-Tenant 403]", func(t *testing.T) {
+		otherTenantArchiveBuf := &bytes.Buffer{}
+		gw := gzip.NewWriter(otherTenantArchiveBuf)
+		tw := tar.NewWriter(gw)
+
+		manifest := HomologManifest{
+			Version:        "0.8.0",
+			Format:         "HOMOLOG_PORTABLE_ARCHIVE_V1",
+			CreatedAt:      time.Now().UTC(),
+			OrganizationID: uuid.New().String(), // Autre organisation !
+			BlobsChecksums: map[string]string{},
+		}
+		mBytes, _ := json.Marshal(manifest)
+		_ = addBytesToTar(tw, "manifest.json", mBytes, time.Now())
+		tw.Close()
+		gw.Close()
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		part, _ := writer.CreateFormFile("archive", "autre_labo.homolog")
+		_, _ = part.Write(otherTenantArchiveBuf.Bytes())
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/system/backup/restore", body)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+
+		// Utilisateur DT du laboratoire test (sans SYS_MAINT)
+		dtSessionNoSys := &auth.SessionUser{
+			SessionID:      uuid.New(),
+			UserID:         dtUserID,
+			OrganizationID: testOrgID,
+			Email:          "dt.backup@test.dz",
+			Role:           string(domain.RoleDirecteurTechnique),
+			Permissions:    []string{"DOC_APPROVE_PDT"},
+		}
+		req = req.WithContext(context.WithValue(req.Context(), UserContextKey, dtSessionNoSys))
+
+		rr := httptest.NewRecorder()
+		systemHandler.RestoreHomologArchive(rr, req)
+
+		if rr.Code != http.StatusForbidden {
+			t.Fatalf("attendu 403 Forbidden sur tentative de restauration trans-tenant, reçu %d: %s", rr.Code, rr.Body.String())
+		}
+		t.Logf("PASS: Garde-fou multi-tenant validé (rejet 403 immédiat lors de la tentative de restauration d'un autre tenant)")
 	})
 }
