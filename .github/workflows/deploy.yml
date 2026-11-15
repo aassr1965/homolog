@@ -1,0 +1,39 @@
+name: CD — Déploiement Continu Hostinger
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: "Déploiement sur VPS Hostinger"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Connexion SSH et Déploiement"
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script_stop: true
+          script: |
+            echo "==> Mise à jour du code depuis origin/main..."
+            cd /home/sofiene/homolog
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Reconstruction et redémarrage des conteneurs..."
+            docker compose -f docker-compose.prod.yml up -d --build
+
+            echo "==> Nettoyage des images Docker orphelines..."
+            docker image prune -f
+
+            echo "==> Contrôle de santé..."
+            sleep 6
+            curl -f http://localhost:8090/health || exit 1
+            echo "==> Déploiement réussi avec succès !"
