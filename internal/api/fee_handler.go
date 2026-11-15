@@ -443,8 +443,8 @@ func (h *FeeHandler) GetPaymentSlipPrintHTML(w http.ResponseWriter, r *http.Requ
     <meta charset="UTF-8">
     <title>Bordereau de Versement %s — ANPP</title>
     <style>
-        @page { size: A4 portrait; margin: 15mm; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #111; line-height: 1.4; margin: 0; padding: 20px; background: white; }
+        @page { size: A4 portrait; margin: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #111; line-height: 1.4; margin: 0; padding: 15mm; background: white; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px; }
         .republic { text-align: center; flex: 1; }
         .republic h4 { margin: 0; font-size: 13px; font-weight: 700; }
