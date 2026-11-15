@@ -829,7 +829,32 @@ Contrairement aux états réglementaires finaux destinés aux autorités sanitai
 
 ---
 
-### 10.4 Architecture Technique du Moteur de Rendu et d'Exportation
+### 10.4 Standards Graphiques, Typographiques & Exigences d'Édition Haute Fidélité (Charte Print BPF 300 DPI)
+
+Pour conférer à chaque état de sortie une autorité indiscutable face à l'autorité sanitaire nationale (**ANPP**) et aux auditeurs internationaux, **Homolog** applique une charte graphique et typographique de niveau institutionnel :
+
+1. **Rendu Vectoriel Pur 300+ DPI & Zéro Flou :**
+   - Tous les éléments graphiques (armoiries, logos du laboratoire, cartouches, pictogrammes et QR-codes) sont intégrés et générés exclusivement en **SVG vectoriel pur**.
+   - Palette chromatique institutionnelle : Bleu nuit régalien (`#091e36` / `#0f3b60`), Vert pharmacie scellé BPF (`#047857`), Gris ardoise (`#1e293b` / `#475569`) et fond blanc pur.
+2. **Mise en Page A4 Millimétrée & Règle Absolue « Anti-Coupure » :**
+   - Format standard **ISO A4 (210 x 297 mm)** avec marges sécurisées (`12mm 14mm 14mm 14mm`) adaptées aux classeurs de dépôt CTD.
+   - Directive CSS Paged Media `page-break-inside: avoid;` appliquée systématiquement : un tableau de synthèse, un cartouche de données ou une section de signatures **ne sont jamais coupés au milieu d'une page**.
+   - Paginage légal indélébile **« Page X sur Y »** répété sur chaque feuillet.
+3. **Dispositif Anti-Falsification par QR-Code Cryptographique :**
+   - QR-Code SVG vectoriel en pied de page scannable instantanément (< 500 ms) renvoyant vers l'URL `/verify/{sha256}`.
+   - Empreinte SHA-256 tronquée et horodatage certifié UTC+1 imprimés en clair.
+4. **Filigranes Dynamiques Calibrés :**
+   - `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL` en diagonale fine translucide à **8-10% d'opacité** sans masquer la lecture du texte.
+   - `OFFICIEL / APPROUVÉ` matérialisé par un sceau vert BPF horodaté avec visa PDT.
+5. **Parapheurs & Blocs de Signatures Réglementaires Nobles :**
+   - Cadres de signature structurés pour le Pharmacien DT titulaire (1.A.7), le Responsable Assurance Qualité et la Direction Générale, avec rappel de la décision ministérielle nominative et mention solennelle légale.
+6. **Excellence des Classeurs Tableurs (Excel / CSV) :**
+   - Fichiers `.xlsx` avec volets figés (*Freeze Panes*), colonnes ajustées, typage monétaire strict (`### ###,00 DZD`) et dates ISO/européennes.
+   - Encodage universel UTF-8 avec BOM pour les fichiers CSV garantissant l'intégrité des accents français et des caractères arabes.
+
+---
+
+### 10.5 Architecture Technique du Moteur de Rendu et d'Exportation
 
 L'implémentation logicielle du sous-système de reporting dans le backend Go d'Homolog repose sur une chaîne de traitement haute performance :
 

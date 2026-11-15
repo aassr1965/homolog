@@ -3110,7 +3110,51 @@ type ANPPService interface {
     <li><strong>Signature de scellement cryptographique :</strong> Mention en fin de document de l'empreinte globale SHA-256 du journal d'audit trail et du statut de synchronisation de la séquence PostgreSQL <code>audit_logs_id_seq</code> garantissant l'absence totale de suppression ou d'intercalation de lignes (principe <em>Append-Only</em> BPF).</li>
 </ul>
 
-<h3>10.5 Moteur d'Édition et Architecture Technique d'Exportation</h3>
+<h3>10.5 Standards Graphiques, Typographiques &amp; Exigences d'Édition Haute Fidélité (Charte Print BPF 300 DPI)</h3>
+<p>Pour conférer à chaque état de sortie une autorité indiscutable face à l'autorité sanitaire nationale (<strong>ANPP</strong>) et aux auditeurs internationaux, <strong>Homolog</strong> applique une charte graphique et typographique de niveau institutionnel :</p>
+
+<ol>
+<li><strong>Rendu Vectoriel Pur 300+ DPI &amp; Zéro Flou :</strong>
+    <ul>
+        <li>Tous les éléments graphiques (armoiries, logo du laboratoire, caducée officiel, cartouches, pictogrammes et QR-codes) sont intégrés et générés exclusivement en <strong>SVG vectoriel pur</strong> ou polices d'icônes vectorielles. Aucune pixellisation n'est tolérée, garantissant une netteté chirurgicale au tirage papier ou lors du zoom PDF à 800%.</li>
+        <li><strong>Palette chromatique institutionnelle :</strong> Bleu nuit régalien (<code>#091e36</code> / <code>#0f3b60</code>), Vert pharmacie scellé BPF (<code>#047857</code>), Gris ardoise de texte (<code>#1e293b</code> / <code>#475569</code>) et fond blanc pur. Les couleurs d'alerte (Ambre <code>#b45309</code>, Rouge critique <code>#b91c1c</code>) sont strictement calibrées pour signaler les écarts ou délais sans agressivité visuelle.</li>
+    </ul>
+</li>
+<li><strong>Mise en Page A4 Millimétrée &amp; Règle Absolue « Anti-Coupure » :</strong>
+    <ul>
+        <li>Format géométrique standardisé <strong>ISO A4 (210 x 297 mm)</strong> avec marges sécurisées (<code>12mm 14mm 14mm 14mm</code>) prévues pour le reliage physique en classeurs de dépôt CTD.</li>
+        <li><strong>Directive CSS Paged Media <code>page-break-inside: avoid;</code></strong> appliquée à tous les tableaux de synthèse, cartouches d'établissement, blocs d'articles de conditionnement et sections de signatures : un bloc d'information critique ou un paragraphe de visa ne se retrouve jamais tronqué ou séparé de son contexte au bas d'un feuillet.</li>
+        <li><strong>Paginage légal BPF :</strong> Répétition automatique en pied de page de la mention indélébile <strong>« Page X sur Y »</strong>, interdisant toute contestation sur l'intégrité ou l'exhaustivité physique du classeur remis au guichet de l'ANPP.</li>
+        <li><strong>En-tête et pied de page récurrents :</strong> Chaque page rappelle la raison sociale, l'agrément ministériel MIPH (1.A.6), le code interne du dossier (ex: <code>DOS-2026-PARAC-NF</code>), le nom du produit et l'horodatage UTC+1 certifié à la seconde.</li>
+    </ul>
+</li>
+<li><strong>Dispositif Anti-Falsification par QR-Code Haute Résolution :</strong>
+    <ul>
+        <li>Génération dynamique d'un QR-Code SVG vectoriel de 25x25 mm en pied de page droit, encodant l'URL sécurisée de vérification directe : <code>https://homolog.labo.dz/verify/{sha256}</code>.</li>
+        <li>Conçu pour une détection optique instantanée (&lt; 500 ms) par la caméra de n'importe quel smartphone d'inspecteur ou d'expert évaluateur, affichant en temps réel le certificat d'authenticité et le hachage du document original scellé.</li>
+    </ul>
+</li>
+<li><strong>Filigranes Dynamiques Discrets &amp; Lisibles :</strong>
+    <ul>
+        <li>Filigrane diagonal <code>BROUILLON (DRAFT)</code> ou <code>DOCUMENT DE TRAVAIL</code> étalonné avec une opacité fine de <strong>8 % à 10 %</strong> : il garantit l'information juridique sans jamais occulter la lisibilité des chiffres, dosages ou dates d'analyse.</li>
+        <li>Filigrane <code>OFFICIEL / APPROUVÉ</code> matérialisé par un sceau vert BPF discret en haut à droite avec horodatage certifié et empreinte cryptographique.</li>
+    </ul>
+</li>
+<li><strong>Parapheurs &amp; Blocs de Signatures Réglementaires Nobles :</strong>
+    <ul>
+        <li>Cadres de signatures spacieux (largeur min. 220px, hauteur 80px) réservés au Pharmacien Directeur Technique (1.A.7), au Responsable Assurance Qualité et à la Direction Générale.</li>
+        <li>Chaque cartouche comporte l'intitulé officiel de la fonction, la référence à la décision ministérielle d'exercice nominative, la mention solennelle d'engagement, la date et le champ pour cachet humide et visa électronique 2FA.</li>
+    </ul>
+</li>
+<li><strong>Excellence et Rigueur des Classeurs Tableurs (Excel / CSV) :</strong>
+    <ul>
+        <li>Pour les exports financiers (BV1, BV2, liquidation Décret 21-82, suivi budgétaire) et les registres d'échéances : volets d'en-tête figés (<em>Freeze Panes</em>), largeurs de colonnes ajustées au millimètre, typage strict des données monétaires (<code>### ###,00 DZD</code>) et dates (<code>JJ/MM/AAAA</code>).</li>
+        <li>Encodage universel UTF-8 avec BOM pour les fichiers CSV garantissant l'absence totale de caractères corrompus (accents français et caractères arabes) à l'ouverture directe dans Microsoft Excel.</li>
+    </ul>
+</li>
+</ol>
+
+<h3>10.6 Moteur d'Édition et Architecture Technique d'Exportation</h3>
 <p>L'implémentation logicielle du sous-système de reporting dans le backend Go d'Homolog repose sur une chaîne de traitement haute performance :</p>
 
 <pre><code class="language-go">// ReportingService gère la production, le scellement et la vérification des états de sortie BPF.
