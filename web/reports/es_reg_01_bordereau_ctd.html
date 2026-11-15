@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ES-REG-01 — Bordereau Officiel de Transmission CTD — Homolog</title>
+    <link rel="icon" type="image/svg+xml" href="/img/favicon-caducee.svg">
+    <style>
+        /* ==========================================================================
+           FEUILLE DE STYLE PRINT BPF 300+ DPI — HOMOLOG PHARMACEUTICAL REPORTING
+           Norme : ISO A4 (210 x 297 mm) • Marges : 12mm 14mm 14mm 14mm
+           ========================================================================== */
+
+        @page {
+            size: A4 portrait;
+            margin: 12mm 14mm 14mm 14mm;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            color: #0f172a;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 24px 0;
+            font-size: 8.8pt;
+            line-height: 1.42;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Barre d'actions supérieure (masquée à l'impression) */
+        .no-print-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: #091e36;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 13px;
+        }
+
+        .no-print-toolbar .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #0284c7;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background: #0369a1;
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.12);
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Conteneur Feuille A4 */
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 48px auto 24px auto;
+            background: #ffffff;
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.12);
+            padding: 14mm 16mm 14mm 16mm;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        @media print {
+            body {
+                background: #ffffff;
+                padding: 0;
+            }
+            .no-print-toolbar {
+                display: none !important;
+            }
+            .sheet {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border-radius: 0;
+                min-height: auto;
+            }
+            .page-break {
+                page-break-after: always;
+                break-after: page;
+            }
+        }
+
+        /* Filigrane Dynamique BPF */
+        .watermark {
+            position: absolute;
+            top: 48%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 58pt;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: rgba(4, 120, 87, 0.06); /* Vert BPF subtil pour OFFICIEL */
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .watermark.draft {
+            color: rgba(100, 116, 139, 0.08); /* Gris neutre pour DRAFT */
+        }
+
+        /* En-tête Institutionnel */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #091e36;
+            padding-bottom: 8px;
+        }
+
+        .header-logo-cell {
+            width: 72px;
+            vertical-align: middle;
+        }
+
+        .header-title-cell {
+            vertical-align: middle;
+            padding-left: 14px;
+        }
+
+        .header-sub-inst {
+            font-size: 7.2pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #0369a1;
+            letter-spacing: 0.8px;
+            margin-bottom: 2px;
+        }
+
+        .header-main-title {
+            font-size: 13.5pt;
+            font-weight: 800;
+            color: #091e36;
+            line-height: 1.15;
+            margin: 0;
+            letter-spacing: -0.2px;
+        }
+
+        .header-sub-desc {
+            font-size: 7.5pt;
+            color: #475569;
+            margin-top: 2px;
+        }
+
+        .header-badge-cell {
+            width: 160px;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .badge-ref {
+            display: inline-block;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 7pt;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .badge-meta {
+            font-size: 6.8pt;
+            color: #64748b;
+            line-height: 1.35;
+        }
+
+        /* Cartouche d'Identification */
+        .meta-card {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 9px 12px;
+            margin-bottom: 14px;
+            page-break-inside: avoid;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+        }
+
+        .meta-row {
+            display: flex;
+            font-size: 8pt;
+        }
+
+        .meta-lbl {
+            width: 130px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 6.8pt;
+            letter-spacing: 0.4px;
+        }
+
+        .meta-val {
+            color: #0f172a;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        /* Titre de Section */
+        .section-title {
+            font-size: 9.5pt;
+            font-weight: 800;
+            color: #091e36;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 14px 0 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            page-break-inside: avoid;
+        }
+
+        .section-title::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 12px;
+            background: #0284c7;
+            border-radius: 2px;
+        }
+
+        /* Tableau BPF Haute Densité */
+        .table-bpf {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+
+        .table-bpf th {
+            background: #091e36;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 6.8pt;
+            letter-spacing: 0.5px;
+            padding: 6px 8px;
+            text-align: left;
+            border: 1px solid #091e36;
+        }
+
+        .table-bpf td {
+            padding: 5px 8px;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            vertical-align: middle;
+        }
+
+        .table-bpf tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        .table-bpf .num {
+            font-variant-numeric: tabular-nums;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .table-bpf .status-ok {
+            color: #047857;
+            font-weight: 700;
+        }
+
+        /* Bloc Support Numérique */
+        .digital-hash-box {
+            background: #eff6ff;
+            border: 1px dashed #3b82f6;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 7.5pt;
+            color: #1e40af;
+            margin-bottom: 14px;
+            page-break-inside: avoid;
+        }
+
+        .hash-code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-weight: 700;
+            background: #dbeafe;
+            padding: 2px 6px;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+            font-size: 7.2pt;
+        }
+
+        /* Cadre Réception Bureau d'Ordre ANPP */
+        .anpp-reception-box {
+            border: 2px solid #091e36;
+            border-radius: 4px;
+            padding: 10px 14px;
+            margin: 14px 0;
+            background: #ffffff;
+            page-break-inside: avoid;
+        }
+
+        .anpp-reception-title {
+            font-size: 8.5pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #091e36;
+            text-align: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 4px;
+        }
+
+        .anpp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .anpp-field {
+            font-size: 7.5pt;
+        }
+
+        .anpp-field-lbl {
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 6.5pt;
+            margin-bottom: 2px;
+        }
+
+        .anpp-field-box {
+            height: 38px;
+            border: 1px dashed #94a3b8;
+            background: #f8fafc;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 6.8pt;
+        }
+
+        /* Blocs de Signatures Solennelles (Parapheur) */
+        .sign-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 14px;
+            page-break-inside: avoid;
+        }
+
+        .sign-box {
+            border: 1px solid #94a3b8;
+            border-radius: 4px;
+            padding: 10px 12px;
+            background: #ffffff;
+            font-size: 7.5pt;
+            position: relative;
+        }
+
+        .sign-title {
+            font-size: 8.5pt;
+            font-weight: 800;
+            color: #091e36;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+        }
+
+        .sign-mandate {
+            font-size: 6.8pt;
+            color: #0369a1;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .sign-oath {
+            font-size: 6.8pt;
+            color: #475569;
+            font-style: italic;
+            line-height: 1.35;
+            border-left: 2px solid #0284c7;
+            padding-left: 6px;
+            margin-bottom: 10px;
+        }
+
+        .sign-seal-area {
+            height: 60px;
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            position: relative;
+        }
+
+        .seal-stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #f0fdf4;
+            border: 1px solid #4ade80;
+            color: #15803d;
+            font-size: 7pt;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Pied de Page Légal BPF avec QR-Code Vectoriel */
+        .footer-legal {
+            margin-top: 24px;
+            padding-top: 8px;
+            border-top: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 6.8pt;
+            color: #64748b;
+            page-break-inside: avoid;
+        }
+
+        .footer-qr-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qr-frame {
+            width: 44px;
+            height: 44px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer-info {
+            line-height: 1.4;
+        }
+
+        .footer-page-num {
+            font-weight: 700;
+            font-size: 8pt;
+            color: #091e36;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barre d'outils interactive (non imprimée) -->
+    <div class="no-print-toolbar">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            <div>
+                <strong>Homolog Reporting BPF</strong>
+                <span style="opacity:0.75; font-size:11px; margin-left:8px;">Maquette Témoin Haute Qualité • ES-REG-01</span>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-outline" onclick="toggleWatermark()">
+                🏷️ Basculer Statut (<span id="wm-label">OFFICIEL</span>)
+            </button>
+            <button class="btn btn-outline" onclick="simulateScan()">
+                📱 Simuler Scan QR-Code
+            </button>
+            <button class="btn btn-primary" onclick="window.print()">
+                🖨️ Imprimer / Export PDF (A4 300 DPI)
+            </button>
+            <a href="/" class="btn btn-outline" style="border-color:transparent; background:transparent;">
+                ✕ Quitter
+            </a>
+        </div>
+    </div>
+
+    <!-- FEUILLE A4 NORMALISÉE -->
+    <div class="sheet">
+
+        <!-- Filigrane dynamique -->
+        <div class="watermark" id="doc-watermark">OFFICIEL — VALIDÉ</div>
+
+        <!-- EN-TÊTE OFFICIEL BPF -->
+        <table class="header-table">
+            <tr>
+                <td class="header-logo-cell">
+                    <!-- Caducée vectoriel officiel SVG (300 DPI) -->
+                    <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="30" fill="#091e36" stroke="#0284c7" stroke-width="2.5"/>
+                        <path d="M32 10v44M22 22c5-3 15-3 20 0s-5 8-10 10 15 5 10 10-15-1-20-4" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="32" cy="11" r="3" fill="#38bdf8"/>
+                    </svg>
+                </td>
+                <td class="header-title-cell">
+                    <div class="header-sub-inst">République Algérienne Démocratique et Populaire • Ministère de l'Industrie et de la Production Pharmaceutique</div>
+                    <h1 class="header-main-title">Bordereau Officiel de Transmission CTD</h1>
+                    <div class="header-sub-desc">Dépôt du Dossier Technique Commun (Modules 1 à 5) • Guide ANPP DEPP Version 01 (Juillet 2025)</div>
+                </td>
+                <td class="header-badge-cell">
+                    <span class="badge-ref">REF : ES-REG-01-2026-0842</span>
+                    <div class="badge-meta">
+                        Date d'émission : <strong>15/11/2026 11:05</strong><br>
+                        Heure légale : UTC+1 (Alger)<br>
+                        Procédure : <strong>NF (Fabrication Locale)</strong>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- CARTOUCHE D'IDENTIFICATION -->
+        <div class="meta-card">
+            <div class="meta-grid">
+                <div class="meta-row">
+                    <span class="meta-lbl">Demandeur (1.A.6) :</span>
+                    <span class="meta-val">Laboratoires El Djazair Pharma Spa</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-lbl">Agrément Ministériel :</span>
+                    <span class="meta-val">N° 2024/MIPH/DEP/042 (Valide au 31/12/2029)</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-lbl">Directeur Technique (1.A.7) :</span>
+                    <span class="meta-val">Dr. Yassine Benali (Décision N° 2024/MIPH/DT/118)</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-lbl">Site de Fabrication (1.M) :</span>
+                    <span class="meta-val">Unité Industrielle Oued Smar, Alger (BPF N° 2025/084)</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-lbl">Produit &amp; Dosage :</span>
+                    <span class="meta-val" style="color:#0284c7;">PARACÉTAMOL EL DJAZAIR 500 mg, Comprimé</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-lbl">DCI &amp; Code ATC :</span>
+                    <span class="meta-val">Paracétamol (DCI) • Code OMS : N02BE01</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-lbl">Présentation Commerciale :</span>
+                    <span class="meta-val">Boîte de 20 comprimés sous plaquettes thermoformées</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-lbl">Code Interne Dossier :</span>
+                    <span class="meta-val" style="font-family:monospace;">DOS-2026-PARAC-NF</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 1 : INVENTAIRE DES MODULES CTD -->
+        <div class="section-title">1. Inventaire Exhaustif des Volumes CTD Transmis</div>
+        <table class="table-bpf">
+            <thead>
+                <tr>
+                    <th style="width: 14%;">Module CTD</th>
+                    <th style="width: 44%;">Intitulé Réglementaire (Guide ANPP 2025)</th>
+                    <th style="width: 12%; text-align:center;">Volumes</th>
+                    <th style="width: 14%; text-align:center;">Feuillets Paginés</th>
+                    <th style="width: 16%; text-align:center;">Statut Intégrité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Module 1</strong></td>
+                    <td><strong>Spécificités Régionales Algérie</strong> (1.A Demandeur, 1.H Détenteur, 1.M Fabricants, 1.P Infos Produit)</td>
+                    <td class="num">1 Classeur</td>
+                    <td class="num">248 pages</td>
+                    <td style="text-align:center;"><span class="status-ok">Conforme (41/41) ✅</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Module 2</strong></td>
+                    <td><strong>Résumés du Dossier Technique Commun</strong> (Introduction, QOS 2.3, Résumé Non-Clinique &amp; Clinique)</td>
+                    <td class="num">1 Classeur</td>
+                    <td class="num">184 pages</td>
+                    <td style="text-align:center;"><span class="status-ok">Conforme (7/7) ✅</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Module 3</strong></td>
+                    <td><strong>Qualité Pharmaceutique &amp; Biologique</strong> (3.2.S Substance Active API, 3.2.P Produit Fini &amp; Stabilités Zone IVb)</td>
+                    <td class="num">3 Classeurs</td>
+                    <td class="num">892 pages</td>
+                    <td style="text-align:center;"><span class="status-ok">Conforme (142/142) ✅</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Module 4</strong></td>
+                    <td><strong>Rapports d'Études Non-Cliniques</strong> (Pharmacologie &amp; Toxicologie — Dérogation Générique Art. 12)</td>
+                    <td class="num">1 Bannette</td>
+                    <td class="num">46 pages</td>
+                    <td style="text-align:center;"><span class="status-ok">Revue Littéraire ✅</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Module 5</strong></td>
+                    <td><strong>Rapports d'Études Cliniques &amp; Bioéquivalence</strong> (Étude in vivo BA/BE CRO, IC 90% 80-125% sur Cmax/AUC)</td>
+                    <td class="num">2 Classeurs</td>
+                    <td class="num">520 pages</td>
+                    <td style="text-align:center;"><span class="status-ok">Conforme (BE-2025-01) ✅</span></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr style="background:#f1f5f9; font-weight:700;">
+                    <td colspan="2" style="text-align:right; text-transform:uppercase; font-size:7.2pt; color:#475569;">Total Général Remis au Dépôt :</td>
+                    <td class="num" style="color:#0284c7; font-weight:800;">8 Volumes</td>
+                    <td class="num" style="color:#0284c7; font-weight:800;">1 890 Pages</td>
+                    <td style="text-align:center; color:#047857; font-weight:800;">100 % Scellé BPF</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- SECTION 2 : SUPPORT NUMÉRIQUE SCELLÉ -->
+        <div class="digital-hash-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <strong>Support Numérique d'Accompagnement (eCTD Ready) :</strong>
+                <span style="font-size:7pt; font-weight:700; color:#1d4ed8;">Clé USB Métallique Scellée N° USB-2026-0842</span>
+            </div>
+            <div>
+                Empreinte Cryptographique Globale SHA-256 de l'Archive Soumise :<br>
+                <span class="hash-code">e963a83f1402d7ba58c946280db5148002cf7252cb7ecbf66a0149ea72960f21</span>
+            </div>
+        </div>
+
+        <!-- SECTION 3 : CADRE RÉSERVÉ AU GUICHET D'ACCUEIL ANPP -->
+        <div class="anpp-reception-box">
+            <div class="anpp-reception-title">Cadre Réservé au Bureau d'Ordre &amp; Accueil de l'ANPP (Guichet Central)</div>
+            <div class="anpp-grid">
+                <div class="anpp-field">
+                    <div class="anpp-field-lbl">Date &amp; Heure d'Arrivée au Guichet :</div>
+                    <div class="anpp-field-box">____ / ____ / 2026 à ____ h ____</div>
+                </div>
+                <div class="anpp-field">
+                    <div class="anpp-field-lbl">Numéro d'Enregistrement Attribué :</div>
+                    <div class="anpp-field-box">N° ANPP/BO/2026/____________</div>
+                </div>
+                <div class="anpp-field">
+                    <div class="anpp-field-lbl">Cachet Humide &amp; Visa de l'Agent Récepteur :</div>
+                    <div class="anpp-field-box">[ Empreinte Cachet Bureau d'Ordre ]</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4 : SIGNATURE SOLENNELLE DU PHARMACIEN DIRECTEUR TECHNIQUE -->
+        <div class="section-title">2. Déclaration Solennelle &amp; Visa Légal du Pharmacien Directeur Technique</div>
+        <div class="sign-grid">
+            <div class="sign-box">
+                <div class="sign-title">Pharmacien Directeur Technique (PDT)</div>
+                <div class="sign-mandate">Titulaire de la Décision Ministérielle N° 2024/MIPH/DT/118 • Article 1.A.7</div>
+                <div class="sign-oath">
+                    « En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude absolue des données techniques et analytiques du présent dossier CTD soumis à l'ANPP conformément aux lois et réglementations sanitaires en vigueur. »
+                </div>
+                <div class="sign-seal-area">
+                    <div class="seal-stamp">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Signé Électroniquement (2FA / TOTP)
+                    </div>
+                    <div style="font-size:6.5pt; color:#64748b; margin-top:3px;">
+                        Dr. Yassine Benali • 15/11/2026 11:05:42 UTC+1<br>
+                        Empreinte Sceau : <span style="font-family:monospace; font-weight:700;">8a7c9f4e2b01d365</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sign-box">
+                <div class="sign-title">Direction Générale de l'Établissement</div>
+                <div class="sign-mandate">Mandataire Social • Laboratoires El Djazair Pharma Spa</div>
+                <div class="sign-oath">
+                    « La Direction Générale confirme mandater officiellement le Pharmacien Directeur Technique pour le dépôt de la présente demande et certifie la solvabilité des engagements industriels et financiers associés. »
+                </div>
+                <div class="sign-seal-area">
+                    <div class="seal-stamp" style="background:#eff6ff; border-color:#93c5fd; color:#1d4ed8;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Approuvé &amp; Autorisé
+                    </div>
+                    <div style="font-size:6.5pt; color:#64748b; margin-top:3px;">
+                        M. Salim Hadj-Ahmed (PDG) • Cachet Société
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PIED DE PAGE LÉGAL BPF & QR-CODE D'AUTHENTICITÉ -->
+        <div class="footer-legal">
+            <div class="footer-qr-block">
+                <!-- QR-Code vectoriel SVG ultra-net (300 DPI) -->
+                <div class="qr-frame">
+                    <svg width="40" height="40" viewBox="0 0 100 100" fill="#091e36">
+                        <!-- Coin Haut Gauche -->
+                        <rect x="10" y="10" width="25" height="25" fill="#091e36"/>
+                        <rect x="15" y="15" width="15" height="15" fill="#ffffff"/>
+                        <rect x="19" y="19" width="7" height="7" fill="#091e36"/>
+                        <!-- Coin Haut Droit -->
+                        <rect x="65" y="10" width="25" height="25" fill="#091e36"/>
+                        <rect x="70" y="15" width="15" height="15" fill="#ffffff"/>
+                        <rect x="74" y="19" width="7" height="7" fill="#091e36"/>
+                        <!-- Coin Bas Gauche -->
+                        <rect x="10" y="65" width="25" height="25" fill="#091e36"/>
+                        <rect x="15" y="70" width="15" height="15" fill="#ffffff"/>
+                        <rect x="19" y="74" width="7" height="7" fill="#091e36"/>
+                        <!-- Données QR symboliques nettes -->
+                        <rect x="42" y="12" width="6" height="6"/><rect x="52" y="12" width="6" height="6"/>
+                        <rect x="42" y="24" width="6" height="6"/><rect x="42" y="36" width="6" height="6"/>
+                        <rect x="52" y="30" width="6" height="6"/><rect x="60" y="42" width="6" height="6"/>
+                        <rect x="70" y="48" width="6" height="6"/><rect x="80" y="42" width="6" height="6"/>
+                        <rect x="42" y="65" width="6" height="6"/><rect x="52" y="75" width="6" height="6"/>
+                        <rect x="65" y="70" width="6" height="6"/><rect x="78" y="78" width="6" height="6"/>
+                    </svg>
+                </div>
+                <div class="footer-info">
+                    <strong>Contrôle d'Authenticité Numérique en Ligne (21 CFR Part 11 / ALCOA+) :</strong><br>
+                    Scannez le QR-Code ou consultez : <span style="color:#0284c7; font-family:monospace;">https://homolog.dz/verify/e963a83f1402d7ba58c9...</span><br>
+                    Document officiel immuable certifié • Empreinte SHA-256 intègre • Plateforme Homolog Algérie
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div class="footer-page-num">Page 1 sur 1</div>
+                <div>Format ISO A4 • 300+ DPI Vectoriel</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script Interactif pour Démonstration -->
+    <script>
+        function toggleWatermark() {
+            const wm = document.getElementById('doc-watermark');
+            const lbl = document.getElementById('wm-label');
+            if (wm.classList.contains('draft')) {
+                wm.classList.remove('draft');
+                wm.textContent = 'OFFICIEL — VALIDÉ';
+                lbl.textContent = 'OFFICIEL';
+            } else {
+                wm.classList.add('draft');
+                wm.textContent = 'DOCUMENT DE TRAVAIL — BROUILLON';
+                lbl.textContent = 'BROUILLON';
+            }
+        }
+
+        function simulateScan() {
+            alert("📱 Simulation Scan QR-Code ANPP :\n\n" +
+                  "URL résolue : https://homolog.dz/verify/e963a83f1402d7ba58c9...\n" +
+                  "Document : ES-REG-01 (Bordereau de Dépôt CTD)\n" +
+                  "Dossier : DOS-2026-PARAC-NF (Paracétamol 500mg)\n" +
+                  "Signataire : Dr. Yassine Benali (Directeur Technique)\n" +
+                  "Statut : OFFICIEL / SCELLÉ LE 15/11/2026 11:05:42 UTC+1\n" +
+                  "Résultat : Authenticité bit-à-bit 100% CONFORME ✅");
+        }
+    </script>
+
+</body>
+</html>

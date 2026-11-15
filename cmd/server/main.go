@@ -199,6 +199,7 @@ func main() {
 	r.Handle("/css/*", noCacheWrapper(staticFS))
 	r.Handle("/js/*", noCacheWrapper(staticFS))
 	r.Handle("/img/*", staticFS)
+	r.Handle("/reports/*", noCacheWrapper(staticFS))
 
 	// Routes de diagnostic et d'état de santé
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
