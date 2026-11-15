@@ -489,7 +489,7 @@
 
     <div class="callout info">
         <div class="callout-title">Structure du Référentiel</div>
-        Le présent document constitue le référentiel contractuel et réglementaire exhaustif pour la conception, l'implémentation et la validation pharmaceutique (GAMP 5 / BPF) de la plateforme **Homolog**. Il détaille les 10 domaines d'exigences couvrant l'ensemble du cycle de vie des produits de santé en Algérie.
+        Le présent document constitue le référentiel contractuel et réglementaire exhaustif pour la conception, l'implémentation et la validation pharmaceutique (GAMP 5 / BPF) de la plateforme **Homolog**. Il détaille les 11 domaines d'exigences couvrant l'ensemble du cycle de vie des produits de santé en Algérie.
     </div>
 
     <table>
@@ -558,6 +558,12 @@
             </tr>
             <tr>
                 <td><strong>10</strong></td>
+                <td><strong>Spécifications Exhaustives des États de Sortie & Reporting Réglementaire</strong></td>
+                <td>15 états BPF/ANPP : bordereaux BV1/BV2, dépôts CTD, Audit Trail ALCOA+, QR-Code d'intégrité, PDF/A.</td>
+                <td><strong>Matrice des 15 États</strong></td>
+            </tr>
+            <tr>
+                <td><strong>11</strong></td>
                 <td><strong>Conclusion et Approbation Formelle</strong></td>
                 <td>Engagement d'immuabilité, scellement cryptographique et visa légal PDT.</td>
                 <td>Sign-off Officiel</td>
@@ -2749,9 +2755,307 @@ type ANPPService interface {
         <div class="page-break"></div>
         <div class="page-header">
             <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
-            <span>SECTION 10 : 10. Conclusion et Validation</span>
+            <span>SECTION 10 : 10. Spécifications Exhaustives des États de Sortie & Reporting Réglementaire</span>
         </div>
-        <h2>10. Conclusion et Validation</h2>
+        <h2>10. Spécifications Exhaustives des États de Sortie &amp; Reporting Réglementaire</h2>
+<p>Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (<strong>ANPP</strong>), les états de sortie ne constituent pas de simples impressions bureautiques, mais des <strong>actes réglementaires opposables</strong>, des <strong>pièces de dépôt officielles</strong> et des <strong>justificatifs d'audit BPF / 21 CFR Part 11</strong>. La plateforme <strong>Homolog</strong> standardise et automatise l'intégralité des flux documentaires sortants à travers un moteur d'édition certifié garantissant l'intégrité, l'immuabilité et la valeur probante de chaque feuillet émis.</p>
+
+        <div class="callout info">
+            <div class="callout-title">Principe d'Intégrité ALCOA+ Appliqué aux États de Sortie</div>
+            Tout état de sortie généré par Homolog satisfait obligatoirement aux 9 critères du référentiel international <strong>ALCOA+</strong> : <em>Attributable</em> (signataire nominatif et rôle), <em>Legible</em> (norme PDF/A vectorielle haute lisibilité), <em>Contemporaneous</em> (horodatage UTC+1 certifié à la seconde), <em>Original</em> (empreinte cryptographique SHA-256 issue du coffre-fort CAS), <em>Accurate</em> (données extraites directement de PostgreSQL sans retraitement manuel), <em>Complete</em> (paginage strict « Page X sur Y » sans omission), <em>Consistent</em> (traçabilité de versioning synchronisée avec la GED), <em>Enduring</em> (format d'archivage pérenne ISO 19005 sur 30 ans), et <em>Available</em> (restitution instantanée sur réquisition de l'ANPP).
+        </div>
+
+<h3>10.1 Principes Directeurs et Dispositifs de Sécurisation BPF</h3>
+<p>Chaque état de sortie produit par le système intègre nativement une triple barrière de sécurisation et d'authentification :</p>
+<ol>
+<li><strong>Filigranes Dynamiques d'État de Cycle de Vie :</strong>
+    <ul>
+        <li><code>BROUILLON (DRAFT)</code> : Apposé en diagonale translucide grisée (opacité 15%) sur tout document en cours d'élaboration, de relecture ou non encore visé par le Pharmacien Directeur Technique (interdiction formelle de dépôt auprès de l'ANPP).</li>
+        <li><code>OFFICIEL / APPROUVÉ</code> : Apposé avec cartouche vert BPF dès que le flux <em>Maker-Checker-Approver</em> est complété et scellé par la signature électronique qualifiée 2FA du Directeur Technique.</li>
+        <li><code>ARCHIVÉ / PÉRIMÉ</code> : Apposé automatiquement avec timbre rouge dès qu'une révision ultérieure du dossier est approuvée ou qu'un renouvellement/avenant remplace l'état antérieur.</li>
+    </ul>
+</li>
+<li><strong>Dispositif Anti-Falsification par QR-Code Cryptographique :</strong>
+    <p>Chaque page imprimée comporte en cartouche inférieur un QR-code sécurisé contenant l'URL de vérification d'authenticité :<br />
+    <code>https://homolog.labo.dz/verify/{SHA256_DOCUMENT_HASH}</code><br />
+    Le scan de ce QR-code par un inspecteur de l'ANPP, un douanier ou un auditeur qualité ouvre instantanément une page sécurisée attestant en temps réel de : l'authenticité de la pièce, l'identité et mandat du signataire légal, la date/heure de scellement et la conformité bit-à-bit du tirage papier avec l'original stocké dans le coffre-fort Homolog.</p>
+</li>
+<li><strong>Paginage Légal et Cartouche Standardisé BPF :</strong>
+    <p>Conformément aux Bonnes Pratiques de Fabrication, chaque feuillet comporte la mention indélébile <strong>« Page X sur Y »</strong>, le numéro de version (ex: <code>v1.0</code>), le code interne du dossier (ex: <code>DOS-2026-PARAC-NF</code>), ainsi que l'identifiant système unique de l'opérateur ayant déclenché l'édition.</p>
+</li>
+</ol>
+
+<h3>10.2 Matrice Exhaustive des 15 États de Sortie Homolog</h3>
+<p>Le référentiel documentaire d'Homolog structure l'ensemble des restitutions en <strong>cinq familles métier spécialisées</strong> :</p>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 10%;">Code Réf.</th>
+            <th style="width: 25%;">Dénomination de l'État de Sortie</th>
+            <th style="width: 15%;">Format Cible</th>
+            <th style="width: 20%;">Déclencheur &amp; Fréquence</th>
+            <th style="width: 15%;">Visa Légal Requis</th>
+            <th style="width: 15%;">Destinataire / Usage</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- FAMILLE 1 : REGLEMENTAIRE & DEPOT ANPP -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #0369a1; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Famille 1 : Dossiers Réglementaires &amp; Dépôts ANPP (Pièces Maîtresses)</td>
+        </tr>
+        <tr>
+            <td><strong>ES-REG-01</strong></td>
+            <td><strong>Bordereau de Dépôt / Transmission Officiel CTD</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Inventaire des 5 modules CTD et volumes transmis</span></td>
+            <td>PDF/A-1b</td>
+            <td>À chaque soumission physique ou dépôt de dossier</td>
+            <td>Directeur Technique</td>
+            <td>Bureau d'Ordre ANPP / Archives Labo</td>
+        </tr>
+        <tr>
+            <td><strong>ES-REG-02</strong></td>
+            <td><strong>Formulaire Officiel de Demande d'Enregistrement (1.A.3)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Formulaire légal Arrêté 16/12/2020 / Guide 2025</span></td>
+            <td>PDF/A-1b</td>
+            <td>Constitution initiale d'un dossier NI, NF, RI ou RF</td>
+            <td>Directeur Technique &amp; DG</td>
+            <td>Direction de l'Enregistrement ANPP</td>
+        </tr>
+        <tr>
+            <td><strong>ES-REG-03</strong></td>
+            <td><strong>Table des Matières Exhaustive &amp; Index Paginé CTD</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Sommaire interactif des sections 1.0 à 5.4 avec SHA-256</span></td>
+            <td>PDF/A-1b</td>
+            <td>Scellement final d'un Submission Package</td>
+            <td>Resp. Affaires Réglem.</td>
+            <td>Experts Évaluateurs ANPP</td>
+        </tr>
+        <tr>
+            <td><strong>ES-REG-04</strong></td>
+            <td><strong>Fiche Récapitulative de Modification (LD-DEPP07/V01)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Synthèse comparatif Approuvé vs Proposé, rubriques 1-34</span></td>
+            <td>PDF/A-1b</td>
+            <td>Dépôt d'une variation Mmin, Mmod, Mmaj ou Grouping</td>
+            <td>Directeur Technique</td>
+            <td>Sous-Direction des Variations ANPP</td>
+        </tr>
+        <tr>
+            <td><strong>ES-REG-05</strong></td>
+            <td><strong>Bordereau d'Envoi des Échantillons &amp; Réactifs (1.P)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Quantités, lots, dates de péremption, CoA et conservation</span></td>
+            <td>PDF/A-1b</td>
+            <td>Convocation au dépôt des échantillons physiques</td>
+            <td>Responsable CQ / BPF</td>
+            <td>Laboratoire Contrôle LNCPP / ANPP</td>
+        </tr>
+
+        <!-- FAMILLE 2 : FINANCIER & REDEVANCES -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #047857; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Famille 2 : États Financiers &amp; Redevances ANPP (Décret Exécutif 21-82)</td>
+        </tr>
+        <tr>
+            <td><strong>ES-FIN-01</strong></td>
+            <td><strong>Bordereau de Versement BV1 (Enregistrement Initial &amp; DM)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Calcul automatique DZD/Devises, RIB Trésor ANPP</span></td>
+            <td>PDF/A-1b + XLSX</td>
+            <td>Préalable obligatoire au dépôt NI, NF ou DM</td>
+            <td>Directeur Financier &amp; PDT</td>
+            <td>Régie des Recettes ANPP &amp; Trésor</td>
+        </tr>
+        <tr>
+            <td><strong>ES-FIN-02</strong></td>
+            <td><strong>Bordereau de Versement BV2 (Variations &amp; Renouvellements)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Liquidation par rubrique avec abattement Grouping</span></td>
+            <td>PDF/A-1b + XLSX</td>
+            <td>Dépôt de modifications (MI/MF) ou renouvellement (RI/RF)</td>
+            <td>Directeur Financier &amp; PDT</td>
+            <td>Régie des Recettes ANPP</td>
+        </tr>
+        <tr>
+            <td><strong>ES-FIN-03</strong></td>
+            <td><strong>Fiche d'Imputation &amp; Rapprochement Bancaire des Redevances</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Concordance Avis de débit, Bordereau BV et Quittance ANPP</span></td>
+            <td>XLSX / CSV</td>
+            <td>Mensuel ou à réconciliation de la quittance officielle</td>
+            <td>Responsable Comptable</td>
+            <td>Contrôle de Gestion / Audit Interne</td>
+        </tr>
+
+        <!-- FAMILLE 3 : VIGILANCE & COMPLEMENTS -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #b45309; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Famille 3 : Vigilance Réglementaire, Compléments &amp; Rendez-vous ANPP</td>
+        </tr>
+        <tr>
+            <td><strong>ES-VIG-01</strong></td>
+            <td><strong>Bordereau de Réponse aux Compléments (Deficiency Reply)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Tableau croisé : Question ANPP / Réponse Labo / Pièce GED</span></td>
+            <td>PDF/A-1b</td>
+            <td>Notification d'une lettre de carence (délai 60j / 90j)</td>
+            <td>Directeur Technique</td>
+            <td>Commission Technique d'Enregistrement</td>
+        </tr>
+        <tr>
+            <td><strong>ES-VIG-02</strong></td>
+            <td><strong>Fiche de Convocation &amp; Préparation aux Rendez-vous ANPP</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Ordre du jour séance technique, mandatés et historique</span></td>
+            <td>PDF/A-1b</td>
+            <td>Confirmation de créneau RDV PP (mercredi) / RDV DM</td>
+            <td>Resp. Affaires Réglem.</td>
+            <td>Délégation Laboratoire / Accueil ANPP</td>
+        </tr>
+        <tr>
+            <td><strong>ES-VIG-03</strong></td>
+            <td><strong>Rapport Périodique de Veille &amp; Échéancier Réglementaire</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Alertes AMM J-180/90/30, textes JO parus, variations en cours</span></td>
+            <td>PDF/A-1b + XLSX</td>
+            <td>Mensuel / Trimestriel</td>
+            <td>Resp. Affaires Réglem.</td>
+            <td>Comité de Direction / Pharmacovigilance</td>
+        </tr>
+
+        <!-- FAMILLE 4 : QUALITE, AUDIT & BPF -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #4338ca; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Famille 4 : Assurance Qualité, Intégrité BPF &amp; 21 CFR Part 11</td>
+        </tr>
+        <tr>
+            <td><strong>ES-QUA-01</strong></td>
+            <td><strong>Registre d'Audit Trail BPF Scellé &amp; Traçabilité ALCOA+</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Journal immuable append-only des événements avec Hash SHA-256</span></td>
+            <td>PDF/A-1b + CSV</td>
+            <td>Sur demande d'inspection ANPP ou revue qualité périodique</td>
+            <td>Responsable AQ / BPF</td>
+            <td>Inspecteurs BPF ANPP / Auditeurs Qualité</td>
+        </tr>
+        <tr>
+            <td><strong>ES-QUA-02</strong></td>
+            <td><strong>Manifeste de Signature Électronique BPF (Maker-Checker)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Preuve légale de séparation des rôles et double visa qualifié</span></td>
+            <td>PDF/A-1b</td>
+            <td>Scellement de toute version officielle de document CTD</td>
+            <td>Directeur Technique</td>
+            <td>Dossier de Lot / Dossier Maître AMM</td>
+        </tr>
+        <tr>
+            <td><strong>ES-QUA-03</strong></td>
+            <td><strong>Fiche de Contrôle Documentaire Pré-Dépôt (Checklist)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">PV d'audit d'exhaustivité et de conformité 100% des pièces M1-M5</span></td>
+            <td>PDF/A-1b</td>
+            <td>Préalable à toute validation de soumission par le PDT</td>
+            <td>Responsable AQ &amp; PDT</td>
+            <td>Dossier d'Enregistrement Interne</td>
+        </tr>
+
+        <!-- FAMILLE 5 : PILOTAGE & REVERSIBILITE -->
+        <tr style="background-color: #f8fafc;">
+            <td colspan="6" style="font-weight: 700; color: #0f172a; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.5px;">Famille 5 : Pilotage Stratégique, Direction Générale &amp; Réversibilité</td>
+        </tr>
+        <tr>
+            <td><strong>ES-DIR-01</strong></td>
+            <td><strong>Tableau de Bord Exécutif du Portefeuille Produits</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Statuts AMM/DM, taux d'approbation, respect des délais ANPP</span></td>
+            <td>PDF/A-1b + XLSX</td>
+            <td>Trimestriel / Bilan Annuel</td>
+            <td>Directeur Technique &amp; DG</td>
+            <td>Conseil d'Administration / DG</td>
+        </tr>
+        <tr>
+            <td><strong>ES-EXP-01</strong></td>
+            <td><strong>Procès-Verbal de Réversibilité &amp; Manifeste d'Archive (.homolog)</strong><br /><span style="font-size: 6.8pt; color: #64748b;">Inventaire des 19 tables SQL, empreintes CAS et scellement d'archive</span></td>
+            <td>PDF/A-1b + JSON</td>
+            <td>À chaque sauvegarde d'exploitation ou réversibilité contractuelle</td>
+            <td>Directeur Technique &amp; DSI</td>
+            <td>Direction Générale / Huissier / Tiers Archiveur</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>10.3 Spécifications Détaillées des 4 Maquettes Maîtresses Réglementaires</h3>
+
+<h4>10.3.1 ES-REG-01 : Bordereau de Dépôt / Transmission Officiel CTD</h4>
+<p>Ce document officiel accompagne obligatoirement le dépôt physique des volumes CTD au niveau du Bureau d'Ordre de l'ANPP :</p>
+<ul>
+    <li><strong>Cartouche d'identification de l'établissement :</strong> Raison sociale, adresse du siège, numéro d'agrément MIPH (art. 1.A.6), nom du Pharmacien Directeur Technique et coordonnées du délégué déposant.</li>
+    <li><strong>Cartouche d'identification du produit :</strong> DCI, dénomination commerciale, forme galénique, dosage, présentation commerciale, classe ATC, statut réglementaire (médicament fabrication locale NF/RF, importation NI/RI, ou dispositif médical DM).</li>
+    <li><strong>Tableau de ventilation des volumes remis :</strong> Liste détaillée des classeurs physiques remis (Module 1 : Spécificités Algérie, Module 2 : Résumés, Module 3 : Qualité pharmaceutique, Module 4 : Sécurité non-clinique, Module 5 : Efficacité clinique et bioéquivalence in vivo). Pour chaque module, indication du nombre de volumes, du nombre de pages et de la référence du support numérique d'accompagnement (clé USB scellée ou CD-ROM avec empreinte SHA-256).</li>
+    <li><strong>Cadre réservé à l'ANPP (Guichet d'Accueil) :</strong> Date et heure d'arrivée, cachet humide du bureau d'ordre, signature de l'agent récepteur, numéro d'enregistrement attribué au dépôt, et liste d'émargement des pièces manquantes éventuelles.</li>
+</ul>
+
+<h4>10.3.2 ES-FIN-01 / ES-FIN-02 : Bordereaux de Versement BV1 &amp; BV2</h4>
+<p>Édités conformément aux formulaires normalisés de la Direction de l'Administration et des Finances de l'ANPP :</p>
+<ul>
+    <li><strong>Ventilation des prestations tarifées :</strong> Application stricte de la grille tarifaire du Décret Exécutif 21-82 (ex: enregistrement initial princeps 450 000 DZD, générique local 250 000 DZD, variation majeure 120 000 DZD, variation mineure 60 000 DZD, renouvellement 150 000 DZD).</li>
+    <li><strong>Gestion des règles de groupement (Grouping) :</strong> Calcul automatique de la redevance principale avec application du taux réduit réglementaire sur les variations secondaires groupées au sein de la même soumission (Arrêté du 07/11/2021).</li>
+    <li><strong>Coordonnées bancaires officielles pré-remplies :</strong> Intitulé du compte : Agence Nationale des Produits Pharmaceutiques, Banque d'Algérie / Trésor Public, Numéro d'Identité Bancaire (RIB/RIP), avec champ dédié pour reporter le numéro de virement bancaire et la référence de la quittance émise par la régie des recettes.</li>
+</ul>
+
+<h4>10.3.3 ES-VIG-01 : Bordereau de Réponse aux Demandes de Compléments (Deficiency Letters)</h4>
+<p>Document opposable permettant de formaliser la levée des réserves soulevées par les commissions d'experts de l'ANPP :</p>
+<ul>
+    <li><strong>Rappel de la notification initiale :</strong> Référence de la lettre de carence de l'ANPP, date de notification officielle, date de fin de délai réglementaire (respect strict du chronomètre BPF de 60 ou 90 jours).</li>
+    <li><strong>Tableau synoptique d'évaluation contradictoire :</strong>
+        <table style="margin-top: 8px;">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Réf. Question ANPP</th>
+                    <th style="width: 25%;">Point d'Insuffisance Soulevé</th>
+                    <th style="width: 35%;">Réponse &amp; Justification Technique du Laboratoire</th>
+                    <th style="width: 25%;">Pièce GED Rectificative &amp; Page</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Q-M3-01</code></td>
+                    <td>Absence des profils de dissolution comparative à 3 pH (1.2, 4.5, 6.8).</td>
+                    <td>Rapport d'étude de dissolution in vitro complémentaire réalisé selon Pharmacopée Européenne 2.9.3.</td>
+                    <td><code>GED-M3-DISS-V2.pdf</code><br />(pages 12 à 28, SHA-256 scellé)</td>
+                </tr>
+            </tbody>
+        </table>
+    </li>
+    <li><strong>Déclaration solennelle d'engagement :</strong> Attestation signée par le Pharmacien Directeur Technique confirmant qu'aucune autre modification que celles explicitement décrites n'a été introduite dans le dossier.</li>
+</ul>
+
+<h4>10.3.4 ES-QUA-01 : Registre d'Audit Trail BPF Scellé &amp; Traçabilité ALCOA+</h4>
+<p>Ce certificat est édité sur demande lors des inspections des Bonnes Pratiques de Fabrication conduites par la Direction de l'Inspection de l'ANPP ou lors des audits de certification qualité ISO/GAMP 5 :</p>
+<ul>
+    <li><strong>Périmètre audité :</strong> Code dossier, plage de dates sélectionnée, identifiant des acteurs intervenus.</li>
+    <li><strong>Corps du journal d'événements :</strong> Tableau chronologique séquentiel non altérable listant pour chaque opération : l'horodatage précis à la seconde (UTC+1 Alger), l'adresse IP cliente, l'identifiant et nom de l'utilisateur, son rôle au moment de l'action, la nature de l'action (Création, Consultation, Modification, Signature, Scellement, Remplacement de version GED), l'état avant / après, et le motif réglementaire obligatoire saisi.</li>
+    <li><strong>Signature de scellement cryptographique :</strong> Mention en fin de document de l'empreinte globale SHA-256 du journal d'audit trail et du statut de synchronisation de la séquence PostgreSQL <code>audit_logs_id_seq</code> garantissant l'absence totale de suppression ou d'intercalation de lignes (principe <em>Append-Only</em> BPF).</li>
+</ul>
+
+<h3>10.4 Moteur d'Édition et Architecture Technique d'Exportation</h3>
+<p>L'implémentation logicielle du sous-système de reporting dans le backend Go d'Homolog repose sur une chaîne de traitement haute performance :</p>
+
+<pre><code class="language-go">// ReportingService gère la production, le scellement et la vérification des états de sortie BPF.
+type ReportingService interface {
+    // Génère un état de sortie officiel au format normé (PDF/A, XLSX, CSV).
+    GenerateReport(ctx context.Context, req ReportRequest) (*GeneratedReport, error)
+
+    // Applique le visa électronique du Pharmacien Directeur Technique et génère le QR-Code de vérification.
+    SignAndSealReport(ctx context.Context, reportID string, pdtUser *User, totpToken string) (*SealedReport, error)
+
+    // Vérifie l'authenticité d'un document scanné via son empreinte SHA-256.
+    VerifyReportIntegrity(ctx context.Context, sha256Hash string) (*VerificationResult, error)
+}
+
+// Structure de résultat de vérification pour le portail d'audit public/ANPP.
+type VerificationResult struct {
+    IsValid          bool      `json:"is_valid"`
+    DocumentCode     string    `json:"document_code"`     // Ex: ES-REG-01
+    DocumentTitle    string    `json:"document_title"`    // Bordereau de Dépôt CTD
+    DossierReference string    `json:"dossier_reference"` // DOS-2026-PARAC-NF
+    ProductName      string    `json:"product_name"`      // Paracétamol 500mg Comprimé
+    SignatoryName    string    `json:"signatory_name"`    // Dr. Y. Benali (Directeur Technique)
+    SignedAt         time.Time `json:"signed_at"`
+    WatermarkStatus  string    `json:"watermark_status"`  // OFFICIEL / APPROUVE
+    SHA256Hash       string    `json:"sha256_hash"`
+}
+</code></pre>
+
+<p>Les routes API associées au reporting sont protégées par les permissions granulaires du RBAC (notamment <code>can_export_submission_package</code> et <code>can_sign_officially</code>) :</p>
+<ul>
+    <li><code>GET /api/v1/dossiers/{id}/reports/{report_code}?format=pdf|xlsx|csv</code> : Génération à la volée de l'état avec filigrane adapté.</li>
+    <li><code>POST /api/v1/dossiers/{id}/reports/{report_code}/seal</code> : Scellement officiel par le Pharmacien DT avec validation du code TOTP 2FA.</li>
+    <li><code>GET /api/v1/public/verify/{sha256}</code> : Endpoint public léger, accessible via le scan du QR-Code par l'ANPP ou les inspecteurs, restituant la fiche d'authenticité et le statut de validation du document.</li>
+</ul>
+
+        <div class="page-footer">
+            <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
+            <span>Section 10 • Cahier des Charges v1.0</span>
+        </div>
+        
+        <div class="page-break"></div>
+        <div class="page-header">
+            <span>HOMOLOG • CAHIER DES CHARGES FONCTIONNEL & TECHNIQUE</span>
+            <span>SECTION 11 : 11. Conclusion et Validation</span>
+        </div>
+        <h2>11. Conclusion et Validation</h2>
 <p>Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme <strong>Homolog</strong>. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.</p>
             <div class="callout info">
                 <div class="callout-title">Engagement de Conformité Réglementaire & Sécurité</div>
@@ -2822,7 +3126,7 @@ type ANPPService interface {
             
         <div class="page-footer">
             <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
-            <span>Section 10 • Cahier des Charges v1.0</span>
+            <span>Section 11 • Cahier des Charges v1.0</span>
         </div>
         
 
