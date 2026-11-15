@@ -20,7 +20,7 @@ COPY . .
 
 # Compilation d'un binaire statique sans CGO (ultra-sécurisé, sans dépendance C externe)
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -ldflags="-s -w -X 'main.Version=0.7.0' -X 'main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
+    -ldflags="-s -w -X 'main.Version=0.8.0' -X 'main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
     -o /build/homolog ./cmd/server
 
 # Étape 2 : Image d'exécution minimale et durcie (Minimal Hardened Runtime)

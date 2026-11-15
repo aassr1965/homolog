@@ -56,6 +56,12 @@ func main() {
 	var pharmaHandler *api.PharmaHandler
 	var gedHandler *api.GEDHandler
 	var dossierHandler *api.DossierHandler
+	var deficiencyHandler *api.DeficiencyHandler
+	var feeHandler *api.FeeHandler
+	var submissionHandler *api.SubmissionHandler
+	var appointmentHandler *api.AppointmentHandler
+	var regulatoryWatchHandler *api.RegulatoryWatchHandler
+	var setupHandler *api.SetupHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -75,6 +81,15 @@ func main() {
 		// Initialisation des dossiers réglementaires ANPP de démonstration (Jalon 1.5)
 		api.SeedInitialDossiers(ctx, db.Pool, cfg.OnPremOrgSlug)
 
+		// Initialisation du Studio de Compléments ANPP & Traçabilité Délais (Jalon 1.7)
+		api.SeedInitialDeficiencies(ctx, db.Pool, cfg.OnPremOrgSlug)
+
+		// Initialisation des Bordereaux de Redevances BV1/BV2 (Jalon 1.7 Phase 2)
+		api.SeedInitialPaymentSlips(ctx, db.Pool, cfg.OnPremOrgSlug)
+
+		// Initialisation de la Veille Réglementaire & Séances ANPP (Jalon 1.7 Phase 4)
+		api.SeedInitialRegulatoryWatchAndAppointments(ctx, db.Pool, cfg.OnPremOrgSlug)
+
 		sessionManager = auth.NewSessionManager(db.Pool, cfg.SessionExpiryMinutes, cfg.IdleTimeoutMinutes)
 		auditService = audit.NewService(db.Pool)
 		authHandler = api.NewAuthHandler(db.Pool, sessionManager, auditService, cfg)
@@ -89,6 +104,22 @@ func main() {
 
 		dossierRepo := repository.NewDossierRepository(db.Pool)
 		dossierHandler = api.NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditService, db.Pool)
+
+		deficiencyRepo := repository.NewDeficiencyRepository(db.Pool)
+		deficiencyHandler = api.NewDeficiencyHandler(deficiencyRepo, dossierRepo, auditService, db.Pool)
+
+		feeRepo := repository.NewFeeRepository(db.Pool)
+		feeHandler = api.NewFeeHandler(feeRepo, dossierRepo, auditService, db.Pool)
+
+		submissionHandler = api.NewSubmissionHandler(dossierRepo, feeRepo, pharmaRepo, auditService)
+
+		appointmentRepo := repository.NewAppointmentRepository(db.Pool)
+		appointmentHandler = api.NewAppointmentHandler(appointmentRepo, dossierRepo, auditService)
+
+		regulatoryWatchRepo := repository.NewRegulatoryWatchRepository(db.Pool)
+		regulatoryWatchHandler = api.NewRegulatoryWatchHandler(regulatoryWatchRepo, auditService)
+
+		setupHandler = api.NewSetupHandler(db.Pool, sessionManager, auditService, cfg)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -199,6 +230,11 @@ func main() {
 	})
 
 	// Routes API Authentification, 2FA, Signature DT et Audit Trail
+	if setupHandler != nil {
+		r.Get("/api/v1/setup/status", setupHandler.GetSetupStatus)
+		r.Post("/api/v1/setup/initialize", setupHandler.InitializeInstance)
+	}
+
 	if authHandler != nil {
 		r.Post("/api/v1/auth/login", authHandler.Login)
 		r.Post("/api/v1/auth/logout", authHandler.Logout)
@@ -240,6 +276,10 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/sessions/emergency-lockdown", systemHandler.EmergencyLockdown)
 				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/backup", systemHandler.TriggerBackup)
 				protected.With(api.RequirePermission(auditService, domain.PermSysMaint)).Post("/api/v1/system/verify-integrity", systemHandler.VerifyCASIntegrity)
+
+				// Archive Universelle .homolog & Réversibilité BPF (Jalon 1.8)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermSysMaint, domain.PermDocApprovePDT)).Get("/api/v1/system/backup/export", systemHandler.ExportHomologArchive)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermSysMaint, domain.PermDocApprovePDT)).Post("/api/v1/system/backup/restore", systemHandler.RestoreHomologArchive)
 			}
 
 			// Référentiel Établissements, Sites & Produits (Jalon 1.3 - Guide ANPP 2025)
@@ -280,10 +320,10 @@ func main() {
 
 				// Documents & Versions
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents", gedHandler.ListDocuments)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/ged/documents", gedHandler.CreateDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/ged/documents", gedHandler.CreateDocument)
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}", gedHandler.GetDocument)
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}/versions", gedHandler.GetDocumentVersions)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/ged/documents/{id}/versions", gedHandler.UploadNewVersion)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/ged/documents/{id}/versions", gedHandler.UploadNewVersion)
 				protected.With(api.RequirePermission(auditService, domain.PermDocRead)).Get("/api/v1/ged/documents/{id}/download", gedHandler.DownloadVersion)
 
 				// Cycle de vie & Verrouillage
@@ -300,8 +340,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers", dossierHandler.ListDossiers)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierCreate)).Post("/api/v1/dossiers", dossierHandler.CreateDossier)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}", dossierHandler.GetDossier)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
-				protected.With(api.RequirePermission(auditService, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/status", dossierHandler.UpdateItemStatus)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/sign-pdt", dossierHandler.SignPDT)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/status", dossierHandler.UpdateDossierStatus)
@@ -310,6 +350,59 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/members", dossierHandler.ListMembers)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Post("/api/v1/dossiers/{id}/members", dossierHandler.AssignMember)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Delete("/api/v1/dossiers/{id}/members/{userId}", dossierHandler.RemoveMember)
+			}
+
+			// Studio de Compléments ANPP & Traçabilité des Réponses (Jalon 1.7)
+			if deficiencyHandler != nil {
+				// Liste et création de demandes de compléments au sein d'un dossier
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/deficiencies", deficiencyHandler.ListDossierDeficiencies)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/deficiencies", deficiencyHandler.CreateDossierDeficiency)
+
+				// Pilotage unitaire, alertes de délai légal et visa PDT
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/deficiencies/letters/{letterId}", deficiencyHandler.GetDeficiencyLetter)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/deficiencies/letters/{letterId}/attach-document", deficiencyHandler.AttachDocumentToLetter)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/deficiencies/dashboard", deficiencyHandler.GetDeficiencyDashboard)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Put("/api/v1/deficiencies/tasks/{taskId}", deficiencyHandler.UpdateDeficiencyTask)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/deficiencies/tasks/{taskId}/validate-dt", deficiencyHandler.ValidateDeficiencyTaskDT)
+			}
+
+			// Calculateur des Redevances ANPP & Bordereaux BV1/BV2 (Jalon 1.7 Phase 2)
+			if feeHandler != nil {
+				// Consultation et mise à jour des barèmes légaux
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/fees/schedules", feeHandler.ListFeeSchedules)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermUserManage, domain.PermRefEdit)).Post("/api/v1/fees/schedules", feeHandler.CreateOrUpdateFeeSchedule)
+
+				// Bordereaux au sein du dossier
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/fees", feeHandler.ListDossierPaymentSlips)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/dossiers/{id}/fees/generate-slip", feeHandler.GenerateDossierPaymentSlip)
+
+				// Consultation, impression officielle et encaissement
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}", feeHandler.GetPaymentSlip)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}/print-html", feeHandler.GetPaymentSlipPrintHTML)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Put("/api/v1/fees/slips/{slipId}/status", feeHandler.UpdatePaymentSlipStatus)
+			}
+
+			// Assistant de Soumission E-Services ANPP & Validation Pré-Dépôt (Jalon 1.7 Phase 3)
+			if submissionHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/pre-submission-audit", submissionHandler.GetPreSubmissionAudit)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/eservices-manifest", submissionHandler.GetEservicesManifest)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/lock-pre-submission", submissionHandler.LockPreSubmission)
+			}
+
+			// Gestion des Rendez-vous & Séances ANPP (Jalon 1.7 Phase 4)
+			if appointmentHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/appointments", appointmentHandler.ListAppointments)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/appointments", appointmentHandler.CreateAppointment)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/appointments/{appId}", appointmentHandler.GetAppointment)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Put("/api/v1/appointments/{appId}/status", appointmentHandler.UpdateAppointmentStatus)
+			}
+
+			// Veille Réglementaire & Corpus Juridique Pharmaceutique (Jalon 1.7 Phase 4)
+			if regulatoryWatchHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch", regulatoryWatchHandler.ListRegulatoryWatch)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermUserManage)).Post("/api/v1/regulatory-watch", regulatoryWatchHandler.CreateRegulatoryWatchItem)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}", regulatoryWatchHandler.GetRegulatoryWatchItem)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Put("/api/v1/regulatory-watch/{itemId}/analysis", regulatoryWatchHandler.UpdateRegulatoryWatchAnalysis)
 			}
 		})
 	}

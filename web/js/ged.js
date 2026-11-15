@@ -1,9 +1,9 @@
 // ============================================================================
-// COFFRE-FORT GED PHARMACEUTIQUE (Jalon 1.4 - BPF & ALCOA+)
+// COFFRE-FORT GED PHARMACEUTIQUE (BPF & ALCOA+)
 // ============================================================================
 
 // ============================================================================
-        // COFFRE-FORT GED PHARMACEUTIQUE (Jalon 1.4 - BPF & ALCOA+)
+        // COFFRE-FORT GED PHARMACEUTIQUE (BPF & ALCOA+)
         // ============================================================================
         const defaultGEDTaxonomy = [
             {
@@ -699,7 +699,11 @@
                 return;
             }
 
-            let url = `/api/v1/ged/documents/${docID}/download`;
-            if (versionID) url += `?version_id=${encodeURIComponent(versionID)}`;
-            window.open(url, '_blank');
+            if (typeof openDocumentViewerModal === 'function') {
+                openDocumentViewerModal(docID, "Document GED", versionID);
+            } else {
+                let url = `/api/v1/ged/documents/${docID}/download`;
+                if (versionID) url += `?version_id=${encodeURIComponent(versionID)}`;
+                window.open(url, '_blank');
+            }
         }

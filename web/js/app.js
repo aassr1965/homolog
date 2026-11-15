@@ -122,7 +122,7 @@
             }
         }
 
-        // Mode Focus & Responsive Drawer Handlers (Jalon 1.6)
+        // Mode Focus & Responsive Drawer Handlers
         function toggleFocusMode() {
             document.body.classList.toggle('focus-mode');
             const isFocus = document.body.classList.contains('focus-mode');
@@ -291,6 +291,25 @@
 
         function selectAddressLocation(loc) {
             closeAddressBar();
+            if (!loc) return;
+            if (loc.target && loc.target.startsWith("ctd-para-")) {
+                const modNum = parseInt(loc.target.replace("ctd-para-", ""), 10) || 1;
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule('parac', modNum);
+                    return;
+                }
+            } else if (loc.target && loc.target.startsWith("dm-")) {
+                const hint = loc.target.replace("dm-", "");
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule(hint, 0);
+                    return;
+                }
+            } else if (loc.target && loc.target.startsWith("ged-")) {
+                if (typeof switchDomainModule === 'function') {
+                    switchDomainModule('ged');
+                    return;
+                }
+            }
             document.getElementById("bc-root").innerText = "GED";
             document.getElementById("bc-sec").innerText = "Affaires Réglementaires";
             document.getElementById("bc-prod").innerText = loc.title.split("—")[0].trim();
@@ -302,7 +321,7 @@
         var currentRefSection = 'establishments';
 
         function switchDomainModule(domain) {
-            // Contrôle d'habilitation préventif côté UI (Jalon 1.2 & CDC 7.2.2)
+            // Contrôle d'habilitation préventif côté UI (CDC 7.2.2)
             if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE')) {
                 showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas de la permission <code>USER_MANAGE</code> pour accéder à la Console d'Administration.", "🚫", "Fermer");
                 return;
@@ -360,6 +379,9 @@
                 if (domain === 'ctd') {
                     icon = "📋";
                     text = isArabic ? "ملفات التسجيل ANPP (CTD)" : "Dossiers d'Enregistrement (CTD)";
+                } else if (domain === 'deficiencies') {
+                    icon = "⏱️";
+                    text = isArabic ? "استوديو الاستكمالات ANPP" : "Studio de Compléments ANPP & Délais";
                 } else if (domain === 'variations') {
                     icon = "🔄";
                     text = isArabic ? "تعديلات ما بعد التسجيل" : "Variations & Post-AMM (12 Items)";
@@ -391,6 +413,14 @@
                 document.getElementById("bc-prod").innerText = "Catalogue des Dossiers";
                 document.getElementById("bc-mod").innerText = "Checklists Réglementaires";
                 loadDossiers();
+            } else if (domain === 'deficiencies') {
+                document.getElementById("bc-root").innerText = "COMPLÉMENTS_ANPP";
+                document.getElementById("bc-sec").innerText = "Veille_Réglementaire";
+                document.getElementById("bc-prod").innerText = "Décret_20-325";
+                document.getElementById("bc-mod").innerText = "Traçabilité_Délais_Légaux";
+                if (typeof loadDeficienciesDashboard === 'function') {
+                    loadDeficienciesDashboard();
+                }
             } else if (domain === 'variations') {
                 document.getElementById("bc-root").innerText = "POST-AMM";
                 document.getElementById("bc-sec").innerText = "Variations";
@@ -446,11 +476,17 @@
                 `;
             } else if (domain === 'ctd') {
                 tb.innerHTML = `
-                    <button class="btn-pill" id="tb-btn-new-dossier" data-perm="DOSSIER_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDossierModal()">➕ Nouveau Dossier</button>
+                    <button class="btn-pill" id="tb-btn-new-dossier" data-perm="DOSSIER_CREATE" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDossierModal()">➕ Nouveau Dossier</button>
                     <button class="btn-pill" id="tb-btn-members" onclick="openDossierMembersModal()">👥 Équipe &amp; Secret</button>
                     <button class="btn-pill" id="tb-btn-sign-pdt" onclick="openSignPDTModal()">✍️ Visa PDT (21 CFR Part 11)</button>
                     <button class="btn-pill" id="tb-btn-deposit-anpp" onclick="openRecordDepositModal()">🏛️ Enregistrer Dépôt ANPP</button>
-                    <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_LEGAL" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
+                    <button class="btn-pill" id="tb-btn-eservices" style="background:linear-gradient(135deg, #2563eb, #10b981); color:white; border:none; font-weight:700;" onclick="openPreSubmissionAuditModal(selectedDossierId)">🚀 E-Services ANPP</button>
+                    <button class="btn-pill" id="tb-btn-fees" onclick="openGenerateFeeSlipModal(selectedDossierId)">💰 Bordereau BV1/BV2</button>
+                    <button class="btn-pill" id="tb-btn-schedules" onclick="openFeeSchedulesModal()">⚖️ Barème ANPP</button>
+                    <button class="btn-pill" id="tb-btn-deficiency" onclick="openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Enregistrer Complément ANPP</button>
+                    <button class="btn-pill" id="tb-btn-appointments" onclick="openAppointmentsModal()">📅 Séances ANPP</button>
+                    <button class="btn-pill" id="tb-btn-reg-watch" onclick="openRegulatoryWatchModal()">📜 Veille Juridique</button>
+                    <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_PACKAGE" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
                     <button class="btn-pill" onclick="loadDossiers()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
@@ -458,9 +494,19 @@
                         Complétude : <strong id="kpi-dossier-completeness" style="color:var(--accent-blue);">0%</strong>
                     </div>
                 `;
+            } else if (domain === 'deficiencies') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
+                    <button class="btn-pill" onclick="loadDeficienciesDashboard()">🔄 Actualiser</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                        Délais Légaux : <strong style="color:var(--accent-blue);">Compte à Rebours J-X (Guide 2025)</strong>
+                    </div>
+                `;
             } else if (domain === 'variations') {
                 tb.innerHTML = `
-                    <button class="btn-pill" data-perm="VARIATION_MANAGE" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
+                    <button class="btn-pill" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
                     <button class="btn-pill" onclick="renderVariationsTable()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
@@ -480,7 +526,7 @@
                 `;
             } else if (domain === 'ged') {
                 tb.innerHTML = `
-                    <button class="btn-pill" data-perm="DOC_WRITE" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewGEDDocModal()">➕ Déposer Document</button>
+                    <button class="btn-pill" data-perm="DOC_DRAFT_MAKER" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewGEDDocModal()">➕ Déposer Document</button>
                     <select id="ged-filter-status" onchange="filterGEDByStatus(this.value)" class="btn-pill" style="background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color); font-size:11px;">
                         <option value="">Tous les statuts</option>
                         <option value="en_vigueur">En Vigueur (Approuvé)</option>
@@ -554,6 +600,23 @@
                 `;
             } else if (domain === 'ctd') {
                 renderDossiersTree();
+            } else if (domain === 'deficiencies') {
+                container.innerHTML = `
+                    <div class="tree-node selected" onclick="loadDeficienciesDashboard()">
+                        <span class="chevron">⏱️</span>
+                        <span>Toutes les Notifications ANPP</span>
+                        <span class="count-badge req">Guide 2025</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                        <span>🚨 Alertes Critiques (J ≤ 15)</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                        <span>⚠️ Urgences Réglementaires (J ≤ 30)</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                        <span>✍️ Visées Pharmacien DT (1.A.7)</span>
+                    </div>
+                `;
             } else if (domain === 'variations') {
                 container.innerHTML = `
                     <div class="tree-node selected" onclick="toggleSub('sub-var-active')">
@@ -791,13 +854,106 @@
 
         // Piste d'audit trail ALCOA+ en mémoire
 
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add("open");
+                el.style.display = "flex";
+            }
+        }
+
+        function toggleModalFullscreen(modalOverlayId) {
+            const overlay = document.getElementById(modalOverlayId);
+            if (!overlay) return;
+            const modal = overlay.querySelector('.modal');
+            if (!modal) return;
+
+            const isFullscreen = modal.classList.toggle('modal-fullscreen');
+            const btn = overlay.querySelector('.btn-modal-expand');
+            if (btn) {
+                const icon = btn.querySelector('.expand-icon');
+                const lbl = btn.querySelector('.expand-label');
+                if (isFullscreen) {
+                    if (icon) icon.innerText = '🗗';
+                    if (lbl) lbl.innerText = 'Réduire';
+                    btn.title = 'Restaurer la taille normale';
+                } else {
+                    if (icon) icon.innerText = '⛶';
+                    if (lbl) lbl.innerText = 'Agrandir';
+                    btn.title = 'Agrandir en plein écran';
+                }
+            }
+        }
+
         function closeAllModals() {
-            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.modal-overlay').forEach(m => {
+                m.classList.remove('open');
+                m.style.display = "";
+                const modal = m.querySelector('.modal');
+                if (modal) modal.classList.remove('modal-fullscreen');
+            });
+            const previewIframe = document.getElementById("doc-preview-iframe");
+            if (previewIframe && previewIframe.src !== "about:blank") {
+                previewIframe.src = "about:blank";
+            }
         }
 
         function closeModal(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.remove("open");
+            if (el) {
+                el.classList.remove("open");
+                el.style.display = "";
+                const modal = el.querySelector('.modal');
+                if (modal) modal.classList.remove('modal-fullscreen');
+                const btn = el.querySelector('.btn-modal-expand');
+                if (btn) {
+                    const icon = btn.querySelector('.expand-icon');
+                    const lbl = btn.querySelector('.expand-label');
+                    if (icon) icon.innerText = '⛶';
+                    if (lbl) lbl.innerText = 'Agrandir';
+                }
+            }
+            if (id === 'modal-doc-preview') {
+                const iframe = document.getElementById("doc-preview-iframe");
+                if (iframe) iframe.src = "about:blank";
+            }
+        }
+
+        // Visualiseur universel de documents & scans in-app (Agrandissable)
+        function openDocumentViewerModal(docId, docTitle, versionId) {
+            if (!docId) {
+                if (typeof showNotifyModal === 'function') {
+                    showNotifyModal("Document introuvable", "Aucun identifiant de pièce documentaire n'a été fourni.", "⚠️");
+                } else {
+                    alert("Aucun document à afficher");
+                }
+                return;
+            }
+
+            let url = `/api/v1/ged/documents/${docId}/download`;
+            if (versionId) url += `?version_id=${encodeURIComponent(versionId)}`;
+
+            const titleEl = document.getElementById("doc-preview-title");
+            if (titleEl) {
+                titleEl.innerText = docTitle || "Aperçu de la Pièce Numérisée";
+                titleEl.title = docTitle || "Aperçu de la Pièce Numérisée";
+            }
+
+            const downloadBtn = document.getElementById("doc-preview-download-btn");
+            if (downloadBtn) {
+                downloadBtn.href = url;
+            }
+
+            const iframe = document.getElementById("doc-preview-iframe");
+            if (iframe) {
+                iframe.src = url;
+            }
+
+            openModal("modal-doc-preview");
+        }
+
+        function closeDocPreviewModal() {
+            closeModal("modal-doc-preview");
         }
 
         function showNotifyModal(title, contentHtml, icon = "ℹ️", btnText = "Compris") {
@@ -811,6 +967,24 @@
 
 
         function goToLocation(targetKey) {
+            if (targetKey && targetKey.startsWith("ctd-para-")) {
+                const modNum = parseInt(targetKey.replace("ctd-para-", ""), 10) || 1;
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule('parac', modNum);
+                    return;
+                }
+            } else if (targetKey && targetKey.startsWith("dm-")) {
+                const hint = targetKey.replace("dm-", "");
+                if (typeof openDossierModule === 'function') {
+                    openDossierModule(hint, 0);
+                    return;
+                }
+            } else if (targetKey && targetKey.startsWith("ged-")) {
+                if (typeof switchDomainModule === 'function') {
+                    switchDomainModule('ged');
+                    return;
+                }
+            }
             const loc = addressLocations.find(l => l.target === targetKey);
             if (loc) {
                 selectAddressLocation(loc);

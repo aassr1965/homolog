@@ -1,5 +1,5 @@
 // ============================================================================
-// RÉFÉRENTIEL PHARMACEUTIQUE (Jalon 1.3 - Établissements, Sites, Produits ANPP)
+// RÉFÉRENTIEL PHARMACEUTIQUE (Établissements, Sites, Produits ANPP)
 // ============================================================================
 
 var currentRefSection = window.currentRefSection || 'establishments';
