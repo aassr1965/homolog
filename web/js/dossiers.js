@@ -1,9 +1,9 @@
 // =========================================================================
-// JALON 1.5 : MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
+// MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
 // =========================================================================
 
 // =========================================================================
-        // JALON 1.5 : MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
+        // MOTEUR DE DOSSIERS ANPP & CHECKLISTS DYNAMIQUES CTD
         // =========================================================================
 
         function escapeHTML(str) {
@@ -124,7 +124,7 @@
                             Seul le dossier d'expertise contractuellement assigné est affiché ci-dessous (CDC Section 7.2.2).
                         </div>
                     ` : `
-                        <button class="btn-pill" data-perm="DOSSIER_EDIT" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:600;" onclick="openNewDossierModal()">
+                        <button class="btn-pill" data-perm="DOSSIER_CREATE" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:600;" onclick="openNewDossierModal()">
                             ➕ Nouveau Dossier ANPP
                         </button>
                     `}
@@ -320,6 +320,64 @@
             }
         }
 
+        // Navigation universelle vers un dossier et un module CTD spécifique
+        async function openDossierModule(dossierHint, modNumber = 1) {
+            if (typeof closeAllModals === 'function') closeAllModals();
+            if (typeof closeModal === 'function') closeModal('modal-alerts');
+
+            // 1. Définir le module cible avant tout
+            currentDossierModuleFilter = modNumber;
+            currentDossierSubModuleFilter = 'all';
+
+            // 2. Basculer vers le domaine CTD
+            if (typeof switchDomainModule === 'function') {
+                switchDomainModule('ctd');
+            }
+
+            // 3. Charger ou trouver le dossier
+            try {
+                let dossiersList = currentDossiers;
+                if (!dossiersList || dossiersList.length === 0) {
+                    const res = await fetch('/api/v1/dossiers');
+                    if (res.ok) {
+                        const data = await res.json();
+                        dossiersList = data.dossiers || [];
+                        currentDossiers = dossiersList;
+                    }
+                }
+
+                let target = null;
+                if (dossierHint && dossiersList && dossiersList.length > 0) {
+                    const hintLower = String(dossierHint).toLowerCase();
+                    target = dossiersList.find(d => 
+                        (d.dossier_code && d.dossier_code.toLowerCase().includes(hintLower)) ||
+                        (d.internal_reference && d.internal_reference.toLowerCase().includes(hintLower)) ||
+                        (d.medicine && d.medicine.brand_name_fr && d.medicine.brand_name_fr.toLowerCase().includes(hintLower)) ||
+                        (d.medicine && d.medicine.dci_fr && d.medicine.dci_fr.toLowerCase().includes(hintLower)) ||
+                        (d.medical_device && d.medical_device.commercial_name_fr && d.medical_device.commercial_name_fr.toLowerCase().includes(hintLower))
+                    );
+                }
+
+                if (!target && dossiersList && dossiersList.length > 0) {
+                    target = dossiersList[0];
+                }
+
+                if (target) {
+                    selectedDossierId = target.id;
+                    expandedDossierTreeIds.add(target.id);
+                    await selectDossier(target.id);
+                    currentDossierModuleFilter = modNumber;
+                    currentDossierSubModuleFilter = 'all';
+                    if (currentDossierDetail) {
+                        renderDossierCenterView(currentDossierDetail);
+                    }
+                }
+            } catch(err) {
+                console.error("Erreur openDossierModule:", err);
+            }
+        }
+        window.openDossierModule = openDossierModule;
+
         function formatDossierStatusBadge(st) {
             switch(st) {
                 case 'brouillon':
@@ -367,6 +425,11 @@
                     prodTitle = currentDossierDetail.medical_device.commercial_name_fr;
                 }
                 document.getElementById("bc-mod").innerText = prodTitle;
+
+                // Chargement des bordereaux de redevances ANPP
+                if (typeof loadDossierPaymentSlips === 'function') {
+                    await loadDossierPaymentSlips(id);
+                }
 
                 // KPI toolbar
                 const kpiEl = document.getElementById("kpi-dossier-completeness");
@@ -597,6 +660,57 @@
                                 🏛️ Récépissé Dépôt ANPP : <code style="color:var(--text-main);">${escapeHTML(dossier.deposit_receipt_ref)}</code> (${dossier.deposit_receipt_date ? escapeHTML(dossier.deposit_receipt_date.substring(0, 10)) : ''})
                             </div>
                             ${dossier.anpp_official_reference ? `<div style="font-size:10px; color:var(--text-dim);">N° Dossier ANPP : <strong>${escapeHTML(dossier.anpp_official_reference)}</strong></div>` : ''}
+                        </div>
+                    ` : ''}
+
+                    <!-- Assistant Télé-Soumission E-Services ANPP -->
+                    <div style="margin-top:8px; background:linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06)); border:1px solid rgba(37,99,235,0.25); border-radius:6px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <div style="font-size:12px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                                <span>🚀</span>
+                                <span>Assistant de Télé-Soumission E-Services ANPP</span>
+                                <span style="font-size:10px; background:rgba(37,99,235,0.15); color:var(--accent-blue); padding:1px 6px; border-radius:8px; font-weight:700;">E-Services</span>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">
+                                Audit automatique de conformité pré-dépôt, validation des pièces [E], quittance BV1 et export du manifeste certifié.
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openPreSubmissionAuditModal('${dossier.id}')">
+                                🔍 Lancer Audit Pré-Dépôt &amp; Manifeste
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bordereaux de Versement des Redevances ANPP -->
+                    ${(typeof currentDossierPaymentSlips !== 'undefined' && currentDossierPaymentSlips && currentDossierPaymentSlips.length > 0) ? `
+                        <div style="margin-top:8px; background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:8px 10px;">
+                            <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--text-dim); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                                <span>💰 Bordereaux de Redevances Légales ANPP (${currentDossierPaymentSlips.length})</span>
+                                <button class="btn-pill" style="font-size:10px; padding:2px 8px;" onclick="openGenerateFeeSlipModal('${dossier.id}')">➕ Émettre Nouveau Bordereau</button>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                ${currentDossierPaymentSlips.map(s => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:4px; padding:6px 10px; font-size:11px;">
+                                        <div>
+                                            <span class="badge" style="background:var(--accent-blue); color:white; font-weight:700; margin-right:6px;">${s.slip_type}</span>
+                                            <strong style="color:var(--text-main); font-family:monospace;">${escapeHTML(s.slip_number)}</strong>
+                                            <span style="color:var(--text-dim); margin:0 6px;">|</span>
+                                            <strong style="color:var(--accent-emerald);">${typeof formatDZD === 'function' ? formatDZD(s.amount_dzd) : s.amount_dzd + ' DZD'}</strong>
+                                            ${s.payment_reference ? `<span style="margin-left:8px; font-size:10px; color:#10b981;">(Quittance : ${escapeHTML(s.payment_reference)})</span>` : ''}
+                                        </div>
+                                        <div style="display:flex; gap:6px; align-items:center;">
+                                            <span class="badge" style="background:${s.status === 'paye' ? 'rgba(16,185,129,0.15)' : 'rgba(234,179,8,0.15)'}; color:${s.status === 'paye' ? '#10b981' : '#b45309'}; font-size:10px;">
+                                                ${s.status === 'paye' ? '✅ Quittance Enregistrée' : '⏳ Émis (En attente règlement)'}
+                                            </span>
+                                            <button class="btn-pill" style="font-size:10px; padding:2px 6px;" onclick="openPrintSlipWindow('${s.id}')">🖨️ Imprimer</button>
+                                            ${s.status !== 'paye' ? `
+                                                <button class="btn-pill" style="font-size:10px; padding:2px 6px; background:#10b981; color:white; border:none;" onclick="openRecordSlipPaymentModal('${s.id}', '${s.slip_number}', ${s.amount_dzd})">🏛️ Saisir Quittance</button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     ` : ''}
                 </div>

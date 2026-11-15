@@ -27,6 +27,20 @@ const mockAuditTrail = [
         // Vérification de la session active
         async function checkAuthSession() {
             try {
+                // Contrôle de l'initialisation de l'instance (Setup Wizard BPF)
+                try {
+                    const setupRes = await fetch('/api/v1/setup/status');
+                    if (setupRes.ok) {
+                        const setupData = await setupRes.json();
+                        if (setupData.setup_required) {
+                            showSetupWizardView(setupData);
+                            return;
+                        }
+                    }
+                } catch(err) {
+                    console.warn("Impossible de vérifier le statut setup:", err);
+                }
+
                 const res = await fetch('/api/v1/auth/me');
                 if (res.ok) {
                     const data = await res.json();
@@ -46,7 +60,99 @@ const mockAuditTrail = [
         }
         checkAuthSession();
 
+        function showSetupWizardView(data) {
+            const screenSetup = document.getElementById("screen-setup");
+            const screenLogin = document.getElementById("screen-login");
+            const screenApp = document.getElementById("screen-app");
+            if (screenSetup) screenSetup.style.display = "flex";
+            if (screenLogin) screenLogin.style.display = "none";
+            if (screenApp) screenApp.style.display = "none";
+        }
+
+        async function handleSetupSubmit(e) {
+            e.preventDefault();
+            const errBox = document.getElementById("setup-error");
+            const okBox = document.getElementById("setup-success");
+            const submitBtn = document.getElementById("btn-setup-submit");
+            if (errBox) errBox.style.display = "none";
+            if (okBox) okBox.style.display = "none";
+
+            const orgName = document.getElementById("setup-org-name").value.trim();
+            const orgSlug = document.getElementById("setup-org-slug").value.trim();
+            const license = document.getElementById("setup-license").value.trim();
+            const dtFirstName = document.getElementById("setup-dt-firstname").value.trim();
+            const dtLastName = document.getElementById("setup-dt-lastname").value.trim();
+            const dtEmail = document.getElementById("setup-dt-email").value.trim();
+            const dtPassword = document.getElementById("setup-dt-password").value;
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Initialisation et Scellement en cours...";
+            }
+
+            try {
+                const res = await fetch("/api/v1/setup/initialize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        organization_name: orgName,
+                        organization_slug: orgSlug,
+                        miph_license_number: license,
+                        technical_director_name: "Dr. " + dtFirstName + " " + dtLastName,
+                        dt_first_name: dtFirstName,
+                        dt_last_name: dtLastName,
+                        dt_email: dtEmail,
+                        dt_password: dtPassword
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "🚀 Provisionner et Sceller l'Instance ➔";
+                    }
+                    if (errBox) {
+                        errBox.innerText = data.error || "Échec de l'initialisation";
+                        errBox.style.display = "block";
+                    }
+                    return;
+                }
+
+                if (okBox) {
+                    okBox.innerHTML = `
+                        <strong>✓ Instance Souveraine Initialisée avec Succès !</strong><br>
+                        Établissement : <code>${escapeHtml(orgName)}</code><br>
+                        Pharmacien DT : <code>Dr. ${escapeHtml(dtFirstName)} ${escapeHtml(dtLastName)}</code><br>
+                        Redirection vers la mire de connexion sécurisée...
+                    `;
+                    okBox.style.display = "block";
+                }
+
+                const loginEmailInput = document.getElementById("login-email");
+                if (loginEmailInput) loginEmailInput.value = dtEmail;
+
+                setTimeout(() => {
+                    const screenSetup = document.getElementById("screen-setup");
+                    if (screenSetup) screenSetup.style.display = "none";
+                    showLoginView();
+                }, 2000);
+
+            } catch (err) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "🚀 Provisionner et Sceller l'Instance ➔";
+                }
+                if (errBox) {
+                    errBox.innerText = "Erreur de connexion : " + err.message;
+                    errBox.style.display = "block";
+                }
+            }
+        }
+
         function showLoginView() {
+            const screenSetup = document.getElementById("screen-setup");
+            if (screenSetup) screenSetup.style.display = "none";
             document.getElementById("screen-login").style.display = "flex";
             document.getElementById("screen-app").style.display = "none";
             const err = document.getElementById("login-error");
@@ -64,7 +170,7 @@ const mockAuditTrail = [
             }
         }
 
-        // Helper functions pour le contrôle d'accès RBAC (Jalon 1.2)
+        // Helper functions pour le contrôle d'accès RBAC
         function hasPermission(permission) {
             if (!currentUser || !currentUser.permissions) return false;
             return currentUser.permissions.includes(permission);
@@ -111,7 +217,7 @@ const mockAuditTrail = [
             }
         }
 
-        // Bascule de rôle instantanée pour l'environnement de développement (Jalon 1.2)
+        // Bascule de rôle instantanée pour l'environnement de développement
         async function devSwitchRole(email) {
             if (!email) return;
             try {
@@ -317,20 +423,36 @@ const mockAuditTrail = [
 
             // Vérification de sécurité de routage : Si le domaine actif est interdit, basculer vers un univers autorisé
             const isConsultant = hasRole('consultant_externe', 'consultant_cro_externe');
+            const isSysAdmin = hasRole('admin_systeme_local', 'super_admin_editeur') || hasPermission('SYS_MAINT');
             let targetDomain = currentDomain || 'ref';
             if (isConsultant) {
                 targetDomain = 'ctd';
+            } else if (isSysAdmin && !hasPermission('REF_VIEW')) {
+                targetDomain = 'sys';
             } else if (targetDomain === 'admin' && !hasPermission('USER_MANAGE')) {
-                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'ged');
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'ged'));
             } else if (targetDomain === 'ged' && !hasPermission('DOC_READ')) {
-                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'admin');
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
             } else if ((targetDomain === 'ctd' || targetDomain === 'variations') && !hasPermission('DOSSIER_VIEW')) {
-                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOC_READ') ? 'ged' : 'admin');
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOC_READ') ? 'ged' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
             } else if ((targetDomain === 'ref' || targetDomain === 'dm') && !hasPermission('REF_VIEW')) {
-                targetDomain = hasPermission('DOC_READ') ? 'ged' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'admin');
+                targetDomain = hasPermission('DOC_READ') ? 'ged' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
             }
 
             switchDomainModule(targetDomain);
+
+            // Rafraîchissement discret des alertes de compléments ANPP et compteur d'échéances
+            if (typeof updateDeficiencyBadgeCount === 'function' && typeof hasPermission === 'function' && hasPermission('DOSSIER_VIEW')) {
+                fetch('/api/v1/deficiencies/dashboard')
+                    .then(r => r.json())
+                    .then(data => {
+                        updateDeficiencyBadgeCount(data);
+                    })
+                    .catch(() => {});
+            }
+            if (typeof refreshAlertsModalContent === 'function') {
+                refreshAlertsModalContent();
+            }
         }
 
         function toggleUserDropdown(e) {
@@ -537,10 +659,95 @@ const mockAuditTrail = [
             );
         }
 
-        function openAlertsModal() {
+        async function openAlertsModal() {
             closeAddressBar();
             closeAllModals();
-            document.getElementById("modal-alerts").classList.add("open");
+            openModal("modal-alerts");
+            await refreshAlertsModalContent();
+        }
+
+        async function refreshAlertsModalContent() {
+            const container = document.getElementById("alerts-cards-container");
+            if (!container) return;
+
+            let letters = [];
+            try {
+                const resp = await fetch('/api/v1/deficiencies/dashboard');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    letters = data.recent_letters || [];
+                    
+                    const criticalCount = data.critical_letters || 0;
+                    const urgentCount = data.urgent_letters || 0;
+                    const totalUrgent = criticalCount + urgentCount;
+                    const txtAlerts = document.getElementById("txt-urgent-alerts");
+                    if (txtAlerts) {
+                        const displayCount = Math.max(totalUrgent, letters.length);
+                        txtAlerts.innerText = `${displayCount} Échéance${displayCount > 1 ? 's' : ''} (J < 30j)`;
+                    }
+                }
+            } catch (e) {
+                console.warn("Échec chargement alertes compléments:", e);
+            }
+
+            let html = '';
+
+            // 1. Alertes réelles issues de la base SQL (Compléments ANPP)
+            if (letters.length > 0) {
+                letters.forEach(l => {
+                    const days = l.days_remaining != null ? l.days_remaining : 30;
+                    const isCritical = days <= 15;
+                    const badgeColor = isCritical ? '#ef4444' : '#f59e0b';
+                    const badgeBg = isCritical ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)';
+                    const cardClass = isCritical ? 'alert-card' : 'alert-card warning';
+                    const statusTxt = days < 0 ? `Expiré (${Math.abs(days)}j de retard)` : `Expire dans ${days} jour${days > 1 ? 's' : ''}`;
+
+                    html += `
+                        <div class="${cardClass}">
+                            <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-size:14px;">⏱️</span>
+                                    <strong style="font-size:13px; color:var(--text-main);">Demande de Compléments ANPP — ${escapeHTML(l.product_brand_name || l.dossier_reference || 'Dossier')}</strong>
+                                    <span style="background:${badgeBg}; color:${badgeColor}; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;">${statusTxt}</span>
+                                </div>
+                                <div style="color:var(--text-muted); font-size:11px;">
+                                    Courrier officiel : <code style="color:${isCritical ? 'var(--accent-blue)' : 'var(--accent-amber)'};">${escapeHTML(l.reference_number)}</code> • Date butoir : <strong>${(l.due_date || '').substring(0, 10)}</strong> • Dossier : <strong>${escapeHTML(l.dossier_reference || '')}</strong>
+                                </div>
+                                <div style="color:var(--text-dim); font-size:11px;">
+                                    ${l.notes ? escapeHTML(l.notes) : 'Réponses aux questions notifiées et visa Pharmacien Directeur Technique requis (Mandat 1.A.7).'}
+                                </div>
+                            </div>
+                            <button class="btn-pill" style="background:${badgeColor}; color:white; border:none; padding:6px 12px; white-space:nowrap; cursor:pointer;" onclick="closeModal('modal-alerts'); if(typeof switchDomainModule === 'function') switchDomainModule('deficiencies'); if(typeof openDeficiencyLetterDetail === 'function') openDeficiencyLetterDetail('${l.id}');">
+                                Ouvrir Studio ➔
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            // 2. Alertes statutaires réglementaires (AMM & DM)
+            html += `
+                <div class="alert-card">
+                    <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:14px;">💊</span>
+                            <strong style="font-size:13px; color:var(--text-main);">Renouvellement Décision d'Enregistrement (AMM) — Paracétamol 500mg</strong>
+                            <span style="background:rgba(239,68,68,0.2); color:#ef4444; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;">Expire dans 18 jours</span>
+                        </div>
+                        <div style="color:var(--text-muted); font-size:11px;">
+                            Référence ANPP : <code style="color:var(--accent-blue);">DZ-2019-0412</code> • Date limite de dépôt : <strong>28/11/2026</strong> • Type : Renouvellement quinquennal
+                        </div>
+                        <div style="color:var(--text-dim); font-size:11px;">
+                            Action requise : Valider les pièces administratives du Module 1 (Statut de commercialisation, BPF fabricant actif).
+                        </div>
+                    </div>
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 12px; white-space:nowrap; cursor:pointer;" onclick="closeModal('modal-alerts'); if(typeof openDossierModule === 'function') { openDossierModule('parac', 1); } else { goToLocation('ctd-para-1'); }">
+                        Accéder au Module 1 ➔
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = html;
         }
 
         async function openAuditModal() {

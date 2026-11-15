@@ -23,12 +23,13 @@ jobs:
           # Modèle Gemini et clé Google AI Studio
           config.model: "gemini/gemini-3.5-flash-lite"
           config.fallback_models: '["gemini/gemini-3.8-flash"]'
-          config.custom_model_max_tokens: "64000"
-          config.max_model_tokens: "64000"
-          config.ai_timeout: "240"
+          config.custom_model_max_tokens: "32000"
+          config.max_model_tokens: "32000"
+          config.patch_extra_lines: "1"
+          config.ai_timeout: "360"
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           
           # Automations lors de l'ouverture d'une PR ou sur commande via issue_comment
           github_action_config.auto_review: "true"
-          github_action_config.auto_describe: "true"
+          github_action_config.auto_describe: "false"
           github_action_config.auto_improve: "false"

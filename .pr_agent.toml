@@ -1,0 +1,16 @@
+[config]
+max_model_tokens = 32000
+custom_model_max_tokens = 32000
+patch_extra_lines = 1
+ai_timeout = 360
+
+[ignore]
+glob = [
+  "docs/**",
+  "*.md",
+  "brochure_print.html",
+  "web/presentation.html"
+]
+
+[pr_reviewer]
+enable_review_labels_security = true
