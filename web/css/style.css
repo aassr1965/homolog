@@ -1497,12 +1497,19 @@
 
             /* Volet de prévisualisation plein écran coulissant */
             .pane-preview {
+                position: fixed;
                 top: 48px;
                 bottom: 56px;
+                right: 0;
                 width: 100vw;
                 max-width: 100vw;
                 z-index: 960;
                 border-left: none;
+                transform: translateX(100%);
+                transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .pane-preview.slide-open {
+                transform: translateX(0);
             }
 
             /* Espace de travail adapté avec réserve pour la Bottom Navigation Bar */

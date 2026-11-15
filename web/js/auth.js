@@ -27,6 +27,20 @@ const mockAuditTrail = [
         // Vérification de la session active
         async function checkAuthSession() {
             try {
+                // Contrôle de l'initialisation de l'instance (Setup Wizard BPF)
+                try {
+                    const setupRes = await fetch('/api/v1/setup/status');
+                    if (setupRes.ok) {
+                        const setupData = await setupRes.json();
+                        if (setupData.setup_required) {
+                            showSetupWizardView(setupData);
+                            return;
+                        }
+                    }
+                } catch(err) {
+                    console.warn("Impossible de vérifier le statut setup:", err);
+                }
+
                 const res = await fetch('/api/v1/auth/me');
                 if (res.ok) {
                     const data = await res.json();
@@ -46,7 +60,99 @@ const mockAuditTrail = [
         }
         checkAuthSession();
 
+        function showSetupWizardView(data) {
+            const screenSetup = document.getElementById("screen-setup");
+            const screenLogin = document.getElementById("screen-login");
+            const screenApp = document.getElementById("screen-app");
+            if (screenSetup) screenSetup.style.display = "flex";
+            if (screenLogin) screenLogin.style.display = "none";
+            if (screenApp) screenApp.style.display = "none";
+        }
+
+        async function handleSetupSubmit(e) {
+            e.preventDefault();
+            const errBox = document.getElementById("setup-error");
+            const okBox = document.getElementById("setup-success");
+            const submitBtn = document.getElementById("btn-setup-submit");
+            if (errBox) errBox.style.display = "none";
+            if (okBox) okBox.style.display = "none";
+
+            const orgName = document.getElementById("setup-org-name").value.trim();
+            const orgSlug = document.getElementById("setup-org-slug").value.trim();
+            const license = document.getElementById("setup-license").value.trim();
+            const dtFirstName = document.getElementById("setup-dt-firstname").value.trim();
+            const dtLastName = document.getElementById("setup-dt-lastname").value.trim();
+            const dtEmail = document.getElementById("setup-dt-email").value.trim();
+            const dtPassword = document.getElementById("setup-dt-password").value;
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Initialisation et Scellement en cours...";
+            }
+
+            try {
+                const res = await fetch("/api/v1/setup/initialize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        organization_name: orgName,
+                        organization_slug: orgSlug,
+                        miph_license_number: license,
+                        technical_director_name: "Dr. " + dtFirstName + " " + dtLastName,
+                        dt_first_name: dtFirstName,
+                        dt_last_name: dtLastName,
+                        dt_email: dtEmail,
+                        dt_password: dtPassword
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "🚀 Provisionner et Sceller l'Instance ➔";
+                    }
+                    if (errBox) {
+                        errBox.innerText = data.error || "Échec de l'initialisation";
+                        errBox.style.display = "block";
+                    }
+                    return;
+                }
+
+                if (okBox) {
+                    okBox.innerHTML = `
+                        <strong>✓ Instance Souveraine Initialisée avec Succès !</strong><br>
+                        Établissement : <code>${escapeHtml(orgName)}</code><br>
+                        Pharmacien DT : <code>Dr. ${escapeHtml(dtFirstName)} ${escapeHtml(dtLastName)}</code><br>
+                        Redirection vers la mire de connexion sécurisée...
+                    `;
+                    okBox.style.display = "block";
+                }
+
+                const loginEmailInput = document.getElementById("login-email");
+                if (loginEmailInput) loginEmailInput.value = dtEmail;
+
+                setTimeout(() => {
+                    const screenSetup = document.getElementById("screen-setup");
+                    if (screenSetup) screenSetup.style.display = "none";
+                    showLoginView();
+                }, 2000);
+
+            } catch (err) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "🚀 Provisionner et Sceller l'Instance ➔";
+                }
+                if (errBox) {
+                    errBox.innerText = "Erreur de connexion : " + err.message;
+                    errBox.style.display = "block";
+                }
+            }
+        }
+
         function showLoginView() {
+            const screenSetup = document.getElementById("screen-setup");
+            if (screenSetup) screenSetup.style.display = "none";
             document.getElementById("screen-login").style.display = "flex";
             document.getElementById("screen-app").style.display = "none";
             const err = document.getElementById("login-error");
@@ -317,17 +423,20 @@ const mockAuditTrail = [
 
             // Vérification de sécurité de routage : Si le domaine actif est interdit, basculer vers un univers autorisé
             const isConsultant = hasRole('consultant_externe', 'consultant_cro_externe');
+            const isSysAdmin = hasRole('admin_systeme_local', 'super_admin_editeur') || hasPermission('SYS_MAINT');
             let targetDomain = currentDomain || 'ref';
             if (isConsultant) {
                 targetDomain = 'ctd';
+            } else if (isSysAdmin && !hasPermission('REF_VIEW')) {
+                targetDomain = 'sys';
             } else if (targetDomain === 'admin' && !hasPermission('USER_MANAGE')) {
-                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'ged');
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'ged'));
             } else if (targetDomain === 'ged' && !hasPermission('DOC_READ')) {
-                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'admin');
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
             } else if ((targetDomain === 'ctd' || targetDomain === 'variations') && !hasPermission('DOSSIER_VIEW')) {
-                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOC_READ') ? 'ged' : 'admin');
+                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOC_READ') ? 'ged' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
             } else if ((targetDomain === 'ref' || targetDomain === 'dm') && !hasPermission('REF_VIEW')) {
-                targetDomain = hasPermission('DOC_READ') ? 'ged' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : 'admin');
+                targetDomain = hasPermission('DOC_READ') ? 'ged' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
             }
 
             switchDomainModule(targetDomain);

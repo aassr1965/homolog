@@ -26,6 +26,11 @@ function renderSystemTree() {
             <span>Stockage CAS &amp; Sauvegardes</span>
             <span class="count-badge ok">SHA-256</span>
         </div>
+        <div class="tree-node ${currentSystemSection === 'reversibility' ? 'selected' : ''}" onclick="loadSystemSection('reversibility')">
+            <span class="chevron">📦</span>
+            <span>Souveraineté &amp; Réversibilité</span>
+            <span class="count-badge ok">.homolog</span>
+        </div>
         <div class="tree-node ${currentSystemSection === 'sessions' ? 'selected' : ''}" onclick="loadSystemSection('sessions')">
             <span class="chevron">🔒</span>
             <span>Sessions Actives &amp; TLS</span>
@@ -64,6 +69,10 @@ async function loadSystemSection(section) {
         if (prodEl) prodEl.innerText = "CAS & Backups";
         if (modEl) modEl.innerText = "Sauvegardes Horodatées";
         loadSystemStorage();
+    } else if (currentSystemSection === 'reversibility') {
+        if (prodEl) prodEl.innerText = "Souveraineté & Réversibilité";
+        if (modEl) modEl.innerText = "Archive Universelle .homolog";
+        loadSystemReversibility();
     } else if (currentSystemSection === 'sessions') {
         if (prodEl) prodEl.innerText = "Sécurité Accès";
         if (modEl) modEl.innerText = "Sessions & IP Actives";
@@ -510,5 +519,322 @@ function loadSystemSecurity() {
         renderSystemDetailPane('sec', systemMetricsCache);
     } else {
         loadSystemMetrics();
+    }
+}
+
+// 7. Vue Souveraineté & Réversibilité BPF (.homolog)
+function loadSystemReversibility() {
+    const thead = document.getElementById("table-head");
+    const tbody = document.getElementById("doc-tbody");
+    if (!thead || !tbody) return;
+
+    thead.innerHTML = `
+        <tr>
+            <th style="width: 140px;">Composant Archive</th>
+            <th>Spécification Technique &amp; Réglementaire</th>
+            <th>Périmètre Opposable ALCOA+</th>
+            <th>Contrôle Intégrité</th>
+            <th style="text-align:center; width: 150px;">Action Immédiate</th>
+        </tr>
+    `;
+
+    tbody.innerHTML = `
+        <tr style="cursor:pointer;" onclick="renderReversibilityDetailPane('manifest')">
+            <td style="font-weight:700; color:var(--text-main);">📜 Manifeste Signé</td>
+            <td style="font-weight:600; color:var(--accent-blue);"><code>manifest.json</code></td>
+            <td style="font-size:11px; color:var(--text-muted);">Horodatage UTC, établissement, auteur BPF, version <code>HOMOLOG_PORTABLE_ARCHIVE_V1</code></td>
+            <td><span class="status-tag status-ok">SCELLÉ SHA-256 🟢</span></td>
+            <td style="text-align:center;">
+                <button class="btn-pill" style="font-size:10px; padding:2px 8px; border-color:var(--accent-emerald); color:var(--accent-emerald);" onclick="exportHomologArchive()">📦 Exporter</button>
+            </td>
+        </tr>
+        <tr style="cursor:pointer;" onclick="renderReversibilityDetailPane('tables')">
+            <td style="font-weight:700; color:var(--text-main);">🐘 Base Relationnelle</td>
+            <td style="font-weight:600; color:var(--accent-blue);"><code>database/*.json</code> (17 Tables)</td>
+            <td style="font-size:11px; color:var(--text-muted);">Établissements, Produits, Lignes, CTD Modules 1-5, DM, Redevances, Journal ALCOA+</td>
+            <td><span class="status-tag status-ok">EXHAUSTIF 🟢</span></td>
+            <td style="text-align:center;">
+                <button class="btn-pill" style="font-size:10px; padding:2px 8px; border-color:var(--accent-blue); color:var(--accent-blue);" onclick="openRestoreHomologModal()">📥 Restaurer</button>
+            </td>
+        </tr>
+        <tr style="cursor:pointer;" onclick="renderReversibilityDetailPane('cas')">
+            <td style="font-weight:700; color:var(--text-main);">💾 Coffre-Fort CAS</td>
+            <td style="font-weight:600; color:var(--accent-blue);"><code>blobs/&lt;sha256&gt;</code> (GED ALCOA+)</td>
+            <td style="font-size:11px; color:var(--text-muted);">Ensemble des pièces jointes opposables dédupliquées, scans officiels ANPP, bordereaux signés</td>
+            <td><span class="status-tag status-ok">SHA-256 CAS 🟢</span></td>
+            <td style="text-align:center;">
+                <button class="btn-pill" style="font-size:10px; padding:2px 8px; border-color:var(--accent-emerald); color:var(--accent-emerald);" onclick="exportHomologArchive()">📦 Exporter</button>
+            </td>
+        </tr>
+        <tr style="cursor:pointer;" onclick="renderReversibilityDetailPane('reversibility')">
+            <td style="font-weight:700; color:var(--text-main);">🛡️ Souveraineté &amp; Réversibilité</td>
+            <td style="font-weight:600; color:var(--accent-blue);">Zéro Dépendance Propriétaire</td>
+            <td style="font-size:11px; color:var(--text-muted);">Migration sans friction Cloud SaaS &lt;--&gt; On-Premise Souverain avec opposabilité totale</td>
+            <td><span class="status-tag status-ok">LIBRE &amp; PORTABLE 🟢</span></td>
+            <td style="text-align:center;">
+                <button class="btn-pill" style="font-size:10px; padding:2px 8px; border-color:var(--text-muted); color:var(--text-main);" onclick="renderReversibilityDetailPane('reversibility')">ℹ️ Spécifications</button>
+            </td>
+        </tr>
+    `;
+
+    renderReversibilityDetailPane('manifest');
+}
+
+// Volet d'aperçu pour la réversibilité
+function renderReversibilityDetailPane(key) {
+    const preview = document.getElementById("preview-body");
+    if (!preview) return;
+
+    let contentHtml = '';
+
+    if (key === 'manifest') {
+        contentHtml = `
+            <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                MANIFESTE DE SOUVERAINETÉ (MANIFEST.JSON)
+            </div>
+            <div style="font-size:11px; line-height:1.7;">
+                <strong>Format conteneur :</strong> <code>HOMOLOG_PORTABLE_ARCHIVE_V1</code><br>
+                <strong>Encapsulation :</strong> Flux tar.gz universel, lisible par n'importe quel outil standard (tar, gzip, python, Go)<br>
+                <strong>Sceau d'archive :</strong> Empreinte SHA-256 calculée sur l'intégralité du contenu relationnel et binaire<br>
+                <strong>Horodatage opposable :</strong> Norme ISO 8601 UTC avec signature de l'auteur légal BPF<br>
+                <strong>Contrôle anti-altération :</strong> Vérification systématique du sceau avant toute opération de réinjection
+            </div>
+            <div style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
+                <button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none; padding:8px; font-weight:700;" onclick="exportHomologArchive()">
+                    📦 Télécharger l'Archive Universelle .homolog
+                </button>
+            </div>
+        `;
+    } else if (key === 'tables') {
+        contentHtml = `
+            <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                PÉRIMÈTRE RELATIONNEL EXHAUSTIF (17 TABLES BPF)
+            </div>
+            <div style="font-size:11px; line-height:1.7;">
+                <strong>Tables incluses :</strong><br>
+                • <code>organizations</code>, <code>establishments</code>, <code>manufacturing_lines</code><br>
+                • <code>products</code>, <code>product_presentations</code>, <code>users</code><br>
+                • <code>ged_documents</code>, <code>ged_versions</code>, <code>anpp_ctd_dossiers</code>, <code>anpp_ctd_sections</code><br>
+                • <code>manufacturing_secrets</code>, <code>foreign_manufacturers</code>, <code>medical_devices</code><br>
+                • <code>anpp_deficiency_letters</code>, <code>anpp_deficiency_tasks</code><br>
+                • <code>fee_schedules</code>, <code>payment_slips</code>, <code>anpp_appointments</code>, <code>regulatory_watch_items</code><br>
+                • <code>audit_logs</code> (Piste d'audit complète scellée)
+            </div>
+            <div style="margin-top:14px;">
+                <button class="btn-pill" style="width:100%; background:var(--accent-blue); color:white; border:none; padding:8px; font-weight:700;" onclick="openRestoreHomologModal()">
+                    📥 Restaurer une Archive Universelle .homolog
+                </button>
+            </div>
+        `;
+    } else if (key === 'cas') {
+        contentHtml = `
+            <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                COFFRE-FORT NUMÉRIQUE CAS (CONTENT ADDRESSABLE STORAGE)
+            </div>
+            <div style="font-size:11px; line-height:1.7;">
+                <strong>Architecture :</strong> Chaque fichier binaire est archivé dans <code>blobs/&lt;sha256&gt;</code>.<br>
+                <strong>Zéro dépendance :</strong> Les fichiers originaux (PDF, scans, bordereaux) sont préservés dans leur état binaire strict.<br>
+                <strong>Vérification à la restauration :</strong> Chaque blob est haché à la volée. S'il ne correspond pas exactement au hash du manifeste, la restauration est rejetée avec code 422.<br>
+                <strong>Opposabilité ALCOA+ :</strong> Intégrité absolue garantie face aux inspecteurs de l'ANPP ou du MIPH.
+            </div>
+            <div style="margin-top:14px;">
+                <button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none; padding:8px; font-weight:700;" onclick="exportHomologArchive()">
+                    📦 Télécharger l'Archive Universelle .homolog
+                </button>
+            </div>
+        `;
+    } else {
+        contentHtml = `
+            <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
+                GARANTIE SOUVERAINE DE RÉVERSIBILITÉ BPF
+            </div>
+            <div style="font-size:11px; line-height:1.7;">
+                <strong>Pourquoi le format .homolog ?</strong><br>
+                Dans l'industrie pharmaceutique, la dépendance à un éditeur logiciel (vendor lock-in) représente un risque critique pour l'homologation des médicaments.<br><br>
+                <strong>Notre engagement éthique &amp; réglementaire :</strong><br>
+                1. Vos dossiers d'enregistrement vous appartiennent à 100%.<br>
+                2. L'archive <code>.homolog</code> peut être restaurée sur n'importe quel serveur On-Premise ou instance Cloud sans licence restrictive.<br>
+                3. Les visas électroniques du Pharmacien DT (21 CFR Part 11) et les traces ALCOA+ restent vérifiables en toute circonstance.
+            </div>
+        `;
+    }
+
+    preview.innerHTML = `
+        <div class="pdf-sim-page">
+            <div class="pdf-sim-header">
+                RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE<br>
+                HOMOLOG PHARMA — SOUVERAINETÉ NUMÉRIQUE &amp; RÉVERSIBILITÉ BPF
+            </div>
+            ${contentHtml}
+        </div>
+    `;
+}
+
+// Déclenchement de l'exportation .homolog
+async function exportHomologArchive() {
+    showNotifyModal(
+        "Génération de l'Archive Universelle .homolog",
+        "Exportation des 17 tables relationnelles, collecte des blobs du coffre-fort CAS et calcul du sceau SHA-256 en cours...",
+        "📦",
+        "Veuillez patienter"
+    );
+
+    try {
+        const response = await fetch('/api/v1/system/backup/export');
+        if (!response.ok) {
+            let errMsg = "Échec du téléchargement";
+            try { const errJson = await response.json(); errMsg = errJson.error || errMsg; } catch(e){}
+            showNotifyModal("Erreur Exportation", errMsg, "⚠️", "Fermer");
+            return;
+        }
+
+        const seal = response.headers.get("X-Homolog-Seal") || "N/A";
+        const disposition = response.headers.get("Content-Disposition");
+        let filename = "homolog_backup.homolog";
+        if (disposition && disposition.indexOf("filename=") !== -1) {
+            const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+            if (matches != null && matches[1]) { 
+                filename = matches[1].replace(/['"]/g, '');
+            }
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+
+        showNotifyModal(
+            "Archive Universelle .homolog Générée &amp; Scellée",
+            `<div style="font-size:11px; line-height:1.6;">
+                <strong>Fichier téléchargé :</strong> <code>${escapeAdminHtml(filename)}</code><br>
+                <strong>Taille :</strong> <code>${(blob.size / 1024 / 1024).toFixed(2)} Mo</code> (${blob.size.toLocaleString()} octets)<br>
+                <strong>Sceau d'intégrité SHA-256 :</strong>
+                <div style="font-family:monospace; font-size:10px; background:var(--bg-panel); padding:4px; border-radius:3px; word-break:break-all; margin-top:4px;">${seal}</div>
+                <div style="margin-top:8px; color:var(--accent-emerald); font-weight:600;">
+                    ✓ Conformité Réversibilité BPF : Données relationnelles et coffre CAS intégralement préservés.
+                </div>
+            </div>`,
+            "📦",
+            "Terminer"
+        );
+    } catch (e) {
+        showNotifyModal("Erreur Réseau", e.message, "⚠️", "Fermer");
+    }
+}
+
+// Ouverture de la modale de restauration
+function openRestoreHomologModal() {
+    closeAllModals();
+    const modal = document.getElementById("modal-restore-homolog");
+    if (modal) {
+        const fileInput = document.getElementById("restore-file-input");
+        if (fileInput) fileInput.value = "";
+        const progContainer = document.getElementById("restore-progress-container");
+        if (progContainer) progContainer.style.display = "none";
+        const resultBox = document.getElementById("restore-result-box");
+        if (resultBox) resultBox.style.display = "none";
+        const submitBtn = document.getElementById("btn-submit-restore");
+        if (submitBtn) submitBtn.disabled = false;
+        modal.classList.add("open");
+    }
+}
+
+// Soumission de la restauration .homolog
+async function submitRestoreHomolog(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById("restore-file-input");
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert("Veuillez sélectionner un fichier .homolog.");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const submitBtn = document.getElementById("btn-submit-restore");
+    const progContainer = document.getElementById("restore-progress-container");
+    const progBar = document.getElementById("restore-progress-bar");
+    const progLabel = document.getElementById("restore-progress-label");
+    const progPercent = document.getElementById("restore-progress-percent");
+    const resultBox = document.getElementById("restore-result-box");
+
+    if (submitBtn) submitBtn.disabled = true;
+    if (progContainer) progContainer.style.display = 'block';
+    if (progBar) progBar.style.width = '30%';
+    if (progPercent) progPercent.innerText = '30%';
+    if (progLabel) progLabel.innerText = "Téléversement de l'archive...";
+    if (resultBox) resultBox.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append("archive", file);
+
+    try {
+        if (progBar) progBar.style.width = '60%';
+        if (progPercent) progPercent.innerText = '60%';
+        if (progLabel) progLabel.innerText = "Contrôle cryptographique SHA-256 et réinjection des tables...";
+
+        const res = await fetch("/api/v1/system/backup/restore", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (progBar) progBar.style.width = '100%';
+        if (progPercent) progPercent.innerText = '100%';
+
+        if (!res.ok) {
+            if (progContainer) progContainer.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = false;
+            if (resultBox) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:4px; padding:10px; color:#ef4444;">
+                        <strong>🚫 Échec de la restauration :</strong> ${escapeAdminHtml(data.error || 'Erreur inconnue')}
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        if (resultBox) {
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+                <div style="background:rgba(16,185,129,0.12); border:1px solid var(--accent-emerald); border-radius:4px; padding:10px; color:var(--accent-emerald);">
+                    <strong style="font-size:12px;">✓ Restauration certifiée 100% conforme !</strong><br>
+                    • Format : <code>${escapeAdminHtml((data.manifest && data.manifest.format) || 'HOMOLOG_PORTABLE_ARCHIVE_V1')}</code><br>
+                    • Tables relationnelles restaurées : <strong>${data.tables_restored || 0}</strong><br>
+                    • Documents CAS vérifiés et restaurés : <strong>${data.blobs_restored || 0}</strong><br>
+                    • Sceau d'archive SHA-256 : <code style="word-break:break-all; font-size:10px;">${escapeAdminHtml((data.manifest && data.manifest.archive_seal) || '')}</code>
+                    <div style="margin-top:8px; font-weight:700; color:var(--text-main);">
+                        Actualisation dans 3 secondes...
+                    </div>
+                </div>
+            `;
+        }
+
+        setTimeout(() => {
+            closeModal('modal-restore-homolog');
+            if (submitBtn) submitBtn.disabled = false;
+            if (progContainer) progContainer.style.display = 'none';
+            loadSystemSection('reversibility');
+            loadSystemMetrics();
+        }, 3000);
+
+    } catch (err) {
+        if (progContainer) progContainer.style.display = 'none';
+        if (submitBtn) submitBtn.disabled = false;
+        if (resultBox) {
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+                <div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:4px; padding:10px; color:#ef4444;">
+                    <strong>Erreur réseau :</strong> ${escapeAdminHtml(err.message)}
+                </div>
+            `;
+        }
     }
 }

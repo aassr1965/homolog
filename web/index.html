@@ -144,6 +144,76 @@
         </div>
     </div>
 
+    <!-- Écran d'Initialisation Souveraine BPF (Setup Wizard 1.A.7) -->
+    <div id="screen-setup" class="login-screen" style="display:none;">
+        <div class="login-card" style="max-width:540px;">
+            <div class="login-header">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="brand-caducee-icon" title="Caducée Pharmaceutique Algérien Officiel">
+                            <img src="/img/caducee-algerie.png" alt="Caducée" width="22" height="22" style="width:22px; height:22px; object-fit:contain;">
+                        </span>
+                        <span class="brand-badge" style="font-size:12px; padding:3px 8px;">SANAD PHARMA</span>
+                        <span style="font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald); padding:2px 8px; border-radius:10px; font-weight:700;">PREMIER DÉMARRAGE</span>
+                    </div>
+                </div>
+                <h2 style="font-size:16px; font-weight:700; color:var(--text-main); margin-bottom:4px;">Assistant d'Initialisation Souveraine BPF</h2>
+                <p style="font-size:11px; color:var(--text-muted);">Configuration du laboratoire et provisionnement du Pharmacien Directeur Technique (1.A.7)</p>
+            </div>
+
+            <form class="login-body" onsubmit="handleSetupSubmit(event)">
+                <div id="setup-error" class="login-error-banner" style="display:none;"></div>
+                <div id="setup-success" class="login-success-banner" style="display:none; background:rgba(16,185,129,0.12); border:1px solid var(--accent-emerald); color:var(--accent-emerald); padding:10px; border-radius:6px; font-size:11px; margin-bottom:10px;"></div>
+
+                <div style="font-size:11px; font-weight:700; color:var(--accent-blue); text-transform:uppercase; letter-spacing:0.5px; margin:6px 0 4px 0;">1. Établissement Pharmaceutique (MIPH)</div>
+                
+                <div class="login-field">
+                    <label for="setup-org-name">Raison Sociale / Laboratoire Titulaire :</label>
+                    <input type="text" id="setup-org-name" class="login-input" placeholder="ex: Laboratoire Pharmaceutique National" required>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div class="login-field">
+                        <label for="setup-org-slug">Identifiant Unique (Slug) :</label>
+                        <input type="text" id="setup-org-slug" class="login-input" placeholder="ex: labo-national" required pattern="[a-z0-9-]+">
+                    </div>
+                    <div class="login-field">
+                        <label for="setup-license">Agrément Ministériel MIPH :</label>
+                        <input type="text" id="setup-license" class="login-input" placeholder="ex: MIPH-2026-001">
+                    </div>
+                </div>
+
+                <div style="font-size:11px; font-weight:700; color:var(--accent-emerald); text-transform:uppercase; letter-spacing:0.5px; margin:10px 0 4px 0;">2. Pharmacien Directeur Technique Titulaire (1.A.7)</div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div class="login-field">
+                        <label for="setup-dt-firstname">Prénom :</label>
+                        <input type="text" id="setup-dt-firstname" class="login-input" placeholder="ex: Yacine" required>
+                    </div>
+                    <div class="login-field">
+                        <label for="setup-dt-lastname">Nom Patronyme :</label>
+                        <input type="text" id="setup-dt-lastname" class="login-input" placeholder="ex: Benkhalid" required>
+                    </div>
+                </div>
+
+                <div class="login-field">
+                    <label for="setup-dt-email">Email Nominatif du Pharmacien DT :</label>
+                    <input type="email" id="setup-dt-email" class="login-input" placeholder="ex: dt.pharmacien@laboratoire.dz" required>
+                </div>
+
+                <div class="login-field">
+                    <label for="setup-dt-password">Mot de passe Maître (Chiffrement Argon2id) :</label>
+                    <input type="password" id="setup-dt-password" class="login-input" placeholder="Min. 10 caractères, robuste" required minlength="10">
+                    <small style="font-size:10px; color:var(--text-dim);">Exigé BPF : 10 caractères min, avec chiffres et caractères spéciaux.</small>
+                </div>
+
+                <button type="submit" id="btn-setup-submit" class="btn-login-submit" style="background:var(--accent-emerald); border-color:var(--accent-emerald);">
+                    🚀 Provisionner et Sceller l'Instance ➔
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Application Principale (Visible après connexion réussie) -->
     <div id="screen-app" style="display:none; flex-direction:column; height:100vh;">
 
@@ -2573,6 +2643,53 @@
             </div>
             <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
                 <button type="button" class="btn-pill" onclick="closeModal('modal-regulatory-watch')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Restauration Archive Universelle .homolog (Réversibilité BPF) -->
+    <div class="modal-overlay" id="modal-restore-homolog" onclick="if(event.target === this) closeModal('modal-restore-homolog')">
+        <div class="modal modal-lg" style="width:640px; max-width:min(640px, calc(100vw - 24px));">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span style="font-size:16px;">📥</span>
+                    <span>Restauration d'une Archive Universelle (.homolog)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-restore-homolog')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-restore-homolog" onsubmit="submitRestoreHomolog(event)">
+                    <div style="background:rgba(239,68,68,0.08); border:1px solid #ef4444; border-radius:6px; padding:12px; margin-bottom:14px; font-size:11px; line-height:1.6;">
+                        <strong style="color:#ef4444;">⚠️ AVERTISSEMENT DE SÉCURITÉ &amp; INTÉGRITÉ ALCOA+ (BPF / 21 CFR Part 11) :</strong><br>
+                        La restauration d'une archive universelle réinjecte l'ensemble des tables relationnelles et des documents GED dans votre instance.<br>
+                        Le système effectuera un contrôle cryptographique strict de l'empreinte SHA-256 de chaque document. Toute anomalie ou altération provoquera l'interruption immédiate de l'opération.
+                    </div>
+
+                    <div class="login-field" style="margin-bottom:14px;">
+                        <label for="restore-file-input" style="font-weight:700; margin-bottom:6px; display:block;">Sélectionnez le fichier d'archive universelle (.homolog ou .tar.gz) :</label>
+                        <input type="file" id="restore-file-input" accept=".homolog,.tar.gz" required class="login-input" style="padding:6px; font-size:12px;" />
+                        <small style="font-size:10px; color:var(--text-dim); display:block; margin-top:4px;">L'archive doit contenir le fichier <code>manifest.json</code> avec un sceau cryptographique valide.</small>
+                    </div>
+
+                    <div id="restore-progress-container" style="display:none; margin:14px 0;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                            <span id="restore-progress-label" style="font-weight:600; color:var(--accent-blue);">Vérification et réinjection en cours...</span>
+                            <span id="restore-progress-percent" style="font-family:monospace;">0%</span>
+                        </div>
+                        <div style="width:100%; height:8px; background:var(--bg-panel); border-radius:4px; overflow:hidden;">
+                            <div id="restore-progress-bar" style="width:0%; height:100%; background:var(--accent-emerald); transition:width 0.3s ease;"></div>
+                        </div>
+                    </div>
+
+                    <div id="restore-result-box" style="display:none; margin:14px 0; font-size:11px; line-height:1.6;"></div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-restore-homolog')">Annuler</button>
+                        <button type="submit" id="btn-submit-restore" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;">
+                            📥 Lancer la Restauration Certifiée
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
