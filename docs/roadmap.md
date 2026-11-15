@@ -1,14 +1,16 @@
 # Feuille de route du projet (Roadmap)
 ## Plateforme collaborative de gestion de l'enregistrement des médicaments, de l'homologation des DM et GED pharmaceutique en Algérie
 
-**Dernière mise à jour :** 11 novembre 2026  
-**Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP)  
+**Dernière mise à jour :** 15 novembre 2026  
+**Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP & Chapitre 10 - Spécifications Exhaustives des États de Sortie)  
 **Textes réglementaires officiels algériens intégrés :**
 - **Guide pour la soumission du Dossier Technique Commun (CTD)** destiné à l'enregistrement des produits pharmaceutiques à usage humain (DEPP/ANPP, Version 01, Date d'effet : 31/07/2025).
 - **Ligne directrice relative aux modifications des décisions d’enregistrement** des produits pharmaceutiques à usage de la médecine humaine (Code : `LD-DEPP07/V01`, Version 01, Date : 22/04/2026).
 - **Décret exécutif n° 20-325** du 22 novembre 2020 (Modalités d'enregistrement des médicaments).
 - **Arrêté du 3 octobre 2021** (Modalités de modification de la DE) & **Arrêté du 7 novembre 2021** (Article 09 : Regroupement de modifications / *Grouping*).
 - **Décret exécutif n° 20-324** et **Arrêté du 10 mai 2021** (Modalités d'homologation des dispositifs médicaux).  
+- **Décret exécutif n° 21-82** (Barèmes des redevances et droits des prestations de l'ANPP - Formulaires BV1 et BV2).
+- **Arrêté BPF 2024 / ICH Q10 / 21 CFR Part 11** (Intégrité des données ALCOA+, Piste d'audit immuable et Signature électronique légale).
 **Architecture cible :** Go 1.26+ | PostgreSQL 16+ (`pgx/v5`) | Frontend embarqué TypeScript/Tailwind (RTL FR/AR) | Mode Hybride (On-Premise & SaaS)
 
 ---
@@ -266,8 +268,20 @@ gantt
     - Lettre d'engagement de validation sur 3 premiers lots industriels de fabrication locale (1.P.8).
     - Lettre d'engagement de suivi de stabilité continue post-commercialisation en Zone IVb (1.P.9).
     - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
-    - Bordereaux de versement officiels BV1 (Initial / DM) et BV2 (Variations / Renouvellements) avec calcul des redevances en DZD ou devises.
     - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
+- [ ] **Moteur Universel de Restitution & des 15 États de Sortie BPF / ANPP (Chapitre 10 du Cahier des Charges) :**
+  - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
+  - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
+  - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://homolog.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
+  - Paginage légal indélébile **`Page X sur Y`** et cartouche d'identification normalisé (raison sociale, agrément MIPH, DCI, version, horodatage UTC+1 certifié).
+  - **Couverture intégrale des 5 familles d'états de sortie (15 états réglementaires officiels) :**
+    - *Famille 1 (Dépôt & Procédures CTD) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP).
+    - *Famille 2 (Redevances & Financier Décret 21-82) :* ES-FIN-01 (Bordereau BV1 initial/DM), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
+    - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
+    - *Famille 4 (Qualité & Audit Trail BPF) :* ES-QUA-01 (Registre d'Audit Trail scellé ALCOA+), ES-QUA-02 (Manifeste de signature électronique Maker-Checker), ES-QUA-03 (Fiche de contrôle documentaire pré-dépôt).
+    - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.homolog`).
+  - Exports tabulaires certifiés **Excel (XLSX) et CSV UTF-8** avec métadonnées d'audit trail (pour comptabilité, finance et analyses de portefeuille).
+  - Routes REST API sécurisées (`GET /api/v1/dossiers/{id}/reports/{code}`, `POST .../seal`, `GET /api/v1/public/verify/{sha256}`).
 - [ ] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
   - Tableau de bord de pilotage temps réel : vue matricielle d'avancement par module CTD et par département rédacteur, alertes sur retards et goulots d'étranglement.
   - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
@@ -363,8 +377,9 @@ gantt
 
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
-| **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0) | Aligné Guide CTD ANPP 2025 & LD Modifications 2026 ✅ |
-| **Jalons Phase 1 complétés** | 8 / 8 jalons | 7 / 8 jalons complétés (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 & 1.7 ✅) \| Jalon 1.8 (Packaging & Réversibilité) prochain | Couverture 100% de la chaîne d'enregistrement et des compléments ANPP validée ✅ |
-| **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth & Produits validés (100%) | Argon2id, TOTP, Sessions, CAS & Modèles ANPP conformes BPF ✅ |
-| **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256) | Scellement cryptographique et rôles validés ✅ |
+| **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0 - 11 Domaines) | Aligné Guide CTD ANPP 2025, LD Modifications 2026 & Chapitre 10 États de Sortie ✅ |
+| **Jalons Phase 1 complétés** | 8 / 8 jalons | 8 / 8 jalons complétés (100 %) (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 & 1.8 ✅) | Phase 1 validée à 100% : socle souverain, GED BPF, compléments ANPP, BV1/BV2 et réversibilité .homolog ✅ |
+| **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth, Produits & Réversibilité validés (100%) | Argon2id, TOTP, Sessions, CAS, RBAC & Backup conformes BPF ✅ |
+| **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
+| **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC & Décret 21-82 | 15 états spécifiés (5 familles métier, QR-Code d'intégrité, PDF/A, XLSX/CSV) | Valeur probante, anti-falsification et paginage « Page X sur Y » conformes BPF ✅ |

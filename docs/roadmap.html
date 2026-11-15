@@ -953,7 +953,8 @@
             <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :</strong> `À Rédiger` ➔ `En Cours` ➔ `En Revue Qualité/Checker` ➔ `Prêt pour Visa DT` ➔ `Approuvé & Scellé`, avec verrouillage Check-out / Check-in et gestion des versions mineures/majeures (`v0.1` à `v1.0`).</li>
             <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Gating Chronologique & Chemin Critique :</strong> Modélisation du graphe DAG des dépendances en 5 phases successives avec verrous bloquants prévenant les erreurs de rédaction prématurée (suivi incombustible des stabilités Zone IVb 6 mois min. et bioéquivalence).</li>
             <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :</strong> Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications produit fini (3.2.P.5), Rapports de stabilité Zone IVb (3.2.P.8), QOS Module 2.3, Dossier technique DM.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic :</strong> Production instantanée en PDF/A de la lettre 1.P.8 (validation 3 premiers lots), 1.P.9 (suivi stabilité Zone IVb), 1.H.10 (attestation DT), bordereaux BV1 et BV2 avec calcul des redevances.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic :</strong> Production instantanée en PDF/A de la lettre 1.P.8 (validation 3 premiers lots), 1.P.9 (suivi stabilité Zone IVb), 1.H.10 (attestation DT) et attestation de non-modification des autres sections.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Moteur Universel de Reporting &amp; des 15 États de Sortie Réglementaires (Chapitre 10 CDC) :</strong> Génération PDF/A-1b et PDF/A-2b haute lisibilité avec filigranes dynamiques BPF (<code>BROUILLON</code>, <code>OFFICIEL / APPROUVÉ</code>, <code>ARCHIVÉ</code>), paginage obligatoire <em>« Page X sur Y »</em>, cartouche légal standardisé, et dispositif anti-falsification par <strong>QR-Code cryptographique</strong> scannable (vérification instantanée <code>/verify/{sha256}</code>). Couverture intégrale des 5 familles d'états (Dépôt CTD, Redevances BV1/BV2, Réponses aux compléments, Audit Trail ALCOA+, Portefeuille AMM/DM) et exports certifiés XLSX / CSV.</li>
             <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Cockpit de Supervision & Parapheur Électronique pour le Pharmacien DT :</strong> Suivi temps réel d'avancement par module CTD, parapheur électronique consolidé avec visualisation diff, rapport du Checker et signature groupée (*Batch Signing*).</li>
         </ul>
     </div>
@@ -1180,6 +1181,12 @@
                 <td>Submission Package & Veille RDV</td>
                 <td><strong>Spécifiée</strong> (BV1/BV2 & E-TASJIL)</td>
                 <td><span class="badge badge-progress">Architecture API-Ready 🚀</span></td>
+            </tr>
+            <tr>
+                <td><strong>États de Sortie &amp; Reporting BPF</strong></td>
+                <td>Conforme Chapitre 10 CDC &amp; Décret 21-82</td>
+                <td><strong>15 États Spécifiés</strong> (5 familles métier, QR-Code, PDF/A)</td>
+                <td><span class="badge badge-done">Valeur probante &amp; ALCOA+ ✅</span></td>
             </tr>
         </tbody>
     </table>
