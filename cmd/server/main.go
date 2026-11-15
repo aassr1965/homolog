@@ -62,6 +62,8 @@ func main() {
 	var appointmentHandler *api.AppointmentHandler
 	var regulatoryWatchHandler *api.RegulatoryWatchHandler
 	var setupHandler *api.SetupHandler
+	var workflowHandler *api.WorkflowHandler
+	var reportHandler *api.ReportHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -120,6 +122,10 @@ func main() {
 		regulatoryWatchHandler = api.NewRegulatoryWatchHandler(regulatoryWatchRepo, auditService)
 
 		setupHandler = api.NewSetupHandler(db.Pool, sessionManager, auditService, cfg)
+
+		workflowRepo := repository.NewWorkflowRepository(db.Pool)
+		workflowHandler = api.NewWorkflowHandler(workflowRepo, dossierRepo, auditService, db.Pool)
+		reportHandler = api.NewReportHandler(dossierRepo, workflowRepo, pharmaRepo, auditService, db.Pool)
 	}
 
 	// 3. Configuration du Routeur HTTP
@@ -405,7 +411,38 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}", regulatoryWatchHandler.GetRegulatoryWatchItem)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Put("/api/v1/regulatory-watch/{itemId}/analysis", regulatoryWatchHandler.UpdateRegulatoryWatchAnalysis)
 			}
+
+			// Atelier d'Élaboration Documentaire, Workflow Maker-Checker & Templates (Jalon 2.1)
+			if workflowHandler != nil {
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/checkout", workflowHandler.CheckoutSection)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/checkin", workflowHandler.CheckinSection)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/assign", workflowHandler.AssignSection)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/submit-review", workflowHandler.SubmitReview)
+				protected.With(api.RequirePermission(auditService, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/review", workflowHandler.ReviewDecision)
+				protected.With(api.RequirePermission(auditService, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/review-decision", workflowHandler.ReviewDecision)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/items/{itemId}/approve", workflowHandler.ApproveSection)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/items/{itemId}/approve-pdt", workflowHandler.ApproveSection)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/items/{itemId}/reviews", workflowHandler.GetItemReviews)
+
+				// Modèles Maîtres ANPP / ICH
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates", workflowHandler.GetMasterTemplates)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates/{code}", workflowHandler.GetMasterTemplateByCode)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates", workflowHandler.GetMasterTemplates)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates/{code}", workflowHandler.GetMasterTemplateByCode)
+			}
+
+			// Moteur de Reporting Réglementaire BPF & États de Sortie (Jalon 2.1)
+			if reportHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/reports/{code}", reportHandler.GenerateDossierReport)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/reports/{code}/seal", reportHandler.SealDossierReport)
+			}
 		})
+	}
+
+	// Portail Public de Vérification QR-Code ANPP (accès sans authentification préalable)
+	if reportHandler != nil {
+		r.Get("/verify/{sha256}", reportHandler.VerifyReportPublic)
+		r.Get("/api/v1/public/verify/{sha256}", reportHandler.VerifyReportPublic)
 	}
 
 	// 4. Lancement du serveur HTTP avec arrêt gracieux
