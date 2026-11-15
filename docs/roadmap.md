@@ -26,8 +26,8 @@ gantt
     Coffre-Fort GED Pharmaceutique BPF/ALCOA+ (1.4)  :done, p1_4, after p1_3, 4d
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :done, p1_5, after p1_4, 4d
     UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):done, p1_6, after p1_5, 4d
-    Studio Compléments & Assistant Soumission ANPP (1.7) :active, p1_7, after p1_6, 3d
-    Packaging Docker & Archive .homolog (1.8)        :p1_8, after p1_7, 2d
+    Studio Compléments & Assistant Soumission ANPP (1.7) :done, p1_7, after p1_6, 3d
+    Packaging Docker & Archive .homolog (1.8)        :active, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
     Atelier Élaboration & Workflow BPF Maker-Checker (2.1):p2_1, after p1_8, 4d
     Redevances, Devises & Justificatifs Bancaires(2.2):p2_2, after p2_1, 3d
@@ -189,25 +189,30 @@ gantt
 - [x] Barre d'état inférieure et indicateurs KPI de complétude avec jauges colorimétriques ALCOA+.
 
 ### Jalon 1.7 : Studio de Compléments ANPP, Assistant de Soumission E-Services & Veille RDV
-- [ ] **Gestion des Compléments et Notifications ANPP :**
-  - Enregistrement des courriers officiels ANPP (date de réception, numéro de référence, motif).
-  - Découpage des questions du courrier en sous-tâches unitaires avec assignation à un responsable (Qualité, R&D, Réglementaire).
-  - Moteur de compte à rebours légal multi-niveaux :
-    - Bandeau d'urgence visuel dans l'application (J < 30 jours).
-    - Notifications e-mails programmées (J-180, J-90, J-30, J-7).
-    - Escalade automatique vers le Pharmacien Directeur Technique si une échéance critique est non traitée à J-30.
-- [ ] **Assistant de Soumission E-Services ANPP (E-TASJIL & RDV PP/DM) :**
-  - **Génération automatique des bordereaux et formulaires officiels ANPP :**
-    - Production automatique des bordereaux de versement **BV1** (Enregistrement initial NI/NF, Homologation DM) et **BV2** (Modifications MI/MF, Renouvellements RI/RF) au format Word/Excel et PDF scellé avec calcul automatique des redevances en DZD ou devises.
-    - Production automatique du Formulaire officiel de demande d'homologation DM (Décret 20-324 / Arrêté 10 mai 2021) et des Récépissés de dépôt pré-remplis.
-    - Production automatique de l'Attestation formelle de non-modification des autres sections (LD-DEPP07/V01).
-  - **Générateur du Submission Package pour E-TASJIL (`etasjil.anpp.dz`) :**
-    - Exportation 1-clic de l'arborescence eCTD / DM normalisée avec index PDF et manifestes d'intégrité SHA-256.
-    - Fiche récapitulative de télé-saisie E-TASJIL (copier-coller sans erreur aligné champ par champ avec les masques du portail officiel).
-  - **Veille calendaire et Assistant Prise de Rendez-vous (`rdvpp.anpp.dz` / `rdvdm.anpp.dz`) :**
-    - Alertes proactives avant ouverture des guichets : mardi à 09h50 pour les DM, mercredi à 09h50 pour les Produits Pharmaceutiques.
-    - Fast-Fill sécurisé préparant les données du dossier (raison sociale, agrément MIPH, PDT, produit, annexe Alger/Oran/Constantine) pour réservation immédiate du créneau.
-  - **Audit de conformité pré-dépôt bloquant :** Interdiction d'exportation si pièces manquantes, certificat expiré ou absence de signature électronique légale du PDT (21 CFR Part 11).
+- [x] **Gestion des Compléments et Notifications ANPP (Migration `010_anpp_deficiency_letters_and_tracking.sql`) :**
+  - [x] Enregistrement des courriers officiels ANPP (date émission, date réception décharge bureau d'ordre, analyse du délai de latence postale, numéro de référence officiel, motif).
+  - [x] Découpage des questions du courrier en sous-tâches unitaires par module CTD (Module 1, 2, 3, 4, 5, DM) avec assignation et priorité.
+  - [x] Moteur de compte à rebours légal multi-niveaux (Décret exécutif 20-325, 90j par défaut, 60j ou date butoir personnalisée) :
+    - [x] Bandeau d'urgence visuel et badges dynamiques dans l'application (J ≤ 15 Critique, J ≤ 30 Urgent, J ≤ 60 Alerte, Dans les délais).
+    - [x] Modale de supervision des échéances critiques accessible depuis le bandeau supérieur de l'application.
+    - [x] Visa légal régalien du Pharmacien Directeur Technique (1.A.7 / 21 CFR Part 11) avec scellement de chaque réponse dans l'audit trail BPF.
+  - [x] **Numérisation, Versement & Visualisation In-App des Scans Officiels (GED ALCOA+) :**
+    - [x] Archivage cryptographique au coffre-fort numérique GED (CAS SHA-256) sous l'arborescence `01_Affaires_Reglementaires/01_06_Correspondances_ANPP`.
+    - [x] Colonne dédiée « Pièce Officielle GED » dans la table des compléments avec boutons d'accès rapide `👁️ Aperçu Scan ANPP` et `📎 Joindre Scan`.
+    - [x] Visualiseur universel de documents in-app (`#modal-doc-preview`) avec affichage PDF intégré, bascule plein écran `⛶ Agrandir` et téléchargement `📥`.
+    - [x] Habilitations RBAC étendues garantissant le téléversement et le remplacement sans friction des pièces officielles par le Pharmacien DT.
+- [x] **Assistant de Soumission E-Services ANPP (E-TASJIL & RDV PP/DM) :**
+  - [x] **Calculateur des redevances & Bordereaux officiels BV1 / BV2 (Migration `011_anpp_fee_schedules_and_payment_slips.sql`) :**
+    - [x] Barèmes légaux configurables selon les procédures officielles ANPP (NI, RI, MI, NF, RF, MF, DM).
+    - [x] Production automatique des bordereaux de versement **BV1** (Enregistrement initial / Homologation) et **BV2** (Modifications / Renouvellements) au format HTML imprimable conforme avec calcul automatique des montants en DZD et devises étrangères.
+  - [x] **Veille calendaire et Assistant Prise de Rendez-vous (Migration `012_anpp_appointments_and_regulatory_watch.sql`) :**
+    - [x] Alertes proactives avant ouverture des guichets : mardi à 09h50 pour les DM (`rdvdm.anpp.dz`), mercredi à 09h50 pour les Produits Pharmaceutiques (`rdvpp.anpp.dz`).
+    - [x] Fast-Fill sécurisé préparant les données du dossier (raison sociale, agrément MIPH, PDT, produit, annexe Alger/Oran/Constantine) pour réservation immédiate du créneau.
+    - [x] Corpus juridique et registre de veille réglementaire avec analyse d'impact et plan de mise en conformité par le Pharmacien DT.
+  - [x] **Submission Package pour E-TASJIL (`etasjil.anpp.dz`) :**
+    - [x] Audit de conformité pré-dépôt bloquant : interdiction de verrouillage si pièces obligatoires manquantes, certificats expirés ou absence de signature électronique du PDT (21 CFR Part 11).
+    - [x] Génération des manifestes d'intégrité SHA-256 (JSON et XML) et scellement formel du dossier de soumission.
+    - [x] Fiche récapitulative de télé-saisie E-TASJIL pour saisie rapide alignée champ par champ avec les masques du portail officiel.
 
 ### Jalon 1.8 : Packaging, Déploiement & Réversibilité
 - [ ] Fichier `docker-compose.yml` de production (PostgreSQL 16 + conteneur binaire Go Homolog).
@@ -346,7 +351,7 @@ gantt
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
 | **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0) | Aligné Guide CTD ANPP 2025 & LD Modifications 2026 ✅ |
-| **Jalons Phase 1 complétés** | 8 / 8 jalons | 5 / 8 jalons complétés (Jalons 1.1, 1.3, 1.4, 1.5 & 1.6 ✅) \| Jalon 1.2 réouvert (extension RBAC/SoD) \| Jalon 1.7 actif | Jalon 1.2 en cours de mise en conformité RBAC/SoD ; Jalon 1.7 (Studio Compléments) actif |
+| **Jalons Phase 1 complétés** | 8 / 8 jalons | 7 / 8 jalons complétés (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6 & 1.7 ✅) \| Jalon 1.8 (Packaging & Réversibilité) prochain | Couverture 100% de la chaîne d'enregistrement et des compléments ANPP validée ✅ |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth & Produits validés (100%) | Argon2id, TOTP, Sessions, CAS & Modèles ANPP conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |

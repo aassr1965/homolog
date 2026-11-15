@@ -602,8 +602,8 @@
     <div class="kpi-grid">
         <div class="kpi-card blue">
             <div class="kpi-label">Phase 1 (Socle & PSSI)</div>
-            <div class="kpi-value">5 / 8 Complétés</div>
-            <div class="kpi-sub">Jalons 1.2 & 1.7 Actifs</div>
+            <div class="kpi-value">7 / 8 Complétés</div>
+            <div class="kpi-sub">Jalon 1.8 Prochain (88%)</div>
         </div>
         <div class="kpi-card amber">
             <div class="kpi-label">Phase 2 (Élaboration & Variations)</div>
@@ -646,17 +646,17 @@
             <rect x="10" y="38" width="32" height="14" rx="2" fill="#10b981"/>
             <text x="26" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.1 ✅</text>
             <!-- 1.2 -->
-            <rect x="45" y="38" width="50" height="14" rx="2" fill="#0284c7" stroke="#0369a1" stroke-width="1"/>
-            <text x="70" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.2 PSSI 🔄</text>
+            <rect x="45" y="38" width="50" height="14" rx="2" fill="#10b981"/>
+            <text x="70" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.2 PSSI ✅</text>
             <!-- 1.3-1.6 -->
             <rect x="98" y="38" width="88" height="14" rx="2" fill="#10b981"/>
             <text x="142" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.3-1.6 (GED/CTD) ✅</text>
             <!-- 1.7 -->
-            <rect x="189" y="38" width="42" height="14" rx="2" fill="#0284c7"/>
-            <text x="210" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.7 Studio 🔄</text>
+            <rect x="189" y="38" width="42" height="14" rx="2" fill="#10b981"/>
+            <text x="210" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.7 Studio ✅</text>
             <!-- 1.8 -->
-            <rect x="234" y="38" width="36" height="14" rx="2" fill="#94a3b8"/>
-            <text x="252" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.8 Pkg</text>
+            <rect x="234" y="38" width="36" height="14" rx="2" fill="#0284c7" stroke="#0369a1" stroke-width="1"/>
+            <text x="252" y="48" fill="#ffffff" font-size="6.5" font-weight="700" text-anchor="middle">1.8 Pkg 🔄</text>
 
             <!-- Lignes Phase 2 -->
             <text x="10" y="72" fill="#0f2942" font-size="7.5" font-weight="700">PHASE 2 : ÉLABORATION & VARIATIONS</text>
@@ -685,9 +685,9 @@
             <!-- Légende -->
             <g transform="translate(10, 150)">
                 <circle cx="5" cy="5" r="3.5" fill="#10b981"/>
-                <text x="13" y="8" fill="#475569" font-size="6.8">Complété (5 jalons)</text>
+                <text x="13" y="8" fill="#475569" font-size="6.8">Complété (7 jalons ✅)</text>
                 <circle cx="105" cy="5" r="3.5" fill="#0284c7"/>
-                <text x="113" y="8" fill="#475569" font-size="6.8">En cours (1.2 PSSI & 1.7 Studio)</text>
+                <text x="113" y="8" fill="#475569" font-size="6.8">En cours (1.8 Packaging & Réversibilité)</text>
                 <circle cx="260" cy="5" r="3.5" fill="#0d9488"/>
                 <text x="268" y="8" fill="#475569" font-size="6.8">2.1 Atelier Collaboratif</text>
                 <circle cx="385" cy="5" r="3.5" fill="#38bdf8"/>
@@ -713,7 +713,7 @@
                 <td><strong>Phase 1</strong><br>Socle & GED</td>
                 <td>Disposer d'une plateforme opérationnelle de bout en bout pour monter, signer et réviser un dossier CTD/DM.</td>
                 <td>Base PostgreSQL, 2FA TOTP, PSSI, RBAC 14 Perms/SoD, Référentiel ANPP 2025, GED ALCOA+, Pharma Explorer 3 volets, E-Services.</td>
-                <td><span class="badge badge-progress">5/8 Complétés (1.2 & 1.7 Actifs)</span></td>
+                <td><span class="badge badge-done">7/8 Complétés (Jalons 1.1 à 1.7 ✅)</span></td>
                 <td><span class="badge badge-anpp">Priorité M (Must)</span></td>
             </tr>
             <tr>
@@ -886,20 +886,20 @@
     </div>
 
     <!-- Jalon 1.7 -->
-    <div class="milestone-card progress">
+    <div class="milestone-card done">
         <div class="milestone-header">
             <span class="milestone-title">Jalon 1.7 : Studio Compléments ANPP, Assistant Soumission E-Services & Veille RDV</span>
-            <span class="badge badge-progress">En Cours d'Implémentation 🚀</span>
+            <span class="badge badge-done">Complété & Validé ✅</span>
         </div>
         <ul class="milestone-items">
             <li class="milestone-item"><span class="check-icon checked">✓</span> Cartographie des e-services ANPP : <em>E-TASJIL</em> (`etasjil.anpp.dz`), <em>RDV PP</em> (`rdvpp.anpp.dz`), <em>RDV DM</em> (`rdvdm.anpp.dz`), <em>État Déclaratif</em>.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Génération automatique des bordereaux officiels ANPP</strong> : production directe des bordereaux de versement <strong>BV1</strong> (enregistrement initial / homologation) et <strong>BV2</strong> (modifications / renouvellements) au format Word/Excel/PDF scellé avec calcul automatique des redevances en DZD et devises.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> Production automatique du <strong>Formulaire officiel d'homologation DM</strong> (Décret 20-324 / Arrêté 10 mai 2021) et des <strong>Récépissés de dépôt</strong> pré-remplis avec données demandeur et DT.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> Production de l'<strong>Attestation formelle de non-modification des autres sections</strong> selon le canevas officiel LD-DEPP07/V01.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Export du Submission Package pour E-TASJIL</strong> : arborescence eCTD normalisée, index PDF scellé et fiche récapitulative de saisie pour copier-coller instantané sans erreur.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Veille calendaire et alertes automatiques RDV</strong> : notifications proactives mardi 09h50 (DM) et mercredi 09h50 (PP) avant ouverture des guichets de réservation + module Fast-Fill sécurisé.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Audit de conformité pré-dépôt bloquant</strong> : interdiction d'exportation si pièces manquantes, certificat expiré ou absence de signature électronique légale du PDT (21 CFR Part 11).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Studio de compléments ANPP</strong> : découpage des courriers officiels en sous-tâches unitaires avec compte à rebours légal multi-niveaux (J-180, J-90, J-30, J-7).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Génération automatique des bordereaux officiels ANPP (Migration 011)</strong> : production directe des bordereaux de versement <strong>BV1</strong> (enregistrement initial / homologation) et <strong>BV2</strong> (modifications / renouvellements) au format HTML imprimable conforme avec calcul automatique des redevances en DZD et devises.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Production automatique du <strong>Formulaire officiel d'homologation DM</strong> (Décret 20-324 / Arrêté 10 mai 2021) et des <strong>Récépissés de dépôt</strong> pré-remplis avec données demandeur et DT.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> Production de l'<strong>Attestation formelle de non-modification des autres sections</strong> selon le canevas officiel LD-DEPP07/V01.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Export du Submission Package pour E-TASJIL</strong> : arborescence normalisée, manifestes d'intégrité cryptographique SHA-256 (JSON/XML), scellement et fiche récapitulative de télé-saisie rapide.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Veille calendaire et alertes automatiques RDV (Migration 012)</strong> : notifications proactives mardi 09h50 (DM) et mercredi 09h50 (PP) avant ouverture des guichets de réservation + module Fast-Fill sécurisé et registre de veille réglementaire.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Audit de conformité pré-dépôt bloquant</strong> : interdiction d'exportation si pièces manquantes, certificat expiré ou absence de signature électronique légale du PDT (21 CFR Part 11).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Studio de compléments ANPP (Migration 010 & Décret 20-325)</strong> : décomposition par question/module CTD, compte à rebours légal multi-niveaux, numérisation/remplacement du scan officiel dans la GED ALCOA+ (CAS SHA-256), visualiseur in-app modal agrandissable et visa régalien PDT (1.A.7).</li>
         </ul>
     </div>
 
@@ -907,7 +907,7 @@
     <div class="milestone-card planned">
         <div class="milestone-header">
             <span class="milestone-title">Jalon 1.8 : Packaging Docker, Déploiement & Archive de Réversibilité .homolog</span>
-            <span class="badge badge-planned">Planifié</span>
+            <span class="badge badge-planned">Planifié (Prochain)</span>
         </div>
         <ul class="milestone-items">
             <li class="milestone-item"><span class="check-icon unchecked">○</span> Fichier `docker-compose.yml` durci de production (PostgreSQL 16 alpine + conteneur binaire Go statique).</li>
@@ -917,9 +917,9 @@
         </ul>
     </div>
 
-    <div class="callout amber">
+    <div class="callout teal">
         <div class="callout-title">Point d'Étape Phase 1</div>
-        Avec 5 jalons complétés sur 8, le Jalon 1.2 en cours d'extension RBAC/SoD et le Jalon 1.7 en phase active de finalisation, le socle de la plateforme <strong>Homolog</strong> garantit déjà la couverture intégrale du processus d'enregistrement et d'homologation selon les directives ANPP 2025.
+        Avec 7 jalons complétés sur 8 et le Jalon 1.7 validé de bout en bout (Studio Compléments, Redevances BV1/BV2, Submission Package E-TASJIL et RDV), le socle de la plateforme <strong>Homolog</strong> couvre désormais l'intégralité du cycle réglementaire actif. Le Jalon 1.8 (Packaging Docker & Archive .homolog) parachèvera la Phase 1.
     </div>
 
     <div class="page-footer">
@@ -1156,8 +1156,8 @@
             <tr>
                 <td><strong>Jalons Phase 1 Complétés</strong></td>
                 <td>8 / 8 Jalons</td>
-                <td><strong>5 / 8 Jalons Complétés</strong> (1.1, 1.3, 1.4, 1.5, 1.6)</td>
-                <td><span class="badge badge-progress">Jalon 1.2 (PSSI/RBAC) & 1.7 (Studio) Actifs 🔄</span></td>
+                <td><strong>7 / 8 Jalons Complétés</strong> (1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7)</td>
+                <td><span class="badge badge-done">Jalon 1.7 Validé ✅ (Jalon 1.8 prochain)</span></td>
             </tr>
             <tr>
                 <td><strong>Couverture Tests Unitaires</strong></td>
