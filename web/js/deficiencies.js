@@ -191,17 +191,6 @@ function renderDeficienciesDashboardView(data) {
                 <tr style="background:${rowBg}; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="openDeficiencyLetterDetail('${l.id}')">
                     <td style="padding:10px 12px;">
                         <div style="font-weight:700; color:var(--accent-blue); font-size:12px;">${escapeHTML(l.reference_number)}</div>
-                        ${l.document_id ? `
-                            <div style="margin-top:3px;">
-                                <a href="javascript:void(0)" onclick="event.stopPropagation(); openDocumentViewerModal('${l.document_id}', '${escapeHTML(l.document_title || l.reference_number)}')" title="Aperçu du scan officiel GED (${escapeHTML(l.document_title || 'Document GED')})" style="text-decoration:none; font-size:10.5px; color:#047857; font-weight:700; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
-                                    <span>👁️</span> <span>Aperçu Scan ANPP</span>
-                                </a>
-                            </div>
-                        ` : `
-                            <div style="margin-top:3px; font-size:10px; color:var(--text-dim); display:inline-flex; align-items:center; gap:4px;">
-                                <span>⚠️ Sans scan GED</span>
-                            </div>
-                        `}
                         <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">${l.notes ? escapeHTML(l.notes).substring(0, 45) + '...' : 'Notification officielle'}</div>
                     </td>
                     <td style="padding:10px 12px;">
@@ -238,16 +227,7 @@ function renderDeficienciesDashboardView(data) {
                         </div>
                     </td>
                     <td style="padding:10px 12px; text-align:right; white-space:nowrap;" onclick="event.stopPropagation();">
-                        ${l.document_id ? `
-                            <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; background:#ecfdf5; color:#047857; border:1px solid #10b981; font-weight:700; margin-right:6px; cursor:pointer;" onclick="openDocumentViewerModal('${l.document_id}', '${escapeHTML(l.document_title || l.reference_number)}')" title="Aperçu du scan officiel numérisé">
-                                👁️ Scan
-                            </button>
-                        ` : `
-                            <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; margin-right:6px; cursor:pointer;" onclick="promptAttachDeficiencyDocument('${l.id}')" title="Joindre un scan numérisé">
-                                📎 Scan
-                            </button>
-                        `}
-                        <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-blue); color:white; border:none; font-weight:600; cursor:pointer;" onclick="openDeficiencyLetterDetail('${l.id}')">
+                        <button type="button" class="btn-pill" style="font-size:11px; padding:4px 12px; background:var(--accent-blue); color:white; border:none; font-weight:600; cursor:pointer;" onclick="openDeficiencyLetterDetail('${l.id}')">
                             🔍 Ouvrir Studio
                         </button>
                     </td>
