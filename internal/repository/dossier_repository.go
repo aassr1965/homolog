@@ -90,12 +90,12 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 				id, dossier_id, module_number, sub_module, item_code,
 				title_fr, title_ar, description_fr, requirement_level,
 				is_mandatory, ged_document_id, status, validation_notes,
-				sort_order, security_classification, created_at, updated_at
+				sort_order, security_classification, assigned_department, workflow_status, created_at, updated_at
 			) VALUES (
 				$1, $2, $3, $4, $5,
 				$6, $7, $8, $9,
 				$10, $11, $12, $13,
-				$14, $15, $16, $17
+				$14, $15, $16, $17, $18, $19
 			)
 		`
 		for i := range items {
@@ -106,6 +106,12 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 			item.DossierID = d.ID
 			if item.Status == "" {
 				item.Status = domain.ItemStatusMissing
+			}
+			if item.WorkflowStatus == "" {
+				item.WorkflowStatus = domain.WorkflowStatusDraftPending
+			}
+			if item.AssignedDepartment == "" {
+				item.AssignedDepartment = determineDefaultDepartment(item.ItemCode, item.SubModule, item.ModuleNumber)
 			}
 			if item.SecurityClassification == "" {
 				if item.ItemCode == "1.A.4" || item.ItemCode == "1.H.4" || item.ItemCode == "1.H.5" {
@@ -123,7 +129,8 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 				item.ID, item.DossierID, item.ModuleNumber, item.SubModule, item.ItemCode,
 				item.TitleFR, item.TitleAR, item.DescriptionFR, string(item.RequirementLevel),
 				item.IsMandatory, item.GEDDocumentID, string(item.Status), item.ValidationNotes,
-				item.SortOrder, string(item.SecurityClassification), item.CreatedAt, item.UpdatedAt,
+				item.SortOrder, string(item.SecurityClassification), item.AssignedDepartment, string(item.WorkflowStatus),
+				item.CreatedAt, item.UpdatedAt,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("échec insertion item de checklist [%s] : %w", item.ItemCode, err)
@@ -216,17 +223,32 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 		}
 	}
 
-	// Chargement des items de checklist avec jointure GED si document rattaché
+	// Chargement des items de checklist avec jointure GED si document rattaché et informations du Workflow
 	queryItems := `
 		SELECT
 			i.id, i.dossier_id, i.module_number, i.sub_module, i.item_code,
 			i.title_fr, COALESCE(i.title_ar, ''), COALESCE(i.description_fr, ''),
 			i.requirement_level, i.is_mandatory, i.ged_document_id, i.status,
 			i.validation_notes, i.sort_order, COALESCE(i.security_classification, 'STANDARD'),
-			i.created_at, i.updated_at,
-			g.id, g.title_fr, g.document_code, g.current_version, g.status, g.taxonomy_path
+			COALESCE(i.workflow_status, 'draft_pending'), COALESCE(i.assigned_department, 'RA'),
+			i.assigned_user_id, i.due_date, i.is_locked, i.locked_by, i.locked_at, i.lock_reason,
+			COALESCE(i.current_revision, 'v0.1'), i.maker_user_id, i.maker_submitted_at,
+			i.checker_user_id, i.checker_reviewed_at, i.checker_decision, i.checker_notes,
+			i.approver_user_id, i.approver_signed_at, i.approver_signature_seal,
+			i.authored_content, i.template_code, i.created_at, i.updated_at,
+			g.id, g.title_fr, g.document_code, g.current_version, g.status, g.taxonomy_path,
+			COALESCE(u_asg.first_name || ' ' || u_asg.last_name, ''),
+			COALESCE(u_lck.first_name || ' ' || u_lck.last_name, ''),
+			COALESCE(u_mkr.first_name || ' ' || u_mkr.last_name, ''),
+			COALESCE(u_chk.first_name || ' ' || u_chk.last_name, ''),
+			COALESCE(u_app.first_name || ' ' || u_app.last_name, '')
 		FROM dossier_checklist_items i
 		LEFT JOIN ged_documents g ON i.ged_document_id = g.id
+		LEFT JOIN users u_asg ON i.assigned_user_id = u_asg.id
+		LEFT JOIN users u_lck ON i.locked_by = u_lck.id
+		LEFT JOIN users u_mkr ON i.maker_user_id = u_mkr.id
+		LEFT JOIN users u_chk ON i.checker_user_id = u_chk.id
+		LEFT JOIN users u_app ON i.approver_user_id = u_app.id
 		WHERE i.dossier_id = $1
 		ORDER BY i.module_number ASC, i.sort_order ASC, i.item_code ASC
 	`
@@ -239,17 +261,25 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 	var items []domain.ChecklistItem
 	for rows.Next() {
 		var it domain.ChecklistItem
-		var reqLvlStr, itStatusStr, secClassStr string
+		var reqLvlStr, itStatusStr, secClassStr, wfStatusStr string
 		var titleAR, descFR string
 		var gedID *uuid.UUID
 		var gTitle, gCode, gVer, gStatus, gTaxo *string
+		var asgName, lckName, mkrName, chkName, appName string
 
 		err := rows.Scan(
 			&it.ID, &it.DossierID, &it.ModuleNumber, &it.SubModule, &it.ItemCode,
 			&it.TitleFR, &titleAR, &descFR,
 			&reqLvlStr, &it.IsMandatory, &it.GEDDocumentID, &itStatusStr,
-			&it.ValidationNotes, &it.SortOrder, &secClassStr, &it.CreatedAt, &it.UpdatedAt,
+			&it.ValidationNotes, &it.SortOrder, &secClassStr,
+			&wfStatusStr, &it.AssignedDepartment,
+			&it.AssignedUserID, &it.DueDate, &it.IsLocked, &it.LockedBy, &it.LockedAt, &it.LockReason,
+			&it.CurrentRevision, &it.MakerUserID, &it.MakerSubmittedAt,
+			&it.CheckerUserID, &it.CheckerReviewedAt, &it.CheckerDecision, &it.CheckerNotes,
+			&it.ApproverUserID, &it.ApproverSignedAt, &it.ApproverSignatureSeal,
+			&it.AuthoredContent, &it.TemplateCode, &it.CreatedAt, &it.UpdatedAt,
 			&gedID, &gTitle, &gCode, &gVer, &gStatus, &gTaxo,
+			&asgName, &lckName, &mkrName, &chkName, &appName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("échec scan item checklist : %w", err)
@@ -260,6 +290,12 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 		it.RequirementLevel = domain.RequirementLevel(reqLvlStr)
 		it.Status = domain.ChecklistItemStatus(itStatusStr)
 		it.SecurityClassification = domain.SecurityClassification(secClassStr)
+		it.WorkflowStatus = domain.WorkflowStatus(wfStatusStr)
+		it.AssignedUserName = asgName
+		it.LockedByName = lckName
+		it.MakerUserName = mkrName
+		it.CheckerUserName = chkName
+		it.ApproverUserName = appName
 
 		if gedID != nil && gTitle != nil {
 			docCode := ""
@@ -823,4 +859,27 @@ func (r *DossierRepository) RemoveDossierMember(ctx context.Context, dossierID, 
 		return fmt.Errorf("erreur révocation membre dossier: %w", err)
 	}
 	return nil
+}
+
+// determineDefaultDepartment affecte le pôle métier selon la matrice de responsabilités BPF (Section 7.4 CDC)
+func determineDefaultDepartment(itemCode, subModule string, moduleNum int) string {
+	if moduleNum == 1 {
+		return "RA"
+	}
+	if strings.HasPrefix(itemCode, "3.2.P.3") || strings.HasPrefix(itemCode, "1.P.8") {
+		return "PROD"
+	}
+	if strings.HasPrefix(itemCode, "3.2.P.2") || strings.HasPrefix(itemCode, "1.M.P.3") || moduleNum == 2 {
+		return "RD"
+	}
+	if strings.HasPrefix(itemCode, "3.2.S.4") || strings.HasPrefix(itemCode, "3.2.P.5") || strings.HasPrefix(itemCode, "3.2.P.8") || strings.HasPrefix(itemCode, "1.P.4") || strings.HasPrefix(itemCode, "1.P.5") {
+		return "QC"
+	}
+	if strings.HasPrefix(itemCode, "5.3.1") || strings.HasPrefix(itemCode, "3.2.S") || strings.HasPrefix(itemCode, "1.M.S") {
+		return "EXTERNAL"
+	}
+	if moduleNum == 3 {
+		return "QC"
+	}
+	return "RA"
 }
