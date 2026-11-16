@@ -32,7 +32,7 @@ gantt
     Packaging Docker & Archive .sanad (1.8)          :done, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
     Atelier Élaboration & Workflow BPF Maker-Checker (2.1):active, p2_1, after p1_8, 4d
-    Redevances, Devises & Justificatifs Bancaires(2.2):p2_2, after p2_1, 3d
+    Redevances, Devises & Settings du Tenant (2.2)   :p2_2, after p2_1, 3d
     Moteur Variations ANPP (Mmin/Mmod/Mmaj)(2.3)     :p2_3, after p2_2, 4d
     Espace Consultants Externes Cloisonné (2.4)      :p2_4, after p2_3, 2d
     Régularisation DM Décret 20-324 (2.5)            :p2_5, after p2_4, 3d
@@ -41,6 +41,7 @@ gantt
     Mises à Jour Réglementaires Hors-Ligne .pkg (2.8):p2_8, after p2_7, 3d
     Contrôle Analytique & Libération Lot DCE (2.9)   :p2_9, after p2_8, 4d
     Chiffrement Applicatif GED AES-256-GCM (2.10)   :p2_10, after p2_9, 3d
+    Dossier de Validation CSV GAMP 5 (2.11)          :p2_11, after p2_10, 3d
     section Phase 3 : Extensions
     Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_8, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
@@ -294,20 +295,24 @@ gantt
   - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
   - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
 
-### Jalon 2.2 : Suivi des Redevances Réglementaires, Devises & Console de Paramétrage Institutionnel
-- [ ] **Console de Paramétrage des Variables Réglementaires & Institutionnelles :**
-  - Interface dédiée au sein de la Console d'Administration permettant la mise à jour dynamique des coordonnées bancaires ANPP (RIB Médicaments BNA/CAS 302.145, RIB Dispositifs Médicaux BNA Al Qods `00100622030000064395`), des bénéficiaires et ordres légaux de chèques certifiés (*Régisseur des recettes de l'ANPP*).
-  - Gestion des barèmes tarifaires configurables (Décret 21-82, Décret 21-551, Ordonnance 21-07 Art. 31) avec versioning temporel (`valid_from` / `valid_to`) pour garantir la reproductibilité et l'immuabilité ALCOA+ des états de sortie historiques ES-FIN-01.
-  - Paramétrage des guichets, adresses des directions spécialisées de l'ANPP (DEPP, DDM, DCE/LNCM, DAF) et des délais légaux de réponse aux notifications d'insuffisance (45 jours, 90 jours).
-  - Workflow de validation des modifications critiques (proposition Maker par l'Admin Labo / Dir. Fin., approbation obligatoire par le Pharmacien DT avec signature électronique 21 CFR Part 11, TOTP et audit trail scellé).
-- [ ] Barèmes configurables des redevances ANPP selon la procédure (**NI, RI, MI, NF, RF, MF, HOMOLOG_DM**) et la nature du produit.
-- [ ] **Dualité des circuits bancaires officiels de l'ANPP :**
-  - *Circuit Médicaments (Décret 21-82) :* Domiciliation Trésor Public / BNA Agence Al Qods Chéraga (CAS n° 302.145) avec liquidation détaillée (instruction Art. 3, expertise LNCM Art. 5, frais de timbre Art. 12).
-  - *Circuit Dispositifs Médicaux (Ordonnance n° 21-07 du 08-06-2021 Art. 31) :* Domiciliation bancaire officielle auprès de la **Banque Nationale d'Algérie (BNA) Agence Al Qods Chéraga (RIB `00100622030000064395`)**, avec barème institutionnel : Homologation initiale importée (**300 000 DA**), Renouvellement DM (**300 000 DA**), Modification DM (**150 000 DA**) et Transfert DM (**100 000 DA**).
+### Jalon 2.2 : Suivi des Redevances Réglementaires, Devises & Settings Réglementaires du Tenant
+- [ ] **Settings Réglementaires & Institutionnels Découplés par Tenant (`organization_id`) :**
+  - Interface dédiée au sein de la Console d'Administration (*Sanad Admin Console*) permettant la mise à jour dynamique et sécurisée des paramètres institutionnels par laboratoire, sans aucun codage en dur :
+    - *Circuit Médicaments :* Mode de paiement (`FIN_PAYMENT_MODE_MEDICINE`), compte Trésor Public CAS n° 302.145 (`FIN_TREASURY_ACCOUNT_MEDICINE`), ordre des chèques certifiés (`FIN_BENEFICIARY_ORDER_MEDICINE` : *Régisseur des recettes de l'ANPP*).
+    - *Circuit Dispositifs Médicaux :* Banque domiciliataire BNA Agence Al Qods Chéraga (`FIN_BANK_NAME_DM`), RIB officiel ANPP `00100622030000064395` (`FIN_BANK_RIB_DM`).
+    - *Délais légaux de carence ANPP :* Délai standard 90 jours avec compte à rebours J-90 / J-60 / J-30 (`REG_DEFICIENCY_DEADLINE_STANDARD_DAYS`) et délai urgent sur mise en demeure 45 jours (`REG_DEFICIENCY_DEADLINE_URGENT_DAYS`).
+  - Gestion des barèmes tarifaires configurables avec versioning temporel (`valid_from` / `valid_to`) pour garantir la reproductibilité et l'immuabilité ALCOA+ des états de sortie historiques (ES-FIN-01, ES-FIN-02) :
+    - *Barèmes Médicaments Décret 21-82 :* `FEE_MEDICINE_NI_DZD` (355 000 DA), `FEE_MEDICINE_RI_DZD` (205 000 DA), `FEE_MEDICINE_MI_DZD` (115 000 DA - Mmaj).
+    - *Barèmes Dispositifs Médicaux Ordonnance 21-07 Art. 31 :* `FEE_DM_HOMOLOGATION_DZD` (300 000 DA), `FEE_DM_RENEWAL_DZD` (300 000 DA), `FEE_DM_MODIFICATION_DZD` (150 000 DA), `FEE_DM_TRANSFER_DZD` (100 000 DA).
+  - Paramétrage des guichets, adresses des directions spécialisées de l'ANPP (DEPP, DDM, DCE/LNCPP, DAF).
+  - Workflow de validation des modifications critiques (proposition Maker par l'Admin Labo / Dir. Fin., approbation obligatoire par le Pharmacien DT avec signature électronique 2FA 21 CFR Part 11 et audit trail scellé).
 - [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
 
 ### Jalon 2.3 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
+- [ ] **Modélisation Préalable de l'Arbre de Décision (Conditions C1..Cn & Justificatifs J1..Jn) :**
+  - Spécification exhaustive par rubrique de l'ensemble des conditions préalables et des justificatifs opposables avant implémentation du code.
+  - Vérification contradictoire des sous-cas et de l'ordonnancement officiel de la nomenclature ANPP (ex: 7.c, 12.a-f).
 - [ ] **Implémentation du référentiel officiel algérien des variations :**
   - **Mmin (Modification Mineure) :** Impact minime ou nul.
   - **Mmod (Modification Modérée) :** Impact potentiel sur qualité, sécurité, efficacité.
@@ -393,7 +398,7 @@ gantt
 - [ ] **Moteur de Chiffrement Symétrique AES-256-GCM dans le Pilote CAS (`internal/storage/`) :**
   - Chiffrement symétrique à la volée des flux entrants (`Save`) avec vecteur d'initialisation aléatoire (IV 96 bits) et tag d'authentification GCM (128 bits).
   - Déchiffrement à la volée des flux sortants (`Open`) réservé exclusivement aux requêtes dûment habilitées par le moteur RBAC.
-  - Préservation du scellement d'intégrité ALCOA+ et de la déduplication par hachage SHA-256 du document en clair.
+  - Préservation du scellement d'intégrité ALCOA+ et de la déduplication CAS strictement partitionnée par tenant (`tenant_id`) en mode SaaS, interdisant toute fuite par confirmation d'existence de hash inter-laboratoires.
   - Opacité binaire absolue sur le disque physique (`data/storage/`) en cas de vol de support, snapshot de VM ou accès non autorisé à la machine hôte.
 - [ ] **Gestion des Clés en Mode Cloud SaaS Souverain (Multi-Tenant Enveloppé) :**
   - Hiérarchie d'enveloppe cryptographique : Master Key d'infrastructure chiffrant les clés de données spécifiques à chaque laboratoire (`tenant_id`).
@@ -401,7 +406,15 @@ gantt
 - [ ] **Gestion des Clés en Mode On-Premise (Zero-Trust Local) :**
   - Génération de la clé maîtresse lors du premier déploiement (*Setup Wizard 1.A.7*), consignée exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire.
   - Cloisonnement hermétique empêchant toute lecture par les administrateurs système IT internes ou par l'éditeur en télémaintenance.
-  - Procédure de rotation de clé (*Key Rotation*) et mécanisme d'export sécurisé pour le Plan de Reprise d'Activité (PRA).
+  - Procédure de rotation de clé (*Key Rotation*), séquestre et mécanisme d'export sécurisé pour le Plan de Reprise d'Activité (PRA).
+
+### Jalon 2.11 : Pack de Qualification Logicielle & Dossier de Validation CSV (GAMP 5 / 21 CFR Part 11)
+- [ ] **Dossier Documentaire Opposable de Qualification pour Audits et Inspections ANPP/MIPH :**
+  - Rédaction des Spécifications des Besoins Utilisateur (*User Requirements Specifications - URS*) pour la GED BPF et le CTD.
+  - Spécifications Fonctionnelles (*FS*) et Spécifications de Conception (*Design Specifications - DS*).
+  - Protocoles et rapports de Qualification d'Installation (*IQ*), Qualification Opérationnelle (*OQ*) et Qualification de Performance (*PQ*).
+  - Matrice de Traçabilité des Exigences Réglementaires (*Requirements Traceability Matrix - RTM*) reliant chaque article réglementaire ANPP à son test automatisé.
+  - Analyse des risques système selon la méthodologie GAMP 5 (FMEA) et politique formelle de gestion des changements (*Change Control*).
 
 ---
 
@@ -428,7 +441,8 @@ gantt
   - Analyse croisée multi-rubriques : identification des contradictions entre la formule déclarée, les certificats d'analyse (CoA), les tailles de lot industrielles et les maquettes de notices.
   - Détection préventive des pièces obligatoires manquantes ou expirées avant soumission.
   - Proposition de corrections et suggestions d'enrichissement motivées.
-- [ ] **Garde-fous ALCOA+ & Gouvernance « Human-in-the-Loop » :**
+- [ ] **Garde-fous ALCOA+, Souveraineté & Gouvernance « Human-in-the-Loop » :**
+  - **Souveraineté & Secret Industriel (Loi 18-07) :** Module IA désactivé par défaut à l'installation. Mode Local Souverain (Ollama) prioritaire pour toute donnée propriétaire (formules galéniques, procédés de synthèse, brevets). Le mode Cloud est strictement conditionné à l'accord formel du laboratoire et cantonné aux corpus publics (Guide CTD, Pharmacopée, décrets).
   - Marqueur d'origine obligatoire sur tout texte généré (`Draft v0.1 - Suggestion IA`).
   - Interdiction absolue d'auto-approbation : le pharmacien modifie, retouche et valide obligatoirement chaque texte.
   - Traçabilité complète dans l'Audit Trail BPF (`audit_logs`) : modèle utilisé, prompt hash, utilisateur ayant déclenché et modifications apportées avant visa légal du Pharmacien Directeur Technique.
@@ -459,4 +473,5 @@ gantt
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
 | **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC, Décret 21-82 & Ordonnance 21-07 | 28 états spécifiés (20 états réglementaires finaux couvrant CTD DEPP, Dispositifs Médicaux DDM et Contrôle Libératoire DCE + 8 états intermédiaires) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
+| **Qualification & Validation CSV** | Conforme GAMP 5 & 21 CFR Part 11 | Intégré à la roadmap (Jalon 2.11 - Pack URS, FS, IQ/OQ/PQ, RTM) | Livrable opposable pour inspections ANPP / BPF ⏳ |
 | **Copilote IA Réglementaire (Phase 3)** | Spécifié (RAG pgvector, SOP, Rédaction & Audit) | Consigné au CDC (Chapitre 11) & Architecture AI-Ready | 100% Souverain / Cloud sécurisé, Human-in-the-Loop & Traçabilité ALCOA+ ⏳ |
