@@ -540,7 +540,7 @@ La plateforme SANAD PHARMA traite des données industrielles hautement sensibles
    - **Neutralisation du Pitch Commercial (*Pitch Deck Executive*) :** Les routes `/presentation` et `/pitch` sont désactivées et renvoient une erreur `HTTP 404 Not Found`. Le bouton d'accès au Pitch Commercial dans le bandeau de l'interface est éliminé dès le service HTTP du document (`index.html`) par substitution côté serveur et verrouillé par l'API de session (`pitch_deck_enabled: false`).
    - **Neutralisation du Switcher de Rôles Dev :** Le sélecteur rapide de rôles sans mot de passe est prohibé (endpoint `/api/v1/auth/dev-switch` neutralisé en 404 et sélecteur masqué).
 
-#### Typologie des 9 Profils Utilisateurs Stricts :
+#### Typologie des 10 Profils Utilisateurs Stricts :
 1. **Super-Administrateur Éditeur (Mode Cloud SaaS) :** Provisioning d'instances laboratoires, isolation des schémas PostgreSQL, quotas de stockage. Aucun accès aux données métier.
 2. **Administrateur Système Local (Mode On-Premise) :** Sauvegardes, certificats TLS, surveillance système. Aucun accès aux documents pharmaceutiques.
 3. **Administrateur de Laboratoire :** Gestion des comptes utilisateurs internes, attribution des profils et structures du laboratoire.
@@ -550,6 +550,7 @@ La plateforme SANAD PHARMA traite des données industrielles hautement sensibles
 7. **Contributeur R&D / Production :** Dépôt des formules cadres, dossiers de lots de validation (3.2.P.3.5), données de stabilité et méthodes d'analyse (*Maker Technique*).
 8. **Consultant Externe :** Accès invité (*Guest*) strictement restreint et cloisonné aux seuls dossiers auxquels il est affecté, avec date d'expiration contractuelle automatique.
 9. **Auditeur / Inspecteur :** Consultation en lecture seule avec accès au journal d'audit immuable (`audit_logs`) pour inspections ANPP ou audits internes.
+10. **Partenaire Fournisseur / API Holder (Extranet B2B GxP) :** Profil d'accès tiers restreint et chiffré permettant au fabricant de principe actif de déposer directement la partie fermée du dossier de substance active (*ASMF / DMF Restricted Part* 3.2.S) et ses certificats BPF, sans divulgation du secret de synthèse au titulaire local mais avec scellement SHA-256 certifié pour transmission à l'ANPP.
 
 ### 7.2 Matrice Exhaustive des Permissions Granulaires (RBAC)
 
@@ -574,7 +575,8 @@ Le contrôle d'accès est régi par 14 permissions unitaires combinées aux 9 pr
 
 *(1) **Cloisonnement Consultant Externe :** Accès restreint strictement limité aux seuls documents et sections CTD/DM explicitement assignés par le Responsable Réglementaire. Tout accès transverse à la GED générale, aux formules confidentielles ou aux autres dossiers est bloqué.*  
 *(2) **Principe Zero-Trust Administrateurs :** Interdiction technique absolue de téléchargement et de consultation du contenu des pièces pharmaceutiques et données de santé pour les rôles d'administration technique.*  
-*(3) **Séparation des Fonctions (SoD) & Non Auto-Approbation :** Pour garantir la conformité BPF et l'intégrité ALCOA+, la règle stricte Maker ≠ Approver s'applique de façon absolue sans exception. Le Pharmacien Directeur Technique exerce le rôle légal d'**Approver** (visa opposable). Le moteur applicatif lui interdit formellement d'être à la fois Maker et Approver d'un même document (l'auto-approbation est techniquement bloquée au niveau de l'API et de la base de données).*
+*(3) **Séparation des Fonctions (SoD) & Non Auto-Approbation :** Pour garantir la conformité BPF et l'intégrité ALCOA+, la règle stricte Maker ≠ Approver s'applique de façon absolue sans exception. Le Pharmacien Directeur Technique exerce le rôle légal d'**Approver** (visa opposable). Le moteur applicatif lui interdit formellement d'être à la fois Maker et Approver d'un même document (l'auto-approbation est techniquement bloquée au niveau de l'API et de la base de données).*  
+*(4) **Cloisonnement Partenaire API / ASMF (Extranet B2B GxP) :** Accès strictement borné au téléversement de la sous-section 3.2.S désignée. Les pièces déposées sont chiffrées par une clé transmise sous pli scellé à l'ANPP, rendant le document opaque pour les collaborateurs du laboratoire mais certifié complet pour le Submission Package.*
 
 #### 7.2.1 Blocage Hermétique des Routes API (Backend Defense-in-Depth)
 Le masquage dans l'interface utilisateur ne constitue en aucun cas la barrière de sécurité principale. La plateforme applique le principe fondamental de **Défense en Profondeur** : chaque endpoint API HTTP/REST est strictement verrouillé côté serveur par le middleware `RequirePermission(perm)` ou `RequireRole(roles...)`. Toute requête non autorisée (y compris via tentative directe par script, curl ou manipulation de requêtes) est interceptée immédiatement avec les règles suivantes :
@@ -718,6 +720,14 @@ flowchart TD
    - Dès validation du rapport 3.2.P.8, les données finales (ex: *« 36 mois »*, *« À conserver à une température ne dépassant pas 30°C »*) sont répercutées automatiquement dans les champs dynamiques de la Notice FR/AR, du RCP et des articles de conditionnement.
    - Dès validation de la formule de lot (3.2.P.3.2), la composition qualitative et quantitative exacte est injectée dans le RCP (rubrique 2), la Notice et le formulaire de demande 1.A.3.
 5. **Verrou de complétude pré-dépôt :** L'export du Submission Package (E-TASJIL) et la signature légale finale du PDT sont techniquement bloqués tant que l'ensemble des branches du DAG (Directed Acyclic Graph) documentaire ne sont pas toutes à l'état *« Approuvé & Scellé »*.
+6. **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
+   - À partir d'une date cible de dépôt fixée (ex: renouvellement quinquennal impératif à **J-180** avant échéance de la Décision d'Enregistrement, ou date visée de mise sur le marché), le moteur calcule automatiquement par chemin critique inversé l'ensemble des dates butoirs intermédiaires :
+     - *J-240 :* Lancement obligatoire des étuves de stabilité Zone IVb (M6 légal).
+     - *J-150 :* Clôture des synthèses qualité (QOS Module 2.3) et soumission au Checker.
+     - *J-60 :* Réservation du créneau sur `rdvpp.anpp.dz` ou `rdvdm.anpp.dz`.
+     - *J-30 :* Finalisation du double visa bilingue Notice 1.P.2 et génération des bordereaux BV1/BV2.
+     - *J-15 :* Visa légal 2FA du Pharmacien DT et scellement du Submission Package.
+   - En cas de dérive calendaire sur un jalon amont, le système recalcule instantanément les marges libres et émet des alertes visuelles graduées (Jaune / Orange / Rouge) dans le cockpit du Pharmacien DT.
 
 #### 7.4.4 Bibliothèque de Modèles Maîtres Pharmaceutiques (*Master Templates*)
 Pour garantir l'uniformité rédactionnelle et la stricte conformité aux exigences de l'ANPP et aux référentiels internationaux (ICH Q1, Q2, Q3, Q6, CTD), la plateforme intègre une bibliothèque native de modèles maîtres paramétrables :
@@ -743,6 +753,25 @@ Pour lui permettre d'exercer pleinement sa responsabilité de garant légal sans
 - **Parapheur électronique unifié :** Liste consolidée de tous les documents arrivés au statut *Prêt pour Visa DT*, avec accès direct au diff des révisions, au rapport de conformité du *Checker* et au volet d'aperçu instantané.
 - **Signature par lot (*Batch Review & Signing*) :** Possibilité de signer électroniquement une liasse de documents validés en une seule opération sécurisée (une saisie TOTP validant l'ensemble de la liasse avec audit trail nominatif pour chaque pièce).
 - **Détection proactive des retards & Goulots d'étranglement :** Indicateurs d'alerte sur les sections en retard par rapport au planning de soumission ciblé ou à l'échéance de réponse aux compléments ANPP.
+
+### 7.5 Salle d'Inspection Virtuelle & Mode "Inspection ANPP" (Inspection Readiness)
+
+Afin de permettre au laboratoire d'aborder sereinement les audits réglementaires et inspections sur site de l'ANPP ou du Ministère de l'Industrie Pharmaceutique (**MIPH**), la plateforme intègre un environnement dédié et étanche :
+
+1. **Activation Contrôlée d'une Session d'Inspection :**
+   - Le Pharmacien Directeur Technique ou le Responsable Assurance Qualité active une session d'inspection horodatée (avec durée de validité limitée, ex. 48 heures).
+   - Définition stricte du **périmètre d'audit** : sélection exclusive des produits, dossiers CTD ou numéros de lots concernés par l'ordre de mission officiel des inspecteurs.
+2. **Interface Épurée "Vue Inspecteur" :**
+   - L'inspecteur se connecte avec le profil temporaire `auditeur_inspecteur` et accède à un espace de travail focalisé en **lecture seule absolue**.
+   - Accès direct aux pièces maîtresses officielles scellées, aux formules de fabrication, aux données de contrôles analytiques et au journal d'audit immuable (`audit_logs`) circonscrit au périmètre audité.
+   - **Protection contre les fuites d'informations transverses :** Masquage total des autres dossiers du portefeuille, des coûts de revient/prix (PCSU, FOB), des projets R&D en cours et des données d'autres établissements.
+3. **Générateur du Pack d'Inspection en 1 Clic :**
+   - Production instantanée d'une archive officielle chiffrée scellée SHA-256 regroupant :
+     - Agréments d'ouverture de l'établissement (MIPH).
+     - Décisions d'enregistrement et d'homologation (DE/DH) en vigueur.
+     - Procédures opératoires normalisées (SOP) applicables.
+     - Certificats de libération des lots audités et traçabilité des matières premières.
+     - Extrait certifié de l'Audit Trail médico-légal 21 CFR Part 11.
 
 ---
 
@@ -1079,6 +1108,7 @@ L'intégration des trames réglementaires certifiées de l'ANPP (issues des rép
    - Identification par spectrométrie **FTIR** ou deux techniques séparatives alternatives.
    - Dosage et taux d'impuretés établis sur **au moins trois (03) essais comparatifs** (HPLC, UV) avec calcul des incertitudes de mesure associées ($\pm U$).
    - Teneur en eau sur 3 essais avec feuilles de calculs brutes et chromatogrammes rattachés.
+   - *Suivi Automatisé du Cycle de Vie des Étalons Secondaires :* Durée maximale de validité fixée à douze (12) mois à compter de la date de caractérisation initiale, avec alertes BPF automatisées de re-qualification / re-test analytique à J-60 et J-30 avant péremption du standard de travail.
 
 ---
 
@@ -1221,7 +1251,18 @@ L'IA agit comme un auditeur qualité virtuel permanent, capable d'examiner le do
 
 ---
 
-### 11.5 Architecture Technique Hybride, Base Vectorielle `pgvector` & RAG Souverain
+### 11.5 Assistant de Traduction Médicale & Glossaire Terminologique Bilingue (FR / AR / EN)
+
+Pour répondre à l'obligation réglementaire stricte de bilinguisme des notices (1.P.2), résumés des caractéristiques (1.P.1) et étiquetages imposée par le Décret exécutif 20-325, l'assistant intègre une mémoire de traduction pharmaceutique spécialisée :
+1. **Base Terminologique & Glossaire Officiel ANPP / Pharmacopée :**
+   - Référentiel unifié des formes galéniques, voies d'administration et termes médicaux en langue arabe institutionnelle (ex: terminologie normalisée pour contre-indications, précautions d'emploi, effets indésirables, interactions médicamenteuses).
+   - Élimination des traductions littérales fautives issues de traducteurs automatiques généralistes.
+2. **Contrôle de Conformité Sémantique Synchrone :**
+   - Analyse comparative automatisée vérifiant que chaque mention obligatoire du texte français possède sa transcription fidèle, exacte et complète dans le texte arabe avant validation.
+
+---
+
+### 11.6 Architecture Technique Hybride, Base Vectorielle `pgvector` & RAG Souverain
 
 L'intégration de l'intelligence artificielle au cœur de Sanad Pharma repose sur une conception modulaire, évolutive et agnostique du fournisseur d'IA :
 

@@ -31,10 +31,10 @@ gantt
     Studio Compléments & Assistant Soumission ANPP (1.7) :done, p1_7, after p1_6, 3d
     Packaging Docker & Archive .sanad (1.8)          :done, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
-    Atelier Élaboration & Workflow BPF Maker-Checker (2.1):active, p2_1, after p1_8, 4d
+    Atelier Élaboration, Smart Planning & Workflow BPF (2.1):active, p2_1, after p1_8, 4d
     Redevances, Devises & Settings du Tenant (2.2)   :p2_2, after p2_1, 3d
-    Moteur Variations ANPP (Mmin/Mmod/Mmaj)(2.3)     :p2_3, after p2_2, 4d
-    Espace Consultants Externes Cloisonné (2.4)      :p2_4, after p2_3, 2d
+    Moteur Variations ANPP & Impact Tree (2.3)       :p2_3, after p2_2, 4d
+    Espace Consultants & Extranet Fournisseur API (2.4):p2_4, after p2_3, 2d
     Régularisation DM Décret 20-324 (2.5)            :p2_5, after p2_4, 3d
     Recherche Plein Texte FTS Bilingue FR/AR (2.6)   :p2_6, after p2_5, 3d
     Console Super-Admin Éditeur Cloud SaaS (2.7)     :p2_7, after p2_6, 3d
@@ -42,6 +42,7 @@ gantt
     Contrôle Analytique & Libération Lot DCE (2.9)   :p2_9, after p2_8, 4d
     Chiffrement Applicatif GED AES-256-GCM (2.10)   :p2_10, after p2_9, 3d
     Dossier de Validation CSV GAMP 5 (2.11)          :p2_11, after p2_10, 3d
+    Salle d'Inspection Virtuelle ANPP (2.12)         :p2_12, after p2_11, 2d
     section Phase 3 : Extensions
     Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_8, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
@@ -263,6 +264,9 @@ gantt
   - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé ; **Verrou de parité linguistique synchrone FR $\leftrightarrow$ AR** interdisant le passage au visa DT si la notice arabe n'est pas alignée sur la révision française).
   - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
+- [ ] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
+  - Calcul automatique du chemin critique à rebours à partir d'une date butoir ou de l'échéance légale de renouvellement quinquennal à **J-180** : planification dynamique des stabilités M6 (J-240), de la rédaction, de la revue qualité Checker (J-150), de la réservation du créneau RDV E-TASJIL (J-60), du visa légal DT et de la liquidation des bordereaux BV1/BV2 (J-15).
+  - Alertes graduées (Jaune / Orange / Rouge) dans le cockpit DT en cas de dérive calendaire sur un jalon critique amont.
 - [ ] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
   - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
   - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).
@@ -350,11 +354,15 @@ gantt
   - Code visuel tri-couleur : Rouge (Impact direct), Orange (Impact indirect *ripple effect*), Vert (Sections préservées candidates à l'attestation de non-modification).
   - Alimentation automatique de la fiche d'impact technique et financier pour le Comité de Contrôle des Changements (EI-CHG-01).
 
-### Jalon 2.4 : Espace Sécurisé pour Consultants Externes
-- [ ] Cloisonnement étanche : accès restreint exclusivement aux seuls dossiers CTD/DM explicitement assignés.
-- [ ] Zéro accès à la GED transverse ou aux autres produits du laboratoire.
-- [ ] Date d'expiration de contrat automatique révoquant les accès à l'échéance.
-- [ ] Journalisation et marquage d'audit renforcé sur chaque action de consultation ou dépôt par un consultant.
+### Jalon 2.4 : Espace Sécurisé pour Consultants Externes & Extranet Fournisseur API (Partie Fermée ASMF)
+- [ ] **Cloisonnement Étanche des Consultants Externes :**
+  - Accès restreint exclusivement aux seuls dossiers CTD/DM explicitement assignés par le Responsable Réglementaire.
+  - Zéro accès à la GED transverse, aux formules confidentielles ou aux autres produits du portefeuille.
+  - Date d'expiration de contrat automatique révoquant les accès à l'échéance et marquage d'audit renforcé.
+- [ ] **Portail Extranet Fournisseur de Substance Active (Dépôt Sécurisé ASMF / DMF) :**
+  - Profil tiers `partenaire_fournisseur_api` permettant au fabricant d'API de téléverser directement la partie fermée (*Restricted Part*) du Module 3.2.S.
+  - Chiffrement étanche : le contenu reste confidentiel vis-à-vis des collaborateurs du laboratoire tout en étant certifié complet et scellé par empreinte SHA-256 pour les évaluateurs de l'ANPP.
+  - Tableau de bord de suivi des Accords Techniques Qualité (*Quality Technical Agreements - QTA*) avec alertes d'échéance à J-90.
 
 ### Jalon 2.5 : Procédure de Régularisation & Homologation Complète des Dispositifs Médicaux (DDM)
 - [ ] **Formulaire Officiel de Demande d'Homologation DM (Décret exécutif 20-324 & Arrêté du 10 mai 2021) :**
@@ -401,6 +409,7 @@ gantt
     - `CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx` (Régularisation DM).
 - [ ] **Template Maître BPF pour Standard de Référence Secondaire (MT-LCQ-01) :**
   - Trame normalisée pour les LCQ conforme à `TEMPLATE-CA-SR-secondaire.docx` (Traçabilité ISO 17034 / pharmacopée primaire, confirmation FTIR, 3 essais comparatifs HPLC/UV avec incertitudes ± U, teneur en eau).
+  - Suivi automatisé du cycle de vie des étalons secondaires : alerte BPF automatisée de péremption et de re-test analytique à 12 mois (J-60 / J-30) contre l'étalon primaire officiel.
 
 ### Jalon 2.10 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud & On-Premise)
 - [ ] **Moteur de Chiffrement Symétrique AES-256-GCM dans le Pilote CAS (`internal/storage/`) :**
@@ -423,6 +432,13 @@ gantt
   - Protocoles et rapports de Qualification d'Installation (*IQ*), Qualification Opérationnelle (*OQ*) et Qualification de Performance (*PQ*).
   - Matrice de Traçabilité des Exigences Réglementaires (*Requirements Traceability Matrix - RTM*) reliant chaque article réglementaire ANPP à son test automatisé.
   - Analyse des risques système selon la méthodologie GAMP 5 (FMEA) et politique formelle de gestion des changements (*Change Control*).
+
+### Jalon 2.12 : Salle d'Inspection Virtuelle & Mode "Inspection ANPP" (Inspection Readiness)
+- [ ] **Environnement d'Inspection Cloisonné pour Inspecteurs ANPP / Auditeurs BPF :**
+  - Activation par le Pharmacien DT d'une session d'inspection temporaire (48h) avec sélection stricte des produits et lots audités.
+  - Vue inspecteur épurée en lecture seule : accès direct aux pièces CTD scellées, formules de fabrication, contrôles LCQ et audit trail circonscrit.
+  - Masquage étanche de tous les autres dossiers, coûts de revient/prix (PCSU, FOB) et données transverses.
+  - Générateur du Pack d'Inspection en 1 Clic : export instantané d'une archive officielle chiffrée scellée SHA-256 (agréments MIPH, décisions DE/DH, SOP et certificats de libération).
 
 ---
 
@@ -449,15 +465,18 @@ gantt
   - Analyse croisée multi-rubriques : identification des contradictions entre la formule déclarée, les certificats d'analyse (CoA), les tailles de lot industrielles et les maquettes de notices.
   - Détection préventive des pièces obligatoires manquantes ou expirées avant soumission.
   - Proposition de corrections et suggestions d'enrichissement motivées.
+- [ ] **Assistant de Traduction Médicale & Glossaire Terminologique Bilingue (FR/AR/EN) :**
+  - Référentiel unifié des termes pharmaceutiques en langue arabe institutionnelle (formes galéniques, voies d'administration, contre-indications, effets indésirables) conforme à l'ANPP et à la Pharmacopée.
+  - Contrôle de conformité sémantique synchrone entre le texte français et le volet arabe de la Notice 1.P.2 et du RCP 1.P.1.
 - [ ] **Garde-fous ALCOA+, Souveraineté & Gouvernance « Human-in-the-Loop » :**
   - **Souveraineté & Secret Industriel (Loi 18-07) :** Module IA désactivé par défaut à l'installation. Mode Local Souverain (Ollama) prioritaire pour toute donnée propriétaire (formules galéniques, procédés de synthèse, brevets). Le mode Cloud est strictement conditionné à l'accord formel du laboratoire et cantonné aux corpus publics (Guide CTD, Pharmacopée, décrets).
   - Marqueur d'origine obligatoire sur tout texte généré (`Draft v0.1 - Suggestion IA`).
   - Interdiction absolue d'auto-approbation : le pharmacien modifie, retouche et valide obligatoirement chaque texte.
   - Traçabilité complète dans l'Audit Trail BPF (`audit_logs`) : modèle utilisé, prompt hash, utilisateur ayant déclenché et modifications apportées avant visa légal du Pharmacien Directeur Technique.
 
-### Jalon 3.2 : Registre de Vigilance Post-Marché
-- [ ] Module de Pharmacovigilance (suivi des PSUR, déclarations d'effets indésirables, fiches de notification officielles).
-- [ ] Module de Matériovigilance des DM (déclaration d'incidents, signalements de défaillances de dispositifs).
+### Jalon 3.2 : Registre de Vigilance & Bilan de Sécurité pour Renouvellement Quinquennal (PSUR)
+- [ ] Recueil et qualification des notifications d'effets indésirables et incidents de matériovigilance DM.
+- [ ] Compilation automatique des données de sécurité et génération du rapport périodique de sécurité (PSUR / Module 1.H) pour les dossiers de renouvellement quinquennal ANPP.
 - [ ] Suivi des enquêtes de lot et gestion des rappels/retraits ordonnés par l'ANPP ou initiés par le laboratoire.
 
 ### Jalon 3.3 : Intégrations d'Entreprise
