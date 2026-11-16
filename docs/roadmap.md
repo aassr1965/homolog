@@ -255,12 +255,12 @@ gantt
   - Assignation des sections CTD/DM à des contributeurs désignés avec dates butoirs et notifications automatiques de suivi.
 - [ ] **Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :**
   - Cycle de vie : `À Rédiger` ➔ `En Cours` ➔ `En Revue Qualité/Checker` ➔ `Prêt pour Visa DT` ➔ `Approuvé & Scellé`.
-  - Mécanisme de verrouillage collaboratif (**Check-out / Check-in**) évitant les conflits d'édition simultanée.
+  - Mécanisme de verrouillage collaboratif (**Check-out / Check-in**) avec bail d'expiration automatique (*TTL Lease Lock* 30 min) et verrouillage transactionnel pessimiste PostgreSQL (`SELECT ... FOR UPDATE`), interdisant l'écrasement concurrent entre Maker et Checker avec bandeau d'avertissement en lecture seule.
   - Gestion granulaire du versionnage : révisions de travail mineures incrémentales (`v0.1`, `v0.2`, `v0.3`...) jusqu'à la révision majeure officielle scellée (`v1.0`) par le PDT.
   - Circuit de revue par les pairs / AQ (*Checker*) avec annotations, demandes d'ajustements motivées et journal d'audit complet.
 - [ ] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
   - Modélisation du graphe orienté acyclique (DAG) des dépendances techniques et réglementaires CTD/DM en 5 phases successives (Matières & Méthodes ➔ Lots pilotes & CoA ➔ Stabilités Zone IVb & Bioéquivalence ➔ QOS & Notice/RCP ➔ Engagements & Visa PDT).
-  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé).
+  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé ; **Verrou de parité linguistique synchrone FR $\leftrightarrow$ AR** interdisant le passage au visa DT si la notice arabe n'est pas alignée sur la révision française).
   - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
 - [ ] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
@@ -345,6 +345,10 @@ gantt
 - [ ] **Module de Regroupement de Modifications (*Grouping* - Article 09 de l'arrêté du 07/11/2021) :**
   - Création d'une soumission groupée pour un même produit combinant plusieurs modifications interdépendantes.
   - Calcul du niveau de criticité global du groupe (alignement sur la modification la plus sévère du groupe).
+- [ ] **Assistant Visuel d'Arborescence d'Impact Réglementaire (Change Impact Tree) :**
+  - Graphe interactif projetant instantanément toutes les sections CTD corollaires impactées par le choix d'une des 34 rubriques (ex. changement de site API $\to$ 3.2.S, 3.2.P, 1.H.8, RCP/notice).
+  - Code visuel tri-couleur : Rouge (Impact direct), Orange (Impact indirect *ripple effect*), Vert (Sections préservées candidates à l'attestation de non-modification).
+  - Alimentation automatique de la fiche d'impact technique et financier pour le Comité de Contrôle des Changements (EI-CHG-01).
 
 ### Jalon 2.4 : Espace Sécurisé pour Consultants Externes
 - [ ] Cloisonnement étanche : accès restreint exclusivement aux seuls dossiers CTD/DM explicitement assignés.
@@ -379,6 +383,10 @@ gantt
 ### Jalon 2.9 : Module de Contrôle Analytique & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)
 - [ ] **Calculateur d'Échantillonnage Statistique Homologué (Norme Fr-DCE02-F/V01) :**
   - Moteur de calcul automatisé des quantités de prélèvements requises selon l'édition officielle du 01/06/2025 (10 pages) pour les 8 voies galéniques : Ophtalmique, Locale, Rectale, Nasale, Parentérale & Irrigation, Orale liquide, Orale solide (dissolution Ph. Eur. 2.9.3, désagrégation, dureté, friabilité), et Inhalation.
+- [ ] **Traçabilité Logistique & Chaîne du Froid des Échantillons LNCPP (Bordereau ES-REG-05) :**
+  - Gestion et scellement des numéros uniques de scellés inviolables apposés sur chaque colis d'échantillons.
+  - Intégration et scellement des relevés de température issus des dataloggers de transport pour produits thermosensibles (+2°C à +8°C et température dirigée +15°C à +25°C).
+  - Enregistrement et rapprochement de l'émargement physique du bureau d'ordre du Laboratoire National de Contrôle (LNCPP / DCE).
 - [ ] **Générateur du Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique :**
   - Attestation légale conforme BPF et à l'Arrêté du 10 mai 2021 avec traçabilité et filiation stricte : **N° lot Produit Fini (PF) ↔ N° lot Substance Active (SA) ↔ N° lot Semi-fini**.
   - Intégration obligatoire du N° d'agrément d'ouverture MIPH et de la **Décision de validation du Laboratoire de Contrôle Qualité (LCQ) octroyée par l'ANPP**.
@@ -406,7 +414,7 @@ gantt
 - [ ] **Gestion des Clés en Mode On-Premise (Zero-Trust Local) :**
   - Génération de la clé maîtresse lors du premier déploiement (*Setup Wizard 1.A.7*), consignée exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire.
   - Cloisonnement hermétique empêchant toute lecture par les administrateurs système IT internes ou par l'éditeur en télémaintenance.
-  - Procédure de rotation de clé (*Key Rotation*), séquestre et mécanisme d'export sécurisé pour le Plan de Reprise d'Activité (PRA).
+  - Procédure de rotation de clé (*Key Rotation*), séquestre à double contrôle (*Four-Eyes Principle* : Split-Key Shamir 2 sur 3 entre PDT, DG et tiers de confiance / séquestre physique) pour parer au risque d'indisponibilité du DT (anti *Bus Factor*), et mécanisme d'export sécurisé pour le Plan de Reprise d'Activité (PRA).
 
 ### Jalon 2.11 : Pack de Qualification Logicielle & Dossier de Validation CSV (GAMP 5 / 21 CFR Part 11)
 - [ ] **Dossier Documentaire Opposable de Qualification pour Audits et Inspections ANPP/MIPH :**

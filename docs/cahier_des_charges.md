@@ -153,7 +153,7 @@ Le Module 1 est découpé en quatre sous-sections normalisées (`1.A`, `1.H`, `1
 | Réf. ANPP | Désignation de l'exigence documentaire | NI | RI | MI | NF | RF | MF | Règles métier et contraintes |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|---|
 | **1.P.1** | **Textes officiels pays d'origine :**<br>• 1.P.1.1 RCP d'origine<br>• 1.P.1.2 Notice d'origine<br>• 1.P.1.3 Étiquette d'origine | E | E | E | E | E | E | Documents approuvés dans le pays exportateur ou de référence |
-| **1.P.2** | **Modèle Algérie (visé obligatoirement par le PDT) :**<br>• 1.P.2.1 RCP Modèle Algérie<br>• 1.P.2.2 Notice Modèle Algérie (Bilingue FR/AR)<br>• 1.P.2.3 Étiquette Modèle Algérie<br>• 1.P.2.4 Maquette Modèle Algérie (Conditionnement primaire & secondaire) | E | E | E | E | E | E | Textes conformes à la réglementation algérienne (notamment arabe obligatoire), maquettes en couleurs à échelle 100%, visées par le DT |
+| **1.P.2** | **Modèle Algérie (visé obligatoirement par le PDT) :**<br>• 1.P.2.1 RCP Modèle Algérie<br>• 1.P.2.2 Notice Modèle Algérie (Bilingue FR/AR)<br>• 1.P.2.3 Étiquette Modèle Algérie<br>• 1.P.2.4 Maquette Modèle Algérie (Conditionnement primaire & secondaire) | E | E | E | E | E | E | Textes conformes à la réglementation algérienne (notamment arabe obligatoire), maquettes en couleurs à échelle 100%, visées par le DT. **Contrôle de Parité Linguistique Synchrone :** Gating bloquant interdisant le visa DT si la notice arabe n'est pas strictement synchronisée à l'indice de révision du texte français. |
 | **1.P.3** | Échantillons du produit fini | E | NA | E | E | NA | E | Enregistrement de la remise physique au laboratoire de contrôle de l'ANPP |
 | **1.P.4** | Bulletin d'analyse de la substance active (avec granulométrie et polymorphisme) et son recontrôle | E | E | E | E | E | E | CoA du fabricant SA + bulletin de recontrôle complet par le fabricant du produit fini |
 | **1.P.5** | Bulletin d’analyse du produit fini (et bulletin du prémix le cas échéant) | E | E | E | E | E | E | Certificat d'analyse libératoire complet conforme aux spécifications |
@@ -354,6 +354,19 @@ Selon la section 5.3 de la Ligne Directrice, toute soumission de variation (Mmin
   - *33.b :* Extension $\to$ Mmod.
 - **34.** Changement des conditions de stockage du produit fini ou en cours d'utilisation $\to$ Mmod.
 
+### 5.5 Assistant Graphique d'Arborescence d'Impact Réglementaire (Change Impact Tree)
+Afin de guider le Pharmacien Réglementaire et d'éliminer le risque d'omission de sections CTD corollaires, le module **Sanad Variations** intègre un composant visuel d'analyse d'impact en graphe dirigé :
+- **Propagation Automatique des Dépendances :** Dès la sélection de l'une des 34 rubriques de modification (ex: Rubrique 7.d — Nouveau site de fabrication d'API), l'arbre d'impact projette instantanément l'arborescence complète des sections CTD impactées :
+  - *Module 1 :* 1.A.3 (Formulaire officiel), 1.H.8 (Attestation du fabricant), 1.P.8 / 1.P.9 (Engagements de validation et stabilités).
+  - *Module 2 :* 2.3.S (Quality Overall Summary - Substance Active).
+  - *Module 3 :* 3.2.S.1 à 3.2.S.7 (Dossier complet de la SA), 3.2.P.2 (Développement galénique / compatibilité excipients), 3.2.P.8 (Données de stabilités Zone IVb sur 3 lots).
+  - *Module Information Produit :* Détection automatique de l'obligation de réviser la Notice (1.P.2) et le RCP (1.P.1) en cas d'impact sur les conditions de conservation ou précautions d'emploi.
+- **Code Visuel Tri-Couleur d'Alerte :**
+  - 🔴 **Rouge (Impact Direct) :** Section CTD au cœur de la modification déclarée (remplacement page à page obligatoire).
+  - 🟠 **Orange (Impact Corollaire) :** Section indirectement affectée par la modification (*Ripple Effect* devant faire l'objet d'une revue ou d'une attestation de non-altération).
+  - 🟢 **Vert (Section Préservée) :** Section non affectée, candidate automatique pour l'Attestation formelle de non-modification des autres sections.
+- **Alimentation Directe de la Fiche EI-CHG-01 :** L'arborescence d'impact exporte automatiquement l'évaluation technique et financière pour le Comité de Contrôle des Changements (*Change Control Board*).
+
 ---
 
 ## 6. Architecture Technique et Ergonomie "Pharma Explorer"
@@ -370,6 +383,11 @@ Selon la section 5.3 de la Ligne Directrice, toute soumission de variation (Mmin
   - Schémas configurables via colonnes `JSONB` indexées (checklists dynamiques, modèles de dossiers).
   - Recherche plein texte bilingue intégrée (`tsvector` / `tsquery`).
   - Table `audit_logs` strictement *append-only* (triggers SQL interdisant formellement `UPDATE` et `DELETE` selon 21 CFR Part 11).
+- **Gestion de la Concurrence & Verrouillage d'Édition (*Lease Lock* GxP) :**
+  - Prévention des conflits de co-édition simultanée entre Maker et Checker sur une même section CTD ou pièce GED via un verrouillage transactionnel pessimiste (`SELECT ... FOR UPDATE` sous PostgreSQL).
+  - Implémentation d'un mécanisme de **Bail Temporaire Renouvelable (*TTL Lease Lock* de 30 minutes)** adossé à la permission `DOC_LOCK_CHECKOUT`.
+  - Attributs de verrouillage dans `dossier_sections` et `ged_documents` : `locked_by_user_id`, `locked_at`, `lock_expires_at`, `lock_reason`.
+  - Notification visuelle en temps réel : bandeau d'avertissement en lecture seule pour les autres utilisateurs indiquant l'identité du rédacteur actif et le décompte avant libération automatique. Libération anticipée sur enregistrement (*Check-in*) ou annulation (*Rollback*).
 - **Frontend Embarqué (`//go:embed`) :**
   - TypeScript strict, Tailwind CSS, Lucide Icons, PDF.js local sans appel à aucun CDN public externe.
   - Zéro dépendance Node.js requise sur le serveur en production.
@@ -695,6 +713,7 @@ flowchart TD
 3. **Verrouillage des synthèses et de l'information médicale :** 
    - Le Résumé Global de la Qualité (**QOS 2.3**) reste au statut *« Verrouillé - En attente données brutes Module 3 »* tant que 100 % des sous-sections de 3.2.S et 3.2.P ne sont pas au minimum en statut de revue validée.
    - La **Notice patient (1.P.2)**, le **RCP (1.P.1)** et les **Maquettes d'emballage** restent verrouillés en édition finale tant que les conclusions de stabilité (durée de vie en mois, température maximale de conservation, précautions particulières de conservation) ne sont pas validées par le Responsable Stabilités.
+   - **Verrou de Parité Linguistique Synchrone (Notice 1.P.2.2 FR $\leftrightarrow$ AR) :** La notice en langue arabe étant juridiquement opposable au même titre que la version française (Décret exécutif 20-325), le système intègre un contrôleur de parité synchrone. Tout passage de la section 1.P.2 au statut *« Prêt pour Visa DT »* est techniquement bloqué tant que le volet arabe n'est pas révisé et synchronisé au même indice de version que le volet français, avec comparateur d'écarts bilingue intégré.
 4. **Propagation descendante en cascade des données maîtresses :**
    - Dès validation du rapport 3.2.P.8, les données finales (ex: *« 36 mois »*, *« À conserver à une température ne dépassant pas 30°C »*) sont répercutées automatiquement dans les champs dynamiques de la Notice FR/AR, du RCP et des articles de conditionnement.
    - Dès validation de la formule de lot (3.2.P.3.2), la composition qualitative et quantitative exacte est injectée dans le RCP (rubrique 2), la Notice et le formulaire de demande 1.A.3.
@@ -816,6 +835,16 @@ flowchart TD
 - **Fonctionnement Air-Gapped :** Prise en charge des environnements industriels 100% isolés d'Internet (aucun appel externe de validation de clé).
 - **Gestion du Cycle de Vie des Clés :** Procédure documentée de rotation de clé (*Key Rotation*) et export sécurisé de la clé maîtresse sous scellé pour le Plan de Reprise d'Activité (PRA).
 
+#### 4. Stratégie de Sauvegarde, PRA & Séquestre de Clé Maîtresse (Anti "Bus Factor") :
+- **Séquestre à Double Contrôle de la Clé Maîtresse (*Four-Eyes Principle*) :**
+  Afin de parer à toute incapacité temporaire, force majeure ou départ inopiné du Pharmacien Directeur Technique (risque critique de perte irréversible des données chiffrées), la clé maîtresse On-Premise fait l'objet d'une procédure de séquestre réglementaire :
+  - *Option Cryptographique (Split-Key / Partage de Secret de Shamir 2 sur 3) :* La clé maîtresse est divisée mathématiquement en 3 fragments indépendants : Fragment 1 détenu par le Pharmacien Directeur Technique, Fragment 2 détenu par la Direction Générale / Mandataire Social, Fragment 3 sous séquestre notarié ou coffre-fort bancaire. La reconstruction exige obligatoirement 2 fragments sur 3.
+  - *Option Physique Sous Scellé Cire/Inviolable :* Clé de secours inscrite sur support matériel chiffré, scellée avec signature manuscrite conjointe du PDT et du DG, conservée dans le coffre-fort ignifugé de la Direction Générale du laboratoire.
+- **Sauvegardes Automatisées Cohérentes (*Consistent Snapshots*) :**
+  - Moteur de sauvegarde planifié couplant le dump transactionnel PostgreSQL (`pg_dump` chiffré) et le miroir physique du stockage CAS `data/storage/`.
+  - Objectifs de service PRA : RPO (Perte de données maximale admissible) $\le 1$ heure, RTO (Durée maximale d'interruption admissible) $\le 4$ heures.
+  - Test de restauration semestriel obligatoire consigné dans le registre de maintenance BPF / 21 CFR Part 11.
+
 ---
 
 ## 9. Module ANPP Submission Assistant & E-Services Gateway (Télé-Procédures ANPP)
@@ -924,7 +953,7 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 | **ES-REG-03** | **Table des Matières Exhaustive & Index Paginé CTD** (Sommaire interactif M1-M5 avec SHA-256) | PDF/A-1b | Scellement final d'un Submission Package | Resp. Affaires Réglem. | Experts Évaluateurs ANPP |
 | **ES-REG-03-DM** | **Récépissé Officiel de Dépôt des Dossiers soumis à Homologation DM** (Grille de recevabilité en 13 points, 4 exemplaires électroniques, double visa ANPP/PDT) | PDF/A-1b | Dépôt physique et enregistrement guichet Direction DM | Directeur Technique & Agent ANPP | Direction des Dispositifs Médicaux ANPP |
 | **ES-REG-04** | **Fiche Récapitulative de Modification (LD-DEPP07/V01)** (Comparatif Approuvé vs Proposé 1-34) | PDF/A-1b | Dépôt d'une variation Mmin, Mmod, Mmaj ou Grouping | Directeur Technique | Sous-Direction des Variations ANPP |
-| **ES-REG-05** | **Bordereau d'Envoi des Échantillons & Réactifs (1.P)** (Quantités calculées selon la Table Officielle d'Échantillonnage ANPP `Fr-DCE02-F/V01`, lots, CoA et conservation) | PDF/A-1b | Convocation au dépôt des échantillons physiques | Responsable CQ / BPF | Laboratoire Contrôle LNCPP / ANPP (DCE) |
+| **ES-REG-05** | **Bordereau d'Envoi des Échantillons & Réactifs (1.P)** (Quantités calculées selon la Table Officielle d'Échantillonnage ANPP `Fr-DCE02-F/V01`, lots, CoA, N° de scellés inviolables, relevé datalogger chaîne du froid +2°C/+8°C et émargement LNCPP) | PDF/A-1b | Convocation au dépôt des échantillons physiques | Responsable CQ / BPF | Laboratoire Contrôle LNCPP / ANPP (DCE) |
 | **Famille 2 : États Financiers & Redevances ANPP (Décret 21-82 & Ordonnance 21-07)** | | | | | |
 | **ES-FIN-01** | **Bordereau de Versement BV1 (Enregistrement Initial & DM)** (Calcul DZD/Devises ; Trésor Public CAS 302.145 pour PP ; BNA Al Qods Chéraga RIB `00100622030000064395` - 300 000 DA pour DM) | PDF/A-1b + XLSX | Préalable obligatoire au dépôt NI, NF ou DM | Directeur Financier & PDT | Régie des Recettes ANPP / BNA Chéraga |
 | **ES-FIN-02** | **Bordereaux de Versement BV Variations, Renouvellements & Transferts** (Grouping PP Décret 21-82 ; BV Renouvellement DM 300k DA, BV Modification DM 150k DA, BV Transfert DM 100k DA BNA) | PDF/A-1b + XLSX | Dépôt de modifications (MI/MF), renouvellements (RI/RF/DM) ou cessions | Directeur Financier & PDT | Régie des Recettes ANPP / Trésor / BNA |
@@ -1017,6 +1046,11 @@ L'intégration des trames réglementaires certifiées de l'ANPP (issues des rép
    - *Voie Orale Liquide (Sirops, suspensions) :* Propreté microbienne (≥ 10g), uniformité des unidoses (≥ 30 doses).
    - *Voie Orale Solide (Comprimés, gélules, lyophilisats) :* Propreté microbienne (≥ 10g), uniformité (≥ 30 doses), Dissolution Ph. Eur. 2.9.3 (≥ 24 doses), Désagrégation 2.9.1 (≥ 18 doses), Dureté 2.9.8 (≥ 10 doses), Friabilité 2.9.7, teneur en eau. Prélèvement total ≥ 0,650 g si comprimé ≤ 0,650 g.
    - *Voie Inhalation :* Aérodynamique des particules fines, dose délivrée, efficacité des conservateurs antimicrobiens (≥ 30g, ≥ 20 doses).
+   - *Traçabilité Logistique & Chaîne du Froid des Échantillons (Bordereau ES-REG-05) :*
+     Pour les produits thermosensibles (vaccins, insulines, collyres, biotechnologies soumis à conservation entre +2°C et +8°C ou température dirigée), le système intègre la traçabilité logistique opposable de transport :
+     - Enregistrement du numéro unique de scellé inviolable apposé sur chaque colis d'échantillons.
+     - Importation et scellement du relevé de température issu du datalogger thermique de transport (vérification de l'absence d'excursion thermique).
+     - Rapprochement avec le récépissé émargé par le bureau d'ordre du Laboratoire National de Contrôle des Produits Pharmaceutiques (LNCPP / DCE) attestant de l'intégrité des scellés à l'arrivée.
 2. **Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique :**
    Attestation formelle engageant la responsabilité légale du Pharmacien DT :
    - *Filiation intégrale des lots :* N° lot Produit Fini (PF) ↔ N° lot Substance Active (SA) ↔ N° lot semi-fini.
