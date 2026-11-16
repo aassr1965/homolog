@@ -282,8 +282,8 @@ func TestWorkflowMakerCheckerCycle(t *testing.T) {
 	}
 
 	var appResp struct {
-		Success       bool                `json:"success"`
-		SignatureSeal string              `json:"signature_seal"`
+		Success       bool                 `json:"success"`
+		SignatureSeal string               `json:"signature_seal"`
 		Item          domain.ChecklistItem `json:"item"`
 	}
 	_ = json.Unmarshal(rr8.Body.Bytes(), &appResp)
