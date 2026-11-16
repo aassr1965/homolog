@@ -172,31 +172,19 @@ func main() {
 	})
 
 	// Présentation Commerciale Haute Fidélité (Pitch Deck 10 Diapositives)
-	// Strictement inaccessible en environnement de production (Conformité PSSI / BPF)
-	if cfg.PitchDeckEnabled() {
-		r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
-			if cfg.GateEnabled() && !gateHandler.IsUnlocked(r) {
-				http.Redirect(w, r, "/?redirect=/presentation", http.StatusTemporaryRedirect)
-				return
-			}
-			content, err := web.Files.ReadFile("presentation.html")
-			if err != nil {
-				http.Error(w, "Support de présentation introuvable", http.StatusNotFound)
-				return
-			}
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Write(content)
-		})
-		r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "/presentation", http.StatusMovedPermanently)
-		})
-	} else {
-		pitchDisabledHandler := func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, "Ressource désactivée ou indisponible en environnement de production", http.StatusNotFound)
+	// Accessible publiquement depuis le sas confidentiel pour permettre aux prospects et partenaires de découvrir le progiciel
+	r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+		content, err := web.Files.ReadFile("presentation.html")
+		if err != nil {
+			http.Error(w, "Support de présentation introuvable", http.StatusNotFound)
+			return
 		}
-		r.Get("/presentation", pitchDisabledHandler)
-		r.Get("/pitch", pitchDisabledHandler)
-	}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(content)
+	})
+	r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/presentation", http.StatusMovedPermanently)
+	})
 
 	// Favicon Caducée officiel Sanad Pharma
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
