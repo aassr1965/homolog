@@ -132,12 +132,16 @@ func main() {
 	// 3. Configuration du Routeur HTTP
 	r := chi.NewRouter()
 
+	// Initialisation du Sas d'Accès Confidentiel (Private Preview Gate)
+	gateHandler := api.NewGateHandler(cfg)
+
 	// Middlewares standards
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(gateHandler.Middleware)
 
 	// CORS sécurisé
 	r.Use(cors.Handler(cors.Options{
@@ -171,6 +175,10 @@ func main() {
 	// Strictement inaccessible en environnement de production (Conformité PSSI / BPF)
 	if cfg.PitchDeckEnabled() {
 		r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+			if cfg.GateEnabled() && !gateHandler.IsUnlocked(r) {
+				http.Redirect(w, r, "/?redirect=/presentation", http.StatusTemporaryRedirect)
+				return
+			}
 			content, err := web.Files.ReadFile("presentation.html")
 			if err != nil {
 				http.Error(w, "Support de présentation introuvable", http.StatusNotFound)
@@ -253,6 +261,11 @@ func main() {
 		}`, cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.PitchDeckEnabled(), cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(resp))
 	})
+
+	// Routes du Sas d'Accès Confidentiel Partenaire (Private Preview Gate)
+	r.Get("/api/v1/gate/status", gateHandler.GetStatus)
+	r.Post("/api/v1/gate/unlock", gateHandler.Unlock)
+	r.Post("/api/v1/gate/lock", gateHandler.Lock)
 
 	// Routes API Authentification, 2FA, Signature DT et Audit Trail
 	if setupHandler != nil {
