@@ -188,7 +188,15 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 	var htmlOutput string
 	switch reportCode {
 	case "ES-REG-02":
-		htmlOutput = renderESREG02HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+		if dossier.ProductType == domain.ProductTypeMedicalDevice || dossier.MedicalDevice != nil {
+			htmlOutput = renderESREG02DMHTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+		} else {
+			htmlOutput = renderESREG02HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+		}
+	case "ES-REG-02-DM":
+		htmlOutput = renderESREG02DMHTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-REG-03-DM":
+		htmlOutput = renderESREG03DMHTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-FIN-01":
 		htmlOutput = renderESFIN01HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	default: // "ES-REG-01"
@@ -342,9 +350,13 @@ func getReportTitle(code string) string {
 	case "ES-REG-01":
 		return "Bordereau Officiel de Transmission CTD (5 Modules)"
 	case "ES-REG-02":
-		return "Formulaire Officiel de Demande d'Enregistrement (1.A.3)"
+		return "Formulaire Officiel de Demande d'Enregistrement (1.A.3) & Homologation DM"
+	case "ES-REG-02-DM":
+		return "Formulaire Officiel de Demande d'Homologation DM (Décret 20-324)"
+	case "ES-REG-03-DM":
+		return "Récépissé Officiel de Dépôt des Dossiers soumis à Homologation DM"
 	case "ES-FIN-01":
-		return "Bordereau de Versement BV1 (Enregistrement Initial & DM)"
+		return "Bordereau de Versement BV1 / BV DM (Ordonnance 21-07 & Décret 21-82)"
 	case "EI-AVT-01":
 		return "Fiche Navette d'Avancement CTD / DM (Dossier Progress Sheet)"
 	default:
@@ -926,13 +938,40 @@ func renderESFIN01HTML(
 	feeInWords := "Trois cent cinquante-cinq mille dinars algériens nets"
 	procedureLabel := "Enregistrement Initial Produit Pharmaceutique"
 
+	legalRef := "Décret Exécutif n° 21-82"
+	subDirection := "Direction de l'Administration et des Finances • Régie des Recettes"
+	tableHeaderLabel := "Libellé de la Prestation Réglementaire (Décret 21-82)"
+	art1Code := "Art. 3"
+	art1Text := "Redevance fixe d'instruction et d'évaluation du dossier de soumission"
+	art2Code := "Art. 5"
+	art2Text := "Contribution aux frais d'expertise analytique et contrôle de conformité LNCM"
+	art3Code := "Art. 12"
+	art3Text := "Frais de traitement du dossier, droits de timbre et archivage pérenne"
+	bankBoxHeader := "2. Domiciliation Bancaire & Coordonnées du Trésor Public (Régie des Recettes ANPP)"
+	bankBeneficiary := "Agence Nationale des Produits Pharmaceutiques (ANPP) — Régie des Recettes"
+	bankDepot := "Trésor Public — Direction Générale de la Comptabilité (Alger) • Compte d'Affectation Spéciale (CAS) N° 302.145"
+	ribCode := "008 99999 0001234567 89"
+
 	if isDM {
-		feeInstruction = "150 000,00 DZD"
-		feeControl = "50 000,00 DZD"
-		feeStamp = "5 000,00 DZD"
-		feeTotal = "205 000,00 DZD"
-		feeInWords = "Deux cent cinq mille dinars algériens nets"
-		procedureLabel = "Homologation Réglementaire Dispositif Médical"
+		legalRef = "Ordonnance n° 21-07 (Art. 31) & Décret 20-324"
+		subDirection = "Direction des Dispositifs Médicaux (DDM) • Régie des Recettes BNA"
+		tableHeaderLabel = "Libellé de la Redevance d'Homologation DM (Ordonnance 21-07 Art. 31)"
+		art1Code = "Art. 31"
+		art1Text = "Redevance d'instruction du dossier d'homologation DM importé"
+		feeInstruction = "300 000,00 DZD"
+		art2Code = "—"
+		art2Text = "Évaluation de la conformité, biocompatibilité & matériovigilance DDM"
+		feeControl = "Inclus"
+		art3Code = "—"
+		art3Text = "Délivrance de la décision d'homologation & archivage réglementaire"
+		feeStamp = "Inclus"
+		feeTotal = "300 000,00 DZD"
+		feeInWords = "Trois cent mille dinars algériens nets"
+		procedureLabel = "Homologation Initiale Dispositif Médical"
+		bankBoxHeader = "2. Domiciliation Bancaire Officielle ANPP — Banque Nationale d'Algérie (BNA)"
+		bankBeneficiary = "Agence Nationale des Produits Pharmaceutiques (ANPP) — Direction des Dispositifs Médicaux"
+		bankDepot = "Banque Nationale d'Algérie (BNA) • Agence Al Qods — Chéraga (Code Guichet : 00622)"
+		ribCode = "001 00622 0300000643 95"
 	} else {
 		switch d.ProcedureCode {
 		case domain.ProcedureRI, domain.ProcedureRF:
@@ -997,7 +1036,7 @@ func renderESFIN01HTML(
 </head>
 <body>
     <div class="no-print-toolbar">
-        <div><strong>Homolog Reporting BPF</strong> • ES-FIN-01 Bordereau de Versement Réglementaire BV1 (Décret 21-82)</div>
+        <div><strong>Homolog Reporting BPF</strong> • ES-FIN-01 Bordereau de Versement Réglementaire (%s)</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
             <a href="/" class="btn btn-outline">✕ Fermer</a>
@@ -1019,18 +1058,18 @@ func renderESFIN01HTML(
                     <div style="font-size:7pt; font-weight:700; color:#64748b; text-transform:uppercase;">RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</div>
                     <div style="font-size:8pt; font-weight:800; color:#091e36;">MINISTÈRE DE L'INDUSTRIE ET DE LA PRODUCTION PHARMACEUTIQUE</div>
                     <div style="font-size:7.5pt; font-weight:700; color:#047857;">AGENCE NATIONALE DES PRODUITS PHARMACEUTIQUES (ANPP)</div>
-                    <div style="font-size:7pt; color:#475569;">Direction de l'Administration et des Finances • Régie des Recettes</div>
+                    <div style="font-size:7pt; color:#475569;">%s</div>
                 </td>
                 <td style="text-align:right; vertical-align:middle;">
                     <div style="font-size:7pt; color:#64748b;">BORDEREAU OFFICIEL</div>
-                    <div style="font-size:9.5pt; font-weight:800; color:#091e36;">ES-FIN-01 • BV1</div>
-                    <div style="font-size:7pt; color:#047857; font-weight:700;">Décret Exécutif n° 21-82</div>
+                    <div style="font-size:9.5pt; font-weight:800; color:#091e36;">ES-FIN-01 • BV</div>
+                    <div style="font-size:7pt; color:#047857; font-weight:700;">%s</div>
                 </td>
             </tr>
         </table>
 
         <div class="title-banner">
-            <h1 class="banner-title">Bordereau de Liquidation & de Paiement de la Redevance (BV1)</h1>
+            <h1 class="banner-title">Bordereau de Liquidation & de Paiement de la Redevance (BV)</h1>
             <span style="font-size:8pt; font-weight:700; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:3px;">Dossier : %s</span>
         </div>
 
@@ -1042,7 +1081,7 @@ func renderESFIN01HTML(
                 <div class="field-row"><span class="field-label">Siège Social & Adresse :</span><span class="field-value">%s</span></div>
                 <div class="field-row"><span class="field-label">Pharmacien DT Déposant :</span><span class="field-value">%s</span></div>
                 <div class="field-row"><span class="field-label">Spécialité Concernée :</span><span class="field-value">%s</span></div>
-                <div class="field-row"><span class="field-label">DCI Principale :</span><span class="field-value">%s</span></div>
+                <div class="field-row"><span class="field-label">DCI / Classe :</span><span class="field-value">%s</span></div>
                 <div class="field-row"><span class="field-label">Dosage & Forme :</span><span class="field-value">%s • %s</span></div>
                 <div class="field-row"><span class="field-label">Procédure Réglementaire :</span><span class="field-value">%s (%s)</span></div>
             </div>
@@ -1052,27 +1091,27 @@ func renderESFIN01HTML(
             <thead>
                 <tr>
                     <th style="width:10%%; text-align:center;">Article</th>
-                    <th style="width:58%%;">Libellé de la Prestation Réglementaire (Décret 21-82)</th>
+                    <th style="width:58%%;">%s</th>
                     <th style="width:14%%; text-align:center;">Assiette</th>
                     <th style="width:18%%; text-align:right;">Montant Exigible</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td style="text-align:center; font-weight:700;">Art. 3</td>
-                    <td>Redevance fixe d'instruction et d'évaluation du dossier de soumission</td>
+                    <td style="text-align:center; font-weight:700;">%s</td>
+                    <td>%s</td>
                     <td style="text-align:center;">Forfaitaire</td>
                     <td style="text-align:right; font-weight:600;">%s</td>
                 </tr>
                 <tr>
-                    <td style="text-align:center; font-weight:700;">Art. 5</td>
-                    <td>Contribution aux frais d'expertise analytique et contrôle de conformité LNCM</td>
+                    <td style="text-align:center; font-weight:700;">%s</td>
+                    <td>%s</td>
                     <td style="text-align:center;">Forfaitaire</td>
                     <td style="text-align:right; font-weight:600;">%s</td>
                 </tr>
                 <tr>
-                    <td style="text-align:center; font-weight:700;">Art. 12</td>
-                    <td>Frais de traitement du dossier, droits de timbre et archivage pérenne</td>
+                    <td style="text-align:center; font-weight:700;">%s</td>
+                    <td>%s</td>
                     <td style="text-align:center;">Forfaitaire</td>
                     <td style="text-align:right; font-weight:600;">%s</td>
                 </tr>
@@ -1089,14 +1128,14 @@ func renderESFIN01HTML(
         </div>
 
         <div class="rib-box">
-            <div style="font-weight:800; color:#091e36; margin-bottom:4px; font-size:8.5pt;">2. Domiciliation Bancaire & Coordonnées du Trésor Public (Régie des Recettes ANPP)</div>
+            <div style="font-weight:800; color:#091e36; margin-bottom:4px; font-size:8.5pt;">%s</div>
             <div style="color:#475569; font-size:7.8pt; margin-bottom:4px;">
-                Bénéficiaire : <strong>Agence Nationale des Produits Pharmaceutiques (ANPP) — Régie des Recettes</strong><br/>
-                Établissement Dépositaire : <strong>Trésor Public — Direction Générale de la Comptabilité (Alger)</strong> • Compte d'Affectation Spéciale (CAS) N° 302.145
+                Bénéficiaire : <strong>%s</strong><br/>
+                Établissement Dépositaire : <strong>%s</strong>
             </div>
             <div>
                 <span style="font-size:7.8pt; color:#475569;">Relevé d'Identité Bancaire (RIB) à créditer obligatoirement :</span><br/>
-                <span class="rib-number">008 99999 0001234567 89</span>
+                <span class="rib-number">%s</span>
             </div>
             <div style="font-size:7.5pt; color:#b91c1c; font-weight:700; margin-top:4px;">
                 Motif impératif du virement : DEP-BV1-%s
@@ -1158,13 +1197,22 @@ func renderESFIN01HTML(
 </body>
 </html>`,
 		prodName,
+		legalRef,
 		wmClass, wmText,
+		subDirection,
+		legalRef,
 		d.DossierCode,
 		estName, estAgreement, estAddress, pdtName,
 		prodName, dci, dosage, form,
 		procedureLabel, d.ProcedureCode,
-		feeInstruction, feeControl, feeStamp, feeTotal,
+		tableHeaderLabel,
+		art1Code, art1Text, feeInstruction,
+		art2Code, art2Text, feeControl,
+		art3Code, art3Text, feeStamp,
+		feeTotal,
 		feeInWords,
+		bankBoxHeader, bankBeneficiary, bankDepot,
+		ribCode,
 		d.DossierCode,
 		pdtName,
 		hashShort, qrURL, qrURL,

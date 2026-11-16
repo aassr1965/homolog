@@ -208,15 +208,31 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 		}
 	} else if d.MedicalDeviceID != nil {
 		dmQuery := `
-			SELECT id, organization_id, commercial_name_fr, COALESCE(commercial_name_ar, ''), dm_class,
-			       is_sterile, manufacturer_reference, status, created_at, updated_at
+			SELECT id, organization_id, commercial_name_fr, COALESCE(commercial_name_ar, ''),
+			       manufacturer_reference, dm_class, COALESCE(classification_rule, ''),
+			       is_sterile, is_single_use, COALESCE(intended_use_fr, ''), COALESCE(intended_use_ar, ''),
+			       COALESCE(origin_type, 'fabrication_locale'), COALESCE(legal_manufacturer_name, ''),
+			       COALESCE(legal_manufacturer_country, 'DZ'), COALESCE(ce_certificate_number, ''),
+			       COALESCE(notified_body_name, ''), COALESCE(notified_body_number, ''),
+			       COALESCE(iso_13485_certificate_number, ''), COALESCE(clv_fsc_number, ''),
+			       COALESCE(clv_issuing_authority, ''), COALESCE(sterilization_method, ''),
+			       COALESCE(gmdn_code, ''), COALESCE(economic_file_type, 'pcsu'),
+			       status, created_at, updated_at
 			FROM medical_devices
 			WHERE id = $1
 		`
 		var dm domain.MedicalDevice
 		err := r.pool.QueryRow(ctx, dmQuery, *d.MedicalDeviceID).Scan(
-			&dm.ID, &dm.OrganizationID, &dm.CommercialNameFR, &dm.CommercialNameAR, &dm.DMClass,
-			&dm.IsSterile, &dm.ManufacturerReference, &dm.Status, &dm.CreatedAt, &dm.UpdatedAt,
+			&dm.ID, &dm.OrganizationID, &dm.CommercialNameFR, &dm.CommercialNameAR,
+			&dm.ManufacturerReference, &dm.DMClass, &dm.ClassificationRule,
+			&dm.IsSterile, &dm.IsSingleUse, &dm.IntendedUseFR, &dm.IntendedUseAR,
+			&dm.OriginType, &dm.LegalManufacturerName,
+			&dm.LegalManufacturerCountry, &dm.CECertificateNumber,
+			&dm.NotifiedBodyName, &dm.NotifiedBodyNumber,
+			&dm.ISO13485CertificateNumber, &dm.CLVFSCNumber,
+			&dm.CLVIssuingAuthority, &dm.SterilizationMethod,
+			&dm.GMDNCode, &dm.EconomicFileType,
+			&dm.Status, &dm.CreatedAt, &dm.UpdatedAt,
 		)
 		if err == nil {
 			d.MedicalDevice = &dm
