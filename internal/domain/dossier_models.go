@@ -148,8 +148,8 @@ type ChecklistItem struct {
 	ApproverSignatureSeal *string        `json:"approver_signature_seal,omitempty"`
 	AuthoredContent       *string        `json:"authored_content,omitempty"`
 	TemplateCode          *string        `json:"template_code,omitempty"`
-	CreatedAt              time.Time              `json:"created_at"`
-	UpdatedAt              time.Time              `json:"updated_at"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
 }
 
 // DossierAssignment représente l'affectation nominative d'un collaborateur ou consultant à un dossier (Need-to-Know)

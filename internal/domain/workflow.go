@@ -36,10 +36,10 @@ const (
 type ReviewType string
 
 const (
-	ReviewTypeAnnotation    ReviewType = "annotation"            // Annotation ou remarque
-	ReviewTypeChangeRequest ReviewType = "demande_modification"  // Demande d'ajustement formelle
-	ReviewTypeQualityPassed ReviewType = "validation_qualite"    // Visa favorable du Checker
-	ReviewTypeRejected      ReviewType = "rejet_motive"          // Rejet motivé renvoyé en rédaction
+	ReviewTypeAnnotation    ReviewType = "annotation"           // Annotation ou remarque
+	ReviewTypeChangeRequest ReviewType = "demande_modification" // Demande d'ajustement formelle
+	ReviewTypeQualityPassed ReviewType = "validation_qualite"   // Visa favorable du Checker
+	ReviewTypeRejected      ReviewType = "rejet_motive"         // Rejet motivé renvoyé en rédaction
 )
 
 // DossierItemReview représente une annotation ou décision dans la piste d'audit du workflow
