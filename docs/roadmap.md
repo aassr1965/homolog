@@ -220,7 +220,7 @@ gantt
 - [x] **Environnement Docker & Docker-Compose de Production :**
   - [x] `Dockerfile` multi-stage durci avec binaire statique Go CGO_ENABLED=0 (`v0.8.0`), image Alpine minimale, utilisateur non-root `homolog:homolog`, santé `/health`.
   - [x] `docker-compose.yml` orchestrant l'application et la base PostgreSQL 16 Alpine avec healthcheck `pg_isready` et volumes persistants.
-  - [x] Fichier `.env.production` avec durcissement PSSI (désactivation stricte du commutateur dev, Cookie Secure forcé, clé JWT 64+ car., timeout 15 min BPF).
+  - [x] Fichier `.env.production` avec durcissement PSSI (désactivation stricte du commutateur dev et du support commercial Pitch Deck `/presentation`, Cookie Secure forcé, clé JWT 64+ car., timeout 15 min BPF).
 - [x] **Assistant de Premier Démarrage (Setup Wizard BPF 1.A.7) :**
   - [x] Détection automatique du statut vierge de l'instance (`GET /api/v1/setup/status`).
   - [x] Provisionnement initial de l'établissement MIPH et du compte Pharmacien DT titulaire (`POST /api/v1/setup/initialize`).

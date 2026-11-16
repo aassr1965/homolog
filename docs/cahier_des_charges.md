@@ -486,6 +486,10 @@ La plateforme SANAD PHARMA (Homolog) traite des données industrielles hautement
 5. **Souveraineté Numérique & Absence Totale d'Exfiltration :**
    - Architecture 100 % autonome sans dépendance vers des CDN publics ou des serveurs tiers (polices Inter/Cairo, icônes Lucide et visionneuse PDF.js compilées directement dans le binaire serveur Go via `//go:embed`).
    - Zéro télémétrie externe, zéro tracking.
+6. **Cloisonnement Hermétique des Environnements & Neutralisation des Outils Commerciaux en Production :**
+   - En environnement de production (`APP_ENV=production` ou `ENVIRONMENT=production`), tous les composants de démonstration, de pitch et de test rapide sont **strictement neutralisés et inaccessibles** par conception (*Security by Design*).
+   - **Neutralisation du Pitch Commercial (*Pitch Deck Executive*) :** Les routes `/presentation` et `/pitch` sont désactivées et renvoient une erreur `HTTP 404 Not Found`. Le bouton d'accès au Pitch Commercial dans le bandeau de l'interface est éliminé dès le service HTTP du document (`index.html`) par substitution côté serveur et verrouillé par l'API de session (`pitch_deck_enabled: false`).
+   - **Neutralisation du Switcher de Rôles Dev :** Le sélecteur rapide de rôles sans mot de passe est prohibé (endpoint `/api/v1/auth/dev-switch` neutralisé en 404 et sélecteur masqué).
 
 #### Typologie des 9 Profils Utilisateurs Stricts :
 1. **Super-Administrateur Éditeur (Mode Cloud SaaS) :** Provisioning d'instances laboratoires, isolation des schémas PostgreSQL, quotas de stockage. Aucun accès aux données métier.
