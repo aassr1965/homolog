@@ -811,7 +811,7 @@
                 if (btnLogin) btnLogin.innerText = "تسجيل الدخول إلى النظام ➔";
                 if (loginLang) loginLang.innerText = "🇫🇷";
 
-                if (gateTitle) gateTitle.innerText = "بوابة المصادقة والتسجيل الصيدلاني المسبق";
+                if (gateTitle) gateTitle.innerText = "برمجية سند (SANAD) — المصادقة والتسجيل الصيدلاني المسبق";
                 if (gateSub) gateSub.innerText = "فضاء تنظيمي خاص وسري لمخابر الأدوية والمستلزمات الطبية في الجزائر (ANPP / MIPH)";
                 if (gateLang) gateLang.innerText = "🇫🇷";
 
@@ -843,7 +843,7 @@
                 if (btnLogin) btnLogin.innerText = "Se connecter au cockpit ➔";
                 if (loginLang) loginLang.innerText = "🇩🇿";
 
-                if (gateTitle) gateTitle.innerText = "Homologation ANPP & GED Pharmaceutique";
+                if (gateTitle) gateTitle.innerText = "Progiciel SANAD — Homologation ANPP & GED";
                 if (gateSub) gateSub.innerText = "Cockpit réglementaire pour l'enregistrement des Médicaments (CTD), Dispositifs Médicaux (DDM) et Compléments Alimentaires en Algérie (ANPP / MIPH).";
                 if (gateLang) gateLang.innerText = "🇩🇿";
 
