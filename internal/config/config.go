@@ -19,6 +19,7 @@ const (
 type Config struct {
 	Environment          string // "development", "staging", "production"
 	EnableDevSwitcher    bool   // Guard for development role switcher (disabled in production)
+	EnablePitchDeck      bool   // Guard for commercial pitch deck presentation (disabled in production)
 	CookieSecure         bool   // Enforce Secure attribute on session cookies
 	DeploymentMode       DeploymentMode
 	Port                 int
@@ -40,6 +41,9 @@ type Config struct {
 	// Tenant specific for on-premise
 	OnPremOrgSlug string
 	OnPremOrgName string
+
+	// GatePasscode defines an optional confidential passkey protecting entry to the app
+	GatePasscode string
 }
 
 // Load reads configuration from environment variables with safe enterprise defaults
@@ -55,6 +59,13 @@ func Load() *Config {
 		devSwitcherDefault = "false"
 	}
 	enableDevSwitch := getEnv("ENABLE_DEV_SWITCHER", devSwitcherDefault) == "true" && !isProd
+
+	// Pitch Deck commercial strictement interdit en production; en non-prod activé par défaut sauf si ENABLE_PITCH_DECK=false
+	pitchDefault := "true"
+	if isProd {
+		pitchDefault = "false"
+	}
+	enablePitch := getEnv("ENABLE_PITCH_DECK", pitchDefault) == "true" && !isProd
 
 	// Cookie Secure is true by default in production; can also be forced via COOKIE_SECURE=true
 	cookieSecureDefault := "false"
@@ -78,6 +89,7 @@ func Load() *Config {
 	return &Config{
 		Environment:          env,
 		EnableDevSwitcher:    enableDevSwitch,
+		EnablePitchDeck:      enablePitch,
 		CookieSecure:         cookieSecure,
 		DeploymentMode:       mode,
 		Port:                 port,
@@ -97,7 +109,17 @@ func Load() *Config {
 
 		OnPremOrgSlug: getEnv("ONPREM_ORG_SLUG", "laboratoire-principal"),
 		OnPremOrgName: getEnv("ONPREM_ORG_NAME", "Laboratoire Pharmaceutique National"),
+
+		GatePasscode: getEnv("GATE_PASSCODE", ""),
 	}
+}
+
+// GateEnabled returns true if a confidential gate passcode is configured
+func (c *Config) GateEnabled() bool {
+	if c == nil {
+		return false
+	}
+	return strings.TrimSpace(c.GatePasscode) != ""
 }
 
 // IsProduction returns true if the environment is configured as production
@@ -122,6 +144,21 @@ func (c *Config) DevSwitcherEnabled() bool {
 		return true
 	}
 	return !c.IsProduction() && c.EnableDevSwitcher
+}
+
+// PitchDeckEnabled returns true only in non-production environments when pitch deck is enabled
+func (c *Config) PitchDeckEnabled() bool {
+	if c == nil {
+		appEnv := strings.ToLower(os.Getenv("APP_ENV"))
+		if appEnv == "production" || appEnv == "prod" {
+			return false
+		}
+		if os.Getenv("ENABLE_PITCH_DECK") == "false" {
+			return false
+		}
+		return true
+	}
+	return !c.IsProduction() && c.EnablePitchDeck
 }
 
 func getEnv(key, fallback string) string {

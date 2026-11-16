@@ -412,8 +412,53 @@ Cette console regroupe l'ensemble des modules d'administration :
 4. **Cartographie des Sites de Fabrication & Sous-traitants (1.H.8) :** Déclaration des sites avec rôles industriels, licences de fabrication et certificats BPF/GMP.
 5. **Surveillance Audit Trail & Sécurité Système (`audit_logs`) :** Tableau de bord de traçabilité des connexions, échecs d'authentification 2FA, blocages de routes HTTP 403 et modifications de rôles.
 6. **Supervision Quotas & Stockage CAS :** Suivi de l'espace disque dédupliqué SHA-256 et déclenchement des sauvegardes chiffrées `.homolog`.
+7. **Module de Paramétrage Réglementaire & Variables Institutionnelles Configurables (`regulatory_parameters`) :** Console d'administration permettant de configurer et d'actualiser sans modification de code source ni redémarrage du serveur l'ensemble des constantes institutionnelles, financières, bancaires et temporelles régissant la conformité ANPP.
 
 *Pour les utilisateurs disposant d'un double rôle (ex: PDT ayant également un mandat d'administrateur du laboratoire), un commutateur d'espace permet de basculer instantanément en un clic entre la **Console Admin** et le **Pharma Explorer**.*
+
+---
+
+### 6.4 Spécifications du Module de Paramétrage Institutionnel & Variables Réglementaires
+
+Afin d'éviter tout codage en dur de variables institutionnelles sujettes à modifications législatives, ministérielles ou bancaires (ex: changement de domiciliation bancaire de l'ANPP, mise à jour des barèmes de redevances par décret exécutif, ajustement des délais de réponse aux notifications d'insuffisance), la plateforme intègre un **Moteur de Paramétrage Réglementaire Découplé** doté d'une gouvernance BPF stricte.
+
+#### 6.4.1 Typologie des Variables Réglementaires Configurables
+
+Le tableau ci-dessous détaille les familles de paramètres administrables dynamiquement :
+
+| Famille de Paramètres | Code Clé Système | Type & Exemple de Valeur | Impact Métier / États de Sortie | Rôle Habilité à Modifier | Approbation Requise |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **RIB ANPP Médicaments** | `FIN_BANK_RIB_MEDICINE` | Chaine : `001 00622 0300000643 95` | Bordereaux ES-FIN-01 (PP), calcul de liquidation | Admin Labo | **Pharmacien DT (2FA)** |
+| **Banque & Agence ANPP** | `FIN_BANK_NAME_MEDICINE` | Chaine : `BNA Agence Al Qods Chéraga` | Volet bancaire ES-FIN-01 | Admin Labo | **Pharmacien DT (2FA)** |
+| **Compte CAS Médicaments** | `FIN_CAS_ACCOUNT_MEDICINE` | Chaine : `CAS N° 302.145 (Fonds Spécial ANPP)` | Mentions légales Trésor Public | Admin Labo | **Pharmacien DT (2FA)** |
+| **RIB ANPP Dispositifs Méd.** | `FIN_BANK_RIB_DM` | Chaine : `001 00622 0300000643 95` | Bordereaux ES-FIN-01 (DM), Formulaire ES-REG-02-DM | Admin Labo | **Pharmacien DT (2FA)** |
+| **Banque Domiciliataire DM** | `FIN_BANK_NAME_DM` | Chaine : `BNA Agence Al Qods — Chéraga (Guichet 00622)` | Bordereaux de versement DDM | Admin Labo | **Pharmacien DT (2FA)** |
+| **Ordre Chèques Certifiés** | `FIN_CHECK_BENEFICIARY_ORDER` | Chaine : `Régisseur des recettes de l'ANPP` | Alternative Décret 21-551 Art. 3 | Admin Labo | **Pharmacien DT (2FA)** |
+| **Barème Enregistrement NI** | `FEE_PROCEDURE_NI_DZD` | Numérique : `355000.00` | Liquidation automatique ES-FIN-01 | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème Homologation DM** | `FEE_PROCEDURE_DM_DZD` | Numérique : `300000.00` | Liquidation automatique ES-FIN-01 (DM) | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème Renouvellement RI** | `FEE_PROCEDURE_RI_DZD` | Numérique : `205000.00` | Renouvellement quinquennal PP | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème Variation Majeure** | `FEE_PROCEDURE_MI_DZD` | Numérique : `115000.00` | Variations LD-DEPP07 / Grouping | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Délai Réponse Insuffisances** | `REG_DEFICIENCY_DEADLINE_DAYS` | Entier : `45` (ou `90`) | Compte à rebours légal alertes & dashboard | Admin Labo / Resp. Reg. | **Pharmacien DT (2FA)** |
+| **Guichet Dépôt DEPP** | `INST_ANPP_DEPP_ADDRESS` | Texte : `Bordereau DEPP, Rue Didouche Mourad, Alger` | En-têtes ES-REG-01, ES-REG-02 | Admin Labo | **Pharmacien DT (2FA)** |
+| **Guichet Dépôt DDM** | `INST_ANPP_DDM_ADDRESS` | Texte : `Direction des Dispositifs Médicaux, Alger` | ES-REG-02-DM, ES-REG-03-DM | Admin Labo | **Pharmacien DT (2FA)** |
+| **Laboratoire Contrôle DCE** | `INST_ANPP_DCE_ADDRESS` | Texte : `Laboratoire National de Contrôle des Médicaments (LNCM)` | Module DCE & Demande d'expertise | Admin Labo | **Pharmacien DT (2FA)** |
+
+#### 6.4.2 Temporalité & Règle d'Immuabilité Rétroactive (GAMP 5 / ALCOA+)
+
+1. **Versioning Temporel (`valid_from` / `valid_to`) :**
+   - Lorsqu'une variable financière ou bancaire est modifiée (ex: nouveau décret modifiant les tarifs d'enregistrement ou nouveau RIB ANPP), l'ancienne valeur n'est **jamais écrasée ou supprimée**.
+   - La ligne existante est clôturée avec un horodatage `valid_to = NOW()`. Une nouvelle ligne est créée avec `valid_from = NOW()` et `valid_to = NULL`.
+2. **Reproductibilité des États de Sortie Déjà Émis :**
+   - Tout état de sortie officiel (ex: ES-FIN-01 émis en 2025) conserve lors de sa réédition la valeur historique du RIB et des barèmes en vigueur à sa date de scellement SHA-256.
+   - Les nouvelles valeurs configurées ne s'appliquent qu'aux dossiers créés ou liquidés postérieurement à leur date d'approbation effective.
+
+#### 6.4.3 Workflow de Mise à Jour Sécurisée (Maker-Checker & Visa DT)
+
+Conformément à la politique PSSI et au principe de non auto-approbation (*SoD*) :
+1. **Étape 1 (Maker - Proposition) :** L'Administrateur du Laboratoire ou le Responsable Financier saisit la modification d'un paramètre (ex: mise à jour d'un code RIB) avec mention obligatoire du **motif réglementaire** (référence du nouveau texte officiel, arrêté ou notification ANPP) et téléversement de la pièce justificative au format PDF/A.
+2. **Étape 2 (Vérification & Contrôle) :** Le système bascule le paramètre en statut `EN_ATTENTE_APPROBATION_DT`. L'ancienne valeur reste active pour les opérations courantes.
+3. **Étape 3 (Approver - Visa DT avec 2FA) :** Le Pharmacien Directeur Technique examine le projet dans son parapheur électronique dédié. Il valide la modification par signature électronique qualifiée (21 CFR Part 11) avec contrôle TOTP.
+4. **Étape 4 (Audit Trail Automatique) :** L'action est scellée dans la table `audit_logs` avec l'empreinte SHA-256 de la modification, l'identité du signataire, l'adresse IP et la date UTC+1.
 
 ---
 
@@ -441,6 +486,10 @@ La plateforme SANAD PHARMA (Homolog) traite des données industrielles hautement
 5. **Souveraineté Numérique & Absence Totale d'Exfiltration :**
    - Architecture 100 % autonome sans dépendance vers des CDN publics ou des serveurs tiers (polices Inter/Cairo, icônes Lucide et visionneuse PDF.js compilées directement dans le binaire serveur Go via `//go:embed`).
    - Zéro télémétrie externe, zéro tracking.
+6. **Cloisonnement Hermétique des Environnements & Neutralisation des Outils Commerciaux en Production :**
+   - En environnement de production (`APP_ENV=production` ou `ENVIRONMENT=production`), tous les composants de démonstration, de pitch et de test rapide sont **strictement neutralisés et inaccessibles** par conception (*Security by Design*).
+   - **Neutralisation du Pitch Commercial (*Pitch Deck Executive*) :** Les routes `/presentation` et `/pitch` sont désactivées et renvoient une erreur `HTTP 404 Not Found`. Le bouton d'accès au Pitch Commercial dans le bandeau de l'interface est éliminé dès le service HTTP du document (`index.html`) par substitution côté serveur et verrouillé par l'API de session (`pitch_deck_enabled: false`).
+   - **Neutralisation du Switcher de Rôles Dev :** Le sélecteur rapide de rôles sans mot de passe est prohibé (endpoint `/api/v1/auth/dev-switch` neutralisé en 404 et sélecteur masqué).
 
 #### Typologie des 9 Profils Utilisateurs Stricts :
 1. **Super-Administrateur Éditeur (Mode Cloud SaaS) :** Provisioning d'instances laboratoires, isolation des schémas PostgreSQL, quotas de stockage. Aucun accès aux données métier.
@@ -776,23 +825,24 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 
 ---
 
-### 10.2 Matrice Exhaustive des 15 États de Sortie Homolog
+### 10.2 Matrice Exhaustive des 20 États de Sortie Réglementaires (ES)
 
 | Code Réf. | Dénomination de l'État de Sortie | Format Cible | Déclencheur & Fréquence | Visa Légal Requis | Destinataire / Usage |
 |---|---|---|---|---|---|
 | **Famille 1 : Dossiers Réglementaires & Dépôts ANPP (Pièces Maîtresses)** | | | | | |
 | **ES-REG-01** | **Bordereau de Dépôt / Transmission Officiel CTD** (Inventaire des 5 modules CTD et volumes) | PDF/A-1b | À chaque soumission physique ou dépôt de dossier | Directeur Technique | Bureau d'Ordre ANPP / Archives Labo |
-| **ES-REG-02** | **Formulaire Officiel de Demande d'Enregistrement (1.A.3)** (Arrêté 16/12/2020 / Guide 2025) | PDF/A-1b | Constitution initiale d'un dossier NI, NF, RI ou RF | Directeur Technique & DG | Direction de l'Enregistrement ANPP |
+| **ES-REG-02** | **Formulaire Officiel de Demande d'Enregistrement (1.A.3) & Demande d'Homologation DM** (Arrêté 16/12/2020 pour PP & Décret 20-324 / Arrêté 10 mai 2021 pour DM en 6 sections) | PDF/A-1b | Constitution initiale d'un dossier NI, NF, RI, RF ou Homologation DM | Directeur Technique & DG | Direction de l'Enregistrement (DEPP) / Direction DM ANPP |
 | **ES-REG-03** | **Table des Matières Exhaustive & Index Paginé CTD** (Sommaire interactif M1-M5 avec SHA-256) | PDF/A-1b | Scellement final d'un Submission Package | Resp. Affaires Réglem. | Experts Évaluateurs ANPP |
+| **ES-REG-03-DM** | **Récépissé Officiel de Dépôt des Dossiers soumis à Homologation DM** (Grille de recevabilité en 13 points, 4 exemplaires électroniques, double visa ANPP/PDT) | PDF/A-1b | Dépôt physique et enregistrement guichet Direction DM | Directeur Technique & Agent ANPP | Direction des Dispositifs Médicaux ANPP |
 | **ES-REG-04** | **Fiche Récapitulative de Modification (LD-DEPP07/V01)** (Comparatif Approuvé vs Proposé 1-34) | PDF/A-1b | Dépôt d'une variation Mmin, Mmod, Mmaj ou Grouping | Directeur Technique | Sous-Direction des Variations ANPP |
-| **ES-REG-05** | **Bordereau d'Envoi des Échantillons & Réactifs (1.P)** (Quantités, lots, CoA et conservation) | PDF/A-1b | Convocation au dépôt des échantillons physiques | Responsable CQ / BPF | Laboratoire Contrôle LNCPP / ANPP |
-| **Famille 2 : États Financiers & Redevances ANPP (Décret Exécutif 21-82)** | | | | | |
-| **ES-FIN-01** | **Bordereau de Versement BV1 (Enregistrement Initial & DM)** (Calcul DZD/Devises, RIB Trésor) | PDF/A-1b + XLSX | Préalable obligatoire au dépôt NI, NF ou DM | Directeur Financier & PDT | Régie des Recettes ANPP & Trésor |
-| **ES-FIN-02** | **Bordereau de Versement BV2 (Variations & Renouvellements)** (Liquidation avec Grouping) | PDF/A-1b + XLSX | Dépôt de modifications (MI/MF) ou renouvellement (RI/RF) | Directeur Financier & PDT | Régie des Recettes ANPP |
+| **ES-REG-05** | **Bordereau d'Envoi des Échantillons & Réactifs (1.P)** (Quantités calculées selon la Table Officielle d'Échantillonnage ANPP `Fr-DCE02-F/V01`, lots, CoA et conservation) | PDF/A-1b | Convocation au dépôt des échantillons physiques | Responsable CQ / BPF | Laboratoire Contrôle LNCPP / ANPP (DCE) |
+| **Famille 2 : États Financiers & Redevances ANPP (Décret 21-82 & Ordonnance 21-07)** | | | | | |
+| **ES-FIN-01** | **Bordereau de Versement BV1 (Enregistrement Initial & DM)** (Calcul DZD/Devises ; Trésor Public CAS 302.145 pour PP ; BNA Al Qods Chéraga RIB `00100622030000064395` - 300 000 DA pour DM) | PDF/A-1b + XLSX | Préalable obligatoire au dépôt NI, NF ou DM | Directeur Financier & PDT | Régie des Recettes ANPP / BNA Chéraga |
+| **ES-FIN-02** | **Bordereaux de Versement BV Variations, Renouvellements & Transferts** (Grouping PP Décret 21-82 ; BV Renouvellement DM 300k DA, BV Modification DM 150k DA, BV Transfert DM 100k DA BNA) | PDF/A-1b + XLSX | Dépôt de modifications (MI/MF), renouvellements (RI/RF/DM) ou cessions | Directeur Financier & PDT | Régie des Recettes ANPP / Trésor / BNA |
 | **ES-FIN-03** | **Fiche d'Imputation & Rapprochement Bancaire des Redevances** (Concordance Avis/BV/Quittance) | XLSX / CSV | Mensuel ou à réconciliation de la quittance ANPP | Responsable Comptable | Contrôle de Gestion / Audit Interne |
 | **Famille 3 : Vigilance Réglementaire, Compléments & Rendez-vous ANPP** | | | | | |
 | **ES-VIG-01** | **Bordereau de Réponse aux Compléments (Deficiency Reply)** (Tableau croisé Question/Réponse/GED) | PDF/A-1b | Notification d'une lettre de carence (délai 60j / 90j) | Directeur Technique | Commission Technique d'Enregistrement |
-| **ES-VIG-02** | **Fiche de Convocation & Préparation aux Rendez-vous ANPP** (Ordre du jour et historique) | PDF/A-1b | Confirmation de créneau RDV PP / RDV DM | Resp. Affaires Réglem. | Délégation Laboratoire / Accueil ANPP |
+| **ES-VIG-02** | **Fiche de Convocation & Préparation aux Rendez-vous ANPP** (Ordre du jour et historique) | PDF/A-1b | Confirmation de créneau RDV PP / RDV DM (`rdvdm.anpp.dz`) | Resp. Affaires Réglem. | Délégation Laboratoire / Accueil ANPP |
 | **ES-VIG-03** | **Rapport Périodique de Veille & Échéancier Réglementaire** (AMM J-180/90/30, textes JO parus) | PDF/A-1b + XLSX | Mensuel / Trimestriel | Resp. Affaires Réglem. | Comité de Direction / Pharmacovigilance |
 | **Famille 4 : Assurance Qualité, Intégrité BPF & 21 CFR Part 11** | | | | | |
 | **ES-QUA-01** | **Registre d'Audit Trail BPF Scellé & Traçabilité ALCOA+** (Journal immuable append-only SHA-256) | PDF/A-1b + CSV | Sur demande d'inspection ANPP ou revue qualité | Responsable AQ / BPF | Inspecteurs BPF ANPP / Auditeurs Qualité |
@@ -801,6 +851,12 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 | **Famille 5 : Pilotage Stratégique, Direction Générale & Réversibilité** | | | | | |
 | **ES-DIR-01** | **Tableau de Bord Exécutif du Portefeuille Produits** (Statuts AMM/DM, taux et délais ANPP) | PDF/A-1b + XLSX | Trimestriel / Bilan Annuel | Directeur Technique & DG | Conseil d'Administration / DG |
 | **ES-EXP-01** | **Procès-Verbal de Réversibilité & Manifeste d'Archive (.homolog)** (Inventaire 19 tables, CAS, SHA) | PDF/A-1b + JSON | À chaque sauvegarde d'exploitation ou réversibilité | Directeur Technique & DSI | Direction Générale / Huissier / Tiers Archiveur |
+| **Famille 6 : Contrôle de Conformité, Métrologie & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)** | | | | | |
+| **ES-DCE-01** | **Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique** (Filiation stricte Lot PF ↔ Lot SA ↔ Lot Semi-fini, agréments, validation LCQ par l'ANPP, Arrêté du 10 mai 2021) | PDF/A-1b | À chaque lot de produit pharmaceutique ou DM libéré | Directeur Technique Libérateur | Direction du Contrôle et de l'Expertise (DCE) |
+| **ES-DCE-02** | **Formulaires Officiels de Réception des Produits Importés soumis à Libération** (PP selon Arrêté 14/02/2021 ; DM selon Arrêtés 14/02/2021 & 20/02/2025, N° DE/DH, dédouanement, plans d'échantillonnage) | PDF/A-1b | À chaque arrivage de marchandise importée sous douane | Pharmacien DT Importateur | Bureau de Libération de Lot DCE / Douanes |
+| **ES-DCE-03** | **Exportateur Automatisé des Canevas Journaliers de Libération ANPP (.xlsx)** (Génération native des classeurs unifiés `PP-DM-Revision`, `PP-Routine` et `DM-Non-Homologues`) | XLSX Normé ANPP | Quotidien / Hebdomadaire (Obligation légale) | Resp. Libération de Lot / PDT | Service Déclarations Journalières DCE |
+| **ES-DCE-04** | **Bordereau de Composition du Dossier de Libération de Lot** (Checklist de contrôle des 8 pièces PDF indispensables + mention du 1er lot commercialisé) | PDF/A-1b | Constitution de chaque dossier de libération physique | Responsable Assurance Qualité | Direction du Contrôle et de l'Expertise (DCE) |
+| **MT-LCQ-01** | **Template Maître BPF de Certificat d'Analyse pour Standard de Référence Secondaire** (Conforme `TEMPLATE-CA-SR-secondaire.docx` : traçabilité ISO 17034, FTIR, HPLC/UV 3 essais ± U, teneur en eau) | PDF/A-1b + DOCX | Qualification et re-test de tout étalon secondaire de travail | Responsable Contrôle Qualité | Laboratoire Contrôle Qualité (LCQ) & ANPP |
 
 ---
 
@@ -825,11 +881,85 @@ Contrairement aux états réglementaires finaux destinés aux autorités sanitai
 | **EI-PIP-01** | **Point de Situation Hebdomadaire du Pipeline (Weekly Pipeline Digest)** (Synthèse CoDir : dossiers en attente ANPP, délais écoulés vs cibles 120j/180j, relances) | PDF + XLSX | Hebdomadaire (Comité de Direction) | Responsable Affaires Réglem. | Directeur Technique & Direction Générale |
 
 > **Distinction de Statut Réglementaire :**  
-> Les **15 États Réglementaires (ES)** sont des actes scellés, visés obligatoirement par le Pharmacien DT sous signature qualifiée 2FA, munis du QR-Code de vérification publique et du filigrane légal `OFFICIEL / APPROUVÉ`. À l'inverse, les **8 États Intermédiaires (EI)** portent le filigrane `DOCUMENT DE TRAVAIL / INTERNE / EN COURS` et servent exclusivement au pilotage opérationnel sans engager la responsabilité légale externe de l'établissement.
+> Les **États Réglementaires (ES)** sont des actes scellés, visés obligatoirement par le Pharmacien DT sous signature qualifiée 2FA, munis du QR-Code de vérification publique et du filigrane légal `OFFICIEL / APPROUVÉ`. À l'inverse, les **États Intermédiaires (EI)** portent le filigrane `DOCUMENT DE TRAVAIL / INTERNE / EN COURS` et servent exclusivement au pilotage opérationnel sans engager la responsabilité légale externe de l'établissement.
 
 ---
 
-### 10.4 Standards Graphiques, Typographiques & Exigences d'Édition Haute Fidélité (Charte Print BPF 300 DPI)
+### 10.4 Référentiels Officiels des Directions Spécialisées ANPP (DDM & DCE)
+
+L'intégration des trames réglementaires certifiées de l'ANPP (issues des répertoires de référence `C:\dev\document homolog\DM\` et `C:\dev\document homolog\DCE\`) enrichit la plateforme d'une conformité institutionnelle exacte :
+
+#### 10.4.1 Direction des Dispositifs Médicaux (DDM) : Homologation & Redevances BNA
+1. **Formulaire Officiel de Demande d'Homologation (6 sections intégrales) :**
+   Conforme au **Décret exécutif n° 20-324 du 22 novembre 2020** et à l'**Arrêté du 10 mai 2021 (28 Ramadhan 1442)** :
+   - *Section 1 (Renseignements Administratifs) :* Dénomination commerciale, désignation, caractéristiques, conditionnement, règle et classe de risque (I, IIa, IIb, III), durées et conditions de conservation, demandeur, détenteur, Pharmacien DT titulaire.
+   - *Certifications & Engagements :* Attestation solennelle sur l'honneur du Pharmacien DT sur la qualité, l'efficacité, la sécurité, la performance et le règlement intégral des droits.
+   - *Section 2 (Nature de la Demande) :*
+     - *Fabrication locale :* N° et date d'agrément d'exploitation MIPH, marché cible (local / exportation / les deux).
+     - *Importation :* Titulaire étranger, pays d'origine, autorisations, Certificat de Libre Vente (CLV), CPP OMS, Marquage CE ou équivalent, certification **ISO 13485** (numéro, date d'attribution et autorité émettrice).
+   - *Section 3 (Renseignements Techniques sur le DM) :* Composition, conditionnement, nomenclature/codification, dimensions, volume, classification, procédé et norme de stérilisation (OUI/NON), nature (kit, système, accessoires), durées et conditions de conservation (proposée, après ouverture, après reconstitution/dilution, stockage), échantillonnage (lots MP et PF, DDF, DDP, photos et maquettes graphiques).
+   - *Section 4 (Renseignements sur le Fabricant & Sites Industriels) :* Cartographie complète des sites (Production, Conditionnement primaire & secondaire, Stérilisation, Contrôle Qualité, Libération) avec certifications associées (BPF/GMP, ISO 13485, ISO 9001) et agrément d'exploitation.
+   - *Section 5 (Partie Technique & Performance) :*
+     - Composition détaillée par sous-composant et pourcentage pondéral (%).
+     - Dépistage formel des composants critiques : Latex (O/N), Phtalates (O/N), Principe actif médicamenteux incorporé (O/N), Origine animale ou biologique (O/N), Substances CMR / toxiques pour la reproduction (O/N).
+     - Études de stabilité accélérée (T0, T3, T6) et en temps réel (T0, T3, T6, T9, T12, T18, T24, T36).
+     - Gestion des risques selon **ISO 14971** et évaluation biologique/préclinique selon **ISO 10993**.
+   - *Section 6 (Études Cliniques) :* Normes appliquées (**ISO 14155**, **ISO 20916**), centres investigateurs et dates.
+2. **Récépissé Officiel de Dépôt des Dossiers soumis à Homologation :**
+   - Formalisation de la grille de recevabilité de la Direction DM en **13 points de contrôle**, attestant du dépôt physique et de l'enregistrement administratif (exigeant **04 exemplaires électroniques**).
+3. **Bordereaux de Versement Spécifiques DM (Compte BNA Chéraga) :**
+   En application stricte de l'**Article 31 de l'Ordonnance n° 21-07 du 08-06-2021**, les redevances d'homologation des DM sont perçues au profit du compte bancaire officiel de l'ANPP :
+   - **Établissement bancaire :** Banque Nationale d'Algérie (BNA), Agence Al Qods Chéraga.
+   - **RIB Bancaire Officiel :** `00100622030000064395`
+   - **Grille tarifaire officielle DM :**
+     - *Nouvelle Demande d'Homologation DM importé :* **300 000 DA** (`Demande-Homologation.docx`)
+     - *Renouvellement d'Homologation DM (fabriqué ou importé) :* **300 000 DA** (`BV-Renouvellement-DM.docx`)
+     - *Modification de Décision d'Homologation DM :* **150 000 DA** (`BV-Modification-DM.docx`)
+     - *Transfert de Décision d'Homologation DM :* **100 000 DA** (`BV-Tranfert-DM.docx`)
+
+#### 10.4.2 Direction du Contrôle et de l'Expertise (DCE) : Contrôle Analytique & Libération de Lot
+1. **Table Officielle d'Échantillonnage des Produits Pharmaceutiques (Norme Fr-DCE02-F/V01) :**
+   Grille statistique nationale opposable édictée par le Laboratoire de Contrôle de l'ANPP (version officielle du 01/06/2025, 10 pages) fixant les prélèvements minimaux et les contrôles exigibles selon les voies galéniques :
+   - *Voie Ophtalmique :* Stérilité, uniformité des unidoses, pH, osmolarité, taille des particules (≥ 10 récipients doseurs si lot > 200 unités ; ≥ 20 unidoses si lot ≥ 500 ; ≥ 30 doses physico-chimie).
+   - *Voie Locale (Pommades, crèmes, gels, emplâtres) :* Propreté microbienne (≥ 10g), stérilité si déclarée stérile, uniformité de teneur (≥ 10 doseurs ou ≥ 30 unidoses).
+   - *Voie Rectale :* Propreté microbienne (≥ 10g), uniformité si SA < 2% de la masse, désagrégation, temps de ramollissement (≥ 3 suppo), dureté (≥ 10 comprimés), friabilité.
+   - *Voie Nasale :* Propreté microbienne, uniformité de masse et de dose, stérilité (≥ 10 bâtons / ≥ 30 bâtons), granulométrie.
+   - *Voie Parentérale & Irrigation :* Stérilité (≥ 10 doseurs / ≥ 20 unidoses), volume extractible, contamination particulaire subvisible (100 récipients si < 25 ml ; 10 si > 25 ml), endotoxines bactériennes / pyrogènes (03 échantillons), toxicité anormale (05 récipients).
+   - *Voie Orale Liquide (Sirops, suspensions) :* Propreté microbienne (≥ 10g), uniformité des unidoses (≥ 30 doses).
+   - *Voie Orale Solide (Comprimés, gélules, lyophilisats) :* Propreté microbienne (≥ 10g), uniformité (≥ 30 doses), Dissolution Ph. Eur. 2.9.3 (≥ 24 doses), Désagrégation 2.9.1 (≥ 18 doses), Dureté 2.9.8 (≥ 10 doses), Friabilité 2.9.7, teneur en eau. Prélèvement total ≥ 0,650 g si comprimé ≤ 0,650 g.
+   - *Voie Inhalation :* Aérodynamique des particules fines, dose délivrée, efficacité des conservateurs antimicrobiens (≥ 30g, ≥ 20 doses).
+2. **Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique :**
+   Attestation formelle engageant la responsabilité légale du Pharmacien DT :
+   - *Filiation intégrale des lots :* N° lot Produit Fini (PF) ↔ N° lot Substance Active (SA) ↔ N° lot semi-fini.
+   - *Traçabilité des sites agréés :* N° agrément d'ouverture MIPH (production, conditionnement, libération) et **N° et date de décision de validation du Laboratoire de Contrôle Qualité (LCQ) octroyée par l'ANPP**.
+   - *Déclaration de conformité :* Respect des BPF et des prescriptions de l'**Arrêté du 10 mai 2021** (composition du dossier d'enregistrement).
+3. **Dossier de Libération de Lot (8 pièces obligatoires en PDF) :**
+   1. Certificat officiel de libération de lot visé par le PDT.
+   2. Bulletin d'analyse du produit fini libéré.
+   3. Bulletins d'analyse du fabricant de la substance active + bulletin de recontrôle interne.
+   4. Bulletins d'analyse du semi-fini (le cas échéant).
+   5. Tableau de correspondance exacte des lots (PF ↔ SA ↔ Semi-fini).
+   6. Copie de la décision d'enregistrement (DE) ou d'homologation (DH) en vigueur.
+   7. Agrément d'ouverture de l'établissement délivré par le MIPH.
+   8. Décision de validation du LCQ délivrée par l'ANPP.
+   *Mention spéciale obligatoire : déclaration formelle du **premier lot commercialisé** après octroi de la DE.*
+4. **Formulaires d'Importation sous Contrôle de Libération :**
+   - *Produits Pharmaceutiques (Arrêté du 14 février 2021) :* DCI, dosage, N° DE/ATU, programme prévisionnel d'importation, N° dédouanement et facture, bulletins d'analyse, document harmonisé, plan d'échantillonnage, vignette.
+   - *Dispositifs Médicaux (Arrêté du 14 février 2021 & Arrêté du 20 février 2025) :* Classe, N° DH ou accusé de dépôt ANPP (pour les DM en cours d'homologation), facture douanière, certification d'origine.
+5. **Canevas Officiels de Déclaration Journalière de Libération (.xlsx) :**
+   - `CANEVAS-Declaration-journaliere-PP-DM-Revision.xlsx` : Matrice unifiée à double onglet (`PRODUITS PHARMACEUTIQUES` et `DM CANEVAS`) ventilant les flux par destination (**Hôpital ou Officine**) et signalant le 1er lot commercialisé.
+   - `CANEVAS-Declaration-journaliere-PP.xlsx` : Suivi quotidien des lots de routine PP et traçabilité de la substance active (site de fabrication SA, lot SA, DDF/DDP).
+   - `CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx` : Suivi quotidien des DM importés dérogatoires non encore homologués.
+6. **Prototype de Certificat d'Analyse pour Standard de Référence Secondaire (MT-LCQ-01) :**
+   Conforme à `TEMPLATE-CA-SR-secondaire.docx` pour les laboratoires de contrôle qualité :
+   - Traçabilité prouvée au Standard de Référence primaire de la Pharmacopée ou organisme accrédité **ISO 17034**.
+   - Identification par spectrométrie **FTIR** ou deux techniques séparatives alternatives.
+   - Dosage et taux d'impuretés établis sur **au moins trois (03) essais comparatifs** (HPLC, UV) avec calcul des incertitudes de mesure associées ($\pm U$).
+   - Teneur en eau sur 3 essais avec feuilles de calculs brutes et chromatogrammes rattachés.
+
+---
+
+### 10.5 Standards Graphiques, Typographiques & Exigences d'Édition Haute Fidélité (Charte Print BPF 300 DPI)
 
 Pour conférer à chaque état de sortie une autorité indiscutable face à l'autorité sanitaire nationale (**ANPP**) et aux auditeurs internationaux, **Homolog** applique une charte graphique et typographique de niveau institutionnel :
 

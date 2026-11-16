@@ -2017,3 +2017,32 @@
             display: none;
         }
         html[data-theme="dark"] .login-error-banner { color: #fca5a5; }
+
+
+/* ============================================================================
+   JALON 2.1 : WORKFLOW BPF MAKER-CHECKER & REPORTING SYSTEM STYLES
+   ============================================================================ */
+.badge-wf-draft_pending { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.badge-wf-drafting { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.badge-wf-under_review { background: #fefce8; color: #a16207; border: 1px solid #fde047; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.badge-wf-pending_approval { background: #faf5ff; color: #7e22ce; border: 1px solid #d8b4fe; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.badge-wf-approved_sealed { background: #ecfdf5; color: #047857; border: 1px solid #6ee7b7; font-weight: 800; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+
+html[data-theme="dark"] .badge-wf-draft_pending { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border-color: rgba(148, 163, 184, 0.4); }
+html[data-theme="dark"] .badge-wf-drafting { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.4); }
+html[data-theme="dark"] .badge-wf-under_review { background: rgba(234, 179, 8, 0.15); color: #facc15; border-color: rgba(234, 179, 8, 0.4); }
+html[data-theme="dark"] .badge-wf-pending_approval { background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.4); }
+html[data-theme="dark"] .badge-wf-approved_sealed { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.4); }
+
+.badge-dept { font-size: 9.5px; padding: 1px 5px; border-radius: 3px; font-weight: 800; font-family: monospace; }
+.badge-dept-ra { background: #e0e7ff; color: #4338ca; }
+.badge-dept-qc { background: #dcfce7; color: #166534; }
+.badge-dept-rd { background: #fae8ff; color: #86198f; }
+.badge-dept-prod { background: #ffedd5; color: #c2410c; }
+.badge-dept-qa { background: #fef3c7; color: #92400e; }
+.badge-dept-external { background: #f3f4f6; color: #374151; }
+
+.badge-rev { font-family: monospace; font-size: 10px; font-weight: 700; background: rgba(100, 116, 139, 0.15); color: var(--text-main); padding: 1px 5px; border-radius: 3px; }
+.badge-rev-sealed { font-family: monospace; font-size: 10px; font-weight: 800; background: rgba(16, 185, 129, 0.18); color: #047857; border: 1px solid #10b981; padding: 1px 5px; border-radius: 3px; }
+
+.lock-pill { font-size: 9.5px; padding: 1px 5px; border-radius: 3px; font-weight: 700; background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }

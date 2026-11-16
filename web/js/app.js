@@ -791,6 +791,10 @@
             const btnLogin = document.getElementById("btn-login-submit");
             const loginLang = document.getElementById("login-lang-label");
 
+            const gateTitle = document.getElementById("gate-title");
+            const gateSub = document.getElementById("gate-subtitle");
+            const gateLang = document.getElementById("gate-lang-label");
+
             if (isArabic) {
                 html.setAttribute("dir", "rtl");
                 html.setAttribute("lang", "ar");
@@ -806,6 +810,10 @@
                 if (lblPwd) lblPwd.innerText = "كلمة المرور المشفرة (Argon2id) :";
                 if (btnLogin) btnLogin.innerText = "تسجيل الدخول إلى النظام ➔";
                 if (loginLang) loginLang.innerText = "🇫🇷";
+
+                if (gateTitle) gateTitle.innerText = "برمجية سند (SANAD) — المصادقة والتسجيل الصيدلاني المسبق";
+                if (gateSub) gateSub.innerText = "فضاء تنظيمي خاص وسري لمخابر الأدوية والمستلزمات الطبية في الجزائر (ANPP / MIPH)";
+                if (gateLang) gateLang.innerText = "🇫🇷";
 
                 const lRef = document.getElementById("lbl-act-ref");
                 const lCtd = document.getElementById("lbl-act-ctd");
@@ -834,6 +842,10 @@
                 if (lblPwd) lblPwd.innerText = "Mot de passe sécurisé (Argon2id) :";
                 if (btnLogin) btnLogin.innerText = "Se connecter au cockpit ➔";
                 if (loginLang) loginLang.innerText = "🇩🇿";
+
+                if (gateTitle) gateTitle.innerText = "Progiciel SANAD — Homologation ANPP & GED";
+                if (gateSub) gateSub.innerText = "Cockpit réglementaire pour l'enregistrement des Médicaments (CTD), Dispositifs Médicaux (DDM) et Compléments Alimentaires en Algérie (ANPP / MIPH).";
+                if (gateLang) gateLang.innerText = "🇩🇿";
 
                 const lRef = document.getElementById("lbl-act-ref");
                 const lCtd = document.getElementById("lbl-act-ctd");

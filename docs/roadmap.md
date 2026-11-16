@@ -220,7 +220,7 @@ gantt
 - [x] **Environnement Docker & Docker-Compose de Production :**
   - [x] `Dockerfile` multi-stage durci avec binaire statique Go CGO_ENABLED=0 (`v0.8.0`), image Alpine minimale, utilisateur non-root `homolog:homolog`, santé `/health`.
   - [x] `docker-compose.yml` orchestrant l'application et la base PostgreSQL 16 Alpine avec healthcheck `pg_isready` et volumes persistants.
-  - [x] Fichier `.env.production` avec durcissement PSSI (désactivation stricte du commutateur dev, Cookie Secure forcé, clé JWT 64+ car., timeout 15 min BPF).
+  - [x] Fichier `.env.production` avec durcissement PSSI (désactivation stricte du commutateur dev et du support commercial Pitch Deck `/presentation`, Cookie Secure forcé, clé JWT 64+ car., timeout 15 min BPF).
 - [x] **Assistant de Premier Démarrage (Setup Wizard BPF 1.A.7) :**
   - [x] Détection automatique du statut vierge de l'instance (`GET /api/v1/setup/status`).
   - [x] Provisionnement initial de l'établissement MIPH et du compte Pharmacien DT titulaire (`POST /api/v1/setup/initialize`).
@@ -241,7 +241,7 @@ gantt
 > **Objectif stratégique :** Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), les modèles maîtres ANPP/ICH, le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, la recherche plein texte et le multi-tenant SaaS.
 
 ### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver)
-- [ ] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
+- [x] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
   - Matrice d'affectation métier selon l'expertise (Section 7.4 du Cahier des Charges) :
     - *Affaires Réglementaires (RA)* : Module 1 complet, notices patient bilingues FR/AR (1.P.2), résumés des caractéristiques (RCP 1.P.1), maquettes, bordereaux BV1/BV2, lettres d'engagements (1.P.8, 1.P.9, 1.H.10) et dossiers de variations (LD-DEPP07/V01).
     - *Contrôle Qualité (CQ) & Stabilités* : Spécifications analytiques SA/PF (3.2.S.4, 3.2.P.5.1), protocoles et rapports de validation des méthodes d'analyse selon ICH Q2(R1) (3.2.P.5.3), bulletins d'analyse libératoires CoA (1.P.4, 1.P.5), et protocoles/rapports d'études de stabilité sous conditions climatiques Zone IVb (3.2.P.8).
@@ -269,17 +269,18 @@ gantt
     - Lettre d'engagement de suivi de stabilité continue post-commercialisation en Zone IVb (1.P.9).
     - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
     - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
-- [ ] **Moteur Universel de Restitution & Référentiel des 23 États Documentaires (Chapitre 10 du Cahier des Charges) :**
+- [ ] **Moteur Universel de Restitution & Référentiel des 28 États Documentaires (Chapitre 10 du Cahier des Charges) :**
   - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
   - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL / EN COURS` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
   - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://homolog.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
   - Paginage légal indélébile **`Page X sur Y`** et cartouche d'identification normalisé (raison sociale, agrément MIPH, DCI, version, horodatage UTC+1 certifié).
-  - **Volet A : Les 15 États Réglementaires & Finaux Opposables (ES) :**
-    - *Famille 1 (Dépôt & Procédures CTD) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP).
-    - *Famille 2 (Redevances & Financier Décret 21-82) :* ES-FIN-01 (Bordereau BV1 initial/DM), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
-    - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
+  - **Volet A : Les États Réglementaires & Finaux Opposables (ES) :**
+    - *Famille 1 (Dépôt & Procédures CTD / DM) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3 Médicament & Formulaire d'Homologation DM en 6 sections Décret 20-324), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-03-DM (Récépissé de dépôt DM en 13 points), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP/ANPP calculé selon la table Fr-DCE02-F/V01).
+    - *Famille 2 (Redevances & Financier Décret 21-82 & Ordonnance 21-07) :* ES-FIN-01 (Bordereau BV1 initial Médicament Trésor Public CAS 302.145 ou BV DM BNA Chéraga RIB `00100622030000064395` - 300 000 DA), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping PP et BV DM BNA Modification 150k DA / Renouvellement 300k DA / Transfert 100k DA), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
+    - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP PP/DM), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
     - *Famille 4 (Qualité & Audit Trail BPF) :* ES-QUA-01 (Registre d'Audit Trail scellé ALCOA+), ES-QUA-02 (Manifeste de signature électronique Maker-Checker), ES-QUA-03 (Fiche de contrôle documentaire pré-dépôt).
     - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.homolog`).
+    - *Famille 6 (Contrôle de Conformité, Métrologie & Libération DCE) :* ES-DCE-01 (Certificat Officiel de Libération de Lot du Pharmacien DT avec traçabilité PF/SA/Semi-fini et validation LCQ), ES-DCE-02 (Formulaires de réception à l'importation PP Arrêté 14/02/2021 et DM Arrêté 20/02/2025), ES-DCE-03 (Exportateur automatisé des canevas journaliers Excel ANPP unifiés), ES-DCE-04 (Bordereau de composition du dossier de libération en 8 pièces PDF), MT-LCQ-01 (Template Maître Standard de Référence Secondaire ISO 17034).
   - **Volet B : Les 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel (EI) :**
     - *Suivi de montage CTD & Gating :* EI-AVT-01 (Fiche Navette d'avancement 360° et verrous bloquants), EI-AVT-02 (Relevé des écarts et pièces manquantes Gap Analysis par département), EI-AVT-03 (Fiche d'annotation et d'arbitrage Checker / AQ lors d'un rejet).
     - *Épreuves temporelles incompressibles :* EI-CHR-01 (Fiche de suivi des stabilités Zone IVb M0 à M24 avec alerte seuil légal M6), EI-CHR-02 (Rapport d'étape bioéquivalence CRO avec suivi IC 90%).
@@ -291,8 +292,16 @@ gantt
   - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
   - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
 
-### Jalon 2.2 : Suivi des Redevances Réglementaires & Devises
-- [ ] Barèmes configurables des redevances ANPP selon la procédure (**NI, RI, MI, NF, RF, MF**) et la classe de produit.
+### Jalon 2.2 : Suivi des Redevances Réglementaires, Devises & Console de Paramétrage Institutionnel
+- [ ] **Console de Paramétrage des Variables Réglementaires & Institutionnelles :**
+  - Interface dédiée au sein de la Console d'Administration permettant la mise à jour dynamique des coordonnées bancaires ANPP (RIB Médicaments BNA/CAS 302.145, RIB Dispositifs Médicaux BNA Al Qods `00100622030000064395`), des bénéficiaires et ordres légaux de chèques certifiés (*Régisseur des recettes de l'ANPP*).
+  - Gestion des barèmes tarifaires configurables (Décret 21-82, Décret 21-551, Ordonnance 21-07 Art. 31) avec versioning temporel (`valid_from` / `valid_to`) pour garantir la reproductibilité et l'immuabilité ALCOA+ des états de sortie historiques ES-FIN-01.
+  - Paramétrage des guichets, adresses des directions spécialisées de l'ANPP (DEPP, DDM, DCE/LNCM, DAF) et des délais légaux de réponse aux notifications d'insuffisance (45 jours, 90 jours).
+  - Workflow de validation des modifications critiques (proposition Maker par l'Admin Labo / Dir. Fin., approbation obligatoire par le Pharmacien DT avec signature électronique 21 CFR Part 11, TOTP et audit trail scellé).
+- [ ] Barèmes configurables des redevances ANPP selon la procédure (**NI, RI, MI, NF, RF, MF, HOMOLOG_DM**) et la nature du produit.
+- [ ] **Dualité des circuits bancaires officiels de l'ANPP :**
+  - *Circuit Médicaments (Décret 21-82) :* Domiciliation Trésor Public / BNA Agence Al Qods Chéraga (CAS n° 302.145) avec liquidation détaillée (instruction Art. 3, expertise LNCM Art. 5, frais de timbre Art. 12).
+  - *Circuit Dispositifs Médicaux (Ordonnance n° 21-07 du 08-06-2021 Art. 31) :* Domiciliation bancaire officielle auprès de la **Banque Nationale d'Algérie (BNA) Agence Al Qods Chéraga (RIB `00100622030000064395`)**, avec barème institutionnel : Homologation initiale importée (**300 000 DA**), Renouvellement DM (**300 000 DA**), Modification DM (**150 000 DA**) et Transfert DM (**100 000 DA**).
 - [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
 
@@ -336,9 +345,13 @@ gantt
 - [ ] Date d'expiration de contrat automatique révoquant les accès à l'échéance.
 - [ ] Journalisation et marquage d'audit renforcé sur chaque action de consultation ou dépôt par un consultant.
 
-### Jalon 2.5 : Procédure de Régularisation des Dispositifs Médicaux (Décret 20-324)
-- [ ] Inventaire des DM déjà mis sur le marché sans décision d'homologation.
-- [ ] Checklist spécifique de régularisation selon l'arrêté du 10 mai 2021.
+### Jalon 2.5 : Procédure de Régularisation & Homologation Complète des Dispositifs Médicaux (DDM)
+- [ ] **Formulaire Officiel de Demande d'Homologation DM (Décret exécutif 20-324 & Arrêté du 10 mai 2021) :**
+  - Intégration des 6 sections normées : Renseignements administratifs, certifications/engagements PDT, nature de la demande (Fabrication locale vs Importation avec CLV/CPP/CE/ISO 13485), caractéristiques et stérilisation, cartographie complète des fabricants/sous-traitants, partie technique et sécurité (composition %, dépistage latex/phtalates/CMR/médicament/biologique, stabilité T0-T36, gestion des risques **ISO 14971**, évaluation biologique **ISO 10993** et clinique **ISO 14155**).
+- [ ] **Récépissé Officiel de Dépôt des Dossiers soumis à Homologation :**
+  - Grille d'évaluation de la recevabilité administrative et technique en **13 points de contrôle**, attestant du dépôt physique auprès de la Direction DM de l'ANPP (gestion des 04 exemplaires électroniques obligatoires).
+- [ ] **Module de Régularisation des DM sans Homologation :**
+  - Inventaire des DM déjà commercialisés sous mesures transitoires, suivi des accusés de réception de dépôt et formalisation des déclarations quotidiennes dérogatoires (`CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx`).
 - [ ] Tableau de suivi des mesures transitoires et des échéances de dépôt de régularisation.
 
 ### Jalon 2.6 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
@@ -355,6 +368,24 @@ gantt
 - [ ] Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).
 - [ ] Déploiement sans redémarrage des nouveaux modèles de checklists CTD ou fiches de variations émises par l'ANPP.
 - [ ] Vue comparative (Diff) entre le modèle de dossier actuel et le nouveau modèle avant application validée par l'administrateur.
+
+### Jalon 2.9 : Module de Contrôle Analytique & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)
+- [ ] **Calculateur d'Échantillonnage Statistique Homologué (Norme Fr-DCE02-F/V01) :**
+  - Moteur de calcul automatisé des quantités de prélèvements requises selon l'édition officielle du 01/06/2025 (10 pages) pour les 8 voies galéniques : Ophtalmique, Locale, Rectale, Nasale, Parentérale & Irrigation, Orale liquide, Orale solide (dissolution Ph. Eur. 2.9.3, désagrégation, dureté, friabilité), et Inhalation.
+- [ ] **Générateur du Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique :**
+  - Attestation légale conforme BPF et à l'Arrêté du 10 mai 2021 avec traçabilité et filiation stricte : **N° lot Produit Fini (PF) ↔ N° lot Substance Active (SA) ↔ N° lot Semi-fini**.
+  - Intégration obligatoire du N° d'agrément d'ouverture MIPH et de la **Décision de validation du Laboratoire de Contrôle Qualité (LCQ) octroyée par l'ANPP**.
+- [ ] **Dossier Électronique de Libération de Lot (Contrôle des 8 pièces PDF) :**
+  - Contrôle d'exhaustivité et agrégation : Certificat de libération, bulletin PF, bulletins SA fabricant + recontrôle, bulletin semi-fini, tableau de correspondance des lots, copie DE/DH, agrément MIPH, validation LCQ ANPP et déclaration formelle du premier lot commercialisé.
+- [ ] **Module de Réception des Produits Importés sous Contrôle Libératoire :**
+  - Fiches d'importation conformes aux arrêtés du 14/02/2021 (PP) et 20/02/2025 (DM), contrôle des déclarations douanières, factures, bulletins d'analyse et programmes d'importation.
+- [ ] **Générateur Natif des Canevas Officiels de Déclaration Journalière (.xlsx) :**
+  - Production en un clic des classeurs Excel institutionnels de l'ANPP :
+    - `CANEVAS-Declaration-journaliere-PP-DM-Revision.xlsx` (Double onglet PP et DM, ventilation Hôpital / Officine).
+    - `CANEVAS-Declaration-journaliere-PP.xlsx` (Traçabilité SA et routine PP).
+    - `CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx` (Régularisation DM).
+- [ ] **Template Maître BPF pour Standard de Référence Secondaire (MT-LCQ-01) :**
+  - Trame normalisée pour les LCQ conforme à `TEMPLATE-CA-SR-secondaire.docx` (Traçabilité ISO 17034 / pharmacopée primaire, confirmation FTIR, 3 essais comparatifs HPLC/UV avec incertitudes ± U, teneur en eau).
 
 ---
 
@@ -411,5 +442,5 @@ gantt
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth, Produits & Réversibilité validés (100%) | Argon2id, TOTP, Sessions, CAS, RBAC & Backup conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
-| **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC & Décret 21-82 | 23 états spécifiés (15 états réglementaires finaux + 8 états intermédiaires de suivi d'avancement) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
+| **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC, Décret 21-82 & Ordonnance 21-07 | 28 états spécifiés (20 états réglementaires finaux couvrant CTD DEPP, Dispositifs Médicaux DDM et Contrôle Libératoire DCE + 8 états intermédiaires) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
 | **Copilote IA Réglementaire (Phase 3)** | Spécifié (RAG pgvector, SOP, Rédaction & Audit) | Consigné au CDC (Chapitre 11) & Architecture AI-Ready | 100% Souverain / Cloud sécurisé, Human-in-the-Loop & Traçabilité ALCOA+ ⏳ |
