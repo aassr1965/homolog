@@ -443,26 +443,33 @@ Cette console regroupe l'ensemble des modules d'administration :
 
 Afin d'éviter tout codage en dur de variables institutionnelles sujettes à modifications législatives, ministérielles ou bancaires (ex: changement de domiciliation bancaire de l'ANPP, mise à jour des barèmes de redevances par décret exécutif, ajustement des délais de réponse aux notifications d'insuffisance), la plateforme intègre un **Moteur de Paramétrage Réglementaire Découplé** doté d'une gouvernance BPF stricte.
 
-#### 6.4.1 Typologie des Variables Réglementaires Configurables
+> [!IMPORTANT]
+> **Architecture Découplée & Paramétrage par Tenant (`organization_id`) :**
+> L'ensemble des coordonnées bancaires, comptes de trésorerie et barèmes de redevances est **strictement partitionné par laboratoire/tenant**. Aucun compte bancaire ni barème n'est codé en dur dans l'application. Chaque établissement configure et ajuste ses propres paramètres dans l'espace **« Settings du Tenant »** de *Sanad Admin Console*. Le tableau ci-dessous détaille la nomenclature des paramètres système ainsi que le **jeu de valeurs initiales par défaut** injecté lors du provisionnement (*seed*) du laboratoire.
 
-Le tableau ci-dessous détaille les familles de paramètres administrables dynamiquement :
+#### 6.4.1 Typologie des Variables Réglementaires Configurables (Settings du Tenant)
 
-| Famille de Paramètres | Code Clé Système | Type & Exemple de Valeur | Impact Métier / États de Sortie | Rôle Habilité à Modifier | Approbation Requise |
+Le tableau ci-dessous détaille les familles de paramètres administrables dynamiquement au niveau de chaque tenant :
+
+| Famille de Paramètres | Code Clé Système | Type & Valeur Initiale par Défaut | Impact Métier / États de Sortie | Rôle Habilité à Modifier | Approbation Requise |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **RIB ANPP Médicaments** | `FIN_BANK_RIB_MEDICINE` | Chaine : `001 00622 0300000643 95` | Bordereaux ES-FIN-01 (PP), calcul de liquidation | Admin Labo | **Pharmacien DT (2FA)** |
-| **Banque & Agence ANPP** | `FIN_BANK_NAME_MEDICINE` | Chaine : `BNA Agence Al Qods Chéraga` | Volet bancaire ES-FIN-01 | Admin Labo | **Pharmacien DT (2FA)** |
-| **Compte CAS Médicaments** | `FIN_CAS_ACCOUNT_MEDICINE` | Chaine : `CAS N° 302.145 (Fonds Spécial ANPP)` | Mentions légales Trésor Public | Admin Labo | **Pharmacien DT (2FA)** |
-| **RIB ANPP Dispositifs Méd.** | `FIN_BANK_RIB_DM` | Chaine : `001 00622 0300000643 95` | Bordereaux ES-FIN-01 (DM), Formulaire ES-REG-02-DM | Admin Labo | **Pharmacien DT (2FA)** |
-| **Banque Domiciliataire DM** | `FIN_BANK_NAME_DM` | Chaine : `BNA Agence Al Qods — Chéraga (Guichet 00622)` | Bordereaux de versement DDM | Admin Labo | **Pharmacien DT (2FA)** |
-| **Ordre Chèques Certifiés** | `FIN_CHECK_BENEFICIARY_ORDER` | Chaine : `Régisseur des recettes de l'ANPP` | Alternative Décret 21-551 Art. 3 | Admin Labo | **Pharmacien DT (2FA)** |
-| **Barème Enregistrement NI** | `FEE_PROCEDURE_NI_DZD` | Numérique : `355000.00` | Liquidation automatique ES-FIN-01 | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
-| **Barème Homologation DM** | `FEE_PROCEDURE_DM_DZD` | Numérique : `300000.00` | Liquidation automatique ES-FIN-01 (DM) | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
-| **Barème Renouvellement RI** | `FEE_PROCEDURE_RI_DZD` | Numérique : `205000.00` | Renouvellement quinquennal PP | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
-| **Barème Variation Majeure** | `FEE_PROCEDURE_MI_DZD` | Numérique : `115000.00` | Variations LD-DEPP07 / Grouping | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
-| **Délai Réponse Insuffisances** | `REG_DEFICIENCY_DEADLINE_DAYS` | Entier : `45` (ou `90`) | Compte à rebours légal alertes & dashboard | Admin Labo / Resp. Reg. | **Pharmacien DT (2FA)** |
-| **Guichet Dépôt DEPP** | `INST_ANPP_DEPP_ADDRESS` | Texte : `Bordereau DEPP, Rue Didouche Mourad, Alger` | En-têtes ES-REG-01, ES-REG-02 | Admin Labo | **Pharmacien DT (2FA)** |
+| **Médicaments : Mode de Règlement** | `FIN_PAYMENT_MODE_MEDICINE` | Chaine : `TRESOR_PUBLIC_OU_CHEQUE` | Modalité de liquidation des dossiers DEPP | Admin Labo | **Pharmacien DT (2FA)** |
+| **Médicaments : Compte Trésor** | `FIN_TREASURY_ACCOUNT_MEDICINE` | Chaine : `CAS N° 302.145 (Fonds Spécial ANPP)` | Mentions légales Trésor Public (Décret 21-82) | Admin Labo | **Pharmacien DT (2FA)** |
+| **Médicaments : Ordre Bénéficiaire** | `FIN_BENEFICIARY_ORDER_MEDICINE` | Chaine : `Régisseur des recettes de l'ANPP` | Libellé des chèques certifiés et bordereaux BV1/BV2 | Admin Labo | **Pharmacien DT (2FA)** |
+| **Dispositifs Méd. : Banque** | `FIN_BANK_NAME_DM` | Chaine : `BNA Agence Al Qods — Chéraga (Guichet 00622)` | Bordereaux de versement DDM (Ordonnance 21-07) | Admin Labo | **Pharmacien DT (2FA)** |
+| **Dispositifs Méd. : RIB ANPP** | `FIN_BANK_RIB_DM` | Chaine : `00100622030000064395` | Bordereaux ES-FIN-01 (DM), Formulaire ES-REG-02-DM | Admin Labo | **Pharmacien DT (2FA)** |
+| **Barème PP : Enregistrement NI** | `FEE_MEDICINE_NI_DZD` | Numérique : `355000.00` | Liquidation automatique ES-FIN-01 Médicaments | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème PP : Renouvellement RI** | `FEE_MEDICINE_RI_DZD` | Numérique : `205000.00` | Renouvellement quinquennal Médicaments | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème PP : Variation Majeure (Mmaj)**| `FEE_MEDICINE_MI_DZD` | Numérique : `115000.00` | Variations Mmaj Décret 21-82 / Grouping PP | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème DM : Homologation Initiale** | `FEE_DM_HOMOLOGATION_DZD` | Numérique : `300000.00` | Liquidation automatique ES-FIN-01 DM | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème DM : Renouvellement DM** | `FEE_DM_RENEWAL_DZD` | Numérique : `300000.00` | Renouvellement quinquennal DM (BNA Chéraga) | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème DM : Modification DM** | `FEE_DM_MODIFICATION_DZD` | Numérique : `150000.00` | Modification technique DM (BNA Chéraga) | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Barème DM : Transfert DM** | `FEE_DM_TRANSFER_DZD` | Numérique : `100000.00` | Cession / transfert d'homologation DM | Admin Labo / Dir. Fin. | **Pharmacien DT (2FA)** |
+| **Délai Carence Réglementaire (Standard)**| `REG_DEFICIENCY_DEADLINE_STANDARD_DAYS`| Entier : `90` | Compte à rebours légal initial (J-90 / J-60 / J-30) | Admin Labo / Resp. Reg. | **Pharmacien DT (2FA)** |
+| **Délai Carence Réglementaire (Relance)** | `REG_DEFICIENCY_DEADLINE_URGENT_DAYS`  | Entier : `45` (ou `60`) | Délai sur mise en demeure ou relance formelle ANPP | Admin Labo / Resp. Reg. | **Pharmacien DT (2FA)** |
+| **Guichet Dépôt DEPP** | `INST_ANPP_DEPP_ADDRESS` | Texte : `Direction de l'Enregistrement, Rue Didouche Mourad, Alger` | En-têtes ES-REG-01, ES-REG-02 | Admin Labo | **Pharmacien DT (2FA)** |
 | **Guichet Dépôt DDM** | `INST_ANPP_DDM_ADDRESS` | Texte : `Direction des Dispositifs Médicaux, Alger` | ES-REG-02-DM, ES-REG-03-DM | Admin Labo | **Pharmacien DT (2FA)** |
-| **Laboratoire Contrôle DCE** | `INST_ANPP_DCE_ADDRESS` | Texte : `Laboratoire National de Contrôle des Médicaments (LNCM)` | Module DCE & Demande d'expertise | Admin Labo | **Pharmacien DT (2FA)** |
+| **Laboratoire Contrôle DCE** | `INST_ANPP_DCE_ADDRESS` | Texte : `Laboratoire National de Contrôle des Produits Pharmaceutiques (LNCPP)` | Module DCE & Demande d'expertise | Admin Labo | **Pharmacien DT (2FA)** |
 
 #### 6.4.2 Temporalité & Règle d'Immuabilité Rétroactive (GAMP 5 / ALCOA+)
 
@@ -478,7 +485,7 @@ Le tableau ci-dessous détaille les familles de paramètres administrables dynam
 Conformément à la politique PSSI et au principe de non auto-approbation (*SoD*) :
 1. **Étape 1 (Maker - Proposition) :** L'Administrateur du Laboratoire ou le Responsable Financier saisit la modification d'un paramètre (ex: mise à jour d'un code RIB) avec mention obligatoire du **motif réglementaire** (référence du nouveau texte officiel, arrêté ou notification ANPP) et téléversement de la pièce justificative au format PDF/A.
 2. **Étape 2 (Vérification & Contrôle) :** Le système bascule le paramètre en statut `EN_ATTENTE_APPROBATION_DT`. L'ancienne valeur reste active pour les opérations courantes.
-3. **Étape 3 (Approver - Visa DT avec 2FA) :** Le Pharmacien Directeur Technique examine le projet dans son parapheur électronique dédié. Il valide la modification par signature électronique qualifiée (21 CFR Part 11) avec contrôle TOTP.
+3. **Étape 3 (Approver - Visa DT avec 2FA) :** Le Pharmacien Directeur Technique examine le projet dans son parapheur électronique dédié. Il valide la modification par signature électronique avancée traçable (conforme 21 CFR Part 11 / GAMP 5) avec contrôle TOTP.
 4. **Étape 4 (Audit Trail Automatique) :** L'action est scellée dans la table `audit_logs` avec l'empreinte SHA-256 de la modification, l'identité du signataire, l'adresse IP et la date UTC+1.
 
 ---
@@ -549,7 +556,7 @@ Le contrôle d'accès est régi par 14 permissions unitaires combinées aux 9 pr
 
 *(1) **Cloisonnement Consultant Externe :** Accès restreint strictement limité aux seuls documents et sections CTD/DM explicitement assignés par le Responsable Réglementaire. Tout accès transverse à la GED générale, aux formules confidentielles ou aux autres dossiers est bloqué.*  
 *(2) **Principe Zero-Trust Administrateurs :** Interdiction technique absolue de téléchargement et de consultation du contenu des pièces pharmaceutiques et données de santé pour les rôles d'administration technique.*  
-*(3) **Séparation des Fonctions (SoD) :** Pour garantir la conformité BPF, le Pharmacien Directeur Technique exerce le rôle d'**Approver** (visa légal). Le système lui interdit de s'auto-désigner comme Maker et Approver d'un même document sans relecture indépendante par un Checker.*
+*(3) **Séparation des Fonctions (SoD) & Non Auto-Approbation :** Pour garantir la conformité BPF et l'intégrité ALCOA+, la règle stricte Maker ≠ Approver s'applique de façon absolue sans exception. Le Pharmacien Directeur Technique exerce le rôle légal d'**Approver** (visa opposable). Le moteur applicatif lui interdit formellement d'être à la fois Maker et Approver d'un même document (l'auto-approbation est techniquement bloquée au niveau de l'API et de la base de données).*
 
 #### 7.2.1 Blocage Hermétique des Routes API (Backend Defense-in-Depth)
 Le masquage dans l'interface utilisateur ne constitue en aucun cas la barrière de sécurité principale. La plateforme applique le principe fondamental de **Défense en Profondeur** : chaque endpoint API HTTP/REST est strictement verrouillé côté serveur par le middleware `RequirePermission(perm)` ou `RequireRole(roles...)`. Toute requête non autorisée (y compris via tentative directe par script, curl ou manipulation de requêtes) est interceptée immédiatement avec les règles suivantes :
@@ -896,7 +903,7 @@ Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (**AN
 Chaque état de sortie produit par le système intègre nativement une triple barrière de sécurisation et d'authentification conforme au principe **ALCOA+** :
 1. **Filigranes Dynamiques d'État de Cycle de Vie :**
    - `BROUILLON (DRAFT)` : Apposé en diagonale translucide sur tout document en cours d'élaboration ou non encore visé par le Pharmacien Directeur Technique (interdiction formelle de dépôt).
-   - `OFFICIEL / APPROUVÉ` : Apposé avec cartouche vert BPF dès que le flux *Maker-Checker-Approver* est complété et scellé par la signature électronique qualifiée 2FA du Directeur Technique.
+   - `OFFICIEL / APPROUVÉ` : Apposé avec cartouche vert BPF dès que le flux *Maker-Checker-Approver* est complété et scellé par la signature électronique certifiée 2FA (conforme 21 CFR Part 11) du Directeur Technique.
    - `ARCHIVÉ / PÉRIMÉ` : Apposé automatiquement avec timbre rouge dès qu'une révision ultérieure du dossier est approuvée ou qu'un renouvellement/avenant remplace l'état antérieur.
 2. **Dispositif Anti-Falsification par QR-Code Cryptographique :**
    Chaque page imprimée comporte en cartouche inférieur un QR-code sécurisé contenant l'URL de vérification d'authenticité :  
@@ -928,7 +935,7 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 | **ES-VIG-03** | **Rapport Périodique de Veille & Échéancier Réglementaire** (AMM J-180/90/30, textes JO parus) | PDF/A-1b + XLSX | Mensuel / Trimestriel | Resp. Affaires Réglem. | Comité de Direction / Pharmacovigilance |
 | **Famille 4 : Assurance Qualité, Intégrité BPF & 21 CFR Part 11** | | | | | |
 | **ES-QUA-01** | **Registre d'Audit Trail BPF Scellé & Traçabilité ALCOA+** (Journal immuable append-only SHA-256) | PDF/A-1b + CSV | Sur demande d'inspection ANPP ou revue qualité | Responsable AQ / BPF | Inspecteurs BPF ANPP / Auditeurs Qualité |
-| **ES-QUA-02** | **Manifeste de Signature Électronique BPF (Maker-Checker)** (Preuve de double visa qualifié) | PDF/A-1b | Scellement de toute version officielle de document CTD | Directeur Technique | Dossier de Lot / Dossier Maître AMM |
+| **ES-QUA-02** | **Manifeste de Signature Électronique BPF (Maker-Checker)** (Preuve de double visa conforme 21 CFR Part 11 / GAMP 5) | PDF/A-1b | Scellement de toute version officielle de document CTD | Directeur Technique | Dossier de Lot / Dossier Maître AMM |
 | **ES-QUA-03** | **Fiche de Contrôle Documentaire Pré-Dépôt (Checklist)** (PV d'audit d'exhaustivité M1-M5) | PDF/A-1b | Préalable à toute validation de soumission PDT | Responsable AQ & PDT | Dossier d'Enregistrement Interne |
 | **Famille 5 : Pilotage Stratégique, Direction Générale & Réversibilité** | | | | | |
 | **ES-DIR-01** | **Tableau de Bord Exécutif du Portefeuille Produits** (Statuts AMM/DM, taux et délais ANPP) | PDF/A-1b + XLSX | Trimestriel / Bilan Annuel | Directeur Technique & DG | Conseil d'Administration / DG |
@@ -963,7 +970,7 @@ Contrairement aux états réglementaires finaux destinés aux autorités sanitai
 | **EI-PIP-01** | **Point de Situation Hebdomadaire du Pipeline (Weekly Pipeline Digest)** (Synthèse CoDir : dossiers en attente ANPP, délais écoulés vs cibles 120j/180j, relances) | PDF + XLSX | Hebdomadaire (Comité de Direction) | Responsable Affaires Réglem. | Directeur Technique & Direction Générale |
 
 > **Distinction de Statut Réglementaire :**  
-> Les **États Réglementaires (ES)** sont des actes scellés, visés obligatoirement par le Pharmacien DT sous signature qualifiée 2FA, munis du QR-Code de vérification publique et du filigrane légal `OFFICIEL / APPROUVÉ`. À l'inverse, les **États Intermédiaires (EI)** portent le filigrane `DOCUMENT DE TRAVAIL / INTERNE / EN COURS` et servent exclusivement au pilotage opérationnel sans engager la responsabilité légale externe de l'établissement.
+> Les **États Réglementaires (ES)** sont des actes scellés, visés obligatoirement par le Pharmacien DT sous signature électronique 2FA (conforme 21 CFR Part 11), munis du QR-Code de vérification publique et du filigrane légal `OFFICIEL / APPROUVÉ`. À l'inverse, les **États Intermédiaires (EI)** portent le filigrane `DOCUMENT DE TRAVAIL / INTERNE / EN COURS` et servent exclusivement au pilotage opérationnel sans engager la responsabilité légale externe de l'établissement.
 
 ---
 
