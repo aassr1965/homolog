@@ -50,6 +50,54 @@
 <body>
     <h1 class="sr-only" style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0;">SANAD PHARMA — Cockpit Réglementaire ANPP &amp; GED Pharmaceutique</h1>
 
+    <!-- Sas d'Accès Partenaire Confidentiel (Private Preview Gate) -->
+    <div id="screen-gate" class="login-screen" style="display:none;">
+        <div class="login-card" style="max-width:460px; border-color: rgba(147, 51, 234, 0.35); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45), 0 0 25px rgba(147, 51, 234, 0.2);">
+            <div class="login-header">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="brand-caducee-icon" title="Caducée Pharmaceutique Algérien Officiel (Croissant, Coupe & Serpent)">
+                            <img src="/img/caducee-algerie.png" alt="Caducée Pharmacie Algérien" width="22" height="22" loading="eager" style="width:22px; height:22px; object-fit:contain;">
+                        </span>
+                        <span class="brand-badge" style="font-size:12px; padding:3px 8px;">HOMOLOG</span>
+                        <span style="font-size:10px; background:rgba(147,51,234,0.18); color:#c084fc; border:1px solid rgba(192,132,252,0.3); padding:2px 8px; border-radius:10px; font-weight:700;">ACCÈS PRIVÉ CONFIDENTIEL</span>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-pill" onclick="toggleTheme()" title="Basculer thème" style="height:26px; padding:2px 6px;">
+                            <span id="gate-theme-icon">☀️</span>
+                        </button>
+                        <button class="btn-pill" onclick="toggleLanguage()" title="Changer de langue" style="height:26px; padding:2px 6px;">
+                            <span id="gate-lang-label">🇩🇿</span>
+                        </button>
+                    </div>
+                </div>
+                <h2 style="font-size:16px; font-weight:700; color:var(--text-main); margin-bottom:4px;" id="gate-title">Sas d'Avant-Première Partenaire</h2>
+                <p style="font-size:11px; color:var(--text-muted);" id="gate-subtitle">Environnement Réglementaire Sécurisé &amp; Sous Accord de Confidentialité</p>
+            </div>
+
+            <form class="login-body" onsubmit="handleGateSubmit(event)">
+                <div id="gate-error" class="login-error-banner" style="display:none;"></div>
+
+                <div style="background:rgba(147, 51, 234, 0.08); border:1px solid rgba(192, 132, 252, 0.25); border-radius:6px; padding:12px; margin-bottom:14px; font-size:11px; line-height:1.5; color:var(--text-main);">
+                    🔒 <strong>Plateforme en Accès Restreint :</strong> Cet environnement contient des technologies et processus réglementaires soumis au secret industriel. Veuillez saisir votre <strong>code d'accès partenaire</strong> pour déverrouiller la mire de connexion.
+                </div>
+
+                <div class="login-field">
+                    <label for="gate-passcode" id="lbl-gate-passcode">Code d'accès partenaire :</label>
+                    <input type="password" id="gate-passcode" class="login-input" placeholder="••••••••••••" required autocomplete="current-password" autofocus style="letter-spacing:2px; font-size:13px;">
+                </div>
+
+                <button type="submit" id="btn-gate-submit" class="btn-login-submit" style="background:linear-gradient(135deg, #7c3aed 0%, #9333ea 100%); border-color:#9333ea; font-weight:700;">
+                    Déverrouiller l'accès ➔
+                </button>
+
+                <div style="text-align:center; font-size:10px; color:var(--text-dim); line-height:1.4; border-top:1px dashed var(--border-color); padding-top:10px; margin-top:8px;">
+                    🛡️ <strong>Protection Cryptographique :</strong> Validation en temps constant • Session chiffrée HttpOnly SameSite Strict • Conformité PSSI &amp; BPF.
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Écran d'Authentification Forte Nominative (21 CFR Part 11 / BPF) -->
     <div id="screen-login" class="login-screen" style="display:flex;">
         <div class="login-card">
@@ -139,6 +187,9 @@
 
                 <div style="text-align:center; font-size:10px; color:var(--text-dim); line-height:1.4; border-top:1px dashed var(--border-color); padding-top:10px;">
                     🔒 <strong>Sécurité ALCOA+ &amp; 21 CFR Part 11 :</strong> Session chiffrée HttpOnly, verrouillage sur inactivité (15 min BPF), protection anti-bruteforce (5 essais = 15 min de blocage) et traçabilité inviolable dans l'Audit Trail.
+                </div>
+                <div id="gate-relock-container" style="display:none; text-align:center; margin-top:8px;">
+                    <a href="javascript:void(0)" onclick="handleGateLock()" style="font-size:10px; color:#c084fc; text-decoration:none;">🔒 Reverrouiller le sas confidentiel partenaire</a>
                 </div>
             </form>
         </div>

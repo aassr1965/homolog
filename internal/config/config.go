@@ -41,6 +41,9 @@ type Config struct {
 	// Tenant specific for on-premise
 	OnPremOrgSlug string
 	OnPremOrgName string
+
+	// GatePasscode defines an optional confidential passkey protecting entry to the app
+	GatePasscode string
 }
 
 // Load reads configuration from environment variables with safe enterprise defaults
@@ -106,7 +109,17 @@ func Load() *Config {
 
 		OnPremOrgSlug: getEnv("ONPREM_ORG_SLUG", "laboratoire-principal"),
 		OnPremOrgName: getEnv("ONPREM_ORG_NAME", "Laboratoire Pharmaceutique National"),
+
+		GatePasscode: getEnv("GATE_PASSCODE", ""),
 	}
+}
+
+// GateEnabled returns true if a confidential gate passcode is configured
+func (c *Config) GateEnabled() bool {
+	if c == nil {
+		return false
+	}
+	return strings.TrimSpace(c.GatePasscode) != ""
 }
 
 // IsProduction returns true if the environment is configured as production
