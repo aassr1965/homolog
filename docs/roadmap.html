@@ -1081,6 +1081,21 @@
         </ul>
     </div>
 
+    <!-- Jalon 2.10 -->
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 2.10 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud &amp; On-Premise)</span>
+            <span class="badge badge-anpp" style="background:rgba(147, 51, 234, 0.15); color:#9333ea; border:1px solid rgba(147, 51, 234, 0.3);">Sécurité &amp; Confidentialité BPF</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Moteur Cryptographique Symétrique AES-256-GCM dans le Pilote CAS :</strong> Chiffrement systématique à la volée des flux de documents avec vecteur d'initialisation aléatoire (IV 96 bits) et tag d'authentification 128 bits, garantissant l'opacité binaire absolue sur le disque physique.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Double Garantie ALCOA+ Intégrité / Confidentialité :</strong> Préservation du scellement d'intégrité et de la déduplication par hachage SHA-256 du document en clair, couplé au déchiffrement à la volée réservé aux seules requêtes autorisées par le moteur RBAC.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Gestion des Clés en Mode Cloud SaaS Souverain (Multi-Tenant Enveloppé) :</strong> Hiérarchie de clés KEK/DEK cloisonnant hermétiquement chaque laboratoire client (isolation mathématique étanche sur infrastructure mutualisée).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Architecture Zero-Trust en Mode On-Premise (Sur Site) :</strong> Clé maîtresse générée au déploiement initial et remise exclusivement au Pharmacien Directeur Technique et au RSSI (inviolabilité garantie face aux équipes IT et à l'éditeur en télémaintenance).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Rotation de Clé &amp; Sauvegardes Sécurisées :</strong> Procédure documentée de rotation des clés et export de clé maîtresse sous scellé pour le Plan de Reprise d'Activité (PRA).</li>
+        </ul>
+    </div>
+
         <div class="page-footer">
         <span>HOMOLOG • Système de Gestion Réglementaire ANPP</span>
         <span>Page 7 / 9</span>

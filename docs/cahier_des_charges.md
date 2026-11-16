@@ -480,7 +480,10 @@ La plateforme SANAD PHARMA (Homolog) traite des données industrielles hautement
    - **Verrouillage d'inactivité BPF :** Expiration automatique de session après 15 minutes d'inactivité (*Idle Timeout*).
    - **Protection anti-brute force :** Blocage automatique du compte pour une durée de 15 minutes après 5 tentatives infructueuses consécutives.
 4. **Chiffrement, Intégrité ALCOA+ & Piste d'Audit Immuable :**
-   - **Chiffrement au repos :** Données binaires stockées dans un volume chiffré (AES-256 / LUKS) avec déduplication physique gérée par le pilote CAS (Content-Addressable Storage) indexé par empreinte SHA-256.
+   - **Chiffrement au repos (At-Rest) Applicatif AES-256-GCM :** Données binaires stockées par le pilote CAS (*Content-Addressable Storage*) avec double garantie cryptographique : scellement d'intégrité et déduplication par empreinte SHA-256 du document en clair, couplé à un chiffrement symétrique systématique à la volée en **AES-256-GCM** (vecteur d'initialisation aléatoire 96 bits et tag d'authentification 128 bits) assurant l'opacité binaire absolue sur le disque physique.
+   - **Gestion des Clés selon le Mode de Déploiement :**
+     - *Mode Cloud SaaS Souverain :* Hiérarchie de clés enveloppées (Master Key d'instance chiffrant les clés de données spécifiques à chaque laboratoire/tenant), garantissant un cloisonnement mathématique étanche entre établissements concurrents sur la même infrastructure mutualisée.
+     - *Mode On-Premise (Zero-Trust Local) :* Clé maîtresse générée lors du déploiement initial (*Setup Wizard 1.A.7*) et remise exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire. Ni les techniciens informatiques internes (DSI), ni l'éditeur du progiciel en télémaintenance ne peuvent déchiffrer les documents sans cette clé.
    - **Chiffrement en transit :** TLS 1.3 exclusif avec suite cryptographique moderne et politique HSTS stricte.
    - **Immuabilité 21 CFR Part 11 :** Table `audit_logs` strictement *append-only* protégée par triggers SQL PostgreSQL interdisant toute modification (`UPDATE`) ou suppression (`DELETE`), journalisant nominativement chaque lecture, export, tentative d'accès, approbation et signature avec horodatage UTC et adresse IP.
 5. **Souveraineté Numérique & Absence Totale d'Exfiltration :**
@@ -726,6 +729,39 @@ Les documents de référence du laboratoire sont organisés en cinq branches ma�
    - `05_01_Accords_Qualite_QTA` (Quality Technical Agreements avec façonniers et fournisseurs)
    - `05_02_Contrats_Faconnage_SousTraitance` (Contrats de fabrication, conditionnement, analyse)
    - `05_03_Certificats_Fournisseurs_APIs` (CEP EDQM, lettres d'accès APIMF, déclarations EST/OGM)
+
+### 8.4 Sécurité du Stockage Physique & Chiffrement Applicatif AES-256-GCM (Dual-Mode Cloud / On-Premise)
+
+Pour répondre aux exigences strictes de confidentialité du secret de fabrication pharmaceutique et aux audits BPF / ALCOA+ / 21 CFR Part 11, le moteur de stockage physique CAS (*Content-Addressable Storage*) intègre une double protection cryptographique native (scellement d'intégrité + chiffrement réversible at-rest) :
+
+```mermaid
+flowchart TD
+    DOC["📄 Document Original (PDF/DOCX/Scan)"]
+    SHA["🛡️ Calcul d'Empreinte SHA-256<br/>(Scellement Immuable ALCOA+)"]
+    ENC["🔐 Chiffrement Symétrique AES-256-GCM<br/>(IV aléatoire 96 bits + Tag 128 bits)"]
+    CAS["💾 Stockage CAS sur Disque<br/>data/storage/ab/cd/abcdef...<br/>(Blobs chiffrés lecture seule 0440)"]
+    
+    DOC --> SHA
+    DOC --> ENC
+    ENC --> CAS
+    SHA -.->|"Clé d'adressage & Vérification"| CAS
+```
+
+#### 1. Mécanisme Cryptographique Unifié (Enveloppe AES-256-GCM + CAS SHA-256) :
+- **Scellement d'Intégrité ALCOA+ :** L'empreinte SHA-256 est calculée sur le document brut en clair pour garantir l'indexation, la déduplication BPF et la vérification de conformité dans la table `ged_versions`.
+- **Chiffrement au Repos (*At-Rest*) :** Le flux physique écrit sur disque est chiffré à la volée avec l'algorithme **AES-256-GCM** (Galois/Counter Mode). Chaque fichier possède un vecteur d'initialisation unique (*nonce/IV* de 12 octets) et un tag d'authentification cryptographique de 16 octets (128 bits) empêchant toute altération silencieuse.
+- **Accès Physique Illisible :** Même avec un accès `root` direct au système de fichiers du serveur ou sur une copie brute de sauvegarde, les fichiers stockés dans `data/storage/` sont d'une opacité totale (bruit binaire indéchiffrable sans la clé).
+
+#### 2. Spécifications du Mode Cloud SaaS Souverain (Multi-Tenant Enveloppé) :
+- **Clé par Établissement (*Tenant Encryption Key*) :** Chaque laboratoire client dispose de sa propre clé de chiffrement déduite ou enveloppée (*Key Encryption Key - KEK*).
+- **Isolation Hermétique Inter-Laboratoires :** Mathématiquement, un laboratoire A ne peut en aucun cas déchiffrer les documents déposés par un laboratoire B, même s'ils partagent la même instance de stockage physique.
+- **Hébergement Souverain :** Déploiement exclusif en datacenter certifié sur le territoire national algérien (conformité Loi 18-07 sur la protection des données et directives MIPH).
+
+#### 3. Spécifications du Mode On-Premise (Sur Site - Architecture Zero-Trust) :
+- **Souveraineté Totale du Laboratoire Client :** La clé maîtresse AES-256 est générée localement lors du premier démarrage (*Setup Wizard 1.A.7*) et remise exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire.
+- **Étanchéité Vis-à-Vis de l'Éditeur et des Équipes Informatiques :** Ni l'éditeur du logiciel en télémaintenance, ni les techniciens informatiques internes (DSI/infogérance) ne peuvent lire le contenu des dossiers CTD ou des prix de revient sans la clé détenue par la Direction Technique.
+- **Fonctionnement Air-Gapped :** Prise en charge des environnements industriels 100% isolés d'Internet (aucun appel externe de validation de clé).
+- **Gestion du Cycle de Vie des Clés :** Procédure documentée de rotation de clé (*Key Rotation*) et export sécurisé de la clé maîtresse sous scellé pour le Plan de Reprise d'Activité (PRA).
 
 ---
 

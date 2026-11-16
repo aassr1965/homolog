@@ -39,6 +39,8 @@ gantt
     Recherche Plein Texte FTS Bilingue FR/AR (2.6)   :p2_6, after p2_5, 3d
     Console Super-Admin Éditeur Cloud SaaS (2.7)     :p2_7, after p2_6, 3d
     Mises à Jour Réglementaires Hors-Ligne .pkg (2.8):p2_8, after p2_7, 3d
+    Contrôle Analytique & Libération Lot DCE (2.9)   :p2_9, after p2_8, 4d
+    Chiffrement Applicatif GED AES-256-GCM (2.10)   :p2_10, after p2_9, 3d
     section Phase 3 : Extensions
     Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_8, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
@@ -386,6 +388,20 @@ gantt
     - `CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx` (Régularisation DM).
 - [ ] **Template Maître BPF pour Standard de Référence Secondaire (MT-LCQ-01) :**
   - Trame normalisée pour les LCQ conforme à `TEMPLATE-CA-SR-secondaire.docx` (Traçabilité ISO 17034 / pharmacopée primaire, confirmation FTIR, 3 essais comparatifs HPLC/UV avec incertitudes ± U, teneur en eau).
+
+### Jalon 2.10 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud & On-Premise)
+- [ ] **Moteur de Chiffrement Symétrique AES-256-GCM dans le Pilote CAS (`internal/storage/`) :**
+  - Chiffrement symétrique à la volée des flux entrants (`Save`) avec vecteur d'initialisation aléatoire (IV 96 bits) et tag d'authentification GCM (128 bits).
+  - Déchiffrement à la volée des flux sortants (`Open`) réservé exclusivement aux requêtes dûment habilitées par le moteur RBAC.
+  - Préservation du scellement d'intégrité ALCOA+ et de la déduplication par hachage SHA-256 du document en clair.
+  - Opacité binaire absolue sur le disque physique (`data/storage/`) en cas de vol de support, snapshot de VM ou accès non autorisé à la machine hôte.
+- [ ] **Gestion des Clés en Mode Cloud SaaS Souverain (Multi-Tenant Enveloppé) :**
+  - Hiérarchie d'enveloppe cryptographique : Master Key d'infrastructure chiffrant les clés de données spécifiques à chaque laboratoire (`tenant_id`).
+  - Étanchement mathématique complet entre laboratoires concurrents sur la même instance mutualisée.
+- [ ] **Gestion des Clés en Mode On-Premise (Zero-Trust Local) :**
+  - Génération de la clé maîtresse lors du premier déploiement (*Setup Wizard 1.A.7*), consignée exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire.
+  - Cloisonnement hermétique empêchant toute lecture par les administrateurs système IT internes ou par l'éditeur en télémaintenance.
+  - Procédure de rotation de clé (*Key Rotation*) et mécanisme d'export sécurisé pour le Plan de Reprise d'Activité (PRA).
 
 ---
 

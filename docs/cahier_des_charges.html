@@ -1979,7 +1979,11 @@
 <li><strong>Verrouillage d'inactivité BPF :</strong> Expiration automatique de session après 15 minutes d'inactivité (<em>Idle Timeout</em>).</li>
 <li><strong>Protection anti-brute force :</strong> Blocage automatique du compte pour une durée de 15 minutes après 5 tentatives infructueuses consécutives.</li>
 <li><strong>Chiffrement, Intégrité ALCOA+ &amp; Piste d'Audit Immuable :</strong></li>
-<li><strong>Chiffrement au repos :</strong> Données binaires stockées dans un volume chiffré (AES-256 / LUKS) avec déduplication physique gérée par le pilote CAS (Content-Addressable Storage) indexé par empreinte SHA-256.</li>
+<li><strong>Chiffrement au repos (At-Rest) Applicatif AES-256-GCM :</strong> Données binaires stockées par le pilote CAS (<em>Content-Addressable Storage</em>) avec double garantie cryptographique : scellement d'intégrité et déduplication par empreinte SHA-256 du document en clair, couplé à un chiffrement symétrique systématique à la volée en <strong>AES-256-GCM</strong> (vecteur d'initialisation aléatoire 96 bits et tag d'authentification 128 bits) assurant l'opacité binaire absolue sur le disque physique.</li>
+<li><strong>Gestion des Clés selon le Mode de Déploiement :</strong>
+<br>• <em>Mode Cloud SaaS Souverain :</em> Hiérarchie de clés enveloppées (Master Key d'instance chiffrant les clés de données propres à chaque laboratoire), garantissant un cloisonnement mathématique étanche entre établissements concurrents sur la même infrastructure mutualisée.
+<br>• <em>Mode On-Premise (Zero-Trust Local) :</em> Clé maîtresse générée lors du déploiement initial (<em>Setup Wizard 1.A.7</em>) et remise exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire (inviolabilité garantie face aux équipes IT et à l'éditeur en télémaintenance).
+</li>
 <li><strong>Chiffrement en transit :</strong> TLS 1.3 exclusif avec suite cryptographique moderne et politique HSTS stricte.</li>
 <li><strong>Immuabilité 21 CFR Part 11 :</strong> Table <code>audit_logs</code> strictement <em>append-only</em> protégée par triggers SQL PostgreSQL interdisant toute modification (<code>UPDATE</code>) ou suppression (<code>DELETE</code>), journalisant nominativement chaque lecture, export, tentative d'accès, approbation et signature avec horodatage UTC et adresse IP.</li>
 <li><strong>Souveraineté Numérique &amp; Absence Totale d'Exfiltration :</strong></li>
@@ -2828,6 +2832,14 @@
 <li><code>05_02_Contrats_Faconnage_SousTraitance</code> (Contrats de fabrication, conditionnement, analyse)</li>
 <li><code>05_03_Certificats_Fournisseurs_APIs</code> (CEP EDQM, lettres d'accès APIMF, déclarations EST/OGM)</li>
 </ol>
+<h3>8.4 Sécurité du Stockage Physique &amp; Chiffrement Applicatif AES-256-GCM (Dual-Mode Cloud / On-Premise)</h3>
+<p>Pour répondre aux exigences strictes de confidentialité du secret de fabrication pharmaceutique et aux audits BPF / ALCOA+ / 21 CFR Part 11, le moteur de stockage physique CAS (<em>Content-Addressable Storage</em>) intègre une double protection cryptographique native (scellement d'intégrité + chiffrement réversible at-rest) :</p>
+<ul>
+<li><strong>Mécanisme Cryptographique Unifié (Enveloppe AES-256-GCM + CAS SHA-256) :</strong> L'empreinte SHA-256 est calculée sur le document brut en clair pour garantir l'indexation, la déduplication BPF et la vérification de conformité dans la table <code>ged_versions</code>. Le flux physique écrit sur disque est chiffré à la volée avec l'algorithme <strong>AES-256-GCM</strong> (IV aléatoire 96 bits + Tag 128 bits), garantissant l'opacité binaire absolue sur le disque (fichiers indéchiffrables en cas d'accès direct ou vol de support).</li>
+<li><strong>Mode Cloud SaaS Souverain (Multi-Tenant Enveloppé) :</strong> Clé par établissement (<em>Tenant Encryption Key</em>) déduite ou enveloppée (KEK/DEK), assurant un étanchement mathématique complet entre laboratoires concurrents sur la même infrastructure mutualisée hébergée en Algérie.</li>
+<li><strong>Mode On-Premise (Zero-Trust Local) :** Clé maîtresse générée lors du premier démarrage (<em>Setup Wizard 1.A.7</em>) et remise exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire. Ni les techniciens informatiques internes (DSI), ni l'éditeur du progiciel en télémaintenance ne peuvent déchiffrer les documents sans cette clé. Fonctionnement 100% autonome et Air-Gapped.</li>
+<li><strong>Gestion du Cycle de Vie des Clés :** Procédure documentée de rotation de clé (<em>Key Rotation</em>) et export sécurisé de la clé maîtresse sous scellé pour le Plan de Reprise d'Activité (PRA).</li>
+</ul>
         <div class="page-footer">
             <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
             <span>Section 8 • Cahier des Charges v1.0</span>
