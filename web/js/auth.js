@@ -50,6 +50,10 @@ const mockAuditTrail = [
                         const switcher = document.getElementById("dev-role-switcher-container");
                         if (switcher) switcher.style.display = "none";
                     }
+                    if (data.pitch_deck_enabled === false) {
+                        const pitchBtn = document.getElementById("btn-pitch-commercial");
+                        if (pitchBtn) pitchBtn.style.display = "none";
+                    }
                     showAppView(currentUser, currentOrg);
                 } else {
                     showLoginView();
@@ -492,6 +496,10 @@ const mockAuditTrail = [
                     if (data.dev_switcher_enabled === false) {
                         const switcher = document.getElementById("dev-role-switcher-container");
                         if (switcher) switcher.style.display = "none";
+                    }
+                    if (data.pitch_deck_enabled === false) {
+                        const pitchBtn = document.getElementById("btn-pitch-commercial");
+                        if (pitchBtn) pitchBtn.style.display = "none";
                     }
                     showAppView(data.user, data.organization);
                     btn.disabled = false;

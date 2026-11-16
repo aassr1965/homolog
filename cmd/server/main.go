@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -156,22 +157,38 @@ func main() {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !cfg.PitchDeckEnabled() {
+			htmlStr := string(content)
+			// En production, masquer immédiatement le bouton du pitch commercial (Défense en profondeur)
+			htmlStr = strings.ReplaceAll(htmlStr, `id="btn-pitch-commercial"`, `id="btn-pitch-commercial" style="display:none !important;"`)
+			w.Write([]byte(htmlStr))
+			return
+		}
 		w.Write(content)
 	})
 
 	// Présentation Commerciale Haute Fidélité (Pitch Deck 10 Diapositives)
-	r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
-		content, err := web.Files.ReadFile("presentation.html")
-		if err != nil {
-			http.Error(w, "Support de présentation introuvable", http.StatusNotFound)
-			return
+	// Strictement inaccessible en environnement de production (Conformité PSSI / BPF)
+	if cfg.PitchDeckEnabled() {
+		r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+			content, err := web.Files.ReadFile("presentation.html")
+			if err != nil {
+				http.Error(w, "Support de présentation introuvable", http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write(content)
+		})
+		r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/presentation", http.StatusMovedPermanently)
+		})
+	} else {
+		pitchDisabledHandler := func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Ressource désactivée ou indisponible en environnement de production", http.StatusNotFound)
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(content)
-	})
-	r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/presentation", http.StatusMovedPermanently)
-	})
+		r.Get("/presentation", pitchDisabledHandler)
+		r.Get("/pitch", pitchDisabledHandler)
+	}
 
 	// Favicon Caducée officiel Sanad Pharma
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
@@ -214,8 +231,8 @@ func main() {
 		if db == nil {
 			dbStatus = "disconnected"
 		}
-		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","environment":"%s","dev_switcher_enabled":%t,"database":"%s","time_utc":"%s","version":"0.7.0"}`,
-			cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), dbStatus, time.Now().UTC().Format(time.RFC3339))
+		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","environment":"%s","dev_switcher_enabled":%t,"pitch_deck_enabled":%t,"database":"%s","time_utc":"%s","version":"0.7.0"}`,
+			cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.PitchDeckEnabled(), dbStatus, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(jsonResp))
 	})
 
@@ -227,12 +244,13 @@ func main() {
 			"deployment_mode": "%s",
 			"environment": "%s",
 			"dev_switcher_enabled": %t,
+			"pitch_deck_enabled": %t,
 			"org_slug": "%s",
 			"org_name": "%s",
 			"idle_timeout_min": %d,
 			"max_upload_bytes": %d,
 			"timestamp_utc": "%s"
-		}`, cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
+		}`, cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.PitchDeckEnabled(), cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(resp))
 	})
 

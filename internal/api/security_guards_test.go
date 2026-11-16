@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+
 	"homolog/internal/audit"
 	"homolog/internal/auth"
 	"homolog/internal/config"
@@ -339,6 +341,91 @@ func TestLoginAndLogout_CookieAttributes(t *testing.T) {
 		}
 		if !sessionCookie.Secure {
 			t.Errorf("Expected Secure = true when X-Forwarded-Proto is https")
+		}
+	})
+}
+
+func TestPitchDeck_ProductionGuard(t *testing.T) {
+	// 1. Production config must never enable pitch deck
+	prodCfg := &config.Config{
+		Environment:     "production",
+		EnablePitchDeck: false,
+	}
+	if prodCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false in production")
+	}
+
+	// Even if someone mistakenly sets EnablePitchDeck = true in production, PitchDeckEnabled() must block it
+	prodDangerousCfg := &config.Config{
+		Environment:     "production",
+		EnablePitchDeck: true,
+	}
+	if prodDangerousCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false in production even if EnablePitchDeck is true")
+	}
+
+	prodAliasCfg := &config.Config{
+		Environment:     "prod",
+		EnablePitchDeck: true,
+	}
+	if prodAliasCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false when Environment is 'prod'")
+	}
+
+	// 2. Development config enables pitch deck when allowed
+	devCfg := &config.Config{
+		Environment:     "development",
+		EnablePitchDeck: true,
+	}
+	if !devCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = true in development")
+	}
+
+	devDisabledCfg := &config.Config{
+		Environment:     "development",
+		EnablePitchDeck: false,
+	}
+	if devDisabledCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false when EnablePitchDeck is false")
+	}
+
+	// 3. Fallback via APP_ENV environment variable
+	t.Run("APP_ENV=production fallback", func(t *testing.T) {
+		t.Setenv("APP_ENV", "production")
+		var nilCfg *config.Config
+		if nilCfg.PitchDeckEnabled() {
+			t.Errorf("Expected nil config with APP_ENV=production to return false")
+		}
+	})
+
+	// 4. Test Route level blocking in production
+	t.Run("Route level blocking in production", func(t *testing.T) {
+		r := chi.NewRouter()
+		if prodCfg.PitchDeckEnabled() {
+			r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("presentation"))
+			})
+		} else {
+			r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "Ressource désactivée ou indisponible en environnement de production", http.StatusNotFound)
+			})
+			r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "Ressource désactivée ou indisponible en environnement de production", http.StatusNotFound)
+			})
+		}
+
+		req1 := httptest.NewRequest(http.MethodGet, "/presentation", nil)
+		rr1 := httptest.NewRecorder()
+		r.ServeHTTP(rr1, req1)
+		if rr1.Code != http.StatusNotFound {
+			t.Errorf("Expected /presentation to return 404 in production, got %d", rr1.Code)
+		}
+
+		req2 := httptest.NewRequest(http.MethodGet, "/pitch", nil)
+		rr2 := httptest.NewRecorder()
+		r.ServeHTTP(rr2, req2)
+		if rr2.Code != http.StatusNotFound {
+			t.Errorf("Expected /pitch to return 404 in production, got %d", rr2.Code)
 		}
 	})
 }
