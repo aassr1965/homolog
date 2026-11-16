@@ -315,7 +315,7 @@ L'ANPP a aboli les nomenclatures européennes (Types IA/IB/II). Sanad Pharma gè
 Lorsque vous déclarez un changement parmi les **34 rubriques officielles** (changement de site de synthèse API, modification de procédé, taille de lot, contenant primaire) :
 1. Le système vous soumet le questionnaire réglementaire des conditions à remplir.
 2. **Si l'ensemble des conditions est respecté :** La modification conserve sa classe nominale (`Mmin` ou `Mmod`).
-3. **Dès lors qu'une seule condition n'est pas remplie :** Le moteur d'escalade **reclasse automatiquement la demande au niveau supérieur** (`Mmin` $\to$ `Mmod` ou `Mmaj`, et `Mmod` $\to$ `Mmaj`) et actualise instantanément la liste des 12 pièces justificatives requises (CDC Section 5.3).
+3. **Dès lors qu'une seule condition n'est pas remplie :** Le moteur d'escalade **reclasse automatiquement la demande au niveau supérieur** (`Mmin` → `Mmod` ou `Mmaj`, et `Mmod` → `Mmaj`) et actualise instantanément la liste des 12 pièces justificatives requises (CDC Section 5.3).
 
 ### 8.3 Regroupement de Modifications (*Grouping*)
 En application de l'article 09 de l'arrêté du 07/11/2021, plusieurs variations interdépendantes pour une même DE peuvent être soumises ensemble. Sanad Pharma calcule automatiquement le niveau de risque global du groupe : **si une modification du groupe est classée `Mmaj`, l'ensemble de la soumission groupée est traitée selon les exigences `Mmaj`.**

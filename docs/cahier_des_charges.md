@@ -183,7 +183,7 @@ Le Module 3 est obligatoire (`E`) pour toutes les catégories (Princeps, Génér
 
 ### 4.2 Module 5 : Données Cliniques et Bioéquivalence
 Pour les médicaments génériques (importés et locaux), le moteur de checklist conditionne la recevabilité du dossier aux exigences suivantes :
-- **5.3.1.2 Étude comparative de Biodisponibilité (BA) et Bioéquivalence (BE) :** Rapport complet de l'étude clinique in vivo démontrant la bioéquivalence du produit candidat vis-à-vis du produit princeps de référence (intervalle de confiance 90 % compris entre 80,00 % et 125,00 % sur $C_{max}$ et $AUC$).
+- **5.3.1.2 Étude comparative de Biodisponibilité (BA) et Bioéquivalence (BE) :** Rapport complet de l'étude clinique in vivo démontrant la bioéquivalence du produit candidat vis-à-vis du produit princeps de référence (intervalle de confiance 90 % compris entre 80,00 % et 125,00 % sur *C*<sub>max</sub> et *AUC*).
 - **5.3.1.4 Méthodes bioanalytiques et analytiques :** Validation complète selon les lignes directrices internationales (BPL/GCP).
 - **Justification d'exonération (Biowaiver) :** En cas d'absence d'étude in vivo, rattachement obligatoire d'un dossier justificatif complet en 1.M.P.3 et 5.3.1.2 (profils de dissolution comparatifs multipoints à pH 1.2, 4.5, 6.8 et classification biopharmaceutique BCS).
 
@@ -254,107 +254,107 @@ Selon la section 5.3 de la Ligne Directrice, toute soumission de variation (Mmin
 - **5.** Suppression d'un site de fabrication, de contrôle, de conditionnement ou de stockage (avec maintien d'au moins un site approuvé opérationnel).
 
 #### II. Modifications relatives au CEP ou Préqualification API (LD-DEPP07 Section 5.4.1.2)
-- **6.a.** Soumission d'un CEP nouveau ou mis à jour provenant d'un fabricant déjà approuvé (`6.a.1` $\to$ Mmin, `6.a.2` $\to$ Mmin, `6.a.3` $\to$ Mmod).
-- **6.b.** Soumission d'un CEP provenant d'un nouveau fabricant (`6.b.1` $\to$ Mmin, `6.b.2` $\to$ Mmod).
+- **6.a.** Soumission d'un CEP nouveau ou mis à jour provenant d'un fabricant déjà approuvé (`6.a.1` → Mmin, `6.a.2` → Mmin, `6.a.3` → Mmod).
+- **6.b.** Soumission d'un CEP provenant d'un nouveau fabricant (`6.b.1` → Mmin, `6.b.2` → Mmod).
 
 #### III. Modifications Qualitatives Substance Active 3.2.S (LD-DEPP07 Section 5.4.2.1)
 - **7.** Remplacement ou ajout d'un site de fabrication ou d'un nouveau fabricant d'API :
-  - *7.a :* Uniquement le contrôle de la SA (`7.a.1` $\to$ Mmin, `7.a.2` $\to$ Mmod).
-  - *7.b :* Production du matériau de départ (`7.b.1` $\to$ Mmin, `7.b.2` $\to$ Mmaj).
-  - *7.c :* Production de l'intermédiaire (`7.c.1` $\to$ Mmod, `7.c.2` $\to$ Mmin).
-  - *7.d :* Production complète de l'API (`7.d.1` $\to$ Mmod, `7.d.2` $\to$ Mmaj).
-- **8.a.** Ajout ou changement d'un bloc de fabrication ou d'une unité de production sur un site API approuvé $\to$ Mmin.
+  - *7.a :* Uniquement le contrôle de la SA (`7.a.1` → Mmin, `7.a.2` → Mmod).
+  - *7.b :* Production du matériau de départ (`7.b.1` → Mmin, `7.b.2` → Mmaj).
+  - *7.c :* Production de l'intermédiaire (`7.c.1` → Mmod, `7.c.2` → Mmin).
+  - *7.d :* Production complète de l'API (`7.d.1` → Mmod, `7.d.2` → Mmaj).
+- **8.a.** Ajout ou changement d'un bloc de fabrication ou d'une unité de production sur un site API approuvé → Mmin.
 - **9.** Changement dans le procédé de fabrication de l'API :
-  - *9.a.1 :* Changement mineur sans altération du profil d'impuretés ni de la voie de synthèse $\to$ Mmod.
-  - *9.a.2 :* Changement important susceptible d'avoir des répercussions significatives $\to$ Mmaj.
+  - *9.a.1 :* Changement mineur sans altération du profil d'impuretés ni de la voie de synthèse → Mmod.
+  - *9.a.2 :* Changement important susceptible d'avoir des répercussions significatives → Mmaj.
 - **10.** Modification de la taille de lot de l'API ou d'un intermédiaire :
-  - *10.a.1 :* Augmentation jusqu'à 10 fois la taille acceptée $\to$ Mmin.
-  - *10.b :* Réduction de la taille de lot $\to$ Mmin.
-  - *10.c.1 :* Augmentation supérieure à 10 fois la taille acceptée $\to$ Mmod.
+  - *10.a.1 :* Augmentation jusqu'à 10 fois la taille acceptée → Mmin.
+  - *10.b :* Réduction de la taille de lot → Mmin.
+  - *10.c.1 :* Augmentation supérieure à 10 fois la taille acceptée → Mmod.
 - **11.** Essais en cours de fabrication ou limites durant la synthèse de l'API :
-  - *11.a :* Resserrement des limites $\to$ Mmin.
-  - *11.b :* Changement mineur d'une procédure analytique $\to$ Mmin.
-  - *11.c :* Ajout d'un nouveau paramètre de spécification $\to$ Mmin.
-  - *11.d :* Suppression d'un paramètre redondant $\to$ Mmin.
-  - *11.e :* Ajout suite à un problème de qualité/sécurité $\to$ Mmod.
-  - *11.f :* Élargissement des limites acceptées $\to$ Mmaj.
+  - *11.a :* Resserrement des limites → Mmin.
+  - *11.b :* Changement mineur d'une procédure analytique → Mmin.
+  - *11.c :* Ajout d'un nouveau paramètre de spécification → Mmin.
+  - *11.d :* Suppression d'un paramètre redondant → Mmin.
+  - *11.e :* Ajout suite à un problème de qualité/sécurité → Mmod.
+  - *11.f :* Élargissement des limites acceptées → Mmaj.
 - **12.** Changement des spécifications et critères d'acceptation de l'API :
-  - *12.a :* Mise à jour suite à révision de monographie de Pharmacopée officielle $\to$ Mmin.
-  - *12.c :* Ajout de paramètre (`12.c.1` $\to$ Mmin, `12.c.2` $\to$ Mmod, `12.c.3` $\to$ Mmaj).
-  - *12.b :* Suppression de paramètre (`12.b.1` $\to$ Mmin, `12.b.2` $\to$ Mmod, `12.b.3` $\to$ Mmaj).
-  - *12.d :* Remplacement de paramètre (`12.d.1` $\to$ Mmin, `12.d.2` $\to$ Mmod, `12.d.3` $\to$ Mmaj).
-  - *12.e :* Resserrement d'un critère d'acceptation $\to$ Mmin.
-  - *12.f :* Élargissement d'un critère (`12.f.1` $\to$ Mmin, `12.f.2` $\to$ Mmod, `12.f.3` $\to$ Mmaj).
+  - *12.a :* Mise à jour suite à révision de monographie de Pharmacopée officielle → Mmin.
+  - *12.c :* Ajout de paramètre (`12.c.1` → Mmin, `12.c.2` → Mmod, `12.c.3` → Mmaj).
+  - *12.b :* Suppression de paramètre (`12.b.1` → Mmin, `12.b.2` → Mmod, `12.b.3` → Mmaj).
+  - *12.d :* Remplacement de paramètre (`12.d.1` → Mmin, `12.d.2` → Mmod, `12.d.3` → Mmaj).
+  - *12.e :* Resserrement d'un critère d'acceptation → Mmin.
+  - *12.f :* Élargissement d'un critère (`12.f.1` → Mmin, `12.f.2` → Mmod, `12.f.3` → Mmaj).
 - **13.** Procédures d'essai de la SA ou de ses intermédiaires :
-  - *13.a :* Mise à jour suite à révision pharmacopée officielle $\to$ Mmin.
-  - *13.b :* Passage d'une méthode interne à une pharmacopée reconnue $\to$ Mmin.
-  - *13.c :* Ajout d'une procédure (`13.c.1` $\to$ Mmin, `13.c.2` $\to$ Mmod, `13.c.3` $\to$ Mmaj).
-  - *13.d :* Modification/remplacement de procédure (`13.d.1` $\to$ Mmin, `13.d.2` $\to$ Mmod, `13.d.3` $\to$ Mmaj).
-  - *13.e :* Suppression d'une procédure alternative (`13.e.1/2` $\to$ Mmin, `13.e.3` $\to$ Mmaj).
+  - *13.a :* Mise à jour suite à révision pharmacopée officielle → Mmin.
+  - *13.b :* Passage d'une méthode interne à une pharmacopée reconnue → Mmin.
+  - *13.c :* Ajout d'une procédure (`13.c.1` → Mmin, `13.c.2` → Mmod, `13.c.3` → Mmaj).
+  - *13.d :* Modification/remplacement de procédure (`13.d.1` → Mmin, `13.d.2` → Mmod, `13.d.3` → Mmaj).
+  - *13.e :* Suppression d'une procédure alternative (`13.e.1/2` → Mmin, `13.e.3` → Mmaj).
 - **14.** Changement de conditionnement primaire de la SA :
-  - *14.a :* Composition qualitative/quantitative $\to$ Mmin.
-  - *14.b :* SA liquides non stériles $\to$ Mmod.
+  - *14.a :* Composition qualitative/quantitative → Mmin.
+  - *14.b :* SA liquides non stériles → Mmod.
 - **15.** Période de recontrôle ou durée de vie de l'API :
-  - *15.a :* Réduction $\to$ Mmin.
-  - *15.b :* Extension $\to$ Mmod.
+  - *15.a :* Réduction → Mmin.
+  - *15.b :* Extension → Mmod.
 - **16.** Conditions de stockage de l'API sur l'étiquette :
-  - *16.a :* Conditions plus restrictives $\to$ Mmin.
-  - *16.b :* Tout autre changement $\to$ Mmod.
+  - *16.a :* Conditions plus restrictives → Mmin.
+  - *16.b :* Tout autre changement → Mmod.
 
 #### IV. Modifications Qualitatives Produit Fini 3.2.P (LD-DEPP07 Section 5.4.2.2)
 - **17.** Système d'aromatisation ou de coloration du produit fini :
-  - *17.a :* Augmentation ou réduction de teneur $\to$ Mmin.
-  - *17.b :* Ajout, suppression ou remplacement d'arôme/colorant $\to$ Mmin.
-- **18.a.** Masse de l'enrobage ou des capsules vides pour formes orales solides à libération immédiate $\to$ Mmin.
+  - *17.a :* Augmentation ou réduction de teneur → Mmin.
+  - *17.b :* Ajout, suppression ou remplacement d'arôme/colorant → Mmin.
+- **18.a.** Masse de l'enrobage ou des capsules vides pour formes orales solides à libération immédiate → Mmin.
 - **19.** Composition en excipients d'une forme orale solide à libération immédiate :
-  - *19.a :* Remplacement d'un excipient par un excipient comparable à concentration similaire $\to$ Mmod (ou Mmaj si conditions non satisfaites).
-  - *19.b :* Changement quantitatif des excipients $\to$ Mmaj.
+  - *19.a :* Remplacement d'un excipient par un excipient comparable à concentration similaire → Mmod (ou Mmaj si conditions non satisfaites).
+  - *19.b :* Changement quantitatif des excipients → Mmaj.
 - **20.** Site de fabrication du produit fini :
-  - *20.a :* Site de conditionnement secondaire $\to$ Mmin.
-  - *20.b :* Site de conditionnement primaire (solides, crèmes, sirops) $\to$ Mmin.
-  - *20.c :* Site chargé de la fabrication (procédé conventionnel non complexe) $\to$ Mmod.
-- **21.a.** Remplacement ou ajout d'un site de contrôle analytique $\to$ Mmin.
+  - *20.a :* Site de conditionnement secondaire → Mmin.
+  - *20.b :* Site de conditionnement primaire (solides, crèmes, sirops) → Mmin.
+  - *20.c :* Site chargé de la fabrication (procédé conventionnel non complexe) → Mmod.
+- **21.a.** Remplacement ou ajout d'un site de contrôle analytique → Mmin.
 - **22.** Taille de lot du produit fini (formes orales solides ou solutions non stériles) :
-  - *22.a :* Augmentation jusqu'à 10 fois la taille approuvée $\to$ Mmin.
-  - *22.b :* Réduction jusqu'à 10 fois $\to$ Mmin.
-  - *22.c :* Plus de 10 fois supérieure ou inférieure $\to$ Mmod.
-- **23.** Changement dans le procédé de fabrication du produit fini (sans changement du principe fondamental) $\to$ Mmod.
+  - *22.a :* Augmentation jusqu'à 10 fois la taille approuvée → Mmin.
+  - *22.b :* Réduction jusqu'à 10 fois → Mmin.
+  - *22.c :* Plus de 10 fois supérieure ou inférieure → Mmod.
+- **23.** Changement dans le procédé de fabrication du produit fini (sans changement du principe fondamental) → Mmod.
 - **24.** Contrôles en cours de fabrication du produit intermédiaire ou fini :
-  - *24.a :* Resserrement des limites $\to$ Mmin.
-  - *24.b :* Suppression d'un contrôle redondant $\to$ Mmin.
-  - *24.c / 24.d :* Ajout, révision ou remplacement d'un contrôle $\to$ Mmin.
-- **25.** Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique $\to$ Mmin.
+  - *24.a :* Resserrement des limites → Mmin.
+  - *24.b :* Suppression d'un contrôle redondant → Mmin.
+  - *24.c / 24.d :* Ajout, révision ou remplacement d'un contrôle → Mmin.
+- **25.** Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique → Mmin.
 - **26.** Spécifications ou procédures analytiques d'un excipient :
-  - *26.a :* Suppression d'un paramètre interne non critique $\to$ Mmin.
-  - *26.b :* Ajout d'un nouveau paramètre $\to$ Mmin.
-  - *26.c :* Resserrement des limites $\to$ Mmin.
-  - *26.d :* Changement ou remplacement d'une méthode $\to$ Mmod.
-- **27.** Mise à jour des spécifications du produit fini suite à révision d'une monographie de Pharmacopée officielle $\to$ Mmin.
+  - *26.a :* Suppression d'un paramètre interne non critique → Mmin.
+  - *26.b :* Ajout d'un nouveau paramètre → Mmin.
+  - *26.c :* Resserrement des limites → Mmin.
+  - *26.d :* Changement ou remplacement d'une méthode → Mmod.
+- **27.** Mise à jour des spécifications du produit fini suite à révision d'une monographie de Pharmacopée officielle → Mmin.
 - **28.** Spécifications et critères d'acceptation du produit fini :
-  - *28.a :* Suppression d'un paramètre non critique redondant $\to$ Mmin.
-  - *28.b :* Ajout d'un paramètre de contrôle $\to$ Mmin.
-  - *28.c :* Resserrement d'un critère $\to$ Mmin.
-  - *28.d :* Remplacement d'un paramètre $\to$ Mmin.
+  - *28.a :* Suppression d'un paramètre non critique redondant → Mmin.
+  - *28.b :* Ajout d'un paramètre de contrôle → Mmin.
+  - *28.c :* Resserrement d'un critère → Mmin.
+  - *28.d :* Remplacement d'un paramètre → Mmin.
 - **29.** Procédures analytiques du produit fini :
-  - *29.a :* Suppression d'une procédure alternative $\to$ Mmin.
-  - *29.b :* Ajout d'une procédure analytique $\to$ Mmin.
-  - *29.c :* Modification ou remplacement d'une procédure $\to$ Mmod.
-  - *29.d :* Mise à jour selon monographie pharmacopée $\to$ Mmin.
-  - *29.e :* Transfert vers une pharmacopée reconnue $\to$ Mmin.
+  - *29.a :* Suppression d'une procédure alternative → Mmin.
+  - *29.b :* Ajout d'une procédure analytique → Mmin.
+  - *29.c :* Modification ou remplacement d'une procédure → Mmod.
+  - *29.d :* Mise à jour selon monographie pharmacopée → Mmin.
+  - *29.e :* Transfert vers une pharmacopée reconnue → Mmin.
 - **30.** Conditionnement primaire du produit fini (changement ou ajout de type de contenant) :
-  - *30.a :* Formes pharmaceutiques non stériles $\to$ Mmod.
-  - *30.b :* Médicaments stériles $\to$ Mmaj.
-  - *30.c :* Suppression d'un contenant sans supprimer de dosage/forme $\to$ Mmod.
+  - *30.a :* Formes pharmaceutiques non stériles → Mmod.
+  - *30.b :* Médicaments stériles → Mmaj.
+  - *30.c :* Suppression d'un contenant sans supprimer de dosage/forme → Mmod.
 - **31.** Composition qualitative et quantitative du conditionnement primaire :
-  - *31.a :* Formes solides (ex: blister vers autre blister équivalent) $\to$ Mmin.
-  - *31.b :* Formes semi-solides et liquides non stériles $\to$ Mmod.
+  - *31.a :* Formes solides (ex: blister vers autre blister équivalent) → Mmin.
+  - *31.b :* Formes semi-solides et liquides non stériles → Mmod.
 - **32.** Durée de conservation du produit fini pour la vente :
-  - *32.a :* Réduction $\to$ Mmod.
-  - *32.b :* Extension (sur base de données de stabilité temps réel) $\to$ Mmod.
+  - *32.a :* Réduction → Mmod.
+  - *32.b :* Extension (sur base de données de stabilité temps réel) → Mmod.
 - **33.** Durée de conservation après première ouverture, dilution ou reconstitution :
-  - *33.a :* Réduction $\to$ Mmod.
-  - *33.b :* Extension $\to$ Mmod.
-- **34.** Changement des conditions de stockage du produit fini ou en cours d'utilisation $\to$ Mmod.
+  - *33.a :* Réduction → Mmod.
+  - *33.b :* Extension → Mmod.
+- **34.** Changement des conditions de stockage du produit fini ou en cours d'utilisation → Mmod.
 
 ### 5.5 Assistant Graphique d'Arborescence d'Impact Réglementaire (Change Impact Tree)
 Afin de guider le Pharmacien Réglementaire et d'éliminer le risque d'omission de sections CTD corollaires, le module **Sanad Variations** intègre un composant visuel d'analyse d'impact en graphe dirigé :
@@ -420,7 +420,7 @@ Inspiré des outils d'exploration professionnelle haute densité, l'écran de tr
 ```
 
 - **Adaptation RTL Arabe Intégrale :**
-  - Bascule instantanée LTR $\leftrightarrow$ RTL via `dir="rtl"`.
+  - Bascule instantanée LTR ↔ RTL via `dir="rtl"`.
   - Inversion symétrique naturelle de l'interface : arbre de navigation ancré à droite, tableau de données au centre, volet de prévisualisation à gauche.
   - Polices locales sans appel réseau : `Cairo` (typographie arabe fluide) et `Inter` (typographie latine).
 
@@ -616,7 +616,7 @@ Côté client, le routeur applicatif TypeScript et les composants de l'interface
 #### 7.2.3 Architecture Technique du Moteur RBAC Dynamique & Révocation Instantanée
 L'attribution des droits s'appuie sur une infrastructure de données dynamique combinée à des sécurités cryptographiques et mémoires :
 1. **Schéma Relationnel Dynamique (PostgreSQL) :**
-   - Tables dédiées : `roles` (définition des profils système et personnalisés), `permissions` (catalogue des 14 permissions unitaires du CDC), `role_permissions` (matrice par défaut profil $\leftrightarrow$ permissions), et `user_permissions` (surcharges et dérogations nominatives autorisées).
+   - Tables dédiées : `roles` (définition des profils système et personnalisés), `permissions` (catalogue des 14 permissions unitaires du CDC), `role_permissions` (matrice par défaut profil ↔ permissions), et `user_permissions` (surcharges et dérogations nominatives autorisées).
    - Migration ascendante transparente `000004_rbac_dynamic_permissions.up.sql` garantissant l'absence de régression pour les comptes existants.
 2. **Garde-fous Réglementaires Inviolables (Hard-coded Go Enforcement) :**
    - Même si un administrateur tente de modifier les droits en base de données, le code backend Go bloque formellement :
@@ -649,7 +649,7 @@ Chaque section CTD et pièce GED est cartographiée et assignée nativement selo
 |---|---|---|
 | **Affaires Réglementaires (RA)** | **Maker (Rédacteur Principal)**<br>Module 1 & Administratif | • **Module 1 complet :** Formulaire de demande (1.A.3), courriers officiels (1.A.2), fiches synoptiques (1.A.11), attestations de prix (1.H.4 / 1.H.5).<br>• **Informations produit :** Notices bilingues FR/AR (1.P.2), Résumés des Caractéristiques du Produit (RCP 1.P.1), maquettes d'étiquetage et emballages à l'échelle (1.P.2).<br>• **Engagements réglementaires :** Lettre de validation sur 3 lots (1.P.8), lettre de suivi de stabilité continue (1.P.9), attestation d'évaluation PDT (1.H.10).<br>• **Dossiers de variations ANPP :** Tableaux comparatifs *Approuvé vs Proposé*, lettres de motivation et attestations de non-modification des autres sections (LD-DEPP07/V01).<br>• **Bordereaux financiers :** Formulaires BV1 (initial/DM) et BV2 (variations/renouvellements). |
 | **Contrôle Qualité (CQ) & Laboratoire de Stabilités** | **Maker (Rédacteur Technique)**<br>Modules 1.P & 3 (Qualité) | • **Spécifications analytiques :** Spécifications et méthodes de contrôle des Matières Premières / Principes Actifs (3.2.S.4) et du Produit Fini (3.2.P.5.1).<br>• **Validation analytique :** Protocoles et rapports de validation des méthodes analytiques selon ICH Q2(R1) (3.2.P.5.3 - spécificité, linéarité, répétabilité, fidélité intermédiaire, exactitude, limites de détection/quantification).<br>• **Bulletins de libération :** Certificats d'analyse (CoA) des lots pilotes et industriels de Substance Active (1.P.4) et Produit Fini (1.P.5).<br>• **Études de stabilité :** Protocoles et rapports de stabilité sous conditions climatiques Zone IVb (30°C ± 2°C / 75% RH ± 5% RH ou 30°C / 65% RH) et stabilités accélérées (40°C / 75% RH) (3.2.P.8.1, 3.2.P.8.2, 3.2.P.8.3). |
-| **Recherche & Développement (R&D) / Galénique** | **Maker (Rédacteur Technique)**<br>Modules 2.3, 3.2.P & BE | • **Développement pharmaceutique (3.2.P.2) :** Justification de la formule, compatibilité principe actif/excipients, développement galénique, sélection du contenant-fermeture primaire.<br>• **Profils de dissolution comparatifs :** Cinétiques de dissolution in vitro multimilieux (pH 1.2, pH 4.5, pH 6.8) et calcul des facteurs de similitude ($f_1$, $f_2$) pour justification d'exonération de bioéquivalence (*Biowaiver* - 1.M.P.3).<br>• **Synthèse Qualité :** Résumé global de la qualité (QOS - Quality Overall Summary, Module 2.3). |
+| **Recherche & Développement (R&D) / Galénique** | **Maker (Rédacteur Technique)**<br>Modules 2.3, 3.2.P & BE | • **Développement pharmaceutique (3.2.P.2) :** Justification de la formule, compatibilité principe actif/excipients, développement galénique, sélection du contenant-fermeture primaire.<br>• **Profils de dissolution comparatifs :** Cinétiques de dissolution in vitro multimilieux (pH 1.2, pH 4.5, pH 6.8) et calcul des facteurs de similitude (*f*<sub>1</sub>, *f*<sub>2</sub>) pour justification d'exonération de bioéquivalence (*Biowaiver* - 1.M.P.3).<br>• **Synthèse Qualité :** Résumé global de la qualité (QOS - Quality Overall Summary, Module 2.3). |
 | **Production Industrielle & Ingénierie** | **Maker (Rédacteur Technique)**<br>Module 3 (Fabrication) | • **Formules de fabrication :** Formule unitaire et formule par taille de lot industrielle (3.2.P.3.2).<br>• **Procédé et contrôles en cours (IPC) :** Schéma synoptique des étapes de production, paramètres critiques de procédé (CPP) et contrôles en cours de fabrication (3.2.P.3.3 / 3.2.P.3.4).<br>• **Validation de procédé :** Protocoles et rapports de validation prospective sur 3 lots industriels consécutifs à l'échelle commerciale (3.2.P.3.5 / engagement 1.P.8 pour fabrication locale). |
 | **Assurance Qualité (AQ) & Conformité BPF** | **Checker (Réviseur Qualité)**<br>& Maker (GED Qualité) | • **Rôle Checker :** Relecture qualité indépendante, vérification de la conformité aux BPF algériennes et aux pharmacopées (Ph. Eur., USP), contrôle des calculs et vérification de la complétude documentaire avant soumission au DT.<br>• **Rôle Maker (GED transverse) :** Manuel qualité, Procédures Opératoires Normalisées (SOP / POS), Revue Périodique de la Qualité Produit (PQR / RQP), rapports d'audit BPF des fournisseurs et sous-traitants, qualifications d'équipements (QI/QO/QP), dossiers de déviations et CAPA. |
 | **Partenaires & Rédacteurs Externes (Tiers / CRO)** | **Maker Externe (Cloisonné)**<br>Modules 3.2.S & 5 | • **Fabricant de Substance Active (API) :** Dossier de la Substance Active (Drug Master File / Active Substance Master File - DMF/ASMF partie fermée/ouverte 3.2.S) et lettres d'accès nominatives (Letter of Access - 1.M.S.3).<br>• **Centre d'Essais Cliniques / CRO :** Protocoles, rapports d'études de bioéquivalence in vivo (Module 5.3.1.2), validation des méthodes bioanalytiques humaines (5.3.1.4) et rapports statistiques de pharmacocinétique. |
@@ -717,7 +717,7 @@ flowchart TD
 3. **Verrouillage des synthèses et de l'information médicale :** 
    - Le Résumé Global de la Qualité (**QOS 2.3**) reste au statut *« Verrouillé - En attente données brutes Module 3 »* tant que 100 % des sous-sections de 3.2.S et 3.2.P ne sont pas au minimum en statut de revue validée.
    - La **Notice patient (1.P.2)**, le **RCP (1.P.1)** et les **Maquettes d'emballage** restent verrouillés en édition finale tant que les conclusions de stabilité (durée de vie en mois, température maximale de conservation, précautions particulières de conservation) ne sont pas validées par le Responsable Stabilités.
-   - **Verrou de Parité Linguistique Synchrone (Notice 1.P.2.2 FR $\leftrightarrow$ AR) :** La notice en langue arabe étant juridiquement opposable au même titre que la version française (Décret exécutif 20-325), le système intègre un contrôleur de parité synchrone. Tout passage de la section 1.P.2 au statut *« Prêt pour Visa DT »* est techniquement bloqué tant que le volet arabe n'est pas révisé et synchronisé au même indice de version que le volet français, avec comparateur d'écarts bilingue intégré.
+   - **Verrou de Parité Linguistique Synchrone (Notice 1.P.2.2 FR ↔ AR) :** La notice en langue arabe étant juridiquement opposable au même titre que la version française (Décret exécutif 20-325), le système intègre un contrôleur de parité synchrone. Tout passage de la section 1.P.2 au statut *« Prêt pour Visa DT »* est techniquement bloqué tant que le volet arabe n'est pas révisé et synchronisé au même indice de version que le volet français, avec comparateur d'écarts bilingue intégré.
 4. **Propagation descendante en cascade des données maîtresses :**
    - Dès validation du rapport 3.2.P.8, les données finales (ex: *« 36 mois »*, *« À conserver à une température ne dépassant pas 30°C »*) sont répercutées automatiquement dans les champs dynamiques de la Notice FR/AR, du RCP et des articles de conditionnement.
    - Dès validation de la formule de lot (3.2.P.3.2), la composition qualitative et quantitative exacte est injectée dans le RCP (rubrique 2), la Notice et le formulaire de demande 1.A.3.
@@ -738,7 +738,7 @@ Pour garantir l'uniformité rédactionnelle et la stricte conformité aux exigen
 - **Template Spécifications et Méthodes d'Essai Produit Fini (ICH Q6A - 3.2.P.5.1 & 3.2.P.5.2) :** Tableau standardisé des critères de libération et péremption (aspect, identification, dosage principe actif, substances apparentées/impuretés, dissolution, uniformité de masse/teneur, contamination microbiologique).
 - **Template Protocole et Rapport de Stabilité Zone IVb (ICH Q1A(R2) - 3.2.P.8) :** Canevas d'essais en conditions climatiques algériennes Zone IVb (30°C ± 2°C / 75% RH ± 5% RH en longue durée, 40°C ± 2°C / 75% RH ± 5% RH en accéléré), tableau de suivi des points de contrôle (M0, M3, M6, M9, M12, M18, M24, M36), évaluation statistique des tendances et conclusion sur la durée de validité.
 - **Template Résumé Global de la Qualité (Quality Overall Summary - QOS Module 2.3) :** Synthèse critique des données de qualité de la substance active (2.3.S) et du produit fini (2.3.P), justifiant les choix de développement galénique et la stratégie de contrôle.
-- **Template Protocole et Rapport de Validation de Procédé (3.2.P.3.5) :** Définition des paramètres opératoires critiques (CPP), des attributs qualité critiques (CQA), plan d'échantillonnage intensif sur 3 lots consécutifs à échelle industrielle et critères d'acceptation statistiques (indices $C_p$ / $C_{pk}$).
+- **Template Protocole et Rapport de Validation de Procédé (3.2.P.3.5) :** Définition des paramètres opératoires critiques (CPP), des attributs qualité critiques (CQA), plan d'échantillonnage intensif sur 3 lots consécutifs à échelle industrielle et critères d'acceptation statistiques (indices *C*<sub>p</sub> / *C*<sub>pk</sub>).
 - **Template Fiche Technique Dispositif Médical (Arrêté du 10 mai 2021) :** Structure réglementaire requise pour l'homologation des DM (classification selon annexe I, description, principes de fonctionnement, matières premières, stérilisation, performances et évaluation clinique).
 
 #### 7.4.5 Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic
@@ -873,7 +873,7 @@ flowchart TD
   - *Option Physique Sous Scellé Cire/Inviolable :* Clé de secours inscrite sur support matériel chiffré, scellée avec signature manuscrite conjointe du PDT et du DG, conservée dans le coffre-fort ignifugé de la Direction Générale du laboratoire.
 - **Sauvegardes Automatisées Cohérentes (*Consistent Snapshots*) :**
   - Moteur de sauvegarde planifié couplant le dump transactionnel PostgreSQL (`pg_dump` chiffré) et le miroir physique du stockage CAS `data/storage/`.
-  - Objectifs de service PRA : RPO (Perte de données maximale admissible) $\le 1$ heure, RTO (Durée maximale d'interruption admissible) $\le 4$ heures.
+  - Objectifs de service PRA : RPO (Perte de données maximale admissible) ≤ 1 heure, RTO (Durée maximale d'interruption admissible) ≤ 4 heures.
   - Test de restauration semestriel obligatoire consigné dans le registre de maintenance BPF / 21 CFR Part 11.
 
 ---
@@ -1081,7 +1081,7 @@ Chaque pièce constitutive du dossier d'agrément est régie par une typologie d
 | Niveau d'Exigibilité | Libellé Réglementaire | Comportement Applicatif & Verrou BPF |
 |:---:|---|---|
 | **`[E]`** | **Exigé / Obligatoire** | **Bloquant absolu :** Aucun dossier ne peut être soumis au visa du PDT ni exporté pour Tabadol si une pièce `[E]` est manquante ou périmée. |
-| **`[C]`** | **Conditionnel** | Activé automatiquement par l'arbre de décision selon les options saisies (ex. si *Locataire* $\to$ Bail notarié 10 ans obligatoire ; si *Sous-traitance* $\to$ Contrat BPF et audit exigés ; si *Formes Stériles* $\to$ Qualification HVAC ISO 5 requise). |
+| **`[C]`** | **Conditionnel** | Activé automatiquement par l'arbre de décision selon les options saisies (ex. si *Locataire* → Bail notarié 10 ans obligatoire ; si *Sous-traitance* → Contrat BPF et audit exigés ; si *Formes Stériles* → Qualification HVAC ISO 5 requise). |
 | **`[F]`** | **Facultatif / Complémentaire** | Documents de valorisation technique, notes explicatives complémentaires, certifications ISO volontaires (non bloquant). |
 | **`[S]`** | **Spécifique à la Procédure** | Pièces imposées exclusivement par la nature de la démarche (ex. relevé comparatif des plans pour une *Modification Substantielle* d'usine). |
 
@@ -1305,7 +1305,7 @@ L'intégration des trames réglementaires certifiées de l'ANPP (issues des rép
    Conforme à `TEMPLATE-CA-SR-secondaire.docx` pour les laboratoires de contrôle qualité :
    - Traçabilité prouvée au Standard de Référence primaire de la Pharmacopée ou organisme accrédité **ISO 17034**.
    - Identification par spectrométrie **FTIR** ou deux techniques séparatives alternatives.
-   - Dosage et taux d'impuretés établis sur **au moins trois (03) essais comparatifs** (HPLC, UV) avec calcul des incertitudes de mesure associées ($\pm U$).
+   - Dosage et taux d'impuretés établis sur **au moins trois (03) essais comparatifs** (HPLC, UV) avec calcul des incertitudes de mesure associées (± U).
    - Teneur en eau sur 3 essais avec feuilles de calculs brutes et chromatogrammes rattachés.
    - *Suivi Automatisé du Cycle de Vie des Étalons Secondaires :* Durée maximale de validité fixée à douze (12) mois à compter de la date de caractérisation initiale, avec alertes BPF automatisées de re-qualification / re-test analytique à J-60 et J-30 avant péremption du standard de travail.
 

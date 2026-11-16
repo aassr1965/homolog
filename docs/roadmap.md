@@ -88,7 +88,7 @@ gantt
     - Pré-remplissage des 14 permissions unitaires et de la matrice par défaut des 10 rôles sans perturber les données existantes.
   - [x] **Moteur RBAC Backend Go & Garde-fous BPF Inviolables :**
     - Service `RBACService` et middleware `RequirePermission(perm)` / `RequireAnyPermission(perms...)`.
-    - Garde-fous réglementaires inviolables en code Go : exercice du visa PDT réservé exclusivement au DT titulaire de la décision ministérielle (1.A.7), filtre Zero-Trust bloquant le téléchargement de documents pour les admins techniques (`admin_systeme_local`, `super_admin_editeur`), et non-auto-approbation SoD par pièce (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
+    - Garde-fous réglementaires inviolables en code Go : exercice du visa PDT réservé exclusivement au DT titulaire de la décision ministérielle (1.A.7), filtre Zero-Trust bloquant le téléchargement de documents pour les admins techniques (`admin_systeme_local`, `super_admin_editeur`), et non-auto-approbation SoD par pièce (*Maker* ≠ *Checker* ≠ *Approver*).
     - Système d'invalidation instantanée par versioning de permissions (`permissions_version`) pour répercussion immédiate sur sessions actives.
     - Interception stricte de chaque endpoint API (`HTTP 403 Forbidden`) avec journalisation d'alerte automatique dans `audit_logs` (`AUDIT_SECURITY_403_BLOCKED`).
   - [x] **Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :**
@@ -254,7 +254,7 @@ gantt
   - Matrice d'affectation métier selon l'expertise (Section 7.4 du Cahier des Charges) :
     - *Affaires Réglementaires (RA)* : Module 1 complet, notices patient bilingues FR/AR (1.P.2), résumés des caractéristiques (RCP 1.P.1), maquettes, bordereaux BV1/BV2, lettres d'engagements (1.P.8, 1.P.9, 1.H.10) et dossiers de variations (LD-DEPP07/V01).
     - *Contrôle Qualité (CQ) & Stabilités* : Spécifications analytiques SA/PF (3.2.S.4, 3.2.P.5.1), protocoles et rapports de validation des méthodes d'analyse selon ICH Q2(R1) (3.2.P.5.3), bulletins d'analyse libératoires CoA (1.P.4, 1.P.5), et protocoles/rapports d'études de stabilité sous conditions climatiques Zone IVb (3.2.P.8).
-    - *Recherche & Développement (R&D) / Galénique* : Justification de la formulation et développement pharmaceutique (3.2.P.2), profils de dissolution comparatifs ($f_1$, $f_2$) pour *Biowaiver* (1.M.P.3), et Résumé Global de la Qualité (QOS Module 2.3).
+    - *Recherche & Développement (R&D) / Galénique* : Justification de la formulation et développement pharmaceutique (3.2.P.2), profils de dissolution comparatifs (*f*<sub>1</sub>, *f*<sub>2</sub>) pour *Biowaiver* (1.M.P.3), et Résumé Global de la Qualité (QOS Module 2.3).
     - *Production Industrielle & Ingénierie* : Formules de fabrication unitaire et par lot (3.2.P.3.2), procédés et contrôles en cours IPC (3.2.P.3.3), protocoles et rapports de validation de procédé sur 3 lots industriels (3.2.P.3.5 / 1.P.8).
     - *Assurance Qualité (AQ)* : Rôle de relecture indépendante (*Checker*), procédures opératoires (SOP/POS), revue annuelle de la qualité (PQR), audits BPF et gestion des CAPA.
     - *Partenaires Externes (Tiers)* : Dépôt sécurisé des ASMF/DMF Substance Active (3.2.S) par les fabricants d'API et rapports d'essais cliniques/bioéquivalence (Module 5) par les CROs.
@@ -267,7 +267,7 @@ gantt
 - [ ] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
   - Modélisation du graphe orienté acyclique (DAG) des dépendances techniques et réglementaires CTD/DM en 5 phases successives (Matières & Méthodes ➔ Lots pilotes & CoA ➔ Stabilités Zone IVb & Bioéquivalence ➔ QOS & Notice/RCP ➔ Engagements & Visa PDT).
   - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé).
-  - **Verrou de parité linguistique synchrone FR $\leftrightarrow$ AR (Règle bloquante GxP) :** Mécanisme de blocage technique interdisant formellement le passage du dossier au statut *« Prêt pour Visa DT »* si la notice patient en langue arabe (1.P.2.2) n'est pas au même indice de révision validé manuellement que la notice française (1.P.2.1), garantissant la stricte symétrie médico-légale exigée par l'ANPP avant toute soumission. *(Note d'architecture : ce verrou de complétude est purement déterministe en Phase 2 ; l'assistant IA d'aide à la traduction médicale et de glossaire bilingue relève du Jalon 3.1)*.
+  - **Verrou de parité linguistique synchrone FR ↔ AR (Règle bloquante GxP) :** Mécanisme de blocage technique interdisant formellement le passage du dossier au statut *« Prêt pour Visa DT »* si la notice patient en langue arabe (1.P.2.2) n'est pas au même indice de révision validé manuellement que la notice française (1.P.2.1), garantissant la stricte symétrie médico-légale exigée par l'ANPP avant toute soumission. *(Note d'architecture : ce verrou de complétude est purement déterministe en Phase 2 ; l'assistant IA d'aide à la traduction médicale et de glossaire bilingue relève du Jalon 3.1)*.
   - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
 - [ ] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
@@ -359,7 +359,7 @@ gantt
   - Création d'une soumission groupée pour un même produit combinant plusieurs modifications interdépendantes.
   - Calcul du niveau de criticité global du groupe (alignement sur la modification la plus sévère du groupe).
 - [ ] **Assistant Visuel d'Arborescence d'Impact Réglementaire (Change Impact Tree) :**
-  - Graphe interactif projetant instantanément toutes les sections CTD corollaires impactées par le choix d'une des 34 rubriques (ex. changement de site API $\to$ 3.2.S, 3.2.P, 1.H.8, RCP/notice).
+  - Graphe interactif projetant instantanément toutes les sections CTD corollaires impactées par le choix d'une des 34 rubriques (ex. changement de site API → 3.2.S, 3.2.P, 1.H.8, RCP/notice).
   - Code visuel tri-couleur : Rouge (Impact direct), Orange (Impact indirect *ripple effect*), Vert (Sections préservées candidates à l'attestation de non-modification).
   - Alimentation automatique de la fiche d'impact technique et financier pour le Comité de Contrôle des Changements (EI-CHG-01).
 
@@ -390,7 +390,7 @@ gantt
     - Demande d'agrément d'ouverture en sous-traitance : formulaire `eForm-MIPH-FAB-SOUS-TRAITANCE`, contrat de façon BPF opposable, partage des responsabilités de contrôle et libération, audit qualité du façonnier.
     - Demande de décision d'exercice du Pharmacien Directeur Technique (PDT) : formulaire `eForm-MIPH-PDT`, diplôme d'État, inscription Ordre Section B < 3 mois, attestations d'expérience 3 ou 5 ans (Décret 21-82), contrat de travail CDI exclusif temps plein, casier judiciaire, engagement déontologique.
     - Demande de décision d'exercice du Pharmacien Assistant : formulaire `eForm-MIPH-ASSISTANT`, diplôme, inscription Ordre, contrat de travail sous l'autorité du PDT.
-    - Moteur de qualification des modifications : *Modifications substantielles* (liste limitative légale : nouvelles formes, nouvelles lignes, réaménagement HVAC/eau PPI, transfert de site $\to$ arrêté modificatif ministériel après visite d'inspection) vs *Modifications non substantielles* (déclarations annuelles d'information).
+    - Moteur de qualification des modifications : *Modifications substantielles* (liste limitative légale : nouvelles formes, nouvelles lignes, réaménagement HVAC/eau PPI, transfert de site → arrêté modificatif ministériel après visite d'inspection) vs *Modifications non substantielles* (déclarations annuelles d'information).
   - **Établissements d'Importation (Arrêté du 01/10/2025) :**
     - Première demande, renouvellement quinquennal, modification du dossier.
     - Intégration du Cahier des conditions techniques à l'importation : locaux sécurisés, séparation stricte quarantaine/rejet sous clé, chambres froides (+2°C/+8°C) et zones climatisées (+15°C/+25°C) thermo-surveillées 24/7 avec alarmes et secours, procédure de libération par le PDT.
