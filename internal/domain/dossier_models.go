@@ -122,8 +122,34 @@ type ChecklistItem struct {
 	ValidationNotes        *string                `json:"validation_notes,omitempty"`
 	SortOrder              int                    `json:"sort_order"`
 	SecurityClassification SecurityClassification `json:"security_classification"`
-	CreatedAt              time.Time              `json:"created_at"`
-	UpdatedAt              time.Time              `json:"updated_at"`
+	// Enrichissements Workflow Maker-Checker-Approver (Jalon 2.1)
+	WorkflowStatus        WorkflowStatus `json:"workflow_status"` // draft_pending, drafting, under_review, pending_approval, approved_sealed
+	AssignedDepartment    string         `json:"assigned_department"`
+	AssignedUserID        *uuid.UUID     `json:"assigned_user_id,omitempty"`
+	AssignedUserName      string         `json:"assigned_user_name,omitempty"`
+	DueDate               *time.Time     `json:"due_date,omitempty"`
+	IsLocked              bool           `json:"is_locked"`
+	LockedBy              *uuid.UUID     `json:"locked_by,omitempty"`
+	LockedByName          string         `json:"locked_by_name,omitempty"`
+	LockedAt              *time.Time     `json:"locked_at,omitempty"`
+	LockReason            *string        `json:"lock_reason,omitempty"`
+	CurrentRevision       string         `json:"current_revision"`
+	MakerUserID           *uuid.UUID     `json:"maker_user_id,omitempty"`
+	MakerUserName         string         `json:"maker_user_name,omitempty"`
+	MakerSubmittedAt      *time.Time     `json:"maker_submitted_at,omitempty"`
+	CheckerUserID         *uuid.UUID     `json:"checker_user_id,omitempty"`
+	CheckerUserName       string         `json:"checker_user_name,omitempty"`
+	CheckerReviewedAt     *time.Time     `json:"checker_reviewed_at,omitempty"`
+	CheckerDecision       *string        `json:"checker_decision,omitempty"`
+	CheckerNotes          *string        `json:"checker_notes,omitempty"`
+	ApproverUserID        *uuid.UUID     `json:"approver_user_id,omitempty"`
+	ApproverUserName      string         `json:"approver_user_name,omitempty"`
+	ApproverSignedAt      *time.Time     `json:"approver_signed_at,omitempty"`
+	ApproverSignatureSeal *string        `json:"approver_signature_seal,omitempty"`
+	AuthoredContent       *string        `json:"authored_content,omitempty"`
+	TemplateCode          *string        `json:"template_code,omitempty"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
 }
 
 // DossierAssignment représente l'affectation nominative d'un collaborateur ou consultant à un dossier (Need-to-Know)

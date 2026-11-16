@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+
 	"homolog/internal/audit"
 	"homolog/internal/auth"
 	"homolog/internal/config"
@@ -339,6 +341,244 @@ func TestLoginAndLogout_CookieAttributes(t *testing.T) {
 		}
 		if !sessionCookie.Secure {
 			t.Errorf("Expected Secure = true when X-Forwarded-Proto is https")
+		}
+	})
+}
+
+func TestPitchDeck_ProductionGuard(t *testing.T) {
+	// 1. Production config must never enable pitch deck
+	prodCfg := &config.Config{
+		Environment:     "production",
+		EnablePitchDeck: false,
+	}
+	if prodCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false in production")
+	}
+
+	// Even if someone mistakenly sets EnablePitchDeck = true in production, PitchDeckEnabled() must block it
+	prodDangerousCfg := &config.Config{
+		Environment:     "production",
+		EnablePitchDeck: true,
+	}
+	if prodDangerousCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false in production even if EnablePitchDeck is true")
+	}
+
+	prodAliasCfg := &config.Config{
+		Environment:     "prod",
+		EnablePitchDeck: true,
+	}
+	if prodAliasCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false when Environment is 'prod'")
+	}
+
+	// 2. Development config enables pitch deck when allowed
+	devCfg := &config.Config{
+		Environment:     "development",
+		EnablePitchDeck: true,
+	}
+	if !devCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = true in development")
+	}
+
+	devDisabledCfg := &config.Config{
+		Environment:     "development",
+		EnablePitchDeck: false,
+	}
+	if devDisabledCfg.PitchDeckEnabled() {
+		t.Errorf("Expected PitchDeckEnabled() = false when EnablePitchDeck is false")
+	}
+
+	// 3. Fallback via APP_ENV environment variable
+	t.Run("APP_ENV=production fallback", func(t *testing.T) {
+		t.Setenv("APP_ENV", "production")
+		var nilCfg *config.Config
+		if nilCfg.PitchDeckEnabled() {
+			t.Errorf("Expected nil config with APP_ENV=production to return false")
+		}
+	})
+
+	// 4. Test Route level blocking in production
+	t.Run("Route level blocking in production", func(t *testing.T) {
+		r := chi.NewRouter()
+		if prodCfg.PitchDeckEnabled() {
+			r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("presentation"))
+			})
+		} else {
+			r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "Ressource désactivée ou indisponible en environnement de production", http.StatusNotFound)
+			})
+			r.Get("/pitch", func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "Ressource désactivée ou indisponible en environnement de production", http.StatusNotFound)
+			})
+		}
+
+		req1 := httptest.NewRequest(http.MethodGet, "/presentation", nil)
+		rr1 := httptest.NewRecorder()
+		r.ServeHTTP(rr1, req1)
+		if rr1.Code != http.StatusNotFound {
+			t.Errorf("Expected /presentation to return 404 in production, got %d", rr1.Code)
+		}
+
+		req2 := httptest.NewRequest(http.MethodGet, "/pitch", nil)
+		rr2 := httptest.NewRecorder()
+		r.ServeHTTP(rr2, req2)
+		if rr2.Code != http.StatusNotFound {
+			t.Errorf("Expected /pitch to return 404 in production, got %d", rr2.Code)
+		}
+	})
+}
+
+// TestGateAccess_SecurityGuard valide le fonctionnement hermétique du Sas d'Accès Confidentiel
+func TestGateAccess_SecurityGuard(t *testing.T) {
+	// 1. Sas désactivé (GATE_PASSCODE vide)
+	t.Run("Gate disabled when passcode is empty", func(t *testing.T) {
+		cfg := &config.Config{
+			GatePasscode: "",
+			JWTSecret:    "test-secret",
+		}
+		if cfg.GateEnabled() {
+			t.Errorf("Expected GateEnabled() = false when GatePasscode is empty")
+		}
+
+		handler := NewGateHandler(cfg)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/gate/status", nil)
+		rr := httptest.NewRecorder()
+		handler.GetStatus(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("Expected 200 OK, got %d", rr.Code)
+		}
+
+		var resp GateStatusResponse
+		if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("Failed to parse json: %v", err)
+		}
+		if resp.GateRequired {
+			t.Errorf("Expected GateRequired = false")
+		}
+		if !resp.Unlocked {
+			t.Errorf("Expected Unlocked = true when gate is disabled")
+		}
+	})
+
+	// 2. Sas activé (GATE_PASSCODE défini)
+	t.Run("Gate enabled with passcode and full lifecycle", func(t *testing.T) {
+		secretPass := "HomologSecretVIP2026!"
+		cfg := &config.Config{
+			Environment:  "production",
+			GatePasscode: secretPass,
+			JWTSecret:    "enterprise-test-secret-key-12345",
+			CookieSecure: true,
+		}
+
+		if !cfg.GateEnabled() {
+			t.Fatalf("Expected GateEnabled() = true")
+		}
+
+		handler := NewGateHandler(cfg)
+
+		// A. Status initial sans cookie -> Requis et Verrouillé
+		reqStatus := httptest.NewRequest(http.MethodGet, "/api/v1/gate/status", nil)
+		rrStatus := httptest.NewRecorder()
+		handler.GetStatus(rrStatus, reqStatus)
+
+		var statusResp GateStatusResponse
+		_ = json.Unmarshal(rrStatus.Body.Bytes(), &statusResp)
+		if !statusResp.GateRequired || statusResp.Unlocked {
+			t.Errorf("Expected gate_required=true and unlocked=false, got %+v", statusResp)
+		}
+
+		// B. Test Middleware -> Bloque les API métier sans cookie
+		r := chi.NewRouter()
+		r.Use(handler.Middleware)
+		r.Get("/api/v1/dossiers", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("dossiers-ok"))
+		})
+		r.Get("/api/v1/gate/status", handler.GetStatus)
+		r.Post("/api/v1/gate/unlock", handler.Unlock)
+		r.Post("/api/v1/gate/lock", handler.Lock)
+
+		reqBlocked := httptest.NewRequest(http.MethodGet, "/api/v1/dossiers", nil)
+		rrBlocked := httptest.NewRecorder()
+		r.ServeHTTP(rrBlocked, reqBlocked)
+
+		if rrBlocked.Code != http.StatusForbidden {
+			t.Errorf("Expected 403 Forbidden for locked gate, got %d", rrBlocked.Code)
+		}
+
+		// C. Tentative de déverrouillage avec un mauvais mot de passe -> 401
+		badBody := bytes.NewBufferString(`{"passcode":"WrongPassword!"}`)
+		reqBad := httptest.NewRequest(http.MethodPost, "/api/v1/gate/unlock", badBody)
+		rrBad := httptest.NewRecorder()
+		r.ServeHTTP(rrBad, reqBad)
+
+		if rrBad.Code != http.StatusUnauthorized {
+			t.Errorf("Expected 401 Unauthorized for bad passcode, got %d", rrBad.Code)
+		}
+
+		// D. Déverrouillage avec le bon mot de passe -> 200 OK + Cookie
+		goodBody := bytes.NewBufferString(`{"passcode":"` + secretPass + `"}`)
+		reqGood := httptest.NewRequest(http.MethodPost, "/api/v1/gate/unlock", goodBody)
+		rrGood := httptest.NewRecorder()
+		r.ServeHTTP(rrGood, reqGood)
+
+		if rrGood.Code != http.StatusOK {
+			t.Fatalf("Expected 200 OK for valid passcode, got %d (body: %s)", rrGood.Code, rrGood.Body.String())
+		}
+
+		// Vérifier les attributs du cookie
+		cookies := rrGood.Result().Cookies()
+		var gateCookie *http.Cookie
+		for _, c := range cookies {
+			if c.Name == GateCookieName {
+				gateCookie = c
+				break
+			}
+		}
+		if gateCookie == nil {
+			t.Fatalf("Expected cookie %s to be set", GateCookieName)
+		}
+		if !gateCookie.HttpOnly {
+			t.Errorf("Expected HttpOnly = true on gate cookie")
+		}
+		if gateCookie.SameSite != http.SameSiteStrictMode {
+			t.Errorf("Expected SameSiteStrictMode on gate cookie")
+		}
+
+		// E. Vérification avec le cookie -> Déverrouillé
+		reqUnlocked := httptest.NewRequest(http.MethodGet, "/api/v1/dossiers", nil)
+		reqUnlocked.AddCookie(gateCookie)
+		rrUnlocked := httptest.NewRecorder()
+		r.ServeHTTP(rrUnlocked, reqUnlocked)
+
+		if rrUnlocked.Code != http.StatusOK {
+			t.Errorf("Expected 200 OK for unlocked request, got %d", rrUnlocked.Code)
+		}
+		if rrUnlocked.Body.String() != "dossiers-ok" {
+			t.Errorf("Expected 'dossiers-ok', got '%s'", rrUnlocked.Body.String())
+		}
+
+		// F. Reverrouillage -> Efface le cookie
+		reqLock := httptest.NewRequest(http.MethodPost, "/api/v1/gate/lock", nil)
+		rrLock := httptest.NewRecorder()
+		r.ServeHTTP(rrLock, reqLock)
+
+		if rrLock.Code != http.StatusOK {
+			t.Errorf("Expected 200 OK for lock, got %d", rrLock.Code)
+		}
+
+		lockCookies := rrLock.Result().Cookies()
+		var clearedCookie *http.Cookie
+		for _, c := range lockCookies {
+			if c.Name == GateCookieName {
+				clearedCookie = c
+				break
+			}
+		}
+		if clearedCookie == nil || clearedCookie.MaxAge >= 0 {
+			t.Errorf("Expected gate cookie to be cleared (MaxAge < 0)")
 		}
 	})
 }

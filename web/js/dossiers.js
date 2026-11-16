@@ -675,9 +675,15 @@
                                 Audit automatique de conformité pré-dépôt, validation des pièces [E], quittance BV1 et export du manifeste certifié.
                             </div>
                         </div>
-                        <div style="display:flex; gap:8px;">
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn-pill" style="background:#7e22ce; color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openDossierReportsModal('${dossier.id}')">
+                                📄 États Réglementaires Officiels
+                            </button>
+                            <button class="btn-pill" style="background:var(--accent-emerald); color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openMasterTemplatesModal()">
+                                📚 Templates Maîtres BPF
+                            </button>
                             <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openPreSubmissionAuditModal('${dossier.id}')">
-                                🔍 Lancer Audit Pré-Dépôt &amp; Manifeste
+                                🔍 Audit Pré-Dépôt
                             </button>
                         </div>
                     </div>
@@ -724,12 +730,12 @@
                     <table id="doc-table">
                         <thead id="table-head">
                             <tr>
-                                <th class="col-hide-xs" style="width: 75px;">Module</th>
-                                <th class="col-hide-sm" style="width: 80px;">Exigence</th>
-                                <th style="width: 90px;">Statut</th>
+                                <th class="col-hide-xs" style="width: 65px;">Module</th>
+                                <th class="col-hide-sm" style="width: 75px;">Exigence</th>
+                                <th style="width: 125px;">Statut BPF &amp; Workflow</th>
                                 <th>Code &amp; Intitulé Réglementaire (Guide ANPP)</th>
-                                <th>Document GED Rattaché (Coffre-Fort BPF)</th>
-                                <th style="width: 140px; text-align:center;">Actions</th>
+                                <th>Document GED / Trame BPF</th>
+                                <th style="width: 160px; text-align:center;">Atelier &amp; Actions</th>
                             </tr>
                         </thead>
                         <tbody id="doc-tbody">
@@ -863,9 +869,24 @@
                             statusBadge = '<span class="status-tag" style="background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid #f87171; font-weight:700;">🔒 SECRET COMMERCIAL</span>';
                         } else if (isMaskedIndustrial) {
                             statusBadge = '<span class="status-tag" style="background:rgba(147,51,234,0.12); color:#7e22ce; border:1px solid #c084fc; font-weight:700;">🛡️ SECRET INDUSTRIEL</span>';
-                        } else if (it.status === 'rattache') statusBadge = '<span class="status-tag status-rev">RATTACHÉ</span>';
-                        else if (it.status === 'valide_qualite') statusBadge = '<span class="status-tag status-ok">VALIDÉ QUALITÉ</span>';
-                        else if (it.status === 'approuve_dt') statusBadge = '<span class="status-tag" style="background:rgba(147,51,234,0.15); color:#7e22ce; border:1.5px solid #c084fc; font-weight:800;">APPROUVÉ PDT</span>';
+                        } else {
+                            const wfBadge = typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(it.workflow_status || 'draft_pending') : '';
+                            const revBadge = typeof formatRevisionBadge === 'function' ? formatRevisionBadge(it.current_revision, it.workflow_status === 'approved_sealed') : '';
+                            let lockIndicator = '';
+                            if (it.is_locked) {
+                                const lockerName = it.locked_by ? (it.locked_by.first_name + ' ' + it.locked_by.last_name) : 'Rédacteur';
+                                lockIndicator = `<div style="margin-top:2px;"><span class="lock-pill" title="Verrouillé par ${escapeHTML(lockerName)} : ${escapeHTML(it.lock_reason || '')}">🔒 ${escapeHTML(it.locked_by ? it.locked_by.last_name : 'En cours')}</span></div>`;
+                            }
+                            statusBadge = `
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                                        ${wfBadge}
+                                        ${revBadge}
+                                    </div>
+                                    ${lockIndicator}
+                                </div>
+                            `;
+                        }
 
                         let modLabel = `M${it.module_number}`;
                         if (it.module_number === 0) modLabel = `DM`;
@@ -886,29 +907,52 @@
                         }
 
                         let actionsHTML = '';
-                        const isLocked = currentDossierDetail && currentDossierDetail.is_locked_for_deposit;
+                        const isLockedDossier = currentDossierDetail && currentDossierDetail.is_locked_for_deposit;
 
                         if (isMasked) {
                             actionsHTML = `<span style="color:var(--text-dim); font-size:10px; font-style:italic;">🔒 Accès réservé</span>`;
-                        } else if (!it.ged_document_id) {
-                            actionsHTML = `
-                                <button class="btn-pill" style="height:24px; padding:2px 8px; font-size:10.5px; font-weight:700; background:var(--accent-blue); color:white; border:none;" 
-                                        onclick="event.stopPropagation(); openAttachGEDModal('${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}', '${it.requirement_level}')"
-                                        ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
-                                    📎 Rattacher GED
-                                </button>
-                            `;
                         } else {
+                            let gedBtn = '';
+                            if (!it.ged_document_id) {
+                                gedBtn = `
+                                    <button class="btn-pill" style="height:22px; padding:1px 6px; font-size:10px; font-weight:700; background:var(--accent-blue); color:white; border:none;" 
+                                            onclick="event.stopPropagation(); openAttachGEDModal('${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}', '${it.requirement_level}')"
+                                            ${isLockedDossier ? 'disabled title="Dossier verrouillé"' : ''} title="Rattacher GED">
+                                        📎 GED
+                                    </button>
+                                `;
+                            } else {
+                                gedBtn = `
+                                    <button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; font-weight:700;" title="Aperçu document" onclick="event.stopPropagation(); previewGEDItemDoc('${it.ged_document_id}')">👁️</button>
+                                    <button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; font-weight:700; color:var(--accent-red); background:#fff5f5; border-color:#fca5a5;" title="Détacher" 
+                                            onclick="event.stopPropagation(); executeDetachGED('${it.id}', '${it.item_code}')" ${isLockedDossier ? 'disabled title="Dossier verrouillé"' : ''}>✕</button>
+                                `;
+                            }
+
+                            // Boutons d'action atelier Maker-Checker
+                            let wfBtns = '';
+                            if (it.workflow_status !== 'approved_sealed' && !isLockedDossier) {
+                                if (!it.is_locked) {
+                                    wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px;" title="Verrouiller en édition (Check-out)" onclick="event.stopPropagation(); openCheckoutModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}')">🔒</button>`;
+                                } else {
+                                    wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-emerald); color:white; border:none;" title="Restituer version (Check-in)" onclick="event.stopPropagation(); openCheckinModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${it.current_revision}')">🔓</button>`;
+                                }
+                            }
+
+                            if (it.workflow_status === 'drafting') {
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-blue); color:white; border:none;" title="Soumettre à revue Qualité" onclick="event.stopPropagation(); submitItemForReview('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">📤</button>`;
+                            } else if (it.workflow_status === 'under_review') {
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-amber); color:white; border:none;" title="Revue Qualité &amp; Double Regard (Checker)" onclick="event.stopPropagation(); openReviewDecisionModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}')">🔍</button>`;
+                            } else if (it.workflow_status === 'pending_approval') {
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:#7e22ce; color:white; border:none;" title="Visa Pharmacien DT" onclick="event.stopPropagation(); openPdtSealModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}')">✍️</button>`;
+                            }
+
+                            wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px;" title="Historique des revues" onclick="event.stopPropagation(); openItemReviewsModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">📜</button>`;
+
                             actionsHTML = `
-                                <div style="display:flex; gap:4px; justify-content:center;">
-                                    <button class="btn-pill" style="height:24px; padding:2px 6px; font-size:10.5px; font-weight:700;" title="Aperçu document" onclick="event.stopPropagation(); previewGEDItemDoc('${it.ged_document_id}')">
-                                        👁️
-                                    </button>
-                                    <button class="btn-pill" style="height:24px; padding:2px 6px; font-size:10.5px; font-weight:700; color:var(--accent-red); background:#fff5f5; border-color:#fca5a5;" title="Détacher" 
-                                            onclick="event.stopPropagation(); executeDetachGED('${it.id}', '${it.item_code}')"
-                                             ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
-                                        ✕
-                                    </button>
+                                <div style="display:flex; gap:3px; justify-content:center; align-items:center;">
+                                    ${gedBtn}
+                                    ${wfBtns}
                                 </div>
                             `;
                         }
@@ -922,6 +966,8 @@
                             }
                         }
 
+                        const deptPill = (!isMasked && typeof formatDepartmentBadge === 'function') ? formatDepartmentBadge(it.assigned_department) : '';
+
                         const displayTitleFR = escapeHTML(it.title_fr);
                         const displayDescFR = escapeHTML(it.description_fr || '');
 
@@ -934,6 +980,7 @@
                                     <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">${escapeHTML(it.item_code)}</span>
                                     <span style="font-weight:700; color:var(--text-main); font-size:12px;">${displayTitleFR}</span>
                                     ${securityPill}
+                                    ${deptPill}
                                 </div>
                                 ${(!isMasked && it.title_ar) ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
                                 ${displayDescFR ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${displayDescFR}</div>` : ''}
@@ -975,10 +1022,10 @@
             currentPreviewSubTab = tab;
             const btnDoc = document.getElementById("pvt-btn-doc");
             const btnAnpp = document.getElementById("pvt-btn-anpp");
-            if (btnDoc && btnAnpp) {
-                btnDoc.classList.toggle("active", tab === 'doc');
-                btnAnpp.classList.toggle("active", tab === 'anpp');
-            }
+            const btnWf = document.getElementById("pvt-btn-wf");
+            if (btnDoc) btnDoc.classList.toggle("active", tab === 'doc');
+            if (btnAnpp) btnAnpp.classList.toggle("active", tab === 'anpp');
+            if (btnWf) btnWf.classList.toggle("active", tab === 'wf');
 
             if (currentDossierDetail && selectedDossierItemId) {
                 const items = currentDossierDetail.items || currentDossierDetail.checklist_data || [];
@@ -1043,6 +1090,125 @@
             else if (item.requirement_level === 'P') reqDesc = "Partiel [P] : Requis selon les caractéristiques du produit (ex: étude bioéquivalence ou justification biowaiver).";
 
             const isLocked = currentDossierDetail && currentDossierDetail.is_locked_for_deposit;
+
+            if (currentPreviewSubTab === 'wf') {
+                // ONGLET 3 : Atelier d'Élaboration Documentaire BPF (Maker-Checker)
+                const isApprovedSealed = item.workflow_status === 'approved_sealed';
+                const wfSteps = [
+                    { id: 'draft_pending', label: '1. À Rédiger', icon: '📝' },
+                    { id: 'drafting', label: '2. En Rédaction', icon: '✏️' },
+                    { id: 'under_review', label: '3. Revue AQ', icon: '🔍' },
+                    { id: 'pending_approval', label: '4. Visa PDT', icon: '⚖️' },
+                    { id: 'approved_sealed', label: '5. Scellé v1.0', icon: '🛡️' }
+                ];
+                const curIdx = wfSteps.findIndex(s => s.id === item.workflow_status);
+                const lockerName = item.locked_by ? (item.locked_by.first_name + ' ' + item.locked_by.last_name) : 'Non verrouillé';
+
+                preview.innerHTML = `
+                    <div class="pdf-sim-page">
+                        <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>🛠️ Atelier BPF Maker-Checker — [${escapeHTML(item.item_code)}]</span>
+                            ${typeof formatRevisionBadge === 'function' ? formatRevisionBadge(item.current_revision, isApprovedSealed) : ''}
+                        </div>
+
+                        <div style="margin-top:10px; margin-bottom:12px;">
+                            <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">
+                                ${escapeHTML(item.title_fr)}
+                            </div>
+                            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                ${typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(item.workflow_status) : ''}
+                                ${typeof formatDepartmentBadge === 'function' ? formatDepartmentBadge(item.assigned_department) : ''}
+                                ${item.due_date ? `<span style="font-size:10.5px; color:var(--text-dim);">Échéance : <strong>${item.due_date.substring(0, 10)}</strong></span>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Stepper Cycle de Vie BPF -->
+                        <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:14px;">
+                            <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Cycle de Validation BPF / 21 CFR Part 11 :</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; font-size:10.5px; overflow-x:auto;">
+                                ${wfSteps.map((st, i) => {
+                                    const isActive = st.id === item.workflow_status;
+                                    const isDone = i < curIdx;
+                                    return `
+                                        <div style="display:flex; align-items:center; gap:4px; ${isActive ? 'font-weight:800; color:var(--accent-blue);' : (isDone ? 'color:var(--accent-emerald); font-weight:600;' : 'color:var(--text-dim);')}">
+                                            <span>${isDone ? '✅' : st.icon}</span>
+                                            <span>${st.label}</span>
+                                            ${i < wfSteps.length - 1 ? '<span style="color:var(--border-color); margin-left:4px;">➔</span>' : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- État du Verrouillage Check-out -->
+                        <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:14px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span style="font-size:11px; font-weight:700; color:var(--text-main);">Statut d'Édition Exclusive (Check-out) :</span>
+                                <span class="status-tag ${item.is_locked ? 'status-rej' : 'status-ok'}">
+                                    ${item.is_locked ? '🔒 VERROUILLÉ EN COURS' : '🔓 LIBRE POUR RÉDACTION'}
+                                </span>
+                            </div>
+                            ${item.is_locked ? `
+                                <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">
+                                    Détenu par : <strong>${escapeHTML(lockerName)}</strong><br>
+                                    Verrouillé le : <span style="font-family:monospace;">${item.locked_at ? new Date(item.locked_at).toLocaleString() : ''}</span><br>
+                                    Motif : <em>${escapeHTML(item.lock_reason || 'Élaboration de la section')}</em>
+                                </div>
+                            ` : `
+                                <div style="font-size:11px; color:var(--text-dim);">
+                                    Aucun contributeur ne modifie actuellement cette section.
+                                </div>
+                            `}
+                        </div>
+
+                        <!-- Actions Opérationnelles Atelier -->
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+                            <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Actions de Rédaction &amp; Relecture :</div>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                ${!item.is_locked && !isApprovedSealed ? `
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="openCheckoutModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}')">
+                                        🔒 Verrouiller (Check-out)
+                                    </button>
+                                ` : ''}
+                                ${item.is_locked ? `
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-emerald); color:white; border:none;" onclick="openCheckinModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.current_revision}')">
+                                        🔓 Restituer (Check-in)
+                                    </button>
+                                ` : ''}
+                                <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="openAssignModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.assigned_department}', '${item.due_date}')">
+                                    👥 Assigner Pôle Métier
+                                </button>
+                                ${item.workflow_status === 'drafting' ? `
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-blue); color:white; border:none;" onclick="submitItemForReview('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
+                                        📤 Soumettre à Revue AQ
+                                    </button>
+                                ` : ''}
+                                ${item.workflow_status === 'under_review' ? `
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-amber); color:white; border:none;" onclick="openReviewDecisionModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}')">
+                                        🔍 Relecture Checker (Double Regard)
+                                    </button>
+                                ` : ''}
+                                ${item.workflow_status === 'pending_approval' ? `
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:#7e22ce; color:white; border:none;" onclick="openPdtSealModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}')">
+                                        ✍️ Apposer Visa Pharmacien DT (2FA)
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Trame Maître BPF & Piste d'Audit -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid var(--border-color); margin-top:auto;">
+                            <button class="btn-pill" style="font-size:11px; padding:3px 8px;" onclick="openMasterTemplatesModal()">
+                                📚 Trame Maître BPF
+                            </button>
+                            <button class="btn-pill" style="font-size:11px; padding:3px 8px;" onclick="openItemReviewsModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
+                                📜 Piste d'Audit des Revues
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
 
             if (currentPreviewSubTab === 'doc') {
                 // ONGLET 1 : Aperçu Pièce GED (Visualiseur BPF / Coffre-fort certifié)

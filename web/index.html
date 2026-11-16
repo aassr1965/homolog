@@ -50,8 +50,161 @@
 <body>
     <h1 class="sr-only" style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0;">SANAD PHARMA — Cockpit Réglementaire ANPP &amp; GED Pharmaceutique</h1>
 
+    <!-- Sas d'Accès Partenaire Confidentiel (Private Preview Gate) -->
+    <div id="screen-gate" class="login-screen" style="display:flex; padding:20px 16px; overflow-y:auto; align-items:center; justify-content:center;">
+        <div class="login-card" style="max-width:660px; width:100%; border-color:rgba(147, 51, 234, 0.35); box-shadow:0 24px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(147, 51, 234, 0.15); margin:auto;">
+            <!-- Header du Sas -->
+            <div class="login-header" style="border-bottom:1px solid var(--border-color); padding-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="brand-caducee-icon" title="Caducée Pharmaceutique Algérien Officiel (Croissant, Coupe & Serpent)">
+                            <img src="/img/caducee-algerie.png" alt="Caducée Pharmacie Algérien" width="28" height="28" loading="eager" style="width:28px; height:28px; object-fit:contain;">
+                        </span>
+                        <div>
+                            <span class="brand-badge" style="font-size:13px; padding:3px 10px; font-weight:800; letter-spacing:0.5px;">SANAD</span>
+                            <span style="font-size:10px; color:var(--text-dim); margin-left:6px;">Plateforme Réglementaire Souveraine</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:10px; background:rgba(147,51,234,0.18); color:#c084fc; border:1px solid rgba(192,132,252,0.3); padding:3px 10px; border-radius:12px; font-weight:700;">ACCÈS PRIVÉ CONFIDENTIEL</span>
+                        <button class="btn-pill" onclick="toggleTheme()" title="Basculer thème" style="height:28px; padding:2px 8px;">
+                            <span id="gate-theme-icon">☀️</span>
+                        </button>
+                        <button class="btn-pill" onclick="toggleLanguage()" title="Changer de langue" style="height:28px; padding:2px 8px;">
+                            <span id="gate-lang-label">🇩🇿</span>
+                        </button>
+                    </div>
+                </div>
+                <h2 style="font-size:18px; font-weight:800; color:var(--text-main); margin-bottom:4px;" id="gate-title">Progiciel SANAD — Homologation ANPP &amp; GED</h2>
+                <p style="font-size:12px; color:var(--text-muted); line-height:1.45;" id="gate-subtitle">Cockpit réglementaire pour l'enregistrement des Médicaments (CTD), Dispositifs Médicaux (DDM) et Compléments Alimentaires en Algérie (ANPP / MIPH).</p>
+            </div>
+
+            <div class="login-body" style="padding-top:16px;">
+                <!-- 1. Formulaire de Déverrouillage par Mot de Passe Unique (AU PREMIER PLAN) -->
+                <form onsubmit="handleGateSubmit(event)" style="background:rgba(147, 51, 234, 0.08); border:1.5px solid rgba(192, 132, 252, 0.35); border-radius:8px; padding:16px; margin-bottom:14px;">
+                    <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:3px; display:flex; align-items:center; gap:6px;">
+                        <span>🔑 Code d'Accès Partenaire Confidentiel</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                        Cet environnement est soumis au secret industriel. Veuillez saisir votre mot de passe d'accès partenaire pour déverrouiller la plateforme.
+                    </div>
+
+                    <div id="gate-error" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
+
+                    <div style="display:flex; gap:8px; align-items:stretch; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px;">
+                            <input type="password" id="gate-passcode" class="login-input" placeholder="Saisissez le mot de passe d'accès partenaire..." required autocomplete="current-password" autofocus style="letter-spacing:2px; font-size:13px; height:42px; background:var(--bg-input); border-color:rgba(147, 51, 234, 0.4); color:var(--text-main);">
+                        </div>
+                        <button type="submit" id="btn-gate-submit" class="btn-login-submit" style="background:linear-gradient(135deg, #7c3aed 0%, #9333ea 100%); border-color:#9333ea; font-weight:700; height:42px; padding:0 22px; white-space:nowrap; margin-top:0;">
+                            Déverrouiller l'accès ➔
+                        </button>
+                    </div>
+                </form>
+
+                <!-- 2. Bloc Présentation du Progiciel (BIEN VISIBLE) -->
+                <div style="background:linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(147, 51, 234, 0.12)); border:1.5px solid rgba(56, 189, 248, 0.35); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:220px;">
+                        <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:2px; display:flex; align-items:center; gap:6px;">
+                            <span>📑 Présentation Complète du Progiciel SANAD</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">
+                            Consultez la présentation exécutive interactive (10 diapositives : architecture souveraine, matrice des 9 rôles BPF et retour sur investissement).
+                        </div>
+                    </div>
+                    <a href="/presentation" target="_blank" class="btn-pill" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#ffffff; font-weight:700; font-size:12px; padding:8px 18px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; border:none; box-shadow:0 4px 12px rgba(2, 132, 199, 0.35); white-space:nowrap;">
+                        <span>Ouvrir la Présentation ➔</span>
+                    </a>
+                </div>
+
+                <!-- 3. Section Contact Référent : Soufiene Aït Ali -->
+                <div style="background:var(--bg-surface); border:1.5px solid var(--border-color); border-radius:8px; padding:14px 16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="font-size:11px; font-weight:800; color:var(--accent-purple); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <span>📞 Contact &amp; Demande d'Accès Partenaire :</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <div style="font-size:14px; font-weight:800; color:var(--text-main);">
+                                Soufiene Aït Ali
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:500; margin-top:2px;">
+                                Concepteur &amp; Responsable du Progiciel SANAD
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <a href="mailto:soufiene.aitali@gmail.com" class="btn-pill" style="background:#0284c7; color:#ffffff; border:none; text-decoration:none; font-size:11px; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; font-weight:700; box-shadow:0 2px 4px rgba(2, 132, 199, 0.25);">
+                                <span>✉️</span>
+                                <span>soufiene.aitali@gmail.com</span>
+                            </a>
+                            <a href="tel:0661605066" class="btn-pill" style="background:#059669; color:#ffffff; border:none; text-decoration:none; font-size:11px; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; font-weight:700; box-shadow:0 2px 4px rgba(5, 150, 105, 0.25);">
+                                <span>📱</span>
+                                <span>06 61 60 50 66</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Illustrations Sobres du Périmètre Métier Traité -->
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px;">
+                        Périmètre Réglementaire Couvert :
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(135px, 1fr)); gap:8px;">
+                        <!-- Pilier 1 : Médicaments CTD -->
+                        <div style="background:rgba(2, 132, 199, 0.08); border:1px solid rgba(2, 132, 199, 0.22); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:6px; color:#38bdf8; font-weight:700; font-size:12px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+                                <span>Médicaments</span>
+                            </div>
+                            <div style="font-size:10px; color:var(--text-dim); line-height:1.35;">
+                                Dossiers CTD Modules 1 à 5, Ligne Directrice Variations LD-DEPP07/V01 et Visa PDT (1.A.7).
+                            </div>
+                        </div>
+
+                        <!-- Pilier 2 : Dispositifs Médicaux -->
+                        <div style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.22); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:6px; color:#34d399; font-weight:700; font-size:12px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>
+                                <span>Dispositifs Médicaux</span>
+                            </div>
+                            <div style="font-size:10px; color:var(--text-dim); line-height:1.35;">
+                                Homologation DDM 6 sections, grille ANPP 13 points et régularisation (ISO 13485 / 14971).
+                            </div>
+                        </div>
+
+                        <!-- Pilier 3 : Compléments Alimentaires -->
+                        <div style="background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.22); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:6px; color:#fbbf24; font-weight:700; font-size:12px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                                <span>Compléments Alim.</span>
+                            </div>
+                            <div style="font-size:10px; color:var(--text-dim); line-height:1.35;">
+                                Conformité nouveau décret ministériel, contrôle DCE/LNCM, stabilité et étiquetage bilingue.
+                            </div>
+                        </div>
+
+                        <!-- Pilier 4 : Coffre-Fort GED & Sécurité -->
+                        <div style="background:rgba(147, 51, 234, 0.08); border:1px solid rgba(192, 132, 252, 0.22); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:6px; color:#c084fc; font-weight:700; font-size:12px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                <span>GED BPF &amp; Sécurité</span>
+                            </div>
+                            <div style="font-size:10px; color:var(--text-dim); line-height:1.35;">
+                                Scellement SHA-256 CAS, intégrité ALCOA+, traçabilité immuable et 21 CFR Part 11.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Sécurité -->
+                <div style="text-align:center; font-size:10px; color:var(--text-dim); line-height:1.4; border-top:1px dashed var(--border-color); padding-top:10px; margin-top:8px;">
+                    🛡️ <strong>Souveraineté Numérique &amp; Conformité BPF :</strong> Données hébergées en Algérie • Scellement SHA-256 CAS • Piste d'audit ALCOA+ • Conforme 21 CFR Part 11.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Écran d'Authentification Forte Nominative (21 CFR Part 11 / BPF) -->
-    <div id="screen-login" class="login-screen" style="display:flex;">
+    <div id="screen-login" class="login-screen" style="display:none;">
         <div class="login-card">
             <div class="login-header">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -137,8 +290,12 @@
                     </div>
                 </div>
 
-                <div style="text-align:center; font-size:10px; color:var(--text-dim); line-height:1.4; border-top:1px dashed var(--border-color); padding-top:10px;">
+
+                <div style="text-align:center; font-size:10px; color:var(--text-dim); line-height:1.4; border-top:1px dashed var(--border-color); padding-top:10px; margin-top:12px;">
                     🔒 <strong>Sécurité ALCOA+ &amp; 21 CFR Part 11 :</strong> Session chiffrée HttpOnly, verrouillage sur inactivité (15 min BPF), protection anti-bruteforce (5 essais = 15 min de blocage) et traçabilité inviolable dans l'Audit Trail.
+                </div>
+                <div id="gate-relock-container" style="display:none; text-align:center; margin-top:8px;">
+                    <a href="javascript:void(0)" onclick="handleGateLock()" style="font-size:11px; color:#c084fc; text-decoration:underline; font-weight:700;">🔒 Revenir au sas d'accès partenaire (Reverrouiller)</a>
                 </div>
             </form>
         </div>
@@ -280,7 +437,7 @@
                 <button class="btn-pill" onclick="openAddressBar()" title="Ouvrir la barre d'adresse ou navigation rapide (Ctrl+K)">
                     📁 <span id="txt-goto-btn">Aller à...</span> <kbd style="font-size:10px; opacity:0.6;">Ctrl+K</kbd>
                 </button>
-                <button class="btn-pill" onclick="window.open('/presentation', '_blank')" style="background:linear-gradient(135deg, #0284c7, #10b981); color:white; border:none; font-weight:700;" title="Ouvrir le support de présentation commercial (Pitch Deck 10 Slides)">
+                <button class="btn-pill" id="btn-pitch-commercial" onclick="window.open('/presentation', '_blank')" style="background:linear-gradient(135deg, #0284c7, #10b981); color:white; border:none; font-weight:700;" title="Ouvrir le support de présentation commercial (Pitch Deck 10 Slides)">
                     📊 Pitch Commercial
                 </button>
 
@@ -458,6 +615,7 @@
                 <div class="preview-tabs-nav" id="preview-tabs-container">
                     <button class="pvt-btn active" id="pvt-btn-doc" onclick="switchPreviewSubTab('doc')">📄 Aperçu Pièce GED</button>
                     <button class="pvt-btn" id="pvt-btn-anpp" onclick="switchPreviewSubTab('anpp')">📋 Fiche ANPP</button>
+                    <button class="pvt-btn" id="pvt-btn-wf" onclick="switchPreviewSubTab('wf')">🛠️ Atelier BPF &amp; Maker-Checker</button>
                 </div>
                 <button class="btn-close-pvt" onclick="togglePreviewPane(false)" title="Fermer le volet (Alt+P ou Échap)">✕ Alt+P</button>
             </div>
@@ -2694,6 +2852,292 @@
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- JALON 2.1 : MODALS ATELIER MAKER-CHECKER & REPORTING OFFICIEL ANPP   -->
+    <!-- ===================================================================== -->
+
+    <!-- Modal Check-out (Verrouillage en rédaction) -->
+    <div class="modal-overlay" id="modal-workflow-checkout" onclick="if(event.target === this) closeModal('modal-workflow-checkout')">
+        <div class="modal" style="width:480px; max-width:min(480px, calc(100vw - 24px));">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🔒 Verrouillage Rédactionnel (Check-out)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-workflow-checkout')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:12px; margin-bottom:12px;">
+                    Vous allez réserver l'édition exclusive de la section <strong id="wf-checkout-code" style="color:var(--accent-blue);"></strong> :
+                    <div id="wf-checkout-title" style="font-weight:600; color:var(--text-main); margin-top:4px;"></div>
+                </div>
+                <div id="wf-checkout-err" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
+                <form onsubmit="submitWorkflowCheckout(event)">
+                    <div class="login-field">
+                        <label for="wf-checkout-reason">Motif de rédaction (Audit Trail BPF) :</label>
+                        <textarea id="wf-checkout-reason" class="login-input" rows="3" required style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-checkout')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;">
+                            🔒 Confirmer Check-out
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Check-in (Restitution & Incrément Révision) -->
+    <div class="modal-overlay" id="modal-workflow-checkin" onclick="if(event.target === this) closeModal('modal-workflow-checkin')">
+        <div class="modal" style="width:500px; max-width:min(500px, calc(100vw - 24px));">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🔓 Restitution de Version (Check-in)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-workflow-checkin')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:12px; margin-bottom:12px;">
+                    Restitution de la section <strong id="wf-checkin-code" style="color:var(--accent-blue);"></strong> (version active : <code id="wf-checkin-rev" style="color:var(--accent-amber);"></code>).
+                </div>
+                <div id="wf-checkin-err" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
+                <form onsubmit="submitWorkflowCheckin(event)">
+                    <div class="login-field">
+                        <label for="wf-checkin-summary">Sommaire des modifications apportées (Exigence ALCOA+) :</label>
+                        <textarea id="wf-checkin-summary" class="login-input" rows="3" placeholder="Ex: Intégration des résultats de stabilité à 6 mois et validation des limites analytiques." required style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-checkin')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-weight:700;">
+                            🔓 Valider Check-in (+1 Révision)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Assignation Pôle Métier -->
+    <div class="modal-overlay" id="modal-workflow-assign" onclick="if(event.target === this) closeModal('modal-workflow-assign')">
+        <div class="modal" style="width:480px; max-width:min(480px, calc(100vw - 24px));">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>👥 Assignation Départementale</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-workflow-assign')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:12px; margin-bottom:12px;">
+                    Attribuer la responsabilité de la section <strong id="wf-assign-code" style="color:var(--accent-blue);"></strong> :
+                </div>
+                <div id="wf-assign-err" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
+                <form onsubmit="submitWorkflowAssign(event)">
+                    <div class="login-field">
+                        <label for="wf-assign-dept">Pôle / Département Métier :</label>
+                        <select id="wf-assign-dept" class="login-input">
+                            <option value="RA">RA — Affaires Réglementaires (Module 1, notices)</option>
+                            <option value="QC">QC — Contrôle Qualité &amp; Stabilités (3.2.S.4, 3.2.P.5, 3.2.P.8)</option>
+                            <option value="RD">RD — R&amp;D / Galénique (3.2.P.2, Dissolution, QOS 2.3)</option>
+                            <option value="PROD">PROD — Production Industrielle (Procédés 3.2.P.3, BPF)</option>
+                            <option value="QA">QA — Assurance Qualité (Revue Checker, SOP, PQR)</option>
+                            <option value="EXTERNAL">EXTERNAL — Tiers / CRO (DMF, Bioéquivalence Module 5)</option>
+                        </select>
+                    </div>
+                    <div class="login-field">
+                        <label for="wf-assign-due">Date d'échéance cible :</label>
+                        <input type="date" id="wf-assign-due" class="login-input">
+                    </div>
+                    <div class="login-field">
+                        <label for="wf-assign-notes">Instructions particulières :</label>
+                        <input type="text" id="wf-assign-notes" class="login-input" placeholder="Ex: Priorité dépôt ANPP fin de trimestre">
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-assign')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;">
+                            👥 Enregistrer l'Assignation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Relecture & Double Regard Checker (SoD) -->
+    <div class="modal-overlay" id="modal-workflow-review-decision" onclick="if(event.target === this) closeModal('modal-workflow-review-decision')">
+        <div class="modal modal-lg" style="width:620px; max-width:min(620px, calc(100vw - 24px));">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🔍 Relecture Qualité &amp; Double Regard (Checker BPF)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-workflow-review-decision')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:12px; margin-bottom:12px;">
+                    Évaluation contradictoire de la section <strong id="wf-review-code" style="color:var(--accent-blue);"></strong> :
+                    <div id="wf-review-title" style="font-weight:600; color:var(--text-main); margin-top:2px;"></div>
+                </div>
+                <div style="background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.25); border-radius:4px; padding:8px 12px; font-size:11px; color:var(--text-main); margin-bottom:12px;">
+                    ⚖️ <strong>Règle de Ségrégation des Fonctions (SoD) :</strong> Le rédacteur (Maker) ne peut pas approuver sa propre section. Cette revue engage votre responsabilité d'Assurance Qualité / Pair technique.
+                </div>
+                <div id="wf-review-err" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
+                <div class="login-field">
+                    <label for="wf-review-comments">Commentaires détaillés de revue (Audit Trail BPF) :</label>
+                    <textarea id="wf-review-comments" class="login-input" rows="3" placeholder="Ex: Conformité ICH Q1A vérifiée, données de chromatographie conformes aux spécifications." required style="resize:vertical;"></textarea>
+                </div>
+                <div class="login-field">
+                    <label for="wf-review-actions">Actions correctives demandées (Obligatoire si rejet) :</label>
+                    <textarea id="wf-review-actions" class="login-input" rows="2" placeholder="Ex: Compléter le tableau des impuretés de dégradation au temps T=6 mois." style="resize:vertical;"></textarea>
+                </div>
+                <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-review-decision')">Annuler</button>
+                    <button type="button" class="btn-pill" style="background:var(--accent-red); color:white; border:none; font-weight:700;" onclick="submitWorkflowReviewDecision('rejected')">
+                        ↩️ Rejeter &amp; Demander Reprise
+                    </button>
+                    <button type="button" class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-weight:700;" onclick="submitWorkflowReviewDecision('approved')">
+                        ✅ Approuver la Revue (Prêt pour Visa DT)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Visa & Sceau Pharmacien Directeur Technique (PDT) -->
+    <div class="modal-overlay" id="modal-workflow-pdt-seal" onclick="if(event.target === this) closeModal('modal-workflow-pdt-seal')">
+        <div class="modal modal-lg" style="width:620px; max-width:min(620px, calc(100vw - 24px));">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>✍️ Visa Officiel Pharmacien Directeur Technique (PDT 1.A.7)</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-workflow-pdt-seal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:12px; margin-bottom:12px;">
+                    Approbation formelle et scellement inaltérable de la section <strong id="wf-pdt-code" style="color:var(--accent-blue);"></strong> :
+                    <div id="wf-pdt-title" style="font-weight:600; color:var(--text-main); margin-top:2px;"></div>
+                </div>
+                <div style="background:rgba(147,51,234,0.08); border:1px solid rgba(147,51,234,0.3); border-radius:4px; padding:10px 12px; font-size:11px; color:var(--text-main); margin-bottom:14px; line-height:1.5;">
+                    🛡️ <strong>Effet du Visa PDT :</strong> La section bascule en statut <strong style="color:#7e22ce;">Scellé v1.0</strong>. Son contenu est horodaté et sécurisé par empreinte cryptographique SHA-256 dans le journal d'audit conforme 21 CFR Part 11.
+                </div>
+                <div id="wf-pdt-err" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
+                <form onsubmit="submitWorkflowPdtApproval(event)">
+                    <div style="margin-bottom:14px;">
+                        <label style="display:flex; align-items:flex-start; gap:8px; font-size:11.5px; cursor:pointer;">
+                            <input type="checkbox" id="wf-pdt-solemn-check" required style="margin-top:2px;">
+                            <span>Je soussigné(e), Pharmacien Directeur Technique habilité, certifie sur l'honneur l'exactitude, la sincérité et la conformité BPF/ANPP des données scientifiques et pharmaceutiques contenues dans cette section.</span>
+                        </label>
+                    </div>
+                    <div class="login-field">
+                        <label for="wf-pdt-totp">Code 2FA Authenticator (6 chiffres) ou mot de passe de confirmation :</label>
+                        <input type="text" id="wf-pdt-totp" class="login-input" placeholder="123456" maxlength="10" style="letter-spacing:2px; font-family:monospace; font-weight:700;">
+                    </div>
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-pdt-seal')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:700;">
+                            ✍️ Signer &amp; Sceller la Section v1.0
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Historique des Revues de l'item -->
+    <div class="modal-overlay" id="modal-workflow-reviews-history" onclick="if(event.target === this) closeModal('modal-workflow-reviews-history')">
+        <div class="modal modal-lg" style="width:680px; max-width:min(680px, calc(100vw - 24px)); max-height:85vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📜 Historique des Revues Qualité — [<span id="wf-hist-code"></span>]</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-workflow-reviews-history')">✕</button>
+            </div>
+            <div class="modal-body" id="wf-hist-body" style="overflow-y:auto; flex:1;">
+                <!-- Chargé dynamiquement -->
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-reviews-history')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Catalogue des Templates Maîtres ANPP -->
+    <div class="modal-overlay" id="modal-master-templates" onclick="if(event.target === this) closeModal('modal-master-templates')">
+        <div class="modal modal-xl" style="width:840px; max-width:min(840px, calc(100vw - 24px)); max-height:85vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📚 Catalogue des Templates Maîtres BPF &amp; Guide CTD ANPP 2025</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-master-templates')">✕</button>
+            </div>
+            <div class="modal-body" id="master-templates-list" style="overflow-y:auto; flex:1;">
+                <!-- Chargé dynamiquement -->
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-pill" onclick="closeModal('modal-master-templates')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Consultation Trame Maître -->
+    <div class="modal-overlay" id="modal-master-template-detail" onclick="if(event.target === this) closeModal('modal-master-template-detail')">
+        <div class="modal modal-xl" style="width:880px; max-width:min(880px, calc(100vw - 24px)); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📄 Trame Officielle : [<span id="tpl-detail-code"></span>] <span id="tpl-detail-name"></span></span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-master-template-detail')">✕</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1; display:flex; flex-direction:column;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+                    Cette trame type pré-remplie respecte scrupuleusement la structure imposée par l'Agence Nationale des Produits Pharmaceutiques. Vous pouvez la copier pour la renseigner dans vos outils de rédaction.
+                </div>
+                <textarea id="tpl-detail-content" class="login-input" style="flex:1; min-height:360px; font-family:monospace; font-size:11px; line-height:1.5; resize:none;" readonly></textarea>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="copyTemplateContentToClipboard()">
+                    📋 Copier la Trame dans le Presse-Papier
+                </button>
+                <button type="button" class="btn-pill" onclick="closeModal('modal-master-template-detail')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Moteur des États de Sortie Réglementaires (ES-REG-01, 02, ES-FIN-01) -->
+    <div class="modal-overlay" id="modal-dossier-reports" onclick="if(event.target === this) closeModal('modal-dossier-reports')">
+        <div class="modal modal-xl" style="width:960px; max-width:min(960px, calc(100vw - 24px)); height:92vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="flex-wrap:wrap; gap:8px;">
+                <div class="modal-title">
+                    <span>📄 Moteur des États de Sortie Réglementaires Officiels ANPP</span>
+                </div>
+                <div id="report-tabs-bar" style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau CTD</button>
+                    <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02 : Formulaire 1.A.3</button>
+                    <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV1</button>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-dossier-reports')">✕</button>
+            </div>
+            <div class="modal-body" style="flex:1; display:flex; flex-direction:column; padding:10px;">
+                <div id="report-iframe-container" style="flex:1; display:flex; flex-direction:column;">
+                    <!-- Iframe chargé dynamiquement -->
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div id="report-seal-status-box"></div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn-pill" style="font-weight:700;" onclick="downloadActiveReportJSON()">
+                        📥 Export JSON Certifié
+                    </button>
+                    <button type="button" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="printActiveReport()">
+                        🖨️ Imprimer / PDF 300 DPI
+                    </button>
+                    <button type="button" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:700;" onclick="sealActiveReport()">
+                        🔏 Sceller le Rapport (Visa PDT)
+                    </button>
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-dossier-reports')">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.15.2"></script>
     <script src="/js/auth.js?v=2026.11.15.2"></script>
@@ -2703,6 +3147,7 @@
     <script src="/js/variations.js?v=2026.11.15.2"></script>
     <script src="/js/ged.js?v=2026.11.15.2"></script>
     <script src="/js/dossiers.js?v=2026.11.15.2"></script>
+    <script src="/js/workflow.js?v=2026.11.15.2"></script>
     <script src="/js/deficiencies.js?v=2026.11.15.2"></script>
     <script src="/js/fees.js?v=2026.11.15.2"></script>
     <script src="/js/submissions.js?v=2026.11.15.2"></script>

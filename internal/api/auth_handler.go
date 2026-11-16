@@ -229,6 +229,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			"name": orgName,
 		},
 		"dev_switcher_enabled": h.cfg == nil || h.cfg.DevSwitcherEnabled(),
+		"pitch_deck_enabled":   h.cfg == nil || h.cfg.PitchDeckEnabled(),
 	})
 }
 
@@ -290,6 +291,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 			"name": user.OrganizationName,
 		},
 		"dev_switcher_enabled": h.cfg == nil || h.cfg.DevSwitcherEnabled(),
+		"pitch_deck_enabled":   h.cfg == nil || h.cfg.PitchDeckEnabled(),
 	})
 }
 

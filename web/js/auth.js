@@ -23,10 +23,129 @@ const mockAuditTrail = [
 
         let currentUser = null;
         let currentOrg = null;
+        let isGateRequired = false;
+
+        // Sas d'Accès Partenaire Confidentiel (Private Preview Gate)
+        function showGateView(data) {
+            const screenGate = document.getElementById("screen-gate");
+            const screenLogin = document.getElementById("screen-login");
+            const screenSetup = document.getElementById("screen-setup");
+            const screenApp = document.getElementById("screen-app");
+
+            if (screenGate) screenGate.style.display = "flex";
+            if (screenLogin) screenLogin.style.display = "none";
+            if (screenSetup) screenSetup.style.display = "none";
+            if (screenApp) screenApp.style.display = "none";
+
+            const err = document.getElementById("gate-error");
+            if (err) err.style.display = "none";
+
+            const input = document.getElementById("gate-passcode");
+            if (input) {
+                input.value = "";
+                setTimeout(() => input.focus(), 100);
+            }
+        }
+
+        async function handleGateSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById("gate-passcode");
+            const errBox = document.getElementById("gate-error");
+            const btn = document.getElementById("btn-gate-submit");
+            if (!input) return;
+
+            const passcode = input.value.trim();
+            if (!passcode) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "Vérification en cours...";
+            }
+            if (errBox) errBox.style.display = "none";
+
+            try {
+                const res = await fetch("/api/v1/gate/unlock", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ passcode: passcode })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = "Déverrouiller l'accès ➔";
+                    }
+                    if (errBox) {
+                        errBox.innerText = data.error || "Code d'accès partenaire invalide.";
+                        errBox.style.display = "block";
+                        if (typeof errBox.animate === "function") {
+                            errBox.animate([
+                                { transform: 'translateX(-6px)' },
+                                { transform: 'translateX(6px)' },
+                                { transform: 'translateX(-4px)' },
+                                { transform: 'translateX(4px)' },
+                                { transform: 'translateX(0)' }
+                            ], { duration: 300 });
+                        }
+                    }
+                    input.select();
+                    return;
+                }
+
+                if (btn) {
+                    btn.innerText = "✓ Accès Autorisé !";
+                    btn.style.background = "var(--accent-emerald)";
+                }
+
+                setTimeout(() => {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = "Déverrouiller l'accès ➔";
+                        btn.style.background = "";
+                    }
+                    checkAuthSession();
+                }, 350);
+
+            } catch (err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = "Déverrouiller l'accès ➔";
+                }
+                if (errBox) {
+                    errBox.innerText = "Erreur de connexion au sas confidentiel.";
+                    errBox.style.display = "block";
+                }
+            }
+        }
+
+        async function handleGateLock() {
+            try {
+                await fetch("/api/v1/gate/lock", { method: "POST" });
+            } catch (e) {
+                console.warn("Erreur reverrouillage sas:", e);
+            }
+            checkAuthSession();
+        }
 
         // Vérification de la session active
         async function checkAuthSession() {
             try {
+                // 0. Contrôle du Sas d'Accès Confidentiel (Private Preview Gate)
+                try {
+                    const gateRes = await fetch('/api/v1/gate/status');
+                    if (gateRes.ok) {
+                        const gateData = await gateRes.json();
+                        isGateRequired = !!gateData.gate_required;
+                        if (gateData.gate_required && !gateData.unlocked) {
+                            showGateView(gateData);
+                            return;
+                        }
+                    }
+                } catch(err) {
+                    console.warn("Impossible de vérifier le statut du sas:", err);
+                }
+
                 // Contrôle de l'initialisation de l'instance (Setup Wizard BPF)
                 try {
                     const setupRes = await fetch('/api/v1/setup/status');
@@ -50,6 +169,10 @@ const mockAuditTrail = [
                         const switcher = document.getElementById("dev-role-switcher-container");
                         if (switcher) switcher.style.display = "none";
                     }
+                    if (data.pitch_deck_enabled === false) {
+                        const pitchBtn = document.getElementById("btn-pitch-commercial");
+                        if (pitchBtn) pitchBtn.style.display = "none";
+                    }
                     showAppView(currentUser, currentOrg);
                 } else {
                     showLoginView();
@@ -61,9 +184,11 @@ const mockAuditTrail = [
         checkAuthSession();
 
         function showSetupWizardView(data) {
+            const screenGate = document.getElementById("screen-gate");
             const screenSetup = document.getElementById("screen-setup");
             const screenLogin = document.getElementById("screen-login");
             const screenApp = document.getElementById("screen-app");
+            if (screenGate) screenGate.style.display = "none";
             if (screenSetup) screenSetup.style.display = "flex";
             if (screenLogin) screenLogin.style.display = "none";
             if (screenApp) screenApp.style.display = "none";
@@ -151,12 +276,19 @@ const mockAuditTrail = [
         }
 
         function showLoginView() {
+            const screenGate = document.getElementById("screen-gate");
+            if (screenGate) screenGate.style.display = "none";
             const screenSetup = document.getElementById("screen-setup");
             if (screenSetup) screenSetup.style.display = "none";
             document.getElementById("screen-login").style.display = "flex";
             document.getElementById("screen-app").style.display = "none";
             const err = document.getElementById("login-error");
             if (err) err.style.display = "none";
+
+            const relockContainer = document.getElementById("gate-relock-container");
+            if (relockContainer) {
+                relockContainer.style.display = isGateRequired ? "block" : "none";
+            }
         }
 
         function handleAuthExpired(message) {
@@ -403,6 +535,8 @@ const mockAuditTrail = [
         }
 
         function showAppView(user, org) {
+            const screenGate = document.getElementById("screen-gate");
+            if (screenGate) screenGate.style.display = "none";
             document.getElementById("screen-login").style.display = "none";
             document.getElementById("screen-app").style.display = "flex";
             if (user) {
@@ -492,6 +626,10 @@ const mockAuditTrail = [
                     if (data.dev_switcher_enabled === false) {
                         const switcher = document.getElementById("dev-role-switcher-container");
                         if (switcher) switcher.style.display = "none";
+                    }
+                    if (data.pitch_deck_enabled === false) {
+                        const pitchBtn = document.getElementById("btn-pitch-commercial");
+                        if (pitchBtn) pitchBtn.style.display = "none";
                     }
                     showAppView(data.user, data.organization);
                     btn.disabled = false;

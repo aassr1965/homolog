@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -62,6 +63,8 @@ func main() {
 	var appointmentHandler *api.AppointmentHandler
 	var regulatoryWatchHandler *api.RegulatoryWatchHandler
 	var setupHandler *api.SetupHandler
+	var workflowHandler *api.WorkflowHandler
+	var reportHandler *api.ReportHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -120,10 +123,17 @@ func main() {
 		regulatoryWatchHandler = api.NewRegulatoryWatchHandler(regulatoryWatchRepo, auditService)
 
 		setupHandler = api.NewSetupHandler(db.Pool, sessionManager, auditService, cfg)
+
+		workflowRepo := repository.NewWorkflowRepository(db.Pool)
+		workflowHandler = api.NewWorkflowHandler(workflowRepo, dossierRepo, auditService, db.Pool)
+		reportHandler = api.NewReportHandler(dossierRepo, workflowRepo, pharmaRepo, auditService, db.Pool)
 	}
 
 	// 3. Configuration du Routeur HTTP
 	r := chi.NewRouter()
+
+	// Initialisation du Sas d'Accès Confidentiel (Private Preview Gate)
+	gateHandler := api.NewGateHandler(cfg)
 
 	// Middlewares standards
 	r.Use(middleware.RequestID)
@@ -131,6 +141,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(gateHandler.Middleware)
 
 	// CORS sécurisé
 	r.Use(cors.Handler(cors.Options{
@@ -150,10 +161,18 @@ func main() {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !cfg.PitchDeckEnabled() {
+			htmlStr := string(content)
+			// En production, masquer immédiatement le bouton du pitch commercial (Défense en profondeur)
+			htmlStr = strings.ReplaceAll(htmlStr, `id="btn-pitch-commercial"`, `id="btn-pitch-commercial" style="display:none !important;"`)
+			w.Write([]byte(htmlStr))
+			return
+		}
 		w.Write(content)
 	})
 
 	// Présentation Commerciale Haute Fidélité (Pitch Deck 10 Diapositives)
+	// Accessible publiquement depuis le sas confidentiel pour permettre aux prospects et partenaires de découvrir le progiciel
 	r.Get("/presentation", func(w http.ResponseWriter, r *http.Request) {
 		content, err := web.Files.ReadFile("presentation.html")
 		if err != nil {
@@ -208,8 +227,8 @@ func main() {
 		if db == nil {
 			dbStatus = "disconnected"
 		}
-		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","environment":"%s","dev_switcher_enabled":%t,"database":"%s","time_utc":"%s","version":"0.7.0"}`,
-			cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), dbStatus, time.Now().UTC().Format(time.RFC3339))
+		jsonResp := fmt.Sprintf(`{"status":"ok","mode":"%s","environment":"%s","dev_switcher_enabled":%t,"pitch_deck_enabled":%t,"database":"%s","time_utc":"%s","version":"0.7.0"}`,
+			cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.PitchDeckEnabled(), dbStatus, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(jsonResp))
 	})
 
@@ -221,14 +240,20 @@ func main() {
 			"deployment_mode": "%s",
 			"environment": "%s",
 			"dev_switcher_enabled": %t,
+			"pitch_deck_enabled": %t,
 			"org_slug": "%s",
 			"org_name": "%s",
 			"idle_timeout_min": %d,
 			"max_upload_bytes": %d,
 			"timestamp_utc": "%s"
-		}`, cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
+		}`, cfg.DeploymentMode, cfg.Environment, cfg.DevSwitcherEnabled(), cfg.PitchDeckEnabled(), cfg.OnPremOrgSlug, cfg.OnPremOrgName, cfg.IdleTimeoutMinutes, cfg.MaxUploadSizeBytes, time.Now().UTC().Format(time.RFC3339))
 		w.Write([]byte(resp))
 	})
+
+	// Routes du Sas d'Accès Confidentiel Partenaire (Private Preview Gate)
+	r.Get("/api/v1/gate/status", gateHandler.GetStatus)
+	r.Post("/api/v1/gate/unlock", gateHandler.Unlock)
+	r.Post("/api/v1/gate/lock", gateHandler.Lock)
 
 	// Routes API Authentification, 2FA, Signature DT et Audit Trail
 	if setupHandler != nil {
@@ -405,7 +430,38 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}", regulatoryWatchHandler.GetRegulatoryWatchItem)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Put("/api/v1/regulatory-watch/{itemId}/analysis", regulatoryWatchHandler.UpdateRegulatoryWatchAnalysis)
 			}
+
+			// Atelier d'Élaboration Documentaire, Workflow Maker-Checker & Templates (Jalon 2.1)
+			if workflowHandler != nil {
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/checkout", workflowHandler.CheckoutSection)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/checkin", workflowHandler.CheckinSection)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/assign", workflowHandler.AssignSection)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/submit-review", workflowHandler.SubmitReview)
+				protected.With(api.RequirePermission(auditService, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/review", workflowHandler.ReviewDecision)
+				protected.With(api.RequirePermission(auditService, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/review-decision", workflowHandler.ReviewDecision)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/items/{itemId}/approve", workflowHandler.ApproveSection)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/items/{itemId}/approve-pdt", workflowHandler.ApproveSection)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/items/{itemId}/reviews", workflowHandler.GetItemReviews)
+
+				// Modèles Maîtres ANPP / ICH
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates", workflowHandler.GetMasterTemplates)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates/{code}", workflowHandler.GetMasterTemplateByCode)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates", workflowHandler.GetMasterTemplates)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates/{code}", workflowHandler.GetMasterTemplateByCode)
+			}
+
+			// Moteur de Reporting Réglementaire BPF & États de Sortie (Jalon 2.1)
+			if reportHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/reports/{code}", reportHandler.GenerateDossierReport)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/reports/{code}/seal", reportHandler.SealDossierReport)
+			}
 		})
+	}
+
+	// Portail Public de Vérification QR-Code ANPP (accès sans authentification préalable)
+	if reportHandler != nil {
+		r.Get("/verify/{sha256}", reportHandler.VerifyReportPublic)
+		r.Get("/api/v1/public/verify/{sha256}", reportHandler.VerifyReportPublic)
 	}
 
 	// 4. Lancement du serveur HTTP avec arrêt gracieux
