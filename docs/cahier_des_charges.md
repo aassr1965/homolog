@@ -1,5 +1,5 @@
 # Cahier des charges fonctionnel & technique détaillé
-## Plateforme collaborative de gestion de l'enregistrement des médicaments, de l'homologation des dispositifs médicaux et GED pharmaceutique en Algérie
+## Plateforme SANAD PHARMA — Gestion de l'Enregistrement des Médicaments, de l'Homologation des Dispositifs Médicaux et GED Pharmaceutique BPF en Algérie
 
 **Version :** 1.0 (Harmonisation Réglementaire ANPP & Lignes Directrices Officielles) — Novembre 2026.  
 **Documents sources et référentiels officiels de l'ANPP intégrés :**
@@ -21,15 +21,36 @@ Deux textes fondamentaux publiés par l'ANPP structurent l'ensemble du cycle de 
 1. **Le Guide CTD ANPP (Juillet 2025) :** Instaure l'exigence du format CTD (Common Technical Document - Modules 1 à 5) pour toute soumission d'enregistrement initial, de renouvellement quinquennal et de variation, en formalisant les exigences spécifiques pour les produits princeps (innovateurs), génériques importés et génériques fabriqués localement.
 2. **La Ligne Directrice des Modifications LD-DEPP07/V01 (Avril 2026) :** Établit la nomenclature algérienne des modifications post-enregistrement en trois classes rigoureuses : **Modification Mineure (Mmin)**, **Modification Modérée (Mmod)** et **Modification Majeure (Mmaj)**, rompant définitivement avec les terminologies étrangères obsolètes (Types IA/IB/II européens). Elle formalise également le principe de reclassement automatique en cas de non-respect d'une condition et la possibilité de regroupement de modifications (*Grouping*, article 09 de l'arrêté du 07/11/2021).
 
-### 1.2 Objectifs de la Plateforme "Homolog"
+### 1.2 Identité de Marque « Sanad Pharma », Architecture Modulaire et Objectifs Stratégiques
+
+#### 1.2.1 Identité de Marque & Rôles Ergonomiques
+- **Marque Produit Officielle :** **Sanad Pharma** (« سَنَد فارما »).  
+  En terminologie scientifique et juridique arabe, le terme *Sanad* désigne l'appui, le fondement documentaire authentifié, la chaîne de transmission inaltérable et la pièce probante. Il traduit fidèlement la vocation du produit : conférer aux laboratoires pharmaceutiques un garant absolu de conformité réglementaire, d'intégrité des données (**ALCOA+**) et de traçabilité opposable devant le Ministère de l'Industrie Pharmaceutique (**MIPH**) et l'Agence Nationale des Produits Pharmaceutiques (**ANPP**). L'ancienne appellation de travail « Homolog » désignait le nom de code de développement initial et s'efface au profit de **Sanad Pharma**.
+- **Espace Opérationnel "Pharma Explorer" :**  
+  Le terme *Pharma Explorer* désigne exclusivement le **modèle ergonomique et l'environnement de travail haute densité à 3 volets** (arborescence réglementaire, liste compacte 32px, visionneuse PDF instantanée) utilisé par les équipes métiers (Affaires Réglementaires, Contrôle Qualité, Pharmacien DT).
+- **Console d'Administration & Sécurité :**  
+  Espace back-office autonome réservé à l'Administrateur Système et de Laboratoire, physiquement et logiquement découplé des données scientifiques conformément aux règles BPF et au principe de défense en profondeur *Zero-Trust*.
+
+#### 1.2.2 Nomenclature de la Suite Modulaire Sanad Pharma
+La plateforme s'articule autour de huit (8) modules fonctionnels étroitement intégrés :
+1. **Sanad Registry (Référentiel Établissements & Produits) :** Répertoire centralisé des établissements agréés MIPH (Décret 20-325), cartographie des sites de fabrication et de contrôle 1.H.8 (substance active, formulateur PF, conditionneurs, contrôle analytique) et catalogue unifié Médicaments & Dispositifs Médicaux (Décret 20-324).
+2. **Sanad CTD Studio (Dossiers d'Enregistrement & Homologation DM) :** Atelier de composition, de structuration et de calcul de complétude des dossiers CTD (Modules 1 à 5) et dossiers techniques DM en 6 sections.
+3. **Sanad Variations (Moteur de Modifications Post-AMM LD-DEPP07/V01) :** Moteur expert de qualification des 34 rubriques de modifications (Mmin, Mmod, Mmaj), détection des escalades dynamiques et production des dossiers comparatifs *État actuel vs Proposé*.
+4. **Sanad Vault (Coffre-Fort GED Pharmaceutique BPF) :** Système d'archivage documentaire GxP à 5 branches maîtresses avec stockage CAS dédupliqué SHA-256 et chiffrement symétrique AES-256-GCM.
+5. **Sanad Gateway (ANPP Submission Assistant & E-Services) :** Passerelle d'interfaçage avec les télé-procédures ANPP (portail E-TASJIL, calendrier RDV PP/DM, liquidation automatique des redevances et bordereaux officiels BV1/BV2).
+6. **Sanad Audit & Compliance :** Moteur d'audit trail inviolable conforme 21 CFR Part 11 / Annexe 11 BPF, scellement cryptographique et signature électronique légale à double facteur (2FA).
+7. **Sanad Admin Console :** Console d'administration du laboratoire, gestion des 9 rôles pharmaceutiques stricts, gouvernance multi-tenant, supervision des quotas et politique de réversibilité.
+8. **Sanad Copilot (Phase 3) :** Copilote d'intelligence réglementaire et d'assistance à la rédaction scientifique (RAG souverain avec `pgvector`, gouvernance stricte *Human-in-the-Loop*).
+
+#### 1.2.3 Objectifs Stratégiques de Sanad Pharma
 - **Centraliser et piloter le cycle de vie complet 360°** de tous les dossiers d'enregistrement de médicaments et d'homologation de DM au sein d'une instance unique.
 - **Assurer la conformité native au format CTD ANPP 2025** : instancier automatiquement les checklists et arborescences selon le type de produit (Princeps, Générique importé, Générique local) et le type de procédure (**NI**, **RI**, **MI**, **NF**, **RF**, **MF**).
 - **Intégrer un Coffre-Fort GED Pharmaceutique (Standard BPF / ALCOA+)** garantissant l'intégrité, la gestion des versions (mineures/majeures), les circuits d'approbation et la signature électronique légale du Directeur Technique.
 - **Intégrer un Atelier d'Élaboration Documentaire et Workflow Multi-Rôles BPF (Maker-Checker-Approver)** : dépasser la simple collecte passive de fichiers existants en fournissant un environnement collaboratif de rédaction technique décentralisée (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité, Partenaires externes). Le Pharmacien Directeur Technique n'étant pas le rédacteur unique mais le garant légal et pénal exclusif (Approver - Décret exécutif 20-325), la plateforme orchestre la chaîne complète : Rédaction (*Maker*) ➔ Revue Qualité/Pair (*Checker*) ➔ Visa Légal Scellé (*Approver*), adossée à une bibliothèque de modèles maîtres conformes ICH/ANPP et à un générateur automatique de formulaires/engagements réglementaires en 1 clic.
 - **Intégrer un Moteur Intelligent de Variations (LD-DEPP07/V01)** : détecter l'impact d'une modification documentaire, qualifier le type de modification (Mmin, Mmod, Mmaj) parmi les 34 rubriques réglementaires, vérifier les conditions, exécuter le reclassement dynamique et générer automatiquement le dossier complet de modification (avec tableau comparatif *État actuel vs Proposé* et attestation de non-modification des autres sections).
 - **Anticiper les échéances critiques et péremptions** : renouvellements quinquennaux à J-180/J-90, réponses aux compléments ANPP avec compte à rebours légal, expiration des certificats BPF, CEP et licences d'exploitation.
-- **Automatiser et sécuriser l'articulation avec les télé-procédures ANPP (Module ANPP Submission Assistant)** : génération automatique des bordereaux officiels (BV1/BV2, récépissés, formulaires d'homologation DM), export du Submission Package prêt pour le portail E-TASJIL (`etasjil.anpp.dz`), calendrier intelligent d'ouverture des créneaux de RDV (`rdvpp.anpp.dz` / `rdvdm.anpp.dz`), et architecture API-Ready pour future télétransmission directe.
-- **Garantir la souveraineté numérique et la flexibilité hybride** : déployable en mode On-Premise 100 % hors-ligne (en intranet sécurisé de laboratoire) ou en mode Cloud SaaS souverain multi-tenant avec réversibilité absolue via l'archive chiffrée `.homolog`.
+- **Automatiser et sécuriser l'articulation avec les télé-procédures ANPP (Module Sanad Gateway / Submission Assistant)** : génération automatique des bordereaux officiels (BV1/BV2, récépissés, formulaires d'homologation DM), export du Submission Package prêt pour le portail E-TASJIL (`etasjil.anpp.dz`), calendrier intelligent d'ouverture des créneaux de RDV (`rdvpp.anpp.dz` / `rdvdm.anpp.dz`), et architecture API-Ready pour future télétransmission directe.
+- **Garantir la souveraineté numérique et la flexibilité hybride** : déployable en mode On-Premise 100 % hors-ligne (en intranet sécurisé de laboratoire) ou en mode Cloud SaaS souverain multi-tenant avec réversibilité absolue via l'archive chiffrée universelle `.sanad`.
 - **Offrir une ergonomie "Pharma Explorer" haute densité** : navigation 3 volets inspirée de Windows Explorer Pro, affichage compact (32px par ligne), volet de prévisualisation PDF instantané et bilinguisme intégral FR/AR avec support RTL natif.
 
 ---
@@ -339,7 +360,7 @@ Selon la section 5.3 de la Ligne Directrice, toute soumission de variation (Mmin
 
 ### 6.1 Stack Technologique Native et Souveraine
 - **Backend & Serveur Applicatif :** **Golang (Go 1.26+)**
-  - Performance native sans runtime lourd, binaire unique auto-suffisant (`homolog.exe`).
+  - Performance native sans runtime lourd, binaire unique auto-suffisant (`sanad.exe` / `sanad-pharma`).
   - Streaming de documents par morceaux (Chunked upload 5 Mo) résilient aux micro-coupures réseau.
   - Driver PostgreSQL natif `jackc/pgx/v5` avec pool de connexions optimisé.
 - **Stockage Abstrait Sécurisé (`StorageProvider`) :**
@@ -358,7 +379,7 @@ Inspiré des outils d'exploration professionnelle haute densité, l'écran de tr
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ [📁 Navigation]  C:\Homolog > Dossiers > ENR-2026-0042 (Amoxicilline 500mg) > CTD_Module_1 > 1.P     │
+│ [📁 Navigation]  C:\SanadPharma > Dossiers > ENR-2026-0042 (Amoxicilline 500mg) > CTD_Module_1 > 1.P   │
 ├────────────────────┬─────────────────────────────────────────────────┬─────────────────────────────────┤
 │ ARBRE DE NAVIGATION│ VUE TABLEAU COMPACT (Hauteur ligne : 32px)      │ VOLET DE PRÉVISUALISATION       │
 │ (Volet Gauche)     │ (Zone Centrale)                                 │ (Volet Droit - Alt+P)           │
@@ -411,7 +432,7 @@ Cette console regroupe l'ensemble des modules d'administration :
 3. **Référentiel Établissements & Décision d'Exercice PDT (1.A.7) :** Enregistrement de l'agrément ministériel MIPH et de la décision ministérielle nominative nommant le Pharmacien Directeur Technique responsable.
 4. **Cartographie des Sites de Fabrication & Sous-traitants (1.H.8) :** Déclaration des sites avec rôles industriels, licences de fabrication et certificats BPF/GMP.
 5. **Surveillance Audit Trail & Sécurité Système (`audit_logs`) :** Tableau de bord de traçabilité des connexions, échecs d'authentification 2FA, blocages de routes HTTP 403 et modifications de rôles.
-6. **Supervision Quotas & Stockage CAS :** Suivi de l'espace disque dédupliqué SHA-256 et déclenchement des sauvegardes chiffrées `.homolog`.
+6. **Supervision Quotas & Stockage CAS :** Suivi de l'espace disque dédupliqué SHA-256 et déclenchement des sauvegardes chiffrées `.sanad` (archive universelle Sanad Pharma).
 7. **Module de Paramétrage Réglementaire & Variables Institutionnelles Configurables (`regulatory_parameters`) :** Console d'administration permettant de configurer et d'actualiser sans modification de code source ni redémarrage du serveur l'ensemble des constantes institutionnelles, financières, bancaires et temporelles régissant la conformité ANPP.
 
 *Pour les utilisateurs disposant d'un double rôle (ex: PDT ayant également un mandat d'administrateur du laboratoire), un commutateur d'espace permet de basculer instantanément en un clic entre la **Console Admin** et le **Pharma Explorer**.*
@@ -465,7 +486,7 @@ Conformément à la politique PSSI et au principe de non auto-approbation (*SoD*
 ## 7. Sécurité, Rôles et Conformité 21 CFR Part 11 / BPF
 
 ### 7.1 Politique de Sécurité du Système d'Information Pharmaceutique (PSSI)
-La plateforme SANAD PHARMA (Homolog) traite des données industrielles hautement sensibles, des secrets de fabrication (formules galéniques, procédés de synthèse chimique) et des données d'enregistrement engageant la responsabilité légale et pénale du Pharmacien Directeur Technique. La politique de sécurité s'articule autour de 5 principes directeurs incompressibles :
+La plateforme SANAD PHARMA traite des données industrielles hautement sensibles, des secrets de fabrication (formules galéniques, procédés de synthèse chimique) et des données d'enregistrement engageant la responsabilité légale et pénale du Pharmacien Directeur Technique. La politique de sécurité s'articule autour de 5 principes directeurs incompressibles :
 
 1. **Cloisonnement « Zero-Trust » des Administrateurs Techniques :**
    - L'Administrateur Système Local (On-Premise) et le Super-Administrateur Éditeur (Cloud SaaS) sont strictement cantonnés aux opérations d'infrastructure (sauvegardes, supervision système, certificats TLS, provisioning d'instances et quotas de stockage).
@@ -538,7 +559,7 @@ Le masquage dans l'interface utilisateur ne constitue en aucun cas la barrière 
 3. **Cartographie des Routes API Sensibles Strictement Verrouillées :**
    - **Téléchargement & Flux Binaires GED :** `/api/v1/ged/documents/{id}/file` et `/api/v1/ged/versions/{id}/download` bloquent formellement les requêtes émanant des rôles `admin_systeme_local` et `super_admin_editeur` (Principe Zero-Trust : restitution `HTTP 403`).
    - **Signature Électronique Légale PDT :** `/api/v1/dossiers/{id}/sign-pdt` et `/api/v1/ged/versions/{id}/sign-dt` exigent obligatoirement le rôle nominatif `directeur_technique`.
-   - **Soumission & Export eCTD :** `/api/v1/dossiers/{id}/export-submission-package` et `/api/v1/dossiers/{id}/export-homolog` sont réservés exclusivement aux rôles `responsable_affaires_reglementaires` et `directeur_technique`.
+   - **Soumission & Export eCTD :** `/api/v1/dossiers/{id}/export-submission-package` et `/api/v1/dossiers/{id}/export-sanad` sont réservés exclusivement aux rôles `responsable_affaires_reglementaires` et `directeur_technique`.
    - **Données Économiques & Prix :** Les endpoints restituant les structures de prix PCSU (1.H.4), factures FOB (1.H.4), benchmark international (1.H.5) et bordereaux financiers BV1/BV2 (1.A.4) sont strictement filtrés au niveau SQL pour les profils `contributeur_rd_production`, `contributeur_qualite_bpf` et `consultant_externe` (champs masqués ou code 403).
    - **Administration Utilisateurs :** Les routes `/api/v1/users/*` sont inaccessibles en dehors de `admin_laboratoire`.
    - **Audit Logs :** L'endpoint `/api/v1/audit/logs` est inaccessible en dehors de `directeur_technique`, `admin_laboratoire` et `auditeur_inspecteur`.
@@ -699,9 +720,10 @@ Pour lui permettre d'exercer pleinement sa responsabilité de garant légal sans
 
 ---
 
-## 8. Taxonomie du Coffre-Fort GED Pharmaceutique (Standard BPF)
+## 8. Taxonomie du Coffre-Fort GED Pharmaceutique BPF (Sanad Vault)
 
-Les documents de référence du laboratoire sont organisés en cinq branches maîtresses interconnectées avec les checklists des dossiers d'enregistrement :
+### 8.1 Structure de l'Arborescence & Cinq Branches Maîtresses BPF
+Les documents de référence du laboratoire sont organisés en cinq (5) branches maîtresses interconnectées avec les checklists des dossiers d'enregistrement CTD et d'homologation DM :
 
 1. **`01_Affaires_Reglementaires`**
    - `01_01_Agrements_Etablissement` (Agréments MIPH demandeur et fabricants)
@@ -729,6 +751,30 @@ Les documents de référence du laboratoire sont organisés en cinq branches ma�
    - `05_01_Accords_Qualite_QTA` (Quality Technical Agreements avec façonniers et fournisseurs)
    - `05_02_Contrats_Faconnage_SousTraitance` (Contrats de fabrication, conditionnement, analyse)
    - `05_03_Certificats_Fournisseurs_APIs` (CEP EDQM, lettres d'accès APIMF, déclarations EST/OGM)
+
+### 8.2 Métadonnées Réglementaires et Cycle de Vie GxP des Documents
+Chaque pièce archivée dans **Sanad Vault** est enrichie d'un jeu de métadonnées obligatoires garantissant son opposabilité légale et son indexation instantanée :
+- **Identification & Codification :** Code document unique normalisé (ex: `SOP-AQ-014`, `DMF-SA-AMOX-01`), titre bilingue (français/arabe) et type MIME.
+- **Rattachement Référentiel (*Sanad Registry*) :** Liaison obligatoire avec l'établissement titulaire, le site de fabrication 1.H.8 concerné ou la spécialité pharmaceutique / DM.
+- **Classification de Confidentialité BPF :**
+  - *Interne Laboratoire* : Accessible à l'ensemble des collaborateurs habilités.
+  - *Confidentiel Qualité* : Restreint aux Affaires Réglementaires et à l'Assurance Qualité.
+  - *Secret Industriel de Fabrication* : Formules galéniques et synthèses chimiques protégées par chiffrement dédié.
+- **Cycle de Vie Documentaire GxP (Machine à États Finis) :**
+  1. `brouillon` (*Draft*) : Document en cours de rédaction par le collaborateur technique (*Maker*). Non opposable.
+  2. `en_revue` (*Under Review*) : Document soumis à vérification par un pair ou le Responsable Qualité (*Checker*).
+  3. `en_approbation_dt` (*Under DT Approval*) : Document finalisé en attente du visa réglementaire du Pharmacien DT.
+  4. `en_vigueur` (*Effective*) : Document validé par signature 2FA du Pharmacien DT (*Approver*), officiellement opposable lors des dépôts ANPP.
+  5. `obsolete` (*Superseded*) : Document remplacé par une version ultérieure ou rendu caduc par une variation post-AMM.
+  6. `archive` (*Archived*) : Pièce conservée pour la durée légale obligatoire avec scellement immuable.
+
+### 8.3 Gestion du Versioning, Audit Trail Documentaire et Intégrité ALCOA+
+- **Règle Stricte d'Incrémentation des Versions :**
+  - *Versions mineures* (`v0.1`, `v0.2`, `v1.1`) : Évolutions de travail, annotations et corrections intermédiaires au stade brouillon.
+  - *Versions majeures* (`v1.0`, `v2.0`) : Versions formellement approuvées et promulguées par le Pharmacien Directeur Technique.
+- **Justification Obligatoire de Révision (*Reason for Change*) :** Conformément au **21 CFR Part 11**, aucun versement d'une nouvelle version ne peut être opéré sans la saisie obligatoire du motif réglementaire ou technique de la modification.
+- **Audit Trail Documentaire Inaltérable :** Chaque action (téléversement, consultation, téléchargement, modification de métadonnée, approbation ou rejet) est consignée dans la table `audit_trail` avec l'identité nominative, le rôle BPF, l'horodatage certifié UTC+1 et l'adresse IP.
+- **Préservation Immuable des Pièces Obsolètes :** Aucune pièce entrée en vigueur ne peut faire l'objet d'une suppression physique (*Soft Delete* / Archivage scellé uniquement). Les versions antérieures demeurent consultables à tout moment pour reconstituer l'état exact du dossier CTD à une date d'audit antérieure.
 
 ### 8.4 Sécurité du Stockage Physique & Chiffrement Applicatif AES-256-GCM (Dual-Mode Cloud / On-Premise)
 
@@ -768,24 +814,24 @@ flowchart TD
 ## 9. Module ANPP Submission Assistant & E-Services Gateway (Télé-Procédures ANPP)
 
 ### 9.1 Cartographie des E-Services Officiels de l'ANPP
-L'ANPP met à disposition des opérateurs pharmaceutiques un ensemble de portails numériques spécialisés avec lesquels la plateforme **Homolog** s'articule :
+L'ANPP met à disposition des opérateurs pharmaceutiques un ensemble de portails numériques spécialisés avec lesquels la plateforme **Sanad Pharma** (via son module **Sanad Gateway**) s'articule :
 1. **E-TASJIL (`https://etasjil.anpp.dz`) :** Portail officiel de gestion dématérialisée des procédures d'enregistrement des produits pharmaceutiques.
 2. **RDV PP (`https://rdvpp.anpp.dz`) :** Plateforme de prise de rendez-vous en ligne obligatoire pour le dépôt physique et l'accueil des dossiers de produits pharmaceutiques (créneau d'ouverture hebdomadaire : du mercredi 10h00 au jeudi 10h00).
 3. **RDV DM (`https://rdvdm.anpp.dz`) :** Plateforme de prise de rendez-vous en ligne obligatoire pour le dépôt des dossiers d'homologation des dispositifs médicaux (créneau d'ouverture : du mardi 10h00 au jeudi 10h00 ; jours de réception : dimanche, lundi, mercredi).
 4. **État Déclaratif (`https://etatdeclaratif.anpp.dz`) :** Extranet réglementaire dédié aux déclarations périodiques d'approvisionnement et d'état des stocks.
 5. **RCP (`https://rcp.anpp.dz`) :** Registre public de consultation des Résumés des Caractéristiques du Produit approuvés.
 
-### 9.2 Cycle de Soumission Hybride et Positionnement d'Homolog
-La réglementation pharmaceutique algérienne impose un **cycle de soumission hybride** (télé-procédure en amont + dépôt physique des classeurs et échantillons sur convocation). **Homolog** automatise l'intégralité de la chaîne préparatoire et assiste le Pharmacien Directeur Technique sans rupture d'intégrité :
+### 9.2 Cycle de Soumission Hybride et Positionnement de Sanad Pharma
+La réglementation pharmaceutique algérienne impose un **cycle de soumission hybride** (télé-procédure en amont + dépôt physique des classeurs et échantillons sur convocation). **Sanad Pharma** automatise l'intégralité de la chaîne préparatoire et assiste le Pharmacien Directeur Technique sans rupture d'intégrité :
 
 ```mermaid
 flowchart TD
-    A["1. Composition & GED BPF dans Homolog<br/>(Modules CTD 1-5 ou Dossier DM)"] --> B["2. Contrôle de Complétude & Validation 21 CFR Part 11<br/>(Signature électronique solennelle PDT)"]
+    A["1. Composition & GED BPF dans Sanad Pharma<br/>(Modules CTD 1-5 ou Dossier DM)"] --> B["2. Contrôle de Complétude & Validation 21 CFR Part 11<br/>(Signature électronique solennelle PDT)"]
     B --> C["3. Génération du 'Submission Package' ANPP<br/>(Bordereaux BV1/BV2, Formulaires officiels, Index eCTD)"]
     C --> D["4. Télé-saisie assistée sur E-TASJIL<br/>(Fiche synthétique d'injection champ par champ)"]
     C --> E["5. Veille & Réservation Créneau RDV PP / DM<br/>(Alertes automatiques Mardi/Mercredi 09h50)"]
     D & E --> F["6. Dépôt Physique Conforme au Siège / Annexes ANPP<br/>(Dossier imprimé, BV visés, quittances bancaires, échantillons)"]
-    F --> G["7. Suivi d'Instruction & Compléments dans Homolog<br/>(Compte à rebours légal J-30 / J-90)"]
+    F --> G["7. Suivi d'Instruction & Compléments dans Sanad Pharma<br/>(Compte à rebours légal J-30 / J-90)"]
 ```
 
 ### 9.3 Spécifications Fonctionnelles de l'Assistant de Soumission
@@ -816,7 +862,7 @@ L'assistant applique un audit automatisé bloquant avant d'autoriser l'export du
 3. **Signature solennelle du Pharmacien Directeur Technique :** Présence obligatoire de la signature électronique nominative avec horodatage UTC et scellement SHA-256 (21 CFR Part 11).
 
 ### 9.4 Architecture Technique du Connecteur (API-Ready)
-Dans le backend Go de **Homolog**, le module d'interopérabilité est modélisé par des interfaces découplées au sein du package `internal/anpp` :
+Dans le backend Go de **Sanad Pharma**, le module d'interopérabilité est modélisé par des interfaces découplées au sein du package `internal/anpp` :
 ```go
 // SubmissionPackage représente le paquet complet prêt pour le dépôt ANPP.
 type SubmissionPackage struct {
@@ -843,7 +889,7 @@ Cette architecture garantit que l'application est immédiatement opérationnelle
 
 ## 10. Spécifications Exhaustives des États de Sortie & Reporting Réglementaire
 
-Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (**ANPP**), les états de sortie ne constituent pas de simples impressions bureautiques, mais des **actes réglementaires opposables**, des **pièces de dépôt officielles** et des **justificatifs d'audit BPF / 21 CFR Part 11**. La plateforme **Homolog** standardise et automatise l'intégralité des flux documentaires sortants à travers un moteur d'édition certifié garantissant l'intégrité, l'immuabilité et la valeur probante de chaque feuillet émis.
+Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (**ANPP**), les états de sortie ne constituent pas de simples impressions bureautiques, mais des **actes réglementaires opposables**, des **pièces de dépôt officielles** et des **justificatifs d'audit BPF / 21 CFR Part 11**. La plateforme **Sanad Pharma** standardise et automatise l'intégralité des flux documentaires sortants à travers un moteur d'édition certifié garantissant l'intégrité, l'immuabilité et la valeur probante de chaque feuillet émis.
 
 ### 10.1 Principes Directeurs et Dispositifs de Sécurisation BPF
 
@@ -854,8 +900,8 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
    - `ARCHIVÉ / PÉRIMÉ` : Apposé automatiquement avec timbre rouge dès qu'une révision ultérieure du dossier est approuvée ou qu'un renouvellement/avenant remplace l'état antérieur.
 2. **Dispositif Anti-Falsification par QR-Code Cryptographique :**
    Chaque page imprimée comporte en cartouche inférieur un QR-code sécurisé contenant l'URL de vérification d'authenticité :  
-   `https://homolog.labo.dz/verify/{SHA256_DOCUMENT_HASH}`  
-   Le scan de ce QR-code par un inspecteur de l'ANPP, un douanier ou un auditeur qualité ouvre instantanément une page sécurisée attestant en temps réel de : l'authenticité de la pièce, l'identité et mandat du signataire légal, la date/heure de scellement et la conformité bit-à-bit du tirage papier avec l'original stocké dans le coffre-fort Homolog.
+   `https://sanad.labo.dz/verify/{SHA256_DOCUMENT_HASH}`  
+   Le scan de ce QR-code par un inspecteur de l'ANPP, un douanier ou un auditeur qualité ouvre instantanément une page sécurisée attestant en temps réel de : l'authenticité de la pièce, l'identité et mandat du signataire légal, la date/heure de scellement et la conformité bit-à-bit du tirage papier avec l'original stocké dans le coffre-fort Sanad Vault.
 3. **Paginage Légal et Cartouche Standardisé BPF :**
    Conformément aux Bonnes Pratiques de Fabrication, chaque feuillet comporte la mention indélébile **« Page X sur Y »**, le numéro de version (ex: `v1.0`), le code interne du dossier (ex: `DOS-2026-PARAC-NF`), ainsi que l'identifiant système unique de l'opérateur ayant déclenché l'édition.
 
@@ -886,7 +932,7 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 | **ES-QUA-03** | **Fiche de Contrôle Documentaire Pré-Dépôt (Checklist)** (PV d'audit d'exhaustivité M1-M5) | PDF/A-1b | Préalable à toute validation de soumission PDT | Responsable AQ & PDT | Dossier d'Enregistrement Interne |
 | **Famille 5 : Pilotage Stratégique, Direction Générale & Réversibilité** | | | | | |
 | **ES-DIR-01** | **Tableau de Bord Exécutif du Portefeuille Produits** (Statuts AMM/DM, taux et délais ANPP) | PDF/A-1b + XLSX | Trimestriel / Bilan Annuel | Directeur Technique & DG | Conseil d'Administration / DG |
-| **ES-EXP-01** | **Procès-Verbal de Réversibilité & Manifeste d'Archive (.homolog)** (Inventaire 19 tables, CAS, SHA) | PDF/A-1b + JSON | À chaque sauvegarde d'exploitation ou réversibilité | Directeur Technique & DSI | Direction Générale / Huissier / Tiers Archiveur |
+| **ES-EXP-01** | **Procès-Verbal de Réversibilité & Manifeste d'Archive (.sanad)** (Inventaire 19 tables, CAS, SHA) | PDF/A-1b + JSON | À chaque sauvegarde d'exploitation ou réversibilité | Directeur Technique & DSI | Direction Générale / Huissier / Tiers Archiveur |
 | **Famille 6 : Contrôle de Conformité, Métrologie & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)** | | | | | |
 | **ES-DCE-01** | **Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique** (Filiation stricte Lot PF ↔ Lot SA ↔ Lot Semi-fini, agréments, validation LCQ par l'ANPP, Arrêté du 10 mai 2021) | PDF/A-1b | À chaque lot de produit pharmaceutique ou DM libéré | Directeur Technique Libérateur | Direction du Contrôle et de l'Expertise (DCE) |
 | **ES-DCE-02** | **Formulaires Officiels de Réception des Produits Importés soumis à Libération** (PP selon Arrêté 14/02/2021 ; DM selon Arrêtés 14/02/2021 & 20/02/2025, N° DE/DH, dédouanement, plans d'échantillonnage) | PDF/A-1b | À chaque arrivage de marchandise importée sous douane | Pharmacien DT Importateur | Bureau de Libération de Lot DCE / Douanes |
@@ -898,7 +944,7 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 
 ### 10.3 Matrice des 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel
 
-La constitution d'un dossier CTD s'étalant sur plusieurs mois et mobilisant des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité, Façonniers et CROs), la plateforme **Homolog** fournit **huit états intermédiaires de liaison et de suivi opérationnel**.
+La constitution d'un dossier CTD s'étalant sur plusieurs mois et mobilisant des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité, Façonniers et CROs), la plateforme **Sanad Pharma** fournit **huit états intermédiaires de liaison et de suivi opérationnel**.
 
 Contrairement aux états réglementaires finaux destinés aux autorités sanitaires, ces états constituent des **instruments internes de pilotage de projet, de coordination transversale et d'arbitrage qualité** :
 
@@ -997,7 +1043,7 @@ L'intégration des trames réglementaires certifiées de l'ANPP (issues des rép
 
 ### 10.5 Standards Graphiques, Typographiques & Exigences d'Édition Haute Fidélité (Charte Print BPF 300 DPI)
 
-Pour conférer à chaque état de sortie une autorité indiscutable face à l'autorité sanitaire nationale (**ANPP**) et aux auditeurs internationaux, **Homolog** applique une charte graphique et typographique de niveau institutionnel :
+Pour conférer à chaque état de sortie une autorité indiscutable face à l'autorité sanitaire nationale (**ANPP**) et aux auditeurs internationaux, **Sanad Pharma** applique une charte graphique et typographique de niveau institutionnel :
 
 1. **Rendu Vectoriel Pur 300+ DPI & Zéro Flou :**
    - Tous les éléments graphiques (armoiries, logos du laboratoire, cartouches, pictogrammes et QR-codes) sont intégrés et générés exclusivement en **SVG vectoriel pur**.
@@ -1020,9 +1066,9 @@ Pour conférer à chaque état de sortie une autorité indiscutable face à l'au
 
 ---
 
-### 10.5 Architecture Technique du Moteur de Rendu et d'Exportation
+### 10.6 Architecture Technique du Moteur de Rendu et d'Exportation
 
-L'implémentation logicielle du sous-système de reporting dans le backend Go d'Homolog repose sur une chaîne de traitement haute performance :
+L'implémentation logicielle du sous-système de reporting dans le backend Go de Sanad Pharma repose sur une chaîne de traitement haute performance :
 
 ```go
 // ReportingService gère la production, le scellement et la vérification des états de sortie BPF.
@@ -1045,17 +1091,17 @@ Les routes API associées au reporting sont protégées par les permissions gran
 
 ---
 
-## 11. Spécifications du Copilote IA & Intelligence Réglementaire Pharmaceutique (Phase 3)
+## 11. Spécifications du Copilote IA & Intelligence Réglementaire Pharmaceutique (Phase 3 — Sanad Copilot)
 
 Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (**ANPP**), la constitution d'un dossier d'enregistrement CTD ou d'homologation de dispositif médical ne se résume pas à l'archivage passif de pièces administratives. Elle exige une intense activité de **rédaction scientifique**, de **justification technico-réglementaire** et de **croisement critique des données** (200 à plus de 1 000 pages).
 
-La plateforme **Homolog** intègre un sous-système d'intelligence artificielle spécialisée dans le domaine pharmaceutique et réglementaire, conçu pour agir comme un véritable copilote métier au service exclusif du Pharmacien et des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité).
+La plateforme **Sanad Pharma** (via son module **Sanad Copilot**) intègre un sous-système d'intelligence artificielle spécialisée dans le domaine pharmaceutique et réglementaire, conçu pour agir comme un véritable copilote métier au service exclusif du Pharmacien et des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité).
 
 ---
 
 ### 11.1 Principes Directeurs, Secret Industriel et Responsabilité Légale (Human-in-the-Loop)
 
-L'implémentation de l'IA dans Homolog est encadrée par trois piliers stricts garantissant la conformité aux Bonnes Pratiques de Fabrication (BPF), au 21 CFR Part 11 et au principe d'intégrité **ALCOA+** :
+L'implémentation de l'IA dans Sanad Pharma est encadrée par trois piliers stricts garantissant la conformité aux Bonnes Pratiques de Fabrication (BPF), au 21 CFR Part 11 et au principe d'intégrité **ALCOA+** :
 
 1. **Responsabilité Pénale Exclusive & Gouvernance « Human-in-the-Loop » :**
    - L'IA n'est jamais autonome et ne prend aucune décision réglementaire. Elle agit exclusivement comme un **assistant de proposition et de rédaction préliminaire**.
@@ -1136,11 +1182,11 @@ L'IA agit comme un auditeur qualité virtuel permanent, capable d'examiner le do
 
 ### 11.5 Architecture Technique Hybride, Base Vectorielle `pgvector` & RAG Souverain
 
-L'intégration de l'intelligence artificielle au cœur d'Homolog repose sur une conception modulaire, évolutive et agnostique du fournisseur d'IA :
+L'intégration de l'intelligence artificielle au cœur de Sanad Pharma repose sur une conception modulaire, évolutive et agnostique du fournisseur d'IA :
 
 ```mermaid
 flowchart LR
-    subgraph D["Données Structurées Homolog"]
+    subgraph D["Données Structurées Sanad Pharma"]
         D1["Dossiers & Produits"]
         D2["Spécifications & Stabilités"]
         D3["Documents GED CAS"]
@@ -1151,7 +1197,7 @@ flowchart LR
         R3["Ligne Directrice Variations 2026"]
         R4["Pharmacopée Européenne & ICH"]
     end
-    subgraph M["Moteur IA Homolog (internal/ai)"]
+    subgraph M["Moteur IA Sanad Copilot (internal/ai)"]
         M1["Prompt Orchestrator & BPF Guardrails"]
     end
     subgraph P["Fournisseurs LLM Interchangeables"]
@@ -1191,4 +1237,4 @@ flowchart LR
 
 ## 12. Conclusion et Validation
 
-Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme **Homolog**. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.
+Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme **Sanad Pharma**. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.

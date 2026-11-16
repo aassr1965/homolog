@@ -1,7 +1,7 @@
 # Feuille de route du projet (Roadmap)
-## Plateforme collaborative de gestion de l'enregistrement des médicaments, de l'homologation des DM et GED pharmaceutique en Algérie
+## Plateforme SANAD PHARMA — Gestion de l'Enregistrement des Médicaments, de l'Homologation des DM et GED Pharmaceutique en Algérie
 
-**Dernière mise à jour :** 15 novembre 2026  
+**Dernière mise à jour :** 16 novembre 2026  
 **Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP & Chapitre 10 - Spécifications Exhaustives des États de Sortie)  
 **Textes réglementaires officiels algériens intégrés :**
 - **Guide pour la soumission du Dossier Technique Commun (CTD)** destiné à l'enregistrement des produits pharmaceutiques à usage humain (DEPP/ANPP, Version 01, Date d'effet : 31/07/2025).
@@ -19,7 +19,7 @@
 
 ```mermaid
 gantt
-    title Planning de déploiement et d'implémentation Homolog
+    title Planning de déploiement et d'implémentation Sanad Pharma
     dateFormat  YYYY-MM-DD
     section Phase 1 : Socle & GED
     Infra, Base PostgreSQL & CAS Dédupliqué (1.1)    :done, p1_1, 2026-11-10, 1d
@@ -29,7 +29,7 @@ gantt
     Moteur Dossiers ANPP (CTD 2025 & DM 2021) (1.5)  :done, p1_5, after p1_4, 4d
     UI Haute Densité 'Pharma Explorer' 3 Volets (1.6):done, p1_6, after p1_5, 4d
     Studio Compléments & Assistant Soumission ANPP (1.7) :done, p1_7, after p1_6, 3d
-    Packaging Docker & Archive .homolog (1.8)        :done, p1_8, after p1_7, 2d
+    Packaging Docker & Archive .sanad (1.8)          :done, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
     Atelier Élaboration & Workflow BPF Maker-Checker (2.1):active, p2_1, after p1_8, 4d
     Redevances, Devises & Justificatifs Bancaires(2.2):p2_2, after p2_1, 3d
@@ -228,11 +228,11 @@ gantt
   - [x] Provisionnement initial de l'établissement MIPH et du compte Pharmacien DT titulaire (`POST /api/v1/setup/initialize`).
   - [x] Écran guidé d'initialisation in-app (`#screen-setup`) avec hachage Argon2id et journalisation dans la piste d'audit immuable.
   - [x] Garde-fou strict interdisant toute réinitialisation sur une instance déjà active (HTTP 409 Conflict).
-- [x] **Archive Universelle Portative .homolog & Réversibilité ALCOA+ :**
-  - [x] Spécification du conteneur d'archive universelle `HOMOLOG_PORTABLE_ARCHIVE_V1` (flux tar.gz autonome sans vendor lock-in).
-  - [x] Moteur d'export (`GET /api/v1/system/backup/export`) : sérialisation JSON des 17 tables métier (`database/`), collecte des pièces GED physiques dédupliquées (`blobs/<sha256>`), manifeste signé (`manifest.json`) et sceau d'archive global SHA-256 (`X-Homolog-Seal`).
+- [x] **Archive Universelle Portative .sanad (Sanad Pharma) & Réversibilité ALCOA+ :**
+  - [x] Spécification du conteneur d'archive universelle `SANAD_PORTABLE_ARCHIVE_V1` (flux tar.gz autonome sans vendor lock-in).
+  - [x] Moteur d'export (`GET /api/v1/system/backup/export`) : sérialisation JSON des 17 tables métier (`database/`), collecte des pièces GED physiques dédupliquées (`blobs/<sha256>`), manifeste signé (`manifest.json`) et sceau d'archive global SHA-256 (`X-Sanad-Seal`).
   - [x] Moteur de restauration certifié (`POST /api/v1/system/backup/restore`) : validation d'intégrité du manifeste, contrôle systématique du hash SHA-256 de chaque document CAS avec rejet immédiat en cas d'altération (HTTP 422), réinjection transactionnelle des 17 tables et scellement dans l'audit log.
-  - [x] Interface cockpit IT (`web/js/system_admin.js`) : section « Souveraineté & Réversibilité », téléchargement direct et modale de restauration (`#modal-restore-homolog`) avec barre de progression.
+  - [x] Interface cockpit IT (`web/js/system_admin.js`) : section « Souveraineté & Réversibilité », téléchargement direct et modale de restauration (`#modal-restore-sanad`) avec barre de progression.
 - [x] **Validation de la réversibilité complète :**
   - [x] Suite de tests unitaires et d'intégration validée à 100% (`backup_archive_test.go` : 5 tests réussis).
   - [x] Phase 1 du socle fondateur achevée à 100% (8/8 jalons complétés).
@@ -274,14 +274,14 @@ gantt
 - [ ] **Moteur Universel de Restitution & Référentiel des 28 États Documentaires (Chapitre 10 du Cahier des Charges) :**
   - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
   - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL / EN COURS` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
-  - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://homolog.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
+  - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://sanad.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
   - Paginage légal indélébile **`Page X sur Y`** et cartouche d'identification normalisé (raison sociale, agrément MIPH, DCI, version, horodatage UTC+1 certifié).
   - **Volet A : Les États Réglementaires & Finaux Opposables (ES) :**
     - *Famille 1 (Dépôt & Procédures CTD / DM) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3 Médicament & Formulaire d'Homologation DM en 6 sections Décret 20-324), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-03-DM (Récépissé de dépôt DM en 13 points), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP/ANPP calculé selon la table Fr-DCE02-F/V01).
     - *Famille 2 (Redevances & Financier Décret 21-82 & Ordonnance 21-07) :* ES-FIN-01 (Bordereau BV1 initial Médicament Trésor Public CAS 302.145 ou BV DM BNA Chéraga RIB `00100622030000064395` - 300 000 DA), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping PP et BV DM BNA Modification 150k DA / Renouvellement 300k DA / Transfert 100k DA), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
     - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP PP/DM), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
     - *Famille 4 (Qualité & Audit Trail BPF) :* ES-QUA-01 (Registre d'Audit Trail scellé ALCOA+), ES-QUA-02 (Manifeste de signature électronique Maker-Checker), ES-QUA-03 (Fiche de contrôle documentaire pré-dépôt).
-    - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.homolog`).
+    - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.sanad`).
     - *Famille 6 (Contrôle de Conformité, Métrologie & Libération DCE) :* ES-DCE-01 (Certificat Officiel de Libération de Lot du Pharmacien DT avec traçabilité PF/SA/Semi-fini et validation LCQ), ES-DCE-02 (Formulaires de réception à l'importation PP Arrêté 14/02/2021 et DM Arrêté 20/02/2025), ES-DCE-03 (Exportateur automatisé des canevas journaliers Excel ANPP unifiés), ES-DCE-04 (Bordereau de composition du dossier de libération en 8 pièces PDF), MT-LCQ-01 (Template Maître Standard de Référence Secondaire ISO 17034).
   - **Volet B : Les 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel (EI) :**
     - *Suivi de montage CTD & Gating :* EI-AVT-01 (Fiche Navette d'avancement 360° et verrous bloquants), EI-AVT-02 (Relevé des écarts et pièces manquantes Gap Analysis par département), EI-AVT-03 (Fiche d'annotation et d'arbitrage Checker / AQ lors d'un rejet).
@@ -363,7 +363,7 @@ gantt
 
 ### Jalon 2.7 : Console Super-Admin Éditeur (Mode Cloud SaaS)
 - [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances.
-- [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.homolog.dz`).
+- [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.sanad.dz`).
 - [ ] Gestion des quotas de stockage par laboratoire et suivi de consommation.
 
 ### Jalon 2.8 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
@@ -445,7 +445,7 @@ gantt
 ### Jalon 3.4 : Passerelle Officielle API ANPP (Télétransmission Directe M2M)
 - [ ] Connecteur d'interopérabilité API (`internal/anpp`) dès publication des spécifications techniques de télé-procédure ou webhook par l'ANPP.
 - [ ] Télétransmission automatisée sécurisée des paquets de soumission CTD scellés (Submission Packages) avec accusé de réception cryptographique.
-- [ ] Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Homolog.
+- [ ] Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Sanad Pharma.
 
 ---
 
@@ -454,7 +454,7 @@ gantt
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
 | **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0 - 12 Domaines) | Aligné Guide CTD ANPP 2025, LD Modifications 2026, États de Sortie & Copilote IA ✅ |
-| **Jalons Phase 1 complétés** | 8 / 8 jalons | 8 / 8 jalons complétés (100 %) (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 & 1.8 ✅) | Phase 1 validée à 100% : socle souverain, GED BPF, compléments ANPP, BV1/BV2 et réversibilité .homolog ✅ |
+| **Jalons Phase 1 complétés** | 8 / 8 jalons | 8 / 8 jalons complétés (100 %) (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 & 1.8 ✅) | Phase 1 validée à 100% : socle souverain, GED BPF, compléments ANPP, BV1/BV2 et réversibilité .sanad ✅ |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth, Produits & Réversibilité validés (100%) | Argon2id, TOTP, Sessions, CAS, RBAC & Backup conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive) | Scellement cryptographique et rôles validés ✅ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |

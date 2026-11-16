@@ -1,7 +1,7 @@
 # Manuel d'Utilisation & Guide Opérationnel des Usagers
-## Plateforme Homolog — Gestion Réglementaire ANPP & GED Pharmaceutique
+## Plateforme SANAD PHARMA — Gestion Réglementaire ANPP & GED Pharmaceutique
 
-**Code Document :** `MAN-HOMOLOG-001`  
+**Code Document :** `MAN-SANAD-001`  
 **Version en vigueur :** `1.0-DRAFT`  
 **Date d'effet :** Novembre 2026  
 **Statut :** Document vivant (Living Documentation), révisé au fur et à mesure du déploiement des jalons et des évolutions des textes officiels de l'ANPP.  
@@ -52,7 +52,7 @@ Ce tableau consigne formellement chaque révision de la notice d'utilisation, ga
 ## 1. Introduction, Philosophie & Cadre Réglementaire ANPP
 
 ### 1.1 Objet de la Plateforme
-La plateforme logicielle **Homolog** est conçue pour piloter à 360° le cycle de vie réglementaire des médicaments et des dispositifs médicaux en Algérie. Elle permet aux laboratoires pharmaceutiques, façonniers et importateurs de :
+La plateforme logicielle **Sanad Pharma** est conçue pour piloter à 360° le cycle de vie réglementaire des médicaments et des dispositifs médicaux en Algérie. Elle permet aux laboratoires pharmaceutiques, façonniers et importateurs de :
 - Structurer, centraliser et instruire leurs dossiers d'enregistrement initial, de renouvellement quinquennal et de modifications selon les référentiels officiels de l'**Agence Nationale des Produits Pharmaceutiques (ANPP)**.
 - Gérer leurs documents opposables au sein d'un coffre-fort numérique conforme aux exigences de traçabilité des **Bonnes Pratiques de Fabrication (BPF)** et du standard international **ALCOA+** (*Attributable, Legible, Contemporaneous, Original, Accurate*).
 - Sécuriser juridiquement les approbations grâce à la signature électronique bloquante du **Pharmacien Directeur Technique (PDT)**.
@@ -69,7 +69,7 @@ La plateforme applique de façon native et rigoureuse les dispositions des texte
 
 ## 2. Sécurité, Connexion & Authentification Forte 2FA
 
-Pour répondre aux normes BPF et 21 CFR Part 11, l'accès à Homolog repose sur une authentification nominative stricte. **Le partage d'identifiants entre collaborateurs est formellement interdit et détecté par l'audit trail.**
+Pour répondre aux normes BPF et 21 CFR Part 11, l'accès à Sanad Pharma repose sur une authentification nominative stricte. **Le partage d'identifiants entre collaborateurs est formellement interdit et détecté par l'audit trail.**
 
 ```mermaid
 flowchart TD
@@ -92,7 +92,7 @@ Tout mot de passe défini sur la plateforme doit obligatoirement respecter les r
 - Le système rejette automatiquement les mots de passe triviaux ou contenant le nom d'utilisateur.
 
 ### 2.2 Activation et Utilisation du Double Facteur (TOTP 100% Hors-Ligne)
-Homolog intègre un moteur de second facteur totalement autonome ne dépendant d'aucun réseau téléphonique ni passerelle SMS externe :
+Sanad Pharma intègre un moteur de second facteur totalement autonome ne dépendant d'aucun réseau téléphonique ni passerelle SMS externe :
 1. À la première connexion, rendez-vous dans votre **Profil Utilisateur** > **Sécurité**.
 2. Cliquez sur **Activer l'authentification 2FA**.
 3. Scannez le QR Code affiché à l'écran avec une application d'authentification standard installée sur votre smartphone (ex: *Google Authenticator*, *Microsoft Authenticator*, *FreeOTP*).
@@ -305,7 +305,7 @@ Conformément à l'article 7 du décret exécutif 20-325, le Pharmacien Directeu
 *(Ce module sera déployé lors de la Phase 2 de la Roadmap - Jalon 2.2)*
 
 ### 8.1 Les 3 Classes Algériennes
-L'ANPP a aboli les nomenclatures européennes (Types IA/IB/II). Homolog gère nativement :
+L'ANPP a aboli les nomenclatures européennes (Types IA/IB/II). Sanad Pharma gère nativement :
 - **Modification Mineure (Mmin) :** Impact négligeable sur la qualité, la sécurité ou l'efficacité.
 - **Modification Modérée (Mmod) :** Impact potentiel nécessitant une revue formelle.
 - **Modification Majeure (Mmaj) :** Impact substantiel sur le profil du produit.
@@ -317,7 +317,7 @@ Lorsque vous déclarez un changement parmi les **34 rubriques officielles** (cha
 3. **Dès lors qu'une seule condition n'est pas remplie :** Le moteur d'escalade **reclasse automatiquement la demande au niveau supérieur** (`Mmin` $\to$ `Mmod` ou `Mmaj`, et `Mmod` $\to$ `Mmaj`) et actualise instantanément la liste des 12 pièces justificatives requises (CDC Section 5.3).
 
 ### 8.3 Regroupement de Modifications (*Grouping*)
-En application de l'article 09 de l'arrêté du 07/11/2021, plusieurs variations interdépendantes pour une même DE peuvent être soumises ensemble. Homolog calcule automatiquement le niveau de risque global du groupe : **si une modification du groupe est classée `Mmaj`, l'ensemble de la soumission groupée est traitée selon les exigences `Mmaj`.**
+En application de l'article 09 de l'arrêté du 07/11/2021, plusieurs variations interdépendantes pour une même DE peuvent être soumises ensemble. Sanad Pharma calcule automatiquement le niveau de risque global du groupe : **si une modification du groupe est classée `Mmaj`, l'ensemble de la soumission groupée est traitée selon les exigences `Mmaj`.**
 
 ---
 
