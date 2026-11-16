@@ -32,19 +32,20 @@ gantt
     Packaging Docker & Archive .sanad (1.8)          :done, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
     Atelier Élaboration, Smart Planning & Workflow BPF (2.1):active, p2_1, after p1_8, 4d
-    Redevances, Devises & Settings du Tenant (2.2)   :p2_2, after p2_1, 3d
-    Moteur Variations ANPP & Impact Tree (2.3)       :p2_3, after p2_2, 4d
-    Espace Consultants & Extranet Fournisseur API (2.4):p2_4, after p2_3, 2d
-    Régularisation DM Décret 20-324 (2.5)            :p2_5, after p2_4, 3d
-    Recherche Plein Texte FTS Bilingue FR/AR (2.6)   :p2_6, after p2_5, 3d
-    Console Super-Admin Éditeur Cloud SaaS (2.7)     :p2_7, after p2_6, 3d
-    Mises à Jour Réglementaires Hors-Ligne .pkg (2.8):p2_8, after p2_7, 3d
-    Contrôle Analytique & Libération Lot DCE (2.9)   :p2_9, after p2_8, 4d
-    Chiffrement Applicatif GED AES-256-GCM (2.10)   :p2_10, after p2_9, 3d
-    Dossier de Validation CSV GAMP 5 (2.11)          :p2_11, after p2_10, 3d
-    Salle d'Inspection Virtuelle ANPP (2.12)         :p2_12, after p2_11, 2d
+    Moteur Édition & 28 États de Sortie BPF (2.2)    :p2_2, after p2_1, 4d
+    Redevances, Devises & Settings du Tenant (2.3)   :p2_3, after p2_2, 3d
+    Moteur Variations ANPP & Impact Tree (2.4)       :p2_4, after p2_3, 4d
+    Espace Consultants & Extranet Fournisseur API (2.5):p2_5, after p2_4, 2d
+    Régularisation DM Décret 20-324 (2.6)            :p2_6, after p2_5, 3d
+    Recherche Plein Texte FTS Bilingue FR/AR (2.7)   :p2_7, after p2_6, 3d
+    Console Super-Admin Éditeur Cloud SaaS (2.8)     :p2_8, after p2_7, 3d
+    Mises à Jour Réglementaires Hors-Ligne .pkg (2.9):p2_9, after p2_8, 3d
+    Contrôle Analytique & Libération Lot DCE (2.10)  :p2_10, after p2_9, 4d
+    Chiffrement Applicatif GED AES-256-GCM (2.11)   :p2_11, after p2_10, 3d
+    Dossier de Validation CSV GAMP 5 (2.12)          :p2_12, after p2_11, 3d
+    Salle d'Inspection Virtuelle ANPP (2.13)         :p2_13, after p2_12, 2d
     section Phase 3 : Extensions
-    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_8, 5d
+    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_13, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
     Passerelle Officielle API ANPP                   :p3_3, after p3_2, 4d
 ```
@@ -77,10 +78,10 @@ gantt
       *« En qualité de Pharmacien Directeur Technique, j'atteste sur l'honneur l'exactitude, la véracité et la complétude des données du présent dossier soumis à l'ANPP conformément aux lois et réglementations en vigueur. »*
     - Scellement cryptographique par empreinte SHA-256 liant le binaire du document, l'identité du signataire, son rôle officiel, l'horodatage UTC et l'adresse IP.
 - [x] **Mise en conformité PSSI, RBAC Dynamique & Console Dédiée (Sections 6.3, 7.1 & 7.2 du CDC) :**
-  - [x] Définir les 9 profils utilisateurs stricts dans le domaine métier (`internal/domain/rbac.go`).
+  - [x] Définir les 10 profils utilisateurs stricts dans le domaine métier (`internal/domain/rbac.go`), incluant le profil partenaire fournisseur API pour le dépôt ASMF chiffré.
   - [x] **Modèle de Données PostgreSQL Dynamique (Migration `005_rbac_and_dynamic_permissions.sql`) :**
     - Tables `roles`, `permissions`, `role_permissions`, `user_permissions`.
-    - Pré-remplissage des 14 permissions unitaires et de la matrice par défaut des 9 rôles sans perturber les données existantes.
+    - Pré-remplissage des 14 permissions unitaires et de la matrice par défaut des 10 rôles sans perturber les données existantes.
   - [x] **Moteur RBAC Backend Go & Garde-fous BPF Inviolables :**
     - Service `RBACService` et middleware `RequirePermission(perm)` / `RequireAnyPermission(perms...)`.
     - Garde-fous réglementaires inviolables en code Go : exercice du visa PDT réservé exclusivement au DT titulaire de la décision ministérielle (1.A.7), filtre Zero-Trust bloquant le téléchargement de documents pour les admins techniques (`admin_systeme_local`, `super_admin_editeur`), et non-auto-approbation SoD par pièce (*Maker* $\neq$ *Checker* $\neq$ *Approver*).
@@ -92,7 +93,7 @@ gantt
   - [x] **Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :**
     - Route Guards frontend interceptant les accès directs non autorisés par domaine avec popups sécurisées d'interdiction.
     - Moteur de rendu conditionnel masquant les composants non autorisés (`data-perm`, `data-perm-any`, bouton signature PDT, console admin, boutons téléchargement Zero-Trust).
-    - Provisionnement de 9 collaborateurs réalistes avec mot de passe universel `Homolog2026!Dev` pour les tests complets.
+    - Provisionnement de 10 collaborateurs réalistes (avec profil Partenaire Fournisseur API) avec mot de passe universel `Homolog2026!Dev` pour les tests complets.
   - [x] Développer et valider la suite de tests unitaires RBAC / Zero-Trust / Session (`internal/api/rbac_test.go`).
 
 ### Jalon 1.3 : Référentiel Établissements & Produits (Conforme Guide ANPP 2025)
@@ -261,7 +262,8 @@ gantt
   - Circuit de revue par les pairs / AQ (*Checker*) avec annotations, demandes d'ajustements motivées et journal d'audit complet.
 - [ ] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
   - Modélisation du graphe orienté acyclique (DAG) des dépendances techniques et réglementaires CTD/DM en 5 phases successives (Matières & Méthodes ➔ Lots pilotes & CoA ➔ Stabilités Zone IVb & Bioéquivalence ➔ QOS & Notice/RCP ➔ Engagements & Visa PDT).
-  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé ; **Verrou de parité linguistique synchrone FR $\leftrightarrow$ AR** interdisant le passage au visa DT si la notice arabe n'est pas alignée sur la révision française).
+  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé).
+  - **Verrou de parité linguistique synchrone FR $\leftrightarrow$ AR (Règle bloquante GxP) :** Mécanisme de blocage technique interdisant formellement le passage du dossier au statut *« Prêt pour Visa DT »* si la notice patient en langue arabe (1.P.2.2) n'est pas au même indice de révision validé manuellement que la notice française (1.P.2.1), garantissant la stricte symétrie médico-légale exigée par l'ANPP avant toute soumission. *(Note d'architecture : ce verrou de complétude est purement déterministe en Phase 2 ; l'assistant IA d'aide à la traduction médicale et de glossaire bilingue relève du Jalon 3.1)*.
   - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
 - [ ] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
@@ -276,30 +278,33 @@ gantt
     - Lettre d'engagement de suivi de stabilité continue post-commercialisation en Zone IVb (1.P.9).
     - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
     - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
-- [ ] **Moteur Universel de Restitution & Référentiel des 28 États Documentaires (Chapitre 10 du Cahier des Charges) :**
-  - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
-  - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL / EN COURS` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
-  - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://sanad.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
-  - Paginage légal indélébile **`Page X sur Y`** et cartouche d'identification normalisé (raison sociale, agrément MIPH, DCI, version, horodatage UTC+1 certifié).
-  - **Volet A : Les États Réglementaires & Finaux Opposables (ES) :**
-    - *Famille 1 (Dépôt & Procédures CTD / DM) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3 Médicament & Formulaire d'Homologation DM en 6 sections Décret 20-324), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-03-DM (Récépissé de dépôt DM en 13 points), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP/ANPP calculé selon la table Fr-DCE02-F/V01).
-    - *Famille 2 (Redevances & Financier Décret 21-82 & Ordonnance 21-07) :* ES-FIN-01 (Bordereau BV1 initial Médicament Trésor Public CAS 302.145 ou BV DM BNA Chéraga RIB `00100622030000064395` - 300 000 DA), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping PP et BV DM BNA Modification 150k DA / Renouvellement 300k DA / Transfert 100k DA), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
-    - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP PP/DM), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
-    - *Famille 4 (Qualité & Audit Trail BPF) :* ES-QUA-01 (Registre d'Audit Trail scellé ALCOA+), ES-QUA-02 (Manifeste de signature électronique Maker-Checker), ES-QUA-03 (Fiche de contrôle documentaire pré-dépôt).
-    - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.sanad`).
-    - *Famille 6 (Contrôle de Conformité, Métrologie & Libération DCE) :* ES-DCE-01 (Certificat Officiel de Libération de Lot du Pharmacien DT avec traçabilité PF/SA/Semi-fini et validation LCQ), ES-DCE-02 (Formulaires de réception à l'importation PP Arrêté 14/02/2021 et DM Arrêté 20/02/2025), ES-DCE-03 (Exportateur automatisé des canevas journaliers Excel ANPP unifiés), ES-DCE-04 (Bordereau de composition du dossier de libération en 8 pièces PDF), MT-LCQ-01 (Template Maître Standard de Référence Secondaire ISO 17034).
-  - **Volet B : Les 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel (EI) :**
-    - *Suivi de montage CTD & Gating :* EI-AVT-01 (Fiche Navette d'avancement 360° et verrous bloquants), EI-AVT-02 (Relevé des écarts et pièces manquantes Gap Analysis par département), EI-AVT-03 (Fiche d'annotation et d'arbitrage Checker / AQ lors d'un rejet).
-    - *Épreuves temporelles incompressibles :* EI-CHR-01 (Fiche de suivi des stabilités Zone IVb M0 à M24 avec alerte seuil légal M6), EI-CHR-02 (Rapport d'étape bioéquivalence CRO avec suivi IC 90%).
-    - *Compléments, Changes & Pipeline :* EI-VIG-01 (Fiche d'instruction des compléments et plan d'action avec jalons internes J-15/J-5), EI-CHG-01 (Fiche d'évaluation d'impact réglementaire Change Control 1-34), EI-PIP-01 (Point hebdomadaire du pipeline de soumissions pour CoDir).
-  - Exports tabulaires certifiés **Excel (XLSX) et CSV UTF-8** avec métadonnées d'audit trail (pour comptabilité, finance et analyses de portefeuille).
-  - Routes REST API sécurisées (`GET /api/v1/dossiers/{id}/reports/{code}`, `POST .../seal`, `GET /api/v1/public/verify/{sha256}`).
 - [ ] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
   - Tableau de bord de pilotage temps réel : vue matricielle d'avancement par module CTD et par département rédacteur, alertes sur retards et goulots d'étranglement.
   - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
   - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
 
-### Jalon 2.2 : Suivi des Redevances Réglementaires, Devises & Settings Réglementaires du Tenant
+### Jalon 2.2 : Moteur Universel d'Édition Haute Fidélité & Référentiel des 28 États Documentaires BPF (Chapitre 10 du CDC)
+- [ ] **Architecture du Moteur d'Édition Backend Go & Formats Opposables :**
+  - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
+  - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL / EN COURS` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
+  - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://sanad.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
+  - Paginage légal indélébile **`Page X sur Y`** et cartouche d'identification normalisé (raison sociale, agrément MIPH, DCI, version, horodatage UTC+1 certifié).
+- [ ] **Volet A : Les 20 États Réglementaires & Finaux Opposables (ES) :**
+  - *Famille 1 (Dépôt & Procédures CTD / DM) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3 Médicament & Formulaire d'Homologation DM en 6 sections Décret 20-324), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-03-DM (Récépissé de dépôt DM en 13 points), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP/ANPP calculé selon la table Fr-DCE02-F/V01).
+  - *Famille 2 (Redevances & Financier Décret 21-82 & Ordonnance 21-07) :* ES-FIN-01 (Bordereau BV1 initial Médicament Trésor Public CAS 302.145 ou BV DM BNA Chéraga RIB `00100622030000064395` - 300 000 DA), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping PP et BV DM BNA Modification 150k DA / Renouvellement 300k DA / Transfert 100k DA), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
+  - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP PP/DM), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
+  - *Famille 4 (Qualité & Audit Trail BPF) :* ES-QUA-01 (Registre d'Audit Trail scellé ALCOA+), ES-QUA-02 (Manifeste de signature électronique Maker-Checker), ES-QUA-03 (Fiche de contrôle documentaire pré-dépôt).
+  - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.sanad`).
+  - *Famille 6 (Contrôle de Conformité, Métrologie & Libération DCE) :* ES-DCE-01 (Certificat Officiel de Libération de Lot du Pharmacien DT avec traçabilité PF/SA/Semi-fini et validation LCQ), ES-DCE-02 (Formulaires de réception à l'importation PP Arrêté 14/02/2021 et DM Arrêté 20/02/2025), ES-DCE-03 (Exportateur automatisé des canevas journaliers Excel ANPP unifiés), ES-DCE-04 (Bordereau de composition du dossier de libération en 8 pièces PDF), MT-LCQ-01 (Template Maître Standard de Référence Secondaire ISO 17034).
+- [ ] **Volet B : Les 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel (EI) :**
+  - *Suivi de montage CTD & Gating :* EI-AVT-01 (Fiche Navette d'avancement 360° et verrous bloquants), EI-AVT-02 (Relevé des écarts et pièces manquantes Gap Analysis par département), EI-AVT-03 (Fiche d'annotation et d'arbitrage Checker / AQ lors d'un rejet).
+  - *Épreuves temporelles incompressibles :* EI-CHR-01 (Fiche de suivi des stabilités Zone IVb M0 à M24 avec alerte seuil légal M6), EI-CHR-02 (Rapport d'étape bioéquivalence CRO avec suivi IC 90%).
+  - *Compléments, Changes & Pipeline :* EI-VIG-01 (Fiche d'instruction des compléments et plan d'action avec jalons internes J-15/J-5), EI-CHG-01 (Fiche d'évaluation d'impact réglementaire Change Control 1-34), EI-PIP-01 (Point hebdomadaire du pipeline de soumissions pour CoDir).
+- [ ] **Exports Tabulaires & API Sécurisée :**
+  - Exports tabulaires certifiés **Excel (XLSX) et CSV UTF-8** avec métadonnées d'audit trail (pour comptabilité, finance et analyses de portefeuille).
+  - Routes REST API sécurisées (`GET /api/v1/dossiers/{id}/reports/{code}`, `POST .../seal`, `GET /api/v1/public/verify/{sha256}`).
+
+### Jalon 2.3 : Suivi des Redevances Réglementaires, Devises & Settings Réglementaires du Tenant
 - [ ] **Settings Réglementaires & Institutionnels Découplés par Tenant (`organization_id`) :**
   - Interface dédiée au sein de la Console d'Administration (*Sanad Admin Console*) permettant la mise à jour dynamique et sécurisée des paramètres institutionnels par laboratoire, sans aucun codage en dur :
     - *Circuit Médicaments :* Mode de paiement (`FIN_PAYMENT_MODE_MEDICINE`), compte Trésor Public CAS n° 302.145 (`FIN_TREASURY_ACCOUNT_MEDICINE`), ordre des chèques certifiés (`FIN_BENEFICIARY_ORDER_MEDICINE` : *Régisseur des recettes de l'ANPP*).
@@ -313,7 +318,7 @@ gantt
 - [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
 
-### Jalon 2.3 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
+### Jalon 2.4 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
 - [ ] **Modélisation Préalable de l'Arbre de Décision (Conditions C1..Cn & Justificatifs J1..Jn) :**
   - Spécification exhaustive par rubrique de l'ensemble des conditions préalables et des justificatifs opposables avant implémentation du code.
   - Vérification contradictoire des sous-cas et de l'ordonnancement officiel de la nomenclature ANPP (ex: 7.c, 12.a-f).
@@ -354,7 +359,7 @@ gantt
   - Code visuel tri-couleur : Rouge (Impact direct), Orange (Impact indirect *ripple effect*), Vert (Sections préservées candidates à l'attestation de non-modification).
   - Alimentation automatique de la fiche d'impact technique et financier pour le Comité de Contrôle des Changements (EI-CHG-01).
 
-### Jalon 2.4 : Espace Sécurisé pour Consultants Externes & Extranet Fournisseur API (Partie Fermée ASMF)
+### Jalon 2.5 : Espace Sécurisé pour Consultants Externes & Extranet Fournisseur API (Partie Fermée ASMF)
 - [ ] **Cloisonnement Étanche des Consultants Externes :**
   - Accès restreint exclusivement aux seuls dossiers CTD/DM explicitement assignés par le Responsable Réglementaire.
   - Zéro accès à la GED transverse, aux formules confidentielles ou aux autres produits du portefeuille.
@@ -364,7 +369,7 @@ gantt
   - Chiffrement étanche : le contenu reste confidentiel vis-à-vis des collaborateurs du laboratoire tout en étant certifié complet et scellé par empreinte SHA-256 pour les évaluateurs de l'ANPP.
   - Tableau de bord de suivi des Accords Techniques Qualité (*Quality Technical Agreements - QTA*) avec alertes d'échéance à J-90.
 
-### Jalon 2.5 : Procédure de Régularisation & Homologation Complète des Dispositifs Médicaux (DDM)
+### Jalon 2.6 : Procédure de Régularisation & Homologation Complète des Dispositifs Médicaux (DDM)
 - [ ] **Formulaire Officiel de Demande d'Homologation DM (Décret exécutif 20-324 & Arrêté du 10 mai 2021) :**
   - Intégration des 6 sections normées : Renseignements administratifs, certifications/engagements PDT, nature de la demande (Fabrication locale vs Importation avec CLV/CPP/CE/ISO 13485), caractéristiques et stérilisation, cartographie complète des fabricants/sous-traitants, partie technique et sécurité (composition %, dépistage latex/phtalates/CMR/médicament/biologique, stabilité T0-T36, gestion des risques **ISO 14971**, évaluation biologique **ISO 10993** et clinique **ISO 14155**).
 - [ ] **Récépissé Officiel de Dépôt des Dossiers soumis à Homologation :**
@@ -373,22 +378,22 @@ gantt
   - Inventaire des DM déjà commercialisés sous mesures transitoires, suivi des accusés de réception de dépôt et formalisation des déclarations quotidiennes dérogatoires (`CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx`).
 - [ ] Tableau de suivi des mesures transitoires et des échéances de dépôt de régularisation.
 
-### Jalon 2.6 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
+### Jalon 2.7 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
 - [ ] Indexation textuelle automatique des documents PDF, Word (.docx) et Excel (.xlsx) déposés en GED.
 - [ ] Moteur de recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant les requêtes en français et en arabe.
 - [ ] Surlignage dynamique des termes trouvés directement dans la vue tableau et le volet de prévisualisation.
 
-### Jalon 2.7 : Console Super-Admin Éditeur (Mode Cloud SaaS)
+### Jalon 2.8 : Console Super-Admin Éditeur (Mode Cloud SaaS)
 - [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances.
 - [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.sanad.dz`).
 - [ ] Gestion des quotas de stockage par laboratoire et suivi de consommation.
 
-### Jalon 2.8 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
+### Jalon 2.9 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
 - [ ] Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).
 - [ ] Déploiement sans redémarrage des nouveaux modèles de checklists CTD ou fiches de variations émises par l'ANPP.
 - [ ] Vue comparative (Diff) entre le modèle de dossier actuel et le nouveau modèle avant application validée par l'administrateur.
 
-### Jalon 2.9 : Module de Contrôle Analytique & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)
+### Jalon 2.10 : Module de Contrôle Analytique & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)
 - [ ] **Calculateur d'Échantillonnage Statistique Homologué (Norme Fr-DCE02-F/V01) :**
   - Moteur de calcul automatisé des quantités de prélèvements requises selon l'édition officielle du 01/06/2025 (10 pages) pour les 8 voies galéniques : Ophtalmique, Locale, Rectale, Nasale, Parentérale & Irrigation, Orale liquide, Orale solide (dissolution Ph. Eur. 2.9.3, désagrégation, dureté, friabilité), et Inhalation.
 - [ ] **Traçabilité Logistique & Chaîne du Froid des Échantillons LNCPP (Bordereau ES-REG-05) :**
@@ -411,7 +416,7 @@ gantt
   - Trame normalisée pour les LCQ conforme à `TEMPLATE-CA-SR-secondaire.docx` (Traçabilité ISO 17034 / pharmacopée primaire, confirmation FTIR, 3 essais comparatifs HPLC/UV avec incertitudes ± U, teneur en eau).
   - Suivi automatisé du cycle de vie des étalons secondaires : alerte BPF automatisée de péremption et de re-test analytique à 12 mois (J-60 / J-30) contre l'étalon primaire officiel.
 
-### Jalon 2.10 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud & On-Premise)
+### Jalon 2.11 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud & On-Premise)
 - [ ] **Moteur de Chiffrement Symétrique AES-256-GCM dans le Pilote CAS (`internal/storage/`) :**
   - Chiffrement symétrique à la volée des flux entrants (`Save`) avec vecteur d'initialisation aléatoire (IV 96 bits) et tag d'authentification GCM (128 bits).
   - Déchiffrement à la volée des flux sortants (`Open`) réservé exclusivement aux requêtes dûment habilitées par le moteur RBAC.
@@ -425,7 +430,7 @@ gantt
   - Cloisonnement hermétique empêchant toute lecture par les administrateurs système IT internes ou par l'éditeur en télémaintenance.
   - Procédure de rotation de clé (*Key Rotation*), séquestre à double contrôle (*Four-Eyes Principle* : Split-Key Shamir 2 sur 3 entre PDT, DG et tiers de confiance / séquestre physique) pour parer au risque d'indisponibilité du DT (anti *Bus Factor*), et mécanisme d'export sécurisé pour le Plan de Reprise d'Activité (PRA).
 
-### Jalon 2.11 : Pack de Qualification Logicielle & Dossier de Validation CSV (GAMP 5 / 21 CFR Part 11)
+### Jalon 2.12 : Pack de Qualification Logicielle & Dossier de Validation CSV (GAMP 5 / 21 CFR Part 11)
 - [ ] **Dossier Documentaire Opposable de Qualification pour Audits et Inspections ANPP/MIPH :**
   - Rédaction des Spécifications des Besoins Utilisateur (*User Requirements Specifications - URS*) pour la GED BPF et le CTD.
   - Spécifications Fonctionnelles (*FS*) et Spécifications de Conception (*Design Specifications - DS*).
@@ -433,7 +438,7 @@ gantt
   - Matrice de Traçabilité des Exigences Réglementaires (*Requirements Traceability Matrix - RTM*) reliant chaque article réglementaire ANPP à son test automatisé.
   - Analyse des risques système selon la méthodologie GAMP 5 (FMEA) et politique formelle de gestion des changements (*Change Control*).
 
-### Jalon 2.12 : Salle d'Inspection Virtuelle & Mode "Inspection ANPP" (Inspection Readiness)
+### Jalon 2.13 : Salle d'Inspection Virtuelle & Mode "Inspection ANPP" (Inspection Readiness)
 - [ ] **Environnement d'Inspection Cloisonné pour Inspecteurs ANPP / Auditeurs BPF :**
   - Activation par le Pharmacien DT d'une session d'inspection temporaire (48h) avec sélection stricte des produits et lots audités.
   - Vue inspecteur épurée en lecture seule : accès direct aux pièces CTD scellées, formules de fabrication, contrôles LCQ et audit trail circonscrit.
@@ -466,8 +471,9 @@ gantt
   - Détection préventive des pièces obligatoires manquantes ou expirées avant soumission.
   - Proposition de corrections et suggestions d'enrichissement motivées.
 - [ ] **Assistant de Traduction Médicale & Glossaire Terminologique Bilingue (FR/AR/EN) :**
-  - Référentiel unifié des termes pharmaceutiques en langue arabe institutionnelle (formes galéniques, voies d'administration, contre-indications, effets indésirables) conforme à l'ANPP et à la Pharmacopée.
-  - Contrôle de conformité sémantique synchrone entre le texte français et le volet arabe de la Notice 1.P.2 et du RCP 1.P.1.
+  - Moteur d'aide à la traduction pharmaceutique et d'alignement terminologique alimentant et facilitant le *Verrou de parité linguistique synchrone FR ↔ AR* (règle bloquante GxP introduite en Jalon 2.1).
+  - Référentiel unifié des termes pharmaceutiques en langue arabe institutionnelle (formes galéniques, voies d'administration, contre-indications, effets indésirables) conforme aux normes ANPP et aux Pharmacopées de référence.
+  - Contrôle et audit de conformité sémantique synchrone entre le texte français et le volet arabe de la Notice patient (1.P.2) et du RCP (1.P.1).
 - [ ] **Garde-fous ALCOA+, Souveraineté & Gouvernance « Human-in-the-Loop » :**
   - **Souveraineté & Secret Industriel (Loi 18-07) :** Module IA désactivé par défaut à l'installation. Mode Local Souverain (Ollama) prioritaire pour toute donnée propriétaire (formules galéniques, procédés de synthèse, brevets). Le mode Cloud est strictement conditionné à l'accord formel du laboratoire et cantonné aux corpus publics (Guide CTD, Pharmacopée, décrets).
   - Marqueur d'origine obligatoire sur tout texte généré (`Draft v0.1 - Suggestion IA`).

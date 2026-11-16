@@ -15,7 +15,7 @@ Ce tableau consigne formellement chaque révision de la notice d'utilisation, ga
 
 | Version | Date | Auteur / Rôle | Nature des modifications & Amendements apportés | Statut d'approbation |
 |:---:|:---:|---|---|:---:|
-| **1.0** | 11/11/2026 | Antigravity / R&D | **Création initiale du manuel opérationnel :**<br>• Cadrage réglementaire ANPP (Guide CTD 2025, LD-DEPP07 2026).<br>• Protocoles de connexion, 2FA hors-ligne et matrice des 9 profils.<br>• Gestion du référentiel Établissements, Sites 1.H.8 et Produits (Médicaments & DM).<br>• Règles de constitution des dossiers CTD (NI, RI, MI, NF, RF, MF).<br>• Guide de signature électronique légale du Directeur Technique.<br>• Préfiguration du moteur de modifications (34 rubriques) et studio de compléments. | **Validé pour exploitation Phase 1** |
+| **1.0** | 11/11/2026 | Antigravity / R&D | **Création initiale du manuel opérationnel :**<br>• Cadrage réglementaire ANPP (Guide CTD 2025, LD-DEPP07 2026).<br>• Protocoles de connexion, 2FA hors-ligne et matrice des 10 profils.<br>• Gestion du référentiel Établissements, Sites 1.H.8 et Produits (Médicaments & DM).<br>• Règles de constitution des dossiers CTD (NI, RI, MI, NF, RF, MF).<br>• Guide de signature électronique légale du Directeur Technique.<br>• Préfiguration du moteur de modifications (34 rubriques) et studio de compléments. | **Validé pour exploitation Phase 1** |
 | *1.1 (Prévue)* | Déc. 2026 | Cellule Réglementaire | Intégration pas-à-pas du Coffre-fort GED (Jalon 1.4) et de la navigation Pharma Explorer 3 volets (Jalon 1.6). | *En préparation* |
 | *2.0 (Prévue)* | T1 2027 | Affaires Réglementaires | Intégration du catalogue complet des 34 variations, assistant de reclassement automatique et module de regroupement (*Grouping*). | *Planifiée* |
 
@@ -26,7 +26,7 @@ Ce tableau consigne formellement chaque révision de la notice d'utilisation, ga
 ```
 1. Introduction, Philosophie & Cadre Réglementaire ANPP
 2. Sécurité, Connexion & Authentification Forte 2FA
-3. Matrice des Rôles & Habilitations Utilisateurs (9 Profils)
+3. Matrice des Rôles & Habilitations Utilisateurs (10 Profils)
 4. Gestion du Référentiel Établissements, Sites & Produits
    4.1 Fiche Établissement Demandeur & Pharmacien Directeur Technique
    4.2 Cartographie des Sites de Fabrication & Contrôle (1.H.8)
@@ -104,9 +104,9 @@ Conformément aux exigences d'intégrité en milieu de laboratoire, **toute sess
 
 ---
 
-## 3. Matrice des Rôles & Habilitations Utilisateurs (9 Profils)
+## 3. Matrice des Rôles & Habilitations Utilisateurs (10 Profils)
 
-L'accès aux fonctionnalités et aux données est strictement cloisonné selon 9 profils nominatifs (CDC Section 7.1) :
+L'accès aux fonctionnalités et aux données est strictement cloisonné selon 10 profils nominatifs (CDC Section 7.1) :
 
 | Profil Utilisateur | Droits d'Accès Principaux | Droits de Validation & Signature | Périmètre Documentaire |
 |---|---|---|---|
@@ -115,7 +115,8 @@ L'accès aux fonctionnalités et aux données est strictement cloisonné selon 9
 | **Contributeur Qualité / BPF** | Gestion des référentiels qualité, téléversement de SOP, certificats BPF/GMP, audits fournisseurs. | Mise en révision documentaire interne (v0.1, v1.0). | Branche `02_Assurance_Qualite_BPF` et Module 1/3 CTD. |
 | **Contributeur R&D / Production** | Dépôt des formules cadres, dossiers de validation industrielle de lots (3.2.P.3.5), rapports de stabilité. | Téléversement des données de lot de validation. | Branche `03_Developpement_Production` et Modules 3 & 5 CTD. |
 | **Consultant Externe** | Consultation et dépôt de pièces justificatives exclusivement sur les dossiers confiés. | Dépôt de brouillons de pièces. Aucune signature possible. | **Cloisonnement hermétique :** Accès limité aux seuls dossiers autorisés avec date d'expiration automatique. |
-| **Auditeur / Inspecteur** | Contrôle de conformité et inspection réglementaire. | **Lecture seule intégrale**, exportation des rapports d'audit trail certifiés. | Accès en lecture seule à l'historique complet et à la table `audit_logs`. |
+| **Auditeur / Inspecteur** | Contrôle de conformité et inspection réglementaire (Mode Inspection ANPP). | **Lecture seule intégrale**, exportation des rapports d'audit trail certifiés. | Accès en lecture seule à l'historique complet et à la table `audit_logs` sur périmètre audité. |
+| **Partenaire Fournisseur / API Holder** | Dépôt chiffré de la partie fermée du dossier de substance active (3.2.S ASMF/DMF) et certificats BPF/CEP. | Aucun droit de signature réglementaire ni de relecture. | **Cloisonnement cryptographique :** Accès borné à la sous-section 3.2.S désignée, documents opaques pour le titulaire local mais certifiés pour l'ANPP. |
 | **Administrateur Laboratoire** | Gestion des comptes utilisateurs, affectation des rôles, gestion des accès. | Aucun droit de signature réglementaire. | Données d'administration des utilisateurs et licences. |
 | **Administrateur Système Local** | Exploitation système (sauvegardes, certificats TLS, Docker). | Aucun droit sur les documents pharmaceutiques. | Logs système et maintenance infra (Mode On-Premise). |
 | **Super-Admin Éditeur** | Provisioning des instances laboratoires, quotas disques. | Aucun accès aux secrets de formules ni documents labos. | Console d'infrastructure (Mode Cloud SaaS Souverain). |
