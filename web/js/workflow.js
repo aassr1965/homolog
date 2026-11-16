@@ -524,10 +524,41 @@ function openDossierReportsModal(dossierId) {
     const modal = document.getElementById('modal-dossier-reports');
     if (!modal) return;
 
-    // Activer le premier onglet
-    document.querySelectorAll('.report-tab-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.code === 'ES-REG-01');
-    });
+    // Détection si Dispositif Médical
+    let isDM = false;
+    if (typeof currentDossierDetail !== 'undefined' && currentDossierDetail && currentDossierDetail.id === dossierId) {
+        if (currentDossierDetail.product_type === 'dispositif_medical' || currentDossierDetail.procedure_code === 'HOMOLOG_DM' || currentDossierDetail.medical_device) {
+            isDM = true;
+        }
+    } else if (typeof currentDossiers !== 'undefined' && currentDossiers) {
+        const found = currentDossiers.find(d => d.id === dossierId);
+        if (found && (found.product_type === 'dispositif_medical' || found.procedure_code === 'HOMOLOG_DM')) {
+            isDM = true;
+        }
+    }
+
+    const tabsBar = document.getElementById('report-tabs-bar');
+    if (tabsBar) {
+        if (isDM) {
+            tabsBar.innerHTML = `
+                <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau Dépôt</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02-DM : Demande Homologation (6 sections)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-03-DM" onclick="switchReportTab('ES-REG-03-DM')">ES-REG-03-DM : Récépissé Dépôt (13 points)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV (BNA Chéraga)</button>
+            `;
+        } else {
+            tabsBar.innerHTML = `
+                <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau CTD</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02 : Formulaire 1.A.3</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV1 (Trésor Public)</button>
+            `;
+        }
+    } else {
+        // Fallback
+        document.querySelectorAll('.report-tab-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.code === 'ES-REG-01');
+        });
+    }
 
     openModal('modal-dossier-reports');
     loadReportView(currentReportCode);
