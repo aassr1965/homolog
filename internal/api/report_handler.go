@@ -947,10 +947,10 @@ func renderESFIN01HTML(
 	art2Text := "Contribution aux frais d'expertise analytique et contrôle de conformité LNCM"
 	art3Code := "Art. 12"
 	art3Text := "Frais de traitement du dossier, droits de timbre et archivage pérenne"
-	bankBoxHeader := "2. Domiciliation Bancaire & Coordonnées du Trésor Public (Régie des Recettes ANPP)"
+	bankBoxHeader := "2. Domiciliation Bancaire Officielle ANPP (Décret exécutif n° 21-551 & Décret 21-82)"
 	bankBeneficiary := "Agence Nationale des Produits Pharmaceutiques (ANPP) — Régie des Recettes"
-	bankDepot := "Trésor Public — Direction Générale de la Comptabilité (Alger) • Compte d'Affectation Spéciale (CAS) N° 302.145"
-	ribCode := "008 99999 0001234567 89"
+	bankDepot := "Banque Nationale d'Algérie (BNA) • Agence Al Qods — Chéraga (Compte CAS N° 302.145)"
+	ribCode := "001 00622 0300000643 95"
 
 	if isDM {
 		legalRef = "Ordonnance n° 21-07 (Art. 31) & Décret 20-324"
@@ -1136,6 +1136,9 @@ func renderESFIN01HTML(
             <div>
                 <span style="font-size:7.8pt; color:#475569;">Relevé d'Identité Bancaire (RIB) à créditer obligatoirement :</span><br/>
                 <span class="rib-number">%s</span>
+            </div>
+            <div style="font-size:7.4pt; color:#475569; margin-top:3px; margin-bottom:4px;">
+                <em>Mode alternatif admis (Décret exécutif n° 21-551 Art. 3) : Chèque de banque certifié libellé à l'ordre du « Régisseur des Recettes de l'ANPP ».</em>
             </div>
             <div style="font-size:7.5pt; color:#b91c1c; font-weight:700; margin-top:4px;">
                 Motif impératif du virement : DEP-BV1-%s

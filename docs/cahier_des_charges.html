@@ -1705,8 +1705,152 @@
 3. <strong>Référentiel Établissements &amp; Décision d'Exercice PDT (1.A.7) :</strong> Enregistrement de l'agrément ministériel MIPH et de la décision ministérielle nominative nommant le Pharmacien Directeur Technique responsable.<br />
 4. <strong>Cartographie des Sites de Fabrication &amp; Sous-traitants (1.H.8) :</strong> Déclaration des sites avec rôles industriels, licences de fabrication et certificats BPF/GMP.<br />
 5. <strong>Surveillance Audit Trail &amp; Sécurité Système (<code>audit_logs</code>) :</strong> Tableau de bord de traçabilité des connexions, échecs d'authentification 2FA, blocages de routes HTTP 403 et modifications de rôles.<br />
-6. <strong>Supervision Quotas &amp; Stockage CAS :</strong> Suivi de l'espace disque dédupliqué SHA-256 et déclenchement des sauvegardes chiffrées <code>.homolog</code>.</p>
+6. <strong>Supervision Quotas &amp; Stockage CAS :</strong> Suivi de l'espace disque dédupliqué SHA-256 et déclenchement des sauvegardes chiffrées <code>.homolog</code>.<br />
+7. <strong>Module de Paramétrage Réglementaire &amp; Variables Institutionnelles Configurables (<code>regulatory_parameters</code>) :</strong> Console d'administration permettant de configurer et d'actualiser sans modification de code source ni redémarrage du serveur l'ensemble des constantes institutionnelles, financières, bancaires et temporelles régissant la conformité ANPP.</p>
 <p><em>Pour les utilisateurs disposant d'un double rôle (ex: PDT ayant également un mandat d'administrateur du laboratoire), un commutateur d'espace permet de basculer instantanément en un clic entre la <strong>Console Admin</strong> et le <strong>Pharma Explorer</strong>.</em></p>
+
+<h3>6.4 Spécifications du Module de Paramétrage Institutionnel &amp; Variables Réglementaires</h3>
+<p>Afin d'éviter tout codage en dur de variables institutionnelles sujettes à modifications législatives, ministérielles ou bancaires (ex: changement de domiciliation bancaire de l'ANPP, mise à jour des barèmes de redevances par décret exécutif, ajustement des délais de réponse aux notifications d'insuffisance), la plateforme intègre un <strong>Moteur de Paramétrage Réglementaire Découplé</strong> doté d'une gouvernance BPF stricte.</p>
+
+<h4>6.4.1 Typologie des Variables Réglementaires Configurables</h4>
+<p>Le tableau ci-dessous détaille les familles de paramètres administrables dynamiquement :</p>
+<table class="table-specs">
+<thead>
+<tr>
+<th>Famille de Paramètres</th>
+<th>Code Clé Système</th>
+<th>Type &amp; Exemple de Valeur</th>
+<th>Impact Métier / États de Sortie</th>
+<th>Rôle Habilité</th>
+<th>Approbation Requise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RIB ANPP Médicaments</strong></td>
+<td><code>FIN_BANK_RIB_MEDICINE</code></td>
+<td>Chaine : <code>001 00622 0300000643 95</code></td>
+<td>Bordereaux ES-FIN-01 (PP), calcul de liquidation</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Banque &amp; Agence ANPP</strong></td>
+<td><code>FIN_BANK_NAME_MEDICINE</code></td>
+<td>Chaine : <code>BNA Agence Al Qods Chéraga</code></td>
+<td>Volet bancaire ES-FIN-01</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Compte CAS Médicaments</strong></td>
+<td><code>FIN_CAS_ACCOUNT_MEDICINE</code></td>
+<td>Chaine : <code>CAS N° 302.145 (Fonds Spécial ANPP)</code></td>
+<td>Mentions légales Trésor Public</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>RIB ANPP Dispositifs Méd.</strong></td>
+<td><code>FIN_BANK_RIB_DM</code></td>
+<td>Chaine : <code>001 00622 0300000643 95</code></td>
+<td>Bordereaux ES-FIN-01 (DM), Formulaire ES-REG-02-DM</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Banque Domiciliataire DM</strong></td>
+<td><code>FIN_BANK_NAME_DM</code></td>
+<td>Chaine : <code>BNA Agence Al Qods — Chéraga (Guichet 00622)</code></td>
+<td>Bordereaux de versement DDM</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Ordre Chèques Certifiés</strong></td>
+<td><code>FIN_CHECK_BENEFICIARY_ORDER</code></td>
+<td>Chaine : <code>Régisseur des recettes de l'ANPP</code></td>
+<td>Alternative Décret 21-551 Art. 3</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Barème Enregistrement NI</strong></td>
+<td><code>FEE_PROCEDURE_NI_DZD</code></td>
+<td>Numérique : <code>355000.00</code></td>
+<td>Liquidation automatique ES-FIN-01</td>
+<td>Admin Labo / Dir. Fin.</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Barème Homologation DM</strong></td>
+<td><code>FEE_PROCEDURE_DM_DZD</code></td>
+<td>Numérique : <code>300000.00</code></td>
+<td>Liquidation automatique ES-FIN-01 (DM)</td>
+<td>Admin Labo / Dir. Fin.</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Barème Renouvellement RI</strong></td>
+<td><code>FEE_PROCEDURE_RI_DZD</code></td>
+<td>Numérique : <code>205000.00</code></td>
+<td>Renouvellement quinquennal PP</td>
+<td>Admin Labo / Dir. Fin.</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Barème Variation Majeure</strong></td>
+<td><code>FEE_PROCEDURE_MI_DZD</code></td>
+<td>Numérique : <code>115000.00</code></td>
+<td>Variations LD-DEPP07 / Grouping</td>
+<td>Admin Labo / Dir. Fin.</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Délai Réponse Insuffisances</strong></td>
+<td><code>REG_DEFICIENCY_DEADLINE_DAYS</code></td>
+<td>Entier : <code>45</code> (ou <code>90</code>)</td>
+<td>Compte à rebours légal alertes &amp; dashboard</td>
+<td>Admin Labo / Resp. Reg.</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Guichet Dépôt DEPP</strong></td>
+<td><code>INST_ANPP_DEPP_ADDRESS</code></td>
+<td>Texte : <code>Bordereau DEPP, Rue Didouche Mourad, Alger</code></td>
+<td>En-têtes ES-REG-01, ES-REG-02</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Guichet Dépôt DDM</strong></td>
+<td><code>INST_ANPP_DDM_ADDRESS</code></td>
+<td>Texte : <code>Direction des Dispositifs Médicaux, Alger</code></td>
+<td>ES-REG-02-DM, ES-REG-03-DM</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+<tr>
+<td><strong>Laboratoire Contrôle DCE</strong></td>
+<td><code>INST_ANPP_DCE_ADDRESS</code></td>
+<td>Texte : <code>Laboratoire National de Contrôle des Médicaments (LNCM)</code></td>
+<td>Module DCE &amp; Demande d'expertise</td>
+<td>Admin Labo</td>
+<td><strong>Pharmacien DT (2FA)</strong></td>
+</tr>
+</tbody>
+</table>
+
+<h4>6.4.2 Temporalité &amp; Règle d'Immuabilité Rétroactive (GAMP 5 / ALCOA+)</h4>
+<p>1. <strong>Versioning Temporel (<code>valid_from</code> / <code>valid_to</code>) :</strong> Lorsqu'une variable financière ou bancaire est modifiée (ex: nouveau décret modifiant les tarifs d'enregistrement ou nouveau RIB ANPP), l'ancienne valeur n'est <strong>jamais écrasée ou supprimée</strong>. La ligne existante est clôturée avec un horodatage <code>valid_to = NOW()</code>. Une nouvelle ligne est créée avec <code>valid_from = NOW()</code> et <code>valid_to = NULL</code>.<br />
+2. <strong>Reproductibilité des États de Sortie Déjà Émis :</strong> Tout état de sortie officiel (ex: ES-FIN-01 émis en 2025) conserve lors de sa réédition la valeur historique du RIB et des barèmes en vigueur à sa date de scellement SHA-256. Les nouvelles valeurs configurées ne s'appliquent qu'aux dossiers créés ou liquidés postérieurement à leur date d'approbation effective.</p>
+
+<h4>6.4.3 Workflow de Mise à Jour Sécurisée (Maker-Checker &amp; Visa DT)</h4>
+<p>Conformément à la politique PSSI et au principe de non auto-approbation (<em>SoD</em>) :<br />
+1. <strong>Étape 1 (Maker - Proposition) :</strong> L'Administrateur du Laboratoire ou le Responsable Financier saisit la modification d'un paramètre (ex: mise à jour d'un code RIB) avec mention obligatoire du <strong>motif réglementaire</strong> (référence du nouveau texte officiel, arrêté ou notification ANPP) et téléversement de la pièce justificative au format PDF/A.<br />
+2. <strong>Étape 2 (Vérification &amp; Contrôle) :</strong> Le système bascule le paramètre en statut <code>EN_ATTENTE_APPROBATION_DT</code>. L'ancienne valeur reste active pour les opérations courantes.<br />
+3. <strong>Étape 3 (Approver - Visa DT avec 2FA) :</strong> Le Pharmacien Directeur Technique examine le projet dans son parapheur électronique dédié. Il valide la modification par signature électronique qualifiée (21 CFR Part 11) avec contrôle TOTP.<br />
+4. <strong>Étape 4 (Audit Trail Automatique) :</strong> L'action est scellée dans la table <code>audit_logs</code> avec l'empreinte SHA-256 de la modification, l'identité du signataire, l'adresse IP et la date UTC+1.</p>
         <div class="page-footer">
             <span>HOMOLOG • Conformité Guide CTD ANPP 2025 & LD-DEPP07/V01</span>
             <span>Section 6 • Cahier des Charges v1.0</span>

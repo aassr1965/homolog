@@ -292,10 +292,15 @@ gantt
   - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
   - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
 
-### Jalon 2.2 : Suivi des Redevances Réglementaires & Devises
+### Jalon 2.2 : Suivi des Redevances Réglementaires, Devises & Console de Paramétrage Institutionnel
+- [ ] **Console de Paramétrage des Variables Réglementaires & Institutionnelles :**
+  - Interface dédiée au sein de la Console d'Administration permettant la mise à jour dynamique des coordonnées bancaires ANPP (RIB Médicaments BNA/CAS 302.145, RIB Dispositifs Médicaux BNA Al Qods `00100622030000064395`), des bénéficiaires et ordres légaux de chèques certifiés (*Régisseur des recettes de l'ANPP*).
+  - Gestion des barèmes tarifaires configurables (Décret 21-82, Décret 21-551, Ordonnance 21-07 Art. 31) avec versioning temporel (`valid_from` / `valid_to`) pour garantir la reproductibilité et l'immuabilité ALCOA+ des états de sortie historiques ES-FIN-01.
+  - Paramétrage des guichets, adresses des directions spécialisées de l'ANPP (DEPP, DDM, DCE/LNCM, DAF) et des délais légaux de réponse aux notifications d'insuffisance (45 jours, 90 jours).
+  - Workflow de validation des modifications critiques (proposition Maker par l'Admin Labo / Dir. Fin., approbation obligatoire par le Pharmacien DT avec signature électronique 21 CFR Part 11, TOTP et audit trail scellé).
 - [ ] Barèmes configurables des redevances ANPP selon la procédure (**NI, RI, MI, NF, RF, MF, HOMOLOG_DM**) et la nature du produit.
 - [ ] **Dualité des circuits bancaires officiels de l'ANPP :**
-  - *Circuit Médicaments (Décret 21-82) :* Domiciliation Trésor Public (CAS n° 302.145) avec liquidation détaillée (instruction Art. 3, expertise LNCM Art. 5, frais de timbre Art. 12).
+  - *Circuit Médicaments (Décret 21-82) :* Domiciliation Trésor Public / BNA Agence Al Qods Chéraga (CAS n° 302.145) avec liquidation détaillée (instruction Art. 3, expertise LNCM Art. 5, frais de timbre Art. 12).
   - *Circuit Dispositifs Médicaux (Ordonnance n° 21-07 du 08-06-2021 Art. 31) :* Domiciliation bancaire officielle auprès de la **Banque Nationale d'Algérie (BNA) Agence Al Qods Chéraga (RIB `00100622030000064395`)**, avec barème institutionnel : Homologation initiale importée (**300 000 DA**), Renouvellement DM (**300 000 DA**), Modification DM (**150 000 DA**) et Transfert DM (**100 000 DA**).
 - [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
