@@ -23,6 +23,28 @@ print(f"Reading markdown from: {MD_PATH}")
 with open(MD_PATH, "r", encoding="utf-8") as f:
     raw_content = f.read()
 
+# Safeguard sanitizer for any LaTeX math expressions
+def sanitize_latex(text):
+    text = text.replace(r'$\to$', '→')
+    text = text.replace(r'$\longrightarrow$', '→')
+    text = text.replace(r'$\leftrightarrow$', '↔')
+    text = text.replace(r'$\le 1$', '≤ 1')
+    text = text.replace(r'$\le 4$', '≤ 4')
+    text = text.replace(r'$\le$', '≤')
+    text = text.replace(r'$\ge$', '≥')
+    text = text.replace(r'$\pm U$', '± U')
+    text = text.replace(r'$\pm$', '±')
+    text = text.replace(r'$\neq$', '≠')
+    text = text.replace(r'$C_{max}$', '<em>C</em><sub>max</sub>')
+    text = text.replace(r'$AUC$', '<em>AUC</em>')
+    text = text.replace(r'$f_1$', '<em>f</em><sub>1</sub>')
+    text = text.replace(r'$f_2$', '<em>f</em><sub>2</sub>')
+    text = text.replace(r'$C_p$', '<em>C</em><sub>p</sub>')
+    text = text.replace(r'$C_{pk}$', '<em>C</em><sub>pk</sub>')
+    return text
+
+raw_content = sanitize_latex(raw_content)
+
 # 1. Custom High-Density HTML Diagrams
 ctd_diagram_html = """
 <div class="diagram-card">
