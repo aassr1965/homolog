@@ -2,14 +2,17 @@
 ## Plateforme SANAD PHARMA — Gestion de l'Enregistrement des Médicaments, de l'Homologation des DM et GED Pharmaceutique en Algérie
 
 **Dernière mise à jour :** 16 novembre 2026  
-**Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP & Chapitre 10 - Spécifications Exhaustives des États de Sortie)  
+**Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP/MIPH, Chapitre 10 - Sanad Corporate & Chapitre 11 - Spécifications Exhaustives des États de Sortie)  
 **Textes réglementaires officiels algériens intégrés :**
+- **Décret exécutif n° 21-82 du 23 février 2021** relatif aux établissements pharmaceutiques et aux conditions de leur agrément.
+- **Arrêté du 22 septembre 2025** (Établissements de fabrication, éléments du dossier, traitement et liste des modifications substantielles).
+- **Arrêté du 30 septembre 2025** (Établissements de distribution en gros) & **Arrêtés du 1er octobre 2025** (Exploitation & Importation).
+- **Ligne directrice MIPH (Février 2026)** relative au dépôt et au traitement des modifications liées aux établissements de fabrication.
 - **Guide pour la soumission du Dossier Technique Commun (CTD)** destiné à l'enregistrement des produits pharmaceutiques à usage humain (DEPP/ANPP, Version 01, Date d'effet : 31/07/2025).
 - **Ligne directrice relative aux modifications des décisions d’enregistrement** des produits pharmaceutiques à usage de la médecine humaine (Code : `LD-DEPP07/V01`, Version 01, Date : 22/04/2026).
 - **Décret exécutif n° 20-325** du 22 novembre 2020 (Modalités d'enregistrement des médicaments).
 - **Arrêté du 3 octobre 2021** (Modalités de modification de la DE) & **Arrêté du 7 novembre 2021** (Article 09 : Regroupement de modifications / *Grouping*).
 - **Décret exécutif n° 20-324** et **Arrêté du 10 mai 2021** (Modalités d'homologation des dispositifs médicaux).  
-- **Décret exécutif n° 21-82** (Barèmes des redevances et droits des prestations de l'ANPP - Formulaires BV1 et BV2).
 - **Arrêté BPF 2024 / ICH Q10 / 21 CFR Part 11** (Intégrité des données ALCOA+, Piste d'audit immuable et Signature électronique légale).
 **Architecture cible :** Go 1.26+ | PostgreSQL 16+ (`pgx/v5`) | Frontend embarqué TypeScript/Tailwind (RTL FR/AR) | Mode Hybride (On-Premise & SaaS)
 
@@ -37,15 +40,16 @@ gantt
     Moteur Variations ANPP & Impact Tree (2.4)       :p2_4, after p2_3, 4d
     Espace Consultants & Extranet Fournisseur API (2.5):p2_5, after p2_4, 2d
     Régularisation DM Décret 20-324 (2.6)            :p2_6, after p2_5, 3d
-    Recherche Plein Texte FTS Bilingue FR/AR (2.7)   :p2_7, after p2_6, 3d
-    Console Super-Admin Éditeur Cloud SaaS (2.8)     :p2_8, after p2_7, 3d
-    Mises à Jour Réglementaires Hors-Ligne .pkg (2.9):p2_9, after p2_8, 3d
-    Contrôle Analytique & Libération Lot DCE (2.10)  :p2_10, after p2_9, 4d
-    Chiffrement Applicatif GED AES-256-GCM (2.11)   :p2_11, after p2_10, 3d
-    Dossier de Validation CSV GAMP 5 (2.12)          :p2_12, after p2_11, 3d
-    Salle d'Inspection Virtuelle ANPP (2.13)         :p2_13, after p2_12, 2d
+    Sanad Corporate & Agréments MIPH Tabadol (2.7)   :p2_7, after p2_6, 4d
+    Recherche Plein Texte FTS Bilingue FR/AR (2.8)   :p2_8, after p2_7, 3d
+    Console Super-Admin Éditeur Cloud SaaS (2.9)     :p2_9, after p2_8, 3d
+    Mises à Jour Réglementaires Hors-Ligne .pkg (2.10):p2_10, after p2_9, 3d
+    Contrôle Analytique & Libération Lot DCE (2.11)  :p2_11, after p2_10, 4d
+    Chiffrement Applicatif GED AES-256-GCM (2.12)   :p2_12, after p2_11, 3d
+    Dossier de Validation CSV GAMP 5 (2.13)          :p2_13, after p2_12, 3d
+    Salle d'Inspection Virtuelle ANPP (2.14)         :p2_14, after p2_13, 2d
     section Phase 3 : Extensions
-    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_13, 5d
+    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_14, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
     Passerelle Officielle API ANPP                   :p3_3, after p3_2, 4d
 ```
@@ -243,7 +247,7 @@ gantt
 ---
 
 ## Phase 2 : Complétude, Moteur de Variations ANPP & Efficacité (Priorité S)
-> **Objectif stratégique :** Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), les modèles maîtres ANPP/ICH, le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, la recherche plein texte et le multi-tenant SaaS.
+> **Objectif stratégique :** Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), les modèles maîtres ANPP/ICH, le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, le module Sanad Corporate de gestion des agréments d'établissements MIPH (Fabrication, Importation, Distribution, Exploitation) avec passerelle Tabadol, la recherche plein texte et le multi-tenant SaaS.
 
 ### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver)
 - [x] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
@@ -283,7 +287,7 @@ gantt
   - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
   - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
 
-### Jalon 2.2 : Moteur Universel d'Édition Haute Fidélité & Référentiel des 28 États Documentaires BPF (Chapitre 10 du CDC)
+### Jalon 2.2 : Moteur Universel d'Édition Haute Fidélité & Référentiel des 28 États Documentaires BPF (Chapitre 11 du CDC)
 - [ ] **Architecture du Moteur d'Édition Backend Go & Formats Opposables :**
   - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
   - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL / EN COURS` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
@@ -378,22 +382,54 @@ gantt
   - Inventaire des DM déjà commercialisés sous mesures transitoires, suivi des accusés de réception de dépôt et formalisation des déclarations quotidiennes dérogatoires (`CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx`).
 - [ ] Tableau de suivi des mesures transitoires et des échéances de dépôt de régularisation.
 
-### Jalon 2.7 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
+### Jalon 2.7 : Module Sanad Corporate — Agréments des Établissements Pharmaceutiques (MIPH & Passerelle Tabadol)
+- [ ] **Espaces Dédiés & Checklists pour les 4 Catégories d'Établissements (Décret exécutif 21-82) :**
+  - **Établissements de Fabrication (Arrêté du 22/09/2025) :**
+    - Demande d'agrément préalable de réalisation : formulaire `eForm-MIPH-FAB-PREALABLE`, descriptif technique (plans de masse/flux, zonage ISO 5 à 8), notice d'impact environnemental, calendrier prévisionnel d'investissement.
+    - Demande d'agrément d'ouverture : formulaire `eForm-MIPH-FAB-OUVERTURE`, conformité des locaux CVC/HVAC, qualification des boucles d'eau purifiée et PPI, rapports de qualification QI/QO des équipements, organigramme et SOP BPF.
+    - Demande d'agrément d'ouverture en sous-traitance : formulaire `eForm-MIPH-FAB-SOUS-TRAITANCE`, contrat de façon BPF opposable, partage des responsabilités de contrôle et libération, audit qualité du façonnier.
+    - Demande de décision d'exercice du Pharmacien Directeur Technique (PDT) : formulaire `eForm-MIPH-PDT`, diplôme d'État, inscription Ordre Section B < 3 mois, attestations d'expérience 3 ou 5 ans (Décret 21-82), contrat de travail CDI exclusif temps plein, casier judiciaire, engagement déontologique.
+    - Demande de décision d'exercice du Pharmacien Assistant : formulaire `eForm-MIPH-ASSISTANT`, diplôme, inscription Ordre, contrat de travail sous l'autorité du PDT.
+    - Moteur de qualification des modifications : *Modifications substantielles* (liste limitative légale : nouvelles formes, nouvelles lignes, réaménagement HVAC/eau PPI, transfert de site $\to$ arrêté modificatif ministériel après visite d'inspection) vs *Modifications non substantielles* (déclarations annuelles d'information).
+  - **Établissements d'Importation (Arrêté du 01/10/2025) :**
+    - Première demande, renouvellement quinquennal, modification du dossier.
+    - Intégration du Cahier des conditions techniques à l'importation : locaux sécurisés, séparation stricte quarantaine/rejet sous clé, chambres froides (+2°C/+8°C) et zones climatisées (+15°C/+25°C) thermo-surveillées 24/7 avec alarmes et secours, procédure de libération par le PDT.
+  - **Établissements de Distribution en Gros (Arrêté du 30/09/2025) :**
+    - Première demande, renouvellement, modification du dossier.
+    - Intégration du Cahier des charges relatif à la distribution en gros (BPDG) : aires étanches de réception/expédition, flotte de véhicules isothermes/frigorifiques équipés d'enregistreurs de température étalonnés, système informatique de traçabilité des lots et plan de rappel d'urgence.
+  - **Établissements d'Exploitation (Arrêté du 01/10/2025) :**
+    - Première demande, renouvellement, modification du dossier.
+    - Intégration du Cahier des conditions techniques à l'exploitation : désignation du responsable de pharmacovigilance (QPPV) et système de recueil des effets indésirables, traçabilité des lots sur le marché national, contrôle préalable de la publicité et de l'information médicale par le PDT.
+- [ ] **Numérisation Intégrale des Formulaires Officiels en « Smart e-Forms » :**
+  - Masques de saisie réactifs avec validation en temps réel des champs réglementaires (NIF, NIS, numéros d'agrément, matricules ordinaux, coordonnées GPS des sites).
+  - Génération automatique en 1 clic des formulaires PDF officiels dûment renseignés conformes à la charte graphique du MIPH avec cartouches et signatures.
+- [ ] **Moteur de Checklists Dynamiques à 4 Niveaux d'Exigibilité :**
+  - Qualification stricte des pièces justificatives : Obligatoires `[E]` (bloquantes), Conditionnelles `[C]` (activées par arbre de décision selon situation juridique ou technique), Facultatives `[F]`, Spécifiques `[S]`.
+  - Tableau de bord temps réel de Gap Analysis Établissement (% de complétude globale, pièces manquantes et pièces expirées).
+- [ ] **Suivi des Validités Réglementaires & Rétroplanning des Échéances Corporate :**
+  - Registre centralisé des arrêtés d'agrément et décisions d'exercice des pharmaciens.
+  - Compte à rebours juridique automatique avec alertes proactives à J-180 (lancement renouvellement), J-90 (audit des pièces) et J-30 (seuil critique) avant péremption de l'agrément quinquennal.
+- [ ] **Assistant de Télé-Procédure pour la Plateforme Tabadol (`gate.miph.gov.dz`) :**
+  - Audit de pré-soumission bloquant (vérification des quotas de fichiers, formats PDF/A 300 DPI, nomenclature de nommage ministérielle).
+  - Export du **Submission Package Tabadol** (archive structurée .zip avec manifeste d'intégrité SHA-256).
+  - Production du bordereau récapitulatif officiel d'accompagnement pour émargement avec décharge au bureau d'ordre central du MIPH.
+
+### Jalon 2.8 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
 - [ ] Indexation textuelle automatique des documents PDF, Word (.docx) et Excel (.xlsx) déposés en GED.
 - [ ] Moteur de recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant les requêtes en français et en arabe.
 - [ ] Surlignage dynamique des termes trouvés directement dans la vue tableau et le volet de prévisualisation.
 
-### Jalon 2.8 : Console Super-Admin Éditeur (Mode Cloud SaaS)
+### Jalon 2.9 : Console Super-Admin Éditeur (Mode Cloud SaaS)
 - [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances.
 - [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.sanad.dz`).
 - [ ] Gestion des quotas de stockage par laboratoire et suivi de consommation.
 
-### Jalon 2.9 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
+### Jalon 2.10 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
 - [ ] Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).
 - [ ] Déploiement sans redémarrage des nouveaux modèles de checklists CTD ou fiches de variations émises par l'ANPP.
 - [ ] Vue comparative (Diff) entre le modèle de dossier actuel et le nouveau modèle avant application validée par l'administrateur.
 
-### Jalon 2.10 : Module de Contrôle Analytique & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)
+### Jalon 2.11 : Module de Contrôle Analytique & Libération de Lot DCE (Direction du Contrôle et de l'Expertise)
 - [ ] **Calculateur d'Échantillonnage Statistique Homologué (Norme Fr-DCE02-F/V01) :**
   - Moteur de calcul automatisé des quantités de prélèvements requises selon l'édition officielle du 01/06/2025 (10 pages) pour les 8 voies galéniques : Ophtalmique, Locale, Rectale, Nasale, Parentérale & Irrigation, Orale liquide, Orale solide (dissolution Ph. Eur. 2.9.3, désagrégation, dureté, friabilité), et Inhalation.
 - [ ] **Traçabilité Logistique & Chaîne du Froid des Échantillons LNCPP (Bordereau ES-REG-05) :**
@@ -416,7 +452,7 @@ gantt
   - Trame normalisée pour les LCQ conforme à `TEMPLATE-CA-SR-secondaire.docx` (Traçabilité ISO 17034 / pharmacopée primaire, confirmation FTIR, 3 essais comparatifs HPLC/UV avec incertitudes ± U, teneur en eau).
   - Suivi automatisé du cycle de vie des étalons secondaires : alerte BPF automatisée de péremption et de re-test analytique à 12 mois (J-60 / J-30) contre l'étalon primaire officiel.
 
-### Jalon 2.11 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud & On-Premise)
+### Jalon 2.12 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud & On-Premise)
 - [ ] **Moteur de Chiffrement Symétrique AES-256-GCM dans le Pilote CAS (`internal/storage/`) :**
   - Chiffrement symétrique à la volée des flux entrants (`Save`) avec vecteur d'initialisation aléatoire (IV 96 bits) et tag d'authentification GCM (128 bits).
   - Déchiffrement à la volée des flux sortants (`Open`) réservé exclusivement aux requêtes dûment habilitées par le moteur RBAC.
@@ -430,7 +466,7 @@ gantt
   - Cloisonnement hermétique empêchant toute lecture par les administrateurs système IT internes ou par l'éditeur en télémaintenance.
   - Procédure de rotation de clé (*Key Rotation*), séquestre à double contrôle (*Four-Eyes Principle* : Split-Key Shamir 2 sur 3 entre PDT, DG et tiers de confiance / séquestre physique) pour parer au risque d'indisponibilité du DT (anti *Bus Factor*), et mécanisme d'export sécurisé pour le Plan de Reprise d'Activité (PRA).
 
-### Jalon 2.12 : Pack de Qualification Logicielle & Dossier de Validation CSV (GAMP 5 / 21 CFR Part 11)
+### Jalon 2.13 : Pack de Qualification Logicielle & Dossier de Validation CSV (GAMP 5 / 21 CFR Part 11)
 - [ ] **Dossier Documentaire Opposable de Qualification pour Audits et Inspections ANPP/MIPH :**
   - Rédaction des Spécifications des Besoins Utilisateur (*User Requirements Specifications - URS*) pour la GED BPF et le CTD.
   - Spécifications Fonctionnelles (*FS*) et Spécifications de Conception (*Design Specifications - DS*).
@@ -438,7 +474,7 @@ gantt
   - Matrice de Traçabilité des Exigences Réglementaires (*Requirements Traceability Matrix - RTM*) reliant chaque article réglementaire ANPP à son test automatisé.
   - Analyse des risques système selon la méthodologie GAMP 5 (FMEA) et politique formelle de gestion des changements (*Change Control*).
 
-### Jalon 2.13 : Salle d'Inspection Virtuelle & Mode "Inspection ANPP" (Inspection Readiness)
+### Jalon 2.14 : Salle d'Inspection Virtuelle & Mode "Inspection ANPP" (Inspection Readiness)
 - [ ] **Environnement d'Inspection Cloisonné pour Inspecteurs ANPP / Auditeurs BPF :**
   - Activation par le Pharmacien DT d'une session d'inspection temporaire (48h) avec sélection stricte des produits et lots audités.
   - Vue inspecteur épurée en lecture seule : accès direct aux pièces CTD scellées, formules de fabrication, contrôles LCQ et audit trail circonscrit.
@@ -500,11 +536,12 @@ gantt
 
 | Indicateur clé | Objectif Phase 1 | État actuel | Conformité réglementaire |
 |---|---|---|---|
-| **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0 - 12 Domaines) | Aligné Guide CTD ANPP 2025, LD Modifications 2026, États de Sortie & Copilote IA ✅ |
+| **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0 - 13 Domaines) | Aligné Guide CTD ANPP 2025, LD Modifications 2026, Agréments MIPH 2025, États de Sortie & Copilote IA ✅ |
 | **Jalons Phase 1 complétés** | 8 / 8 jalons | 8 / 8 jalons complétés (100 %) (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 & 1.8 ✅) | Phase 1 validée à 100% : socle souverain, GED BPF, compléments ANPP, BV1/BV2 et réversibilité .sanad ✅ |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth, Produits & Réversibilité validés (100%) | Argon2id, TOTP, Sessions, CAS, RBAC & Backup conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive) | Scellement cryptographique et rôles validés ✅ |
+| **Agréments Établissements MIPH** | Conforme Décret 21-82 & Arrêtés sept/oct 2025 | Spécifié (Chapitre 10 CDC & Jalon 2.7 Roadmap : 4 catégories, Smart e-Forms, Checklists [E]/[C]/[F]/[S] & Passerelle Tabadol) | Prêt pour implémentation Phase 2 ⏳ |
 | **Nomenclature des Variations** | Conforme LD-DEPP07/V01 | Modélisée (34 rubriques Mmin/Mmod/Mmaj) | Reclassement dynamique & Grouping intégrés ✅ |
-| **États de Sortie & Reporting BPF** | Conforme Chapitre 10 CDC, Décret 21-82 & Ordonnance 21-07 | 28 états spécifiés (20 états réglementaires finaux couvrant CTD DEPP, Dispositifs Médicaux DDM et Contrôle Libératoire DCE + 8 états intermédiaires) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
-| **Qualification & Validation CSV** | Conforme GAMP 5 & 21 CFR Part 11 | Intégré à la roadmap (Jalon 2.11 - Pack URS, FS, IQ/OQ/PQ, RTM) | Livrable opposable pour inspections ANPP / BPF ⏳ |
-| **Copilote IA Réglementaire (Phase 3)** | Spécifié (RAG pgvector, SOP, Rédaction & Audit) | Consigné au CDC (Chapitre 11) & Architecture AI-Ready | 100% Souverain / Cloud sécurisé, Human-in-the-Loop & Traçabilité ALCOA+ ⏳ |
+| **États de Sortie & Reporting BPF** | Conforme Chapitre 11 CDC, Décret 21-82 & Ordonnance 21-07 | 28 états spécifiés (20 états réglementaires finaux couvrant CTD DEPP, Dispositifs Médicaux DDM et Contrôle Libératoire DCE + 8 états intermédiaires) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
+| **Qualification & Validation CSV** | Conforme GAMP 5 & 21 CFR Part 11 | Intégré à la roadmap (Jalon 2.13 - Pack URS, FS, IQ/OQ/PQ, RTM) | Livrable opposable pour inspections ANPP / BPF ⏳ |
+| **Copilote IA Réglementaire (Phase 3)** | Spécifié (RAG pgvector, SOP, Rédaction & Audit) | Consigné au CDC (Chapitre 12) & Architecture AI-Ready | 100% Souverain / Cloud sécurisé, Human-in-the-Loop & Traçabilité ALCOA+ ⏳ |

@@ -32,18 +32,20 @@ Deux textes fondamentaux publiés par l'ANPP structurent l'ensemble du cycle de 
   Espace back-office autonome réservé à l'Administrateur Système et de Laboratoire, physiquement et logiquement découplé des données scientifiques conformément aux règles BPF et au principe de défense en profondeur *Zero-Trust*.
 
 #### 1.2.2 Nomenclature de la Suite Modulaire Sanad Pharma
-La plateforme s'articule autour de huit (8) modules fonctionnels étroitement intégrés :
+La plateforme s'articule autour de neuf (9) modules fonctionnels étroitement intégrés :
 1. **Sanad Registry (Référentiel Établissements & Produits) :** Répertoire centralisé des établissements agréés MIPH (Décret 20-325), cartographie des sites de fabrication et de contrôle 1.H.8 (substance active, formulateur PF, conditionneurs, contrôle analytique) et catalogue unifié Médicaments & Dispositifs Médicaux (Décret 20-324).
-2. **Sanad CTD Studio (Dossiers d'Enregistrement & Homologation DM) :** Atelier de composition, de structuration et de calcul de complétude des dossiers CTD (Modules 1 à 5) et dossiers techniques DM en 6 sections.
-3. **Sanad Variations (Moteur de Modifications Post-AMM LD-DEPP07/V01) :** Moteur expert de qualification des 34 rubriques de modifications (Mmin, Mmod, Mmaj), détection des escalades dynamiques et production des dossiers comparatifs *État actuel vs Proposé*.
-4. **Sanad Vault (Coffre-Fort GED Pharmaceutique BPF) :** Système d'archivage documentaire GxP à 5 branches maîtresses avec stockage CAS dédupliqué SHA-256 et chiffrement symétrique AES-256-GCM.
-5. **Sanad Gateway (ANPP Submission Assistant & E-Services) :** Passerelle d'interfaçage avec les télé-procédures ANPP (portail E-TASJIL, calendrier RDV PP/DM, liquidation automatique des redevances et bordereaux officiels BV1/BV2).
-6. **Sanad Audit & Compliance :** Moteur d'audit trail inviolable conforme 21 CFR Part 11 / Annexe 11 BPF, scellement cryptographique et signature électronique légale à double facteur (2FA).
-7. **Sanad Admin Console :** Console d'administration du laboratoire, gestion des 10 profils pharmaceutiques stricts, gouvernance multi-tenant, supervision des quotas et politique de réversibilité.
-8. **Sanad Copilot (Phase 3) :** Copilote d'intelligence réglementaire et d'assistance à la rédaction scientifique (RAG souverain avec `pgvector`, gouvernance stricte *Human-in-the-Loop*).
+2. **Sanad Corporate & MIPH Gateway (Agréments d'Établissements & Télé-Procédures Tabadol) :** Espace dédié à la préparation, constitution, qualification et suivi des dossiers d'agrément ministériel auprès du Ministère de l'Industrie Pharmaceutique (MIPH), couvrant les 4 catégories d'établissements (Fabrication, Importation, Distribution en gros, Exploitation) selon le Décret exécutif n° 21-82 et les arrêtés de septembre/octobre 2025, la numérisation des formulaires officiels en Smart e-Forms, la gestion des décisions d'exercice des pharmaciens (PDT et assistants), le suivi des échéances de renouvellement et l'exportation du Submission Package pour la plateforme ministérielle Tabadol.
+3. **Sanad CTD Studio (Dossiers d'Enregistrement & Homologation DM) :** Atelier de composition, de structuration et de calcul de complétude des dossiers CTD (Modules 1 à 5) et dossiers techniques DM en 6 sections.
+4. **Sanad Variations (Moteur de Modifications Post-AMM LD-DEPP07/V01) :** Moteur expert de qualification des 34 rubriques de modifications (Mmin, Mmod, Mmaj), détection des escalades dynamiques et production des dossiers comparatifs *État actuel vs Proposé*.
+5. **Sanad Vault (Coffre-Fort GED Pharmaceutique BPF) :** Système d'archivage documentaire GxP à 5 branches maîtresses avec stockage CAS dédupliqué SHA-256 et chiffrement symétrique AES-256-GCM.
+6. **Sanad Gateway (ANPP Submission Assistant & E-Services) :** Passerelle d'interfaçage avec les télé-procédures ANPP (portail E-TASJIL, calendrier RDV PP/DM, liquidation automatique des redevances et bordereaux officiels BV1/BV2).
+7. **Sanad Audit & Compliance :** Moteur d'audit trail inviolable conforme 21 CFR Part 11 / Annexe 11 BPF, scellement cryptographique et signature électronique légale à double facteur (2FA).
+8. **Sanad Admin Console :** Console d'administration du laboratoire, gestion des 10 profils pharmaceutiques stricts, gouvernance multi-tenant, supervision des quotas et politique de réversibilité.
+9. **Sanad Copilot (Phase 3) :** Copilote d'intelligence réglementaire et d'assistance à la rédaction scientifique (RAG souverain avec `pgvector`, gouvernance stricte *Human-in-the-Loop*).
 
 #### 1.2.3 Objectifs Stratégiques de Sanad Pharma
 - **Centraliser et piloter le cycle de vie complet 360°** de tous les dossiers d'enregistrement de médicaments et d'homologation de DM au sein d'une instance unique.
+- **Structurer et piloter les dossiers d'Agréments d'Établissements MIPH (Module Sanad Corporate)** : gérer l'obtention, la modification et le renouvellement quinquennal des agréments des 4 types d'établissements pharmaceutiques (Fabrication, Importation, Distribution en gros, Exploitation) conformément au Décret exécutif n° 21-82 et aux arrêtés d'application de septembre et octobre 2025. Transformer les formulaires officiels en formulaires numériques interactifs (*Smart e-Forms*), gérer les décisions d'exercice nominatives des Pharmaciens Directeurs Techniques et assistants, piloter les checklists dynamiques à 4 niveaux d'exigibilité (`[E]`, `[C]`, `[F]`, `[S]`), et générer les paquets de télé-soumission pour la plateforme ministérielle **Tabadol** (`gate.miph.gov.dz`).
 - **Assurer la conformité native au format CTD ANPP 2025** : instancier automatiquement les checklists et arborescences selon le type de produit (Princeps, Générique importé, Générique local) et le type de procédure (**NI**, **RI**, **MI**, **NF**, **RF**, **MF**).
 - **Intégrer un Coffre-Fort GED Pharmaceutique (Standard BPF / ALCOA+)** garantissant l'intégrité, la gestion des versions (mineures/majeures), les circuits d'approbation et la signature électronique légale du Directeur Technique.
 - **Intégrer un Atelier d'Élaboration Documentaire et Workflow Multi-Rôles BPF (Maker-Checker-Approver)** : dépasser la simple collecte passive de fichiers existants en fournissant un environnement collaboratif de rédaction technique décentralisée (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité, Partenaires externes). Le Pharmacien Directeur Technique n'étant pas le rédacteur unique mais le garant légal et pénal exclusif (Approver - Décret exécutif 20-325), la plateforme orchestre la chaîne complète : Rédaction (*Maker*) ➔ Revue Qualité/Pair (*Checker*) ➔ Visa Légal Scellé (*Approver*), adossée à une bibliothèque de modèles maîtres conformes ICH/ANPP et à un générateur automatique de formulaires/engagements réglementaires en 1 clic.
@@ -952,11 +954,208 @@ Cette architecture garantit que l'application est immédiatement opérationnelle
 
 ---
 
-## 10. Spécifications Exhaustives des États de Sortie & Reporting Réglementaire
+## 10. Module Sanad Corporate : Agréments des Établissements Pharmaceutiques & Télé-Procédures MIPH (Plateforme Tabadol)
+
+### 10.1 Cadre Juridique et Dualité Institutionnelle MIPH vs ANPP
+L'exercice de toute activité pharmaceutique en Algérie repose sur une stricte dualité réglementaire et administrative :
+1. **L'Établissement (Tutelle MIPH) :** Régit par la Direction Générale des Activités Pharmaceutiques et des Équipements de Santé (DGAPES) du Ministère de l'Industrie Pharmaceutique. Nul établissement ne peut exercer sans l'obtention préalable de son arrêté d'agrément ministériel et des décisions d'exercice nominatives de son Pharmacien Directeur Technique et de ses pharmaciens assistants.
+2. **Le Produit (Tutelle ANPP) :** Régit par l'Agence Nationale des Produits Pharmaceutiques (dossiers CTD, enregistrements AMM, homologations DM, variations LD-DEPP07/V01 et libération de lots DCE).
+
+Le module **Sanad Corporate & MIPH Gateway** assure la gestion complète du cycle de vie des établissements pharmaceutiques et l'interfaçage avec les télé-procédures ministérielles de la plateforme **Tabadol** (`https://gate.miph.gov.dz`), conformément aux textes fondamentaux :
+- **Décret exécutif n° 21-82 du 23 février 2021** relatif aux établissements pharmaceutiques et aux conditions de leur agrément.
+- **Arrêté du 22 septembre 2025** fixant les éléments du dossier de demande d'agrément de l'établissement pharmaceutique de fabrication, les modalités de traitement ainsi que la liste limitative des modifications à caractère substantiel.
+- **Arrêté du 30 septembre 2025** fixant les éléments du dossier de demande d'agrément d'un établissement pharmaceutique de distribution en gros.
+- **Arrêté du 1er octobre 2025** fixant les éléments du dossier de demande d'agrément d'un établissement pharmaceutique d'exploitation.
+- **Arrêté du 1er octobre 2025** fixant les éléments du dossier de demande d'agrément d'un établissement pharmaceutique d'importation.
+- **Ligne Directrice MIPH de février 2026** relative au dépôt et au traitement des modifications liées aux établissements pharmaceutiques de fabrication.
+- **Recueil général des textes réglementaires du Ministère de l'Industrie Pharmaceutique**.
+
+```mermaid
+flowchart TD
+    subgraph MIPH["MINISTÈRE DE L'INDUSTRIE PHARMACEUTIQUE (MIPH) — ÉTABLISSEMENT"]
+        T["Plateforme TABADOL (gate.miph.gov.dz)<br/>Télé-procédure préalable sécurisée"]
+        BO["Bureau d'Ordre Central MIPH<br/>Dépôt physique & récépissé avec décharge"]
+        DEC["Arrêté / Décision d'Agrément Établissement<br/>+ Décision d'Exercice Pharmacien DT (1.A.7)"]
+        T --> BO --> DEC
+    end
+    subgraph SANAD["SANAD PHARMA — MODULE CORPORATE"]
+        CFG["1. Sélection Établissement & Type de Demande<br/>(Fabrication, Importation, Distribution, Exploitation)"]
+        EFORM["2. Saisie Smart e-Forms & Métadonnées<br/>(Préalable, Ouverture, PDT, Assistants, BPF)"]
+        CHECK["3. Checklists Réglementaires Dynamiques<br/>([E] Obligatoire, [C] Conditionnel, [F] Facultatif, [S] Spécifique)"]
+        AUDIT["4. Contrôle Bloquant & Submission Package<br/>(Archive Tabadol + Bordereau Récapitulatif)"]
+        CFG --> EFORM --> CHECK --> AUDIT
+    end
+    AUDIT ==> T
+    DEC -.->|Alimente en amont le CTD 1.A.6| ANPP["ANPP (Portail E-TASJIL)<br/>Dossiers Produits CTD / DM"]
+```
+
+### 10.2 Les 4 Catégories d'Établissements et leurs Parcours Réglementaires Dédiés
+
+La plateforme instancie un espace de travail cloisonné et hautement spécialisé pour chacune des quatre (4) catégories d'établissements :
+
+#### 10.2.1 Établissements Pharmaceutiques de Fabrication (Arrêté du 22 septembre 2025)
+Le logiciel prend en charge les six (6) parcours distincts de soumission :
+1. **Parcours A : Demande d'agrément préalable de réalisation :**
+   - *Formulaire officiel numérisé :* `eForm-MIPH-FAB-PREALABLE` (identification du promoteur, nature des investissements, calendrier prévisionnel des travaux, capacité prévisionnelle de production par forme galénique).
+   - *Checklist des pièces exigées :*
+     - Statuts de la société et registre du commerce avec code d'activité fabrication pharmaceutique (`[E]`).
+     - Acte de propriété du terrain ou contrat de bail notarié d'une durée minimale de 10 ans enregistré (`[E]`).
+     - Certificat d'urbanisme et permis de construire (`[E]`).
+     - Étude d'impact sur l'environnement approuvée par les services compétents (`[E]`).
+     - Descriptif technique détaillé du projet : plans de masse, plans de zonage (niveaux de propreté ISO 5 à ISO 8), schémas des flux matières, personnels et déchets (élimination des flux croisés) (`[E]`).
+     - Liste des formes galéniques envisagées et procédés de fabrication prévisionnels (`[E]`).
+     - Étude technico-économique et plan de financement validé (`[E]`).
+2. **Parcours B : Demande d'agrément d'ouverture :**
+   - *Formulaire officiel numérisé :* `eForm-MIPH-FAB-OUVERTURE`.
+   - *Dossier administratif :* Référentiel société, procès-verbaux, assurances professionnelles et responsabilité civile (`[E]`).
+   - *Dossier technique locaux & installations :* Plans finaux as-built certifiés, qualification des systèmes de traitement d'air CVC/HVAC (débits, cascades de surpression, filtration HEPA), qualification des boucles d'eau purifiée et d'eau pour préparations injectables (PPI selon Ph. Eur.), rapports de Qualification d'Installation (IQ) et Opérationnelle (OQ) des équipements de production et de contrôle (`[E]`).
+   - *Dossier organisationnel :* Organigramme nominatif BPF, plan de formation du personnel, système documentaire de gestion de la qualité (PQS), procédures opératoires normalisées (SOP de libération, d'hygiène, d'habillage, de métrologie et de maintenance) (`[E]`).
+   - *Rapport d'inspection préalable :* Préparation de la visite conjointe des inspecteurs du MIPH et de l'ANPP (`[E]`).
+3. **Parcours C : Demande d'agrément d'ouverture dans le cadre de la sous-traitance :**
+   - *Formulaire officiel numérisé :* `eForm-MIPH-FAB-SOUS-TRAITANCE`.
+   - *Contrat de sous-traitance BPF opposable :* Définition claire des obligations du donneur d'ordre et du receveur, clauses de libération exclusive par le PDT, modalités d'audits qualité contradictoires (`[E]`).
+   - *Dossier technique de sous-traitance :* Justification des capacités techniques, validation du transfert de technologie galénique et analytique, certificats BPF en vigueur des installations du façonnier (`[E]`).
+4. **Parcours D : Demande de décision d'exercice du Pharmacien Directeur Technique (PDT) :**
+   - *Formulaire officiel numérisé :* `eForm-MIPH-PDT` (conformité Décret 21-82, article 16 et suivants).
+   - Diplôme d'État de Docteur en Pharmacie ou diplôme équivalent reconnu (`[E]`).
+   - Attestation d'inscription au Conseil National de l'Ordre des Pharmaciens (Section B - Industrie) datant de moins de 3 mois (`[E]`).
+   - Justificatif d'expérience professionnelle pratique d'au moins trois (3) ou cinq (5) années dans le domaine de la fabrication ou du contrôle de la qualité selon le cursus (attestations de travail détaillées visées par la CNAS) (`[E]`).
+   - Contrat de travail à durée indéterminée (CDI) stipulant l'exercice exclusif à temps plein des fonctions de Directeur Technique (`[E]`).
+   - Extrait de casier judiciaire (Bulletin n° 3) datant de moins de 3 mois (`[E]`).
+   - Certificat médical d'aptitude physique et mentale (`[E]`).
+   - Déclaration sur l'honneur de non-cumul d'activité et engagement de respecter les règles de déontologie pharmaceutique et les BPF (`[E]`).
+5. **Parcours E : Demande de décision d'exercice du Pharmacien Assistant :**
+   - *Formulaire officiel numérisé :* `eForm-MIPH-ASSISTANT`.
+   - Diplôme de pharmacien, inscription à l'Ordre, contrat de travail, désignation précise du champ d'activité (production, contrôle qualité, assurance qualité, matériovigilance) sous l'autorité du PDT (`[E]`).
+6. **Parcours F : Gestion des Modifications (Substantielles vs Non Substantielles) :**
+   - *Modifications à caractère substantiel (Arrêté du 22/09/2025 & Ligne Directrice Février 2026) :*
+     - Liste limitative légale : adjonction d'une nouvelle forme galénique, modification ou extension majeure des locaux de production/stockage, création d'une nouvelle ligne de fabrication, modification structurelle des réseaux CVC/eau PPI, transfert ou déplacement de site géographique, changement dans la détention du capital entraînant modification du contrôle de la société.
+     - *Procédure :* Dépôt préalable obligatoire d'un dossier complet, enquête ministérielle, visite d'inspection des lieux et délivrance obligatoire d'un arrêté modificatif ministériel avant tout démarrage d'exploitation.
+   - *Modifications non substantielles :*
+     - Modifications d'aménagements secondaires, renouvellement d'équipements à l'identique (sans impact BPF critique), mises à jour administratives de forme.
+     - *Procédure :* Déclaration annuelle d'information transmise au Ministère avec état récapitulatif sans suspension d'activité.
+
+#### 10.2.2 Établissements Pharmaceutiques d'Importation (Arrêté du 1er octobre 2025)
+Le module structure les trois parcours réglementaires (Première demande, Renouvellement quinquennal, Modification) :
+- *Formulaire officiel numérisé :* `eForm-MIPH-IMPORTATION`.
+- *Checklist des pièces administratives et financières :* Registre du commerce (code importation produits pharmaceutiques/DM), statuts, attestation d'assujettissement fiscal et parafiscal, programme prévisionnel d'importation annuel.
+- *Dossier Pharmacien Directeur Technique :* Décision d'exercice nominative (Section B de l'Ordre, contrat exclusif).
+- *Cahier des conditions techniques à l'importation (Arrêté du 01/10/2025) :*
+  - Descriptif des magasins de stockage : surface minimale réglementaire, séparation stricte des zones (quarantaine physique ou informatique validée, zone de stockage libéré, zone de rejet/retrait sécurisée sous clé).
+  - Installations thermorégulées : chambres froides qualifiées (+2°C à +8°C), zones de température dirigée (+15°C à +25°C), cartographie thermique été/hiver, système de monitoring continu avec alarmes 24/7 et secours électrogène.
+  - Procédure de contrôle et de libération des lots importés par le PDT (contrôle de conformité documentaire, bulletins d'analyse certifiés, certificats de libération du fabricant princeps/générique).
+  - Conventions d'assurance qualité avec les transitaires et transporteurs sous température dirigée.
+
+#### 10.2.3 Établissements Pharmaceutiques de Distribution en Gros (Arrêté du 30 septembre 2025)
+- *Formulaire officiel numérisé :* `eForm-MIPH-DISTRIBUTION`.
+- *Checklist des pièces spécifiques :*
+  - Justificatifs de localisation et d'aménagement des entrepôts selon les Bonnes Pratiques de Distribution en Gros (BPDG).
+  - Plans des locaux distinguant les quais de réception abrités, les aires de préparation des commandes, les zones de quarantaine et de stockage.
+  - Flotte logistique : inventaire des véhicules utilitaires affectés à la distribution, certificats de conformité isotherme/frigorifique, enregistreurs de température embarqués étalonnés.
+  - Système informatique de gestion des stocks garantissant la traçabilité complète des lots (filiation stricte Fabricant/Importateur ➔ Grossiste-Répartiteur ➔ Officines/Hôpitaux) et permettant l'exécution immédiate des retraits de lots ordonnés par les autorités.
+  - Cahier des charges opposable dûment paraphé et signé avec engagement de service public (approvisionnement continu du marché national et respect du stock de sécurité réglementaire).
+
+#### 10.2.4 Établissements Pharmaceutiques d'Exploitation (Arrêté du 1er octobre 2025)
+- *Formulaire officiel numérisé :* `eForm-MIPH-EXPLOITATION`.
+- *Checklist des exigences opposables :*
+  - Système de Pharmacovigilance et de Matériovigilance : désignation de la personne responsable de la pharmacovigilance (QPPV), SOP de recueil, d'évaluation et de transmission des effets indésirables aux centres nationaux.
+  - Gestion de l'information médicale et scientifique : validation préalable de toute documentation promotionnelle ou scientifique par le Pharmacien Directeur Technique, conformément aux dispositions du Ministère et de l'ANPP.
+  - Système de suivi de la traçabilité des lots et plan formel de rappel d'urgence (exercice de rappel à blanc annuel consigné dans l'audit trail).
+  - Cahier des conditions techniques à l'exploitation paraphé avec engagement de conformité déontologique.
+
+---
+
+### 10.3 Architecture des « Smart e-Forms » : Du Formulaire Numérique au Rendu Officiel
+Contrairement à une simple GED passive de fichiers PDF scannés, **Sanad Corporate** transforme chaque formulaire ministériel en un composant numérique intelligent réactif :
+1. **Saisie Structurée et Guidée :** Les champs de formulaire sont validés en temps réel (numéro d'agrément, NIF, NIS, codes d'activité, matricules ordinaux des pharmaciens, coordonnées GPS des sites).
+2. **Héritage et Propagation des Données :** Les données immuables de l'établissement (raison sociale, siège, PDT) sont automatiquement injectées depuis le référentiel central sans ressaisie.
+3. **Double Rendu Opposable :**
+   - *Génération PDF/A Officiel :* Injection des données saisies dans les gabarits graphiques exacts du MIPH, avec mise en page institutionnelle, QR-Code d'intégrité et cartouche de signature PDT.
+   - *Sérialisation JSON pour Tabadol :* Production automatique du payload de données structurées conforme aux masques d'ingestion de la plateforme `gate.miph.gov.dz`.
+
+---
+
+### 10.4 Moteur de Checklists Dynamiques à 4 Niveaux d'Exigibilité
+Chaque pièce constitutive du dossier d'agrément est régie par une typologie d'exigibilité stricte :
+
+| Niveau d'Exigibilité | Libellé Réglementaire | Comportement Applicatif & Verrou BPF |
+|:---:|---|---|
+| **`[E]`** | **Exigé / Obligatoire** | **Bloquant absolu :** Aucun dossier ne peut être soumis au visa du PDT ni exporté pour Tabadol si une pièce `[E]` est manquante ou périmée. |
+| **`[C]`** | **Conditionnel** | Activé automatiquement par l'arbre de décision selon les options saisies (ex. si *Locataire* $\to$ Bail notarié 10 ans obligatoire ; si *Sous-traitance* $\to$ Contrat BPF et audit exigés ; si *Formes Stériles* $\to$ Qualification HVAC ISO 5 requise). |
+| **`[F]`** | **Facultatif / Complémentaire** | Documents de valorisation technique, notes explicatives complémentaires, certifications ISO volontaires (non bloquant). |
+| **`[S]`** | **Spécifique à la Procédure** | Pièces imposées exclusivement par la nature de la démarche (ex. relevé comparatif des plans pour une *Modification Substantielle* d'usine). |
+
+Un tableau de bord interactif de **Gap Analysis Établissement** synthétise en permanence l'état de complétude (pourcentage global, alertes rouges sur pièces `[E]` manquantes, alertes oranges sur pièces conditionnelles en attente d'arbitrage).
+
+---
+
+### 10.5 Suivi des Validités et Rétroplanning des Échéances Corporate
+Le système intègre un moteur de compte à rebours juridique protégeant l'établissement contre toute rupture d'exploitation :
+- **Registre des Titres Réglementaires :** Suivi centralisé des arrêtés d'agrément (validité quinquennale), des décisions d'exercice nominatives (PDT, assistants), des baux notariés, des attestations d'assurances et des certificats de conformité CVC/métrologie.
+- **Rétroplanning Dynamique Inversé Corporate :**
+  - **J-180 :** Alerte automatique d'anticipation et création assistée du dossier de renouvellement quinquennal.
+  - **J-90 :** Notification urgente au Directeur Général et au PDT pour finalisation des bilans d'activité et audit des pièces.
+  - **J-30 :** Seuil critique d'alerte rouge si la demande n'est pas encore déposée sur Tabadol avec récépissé de dépôt bureau d'ordre.
+
+---
+
+### 10.6 Assistant de Soumission Numérique pour la Plateforme Tabadol
+Bien que la soumission finale relève de la plateforme ministérielle officielle (`gate.miph.gov.dz`) et du dépôt physique au bureau d'ordre central du MIPH, **Sanad Corporate** fournit un assistant de pré-soumission complet :
+1. **Audit de Pré-Soumission Bloquant :** Vérification du poids des fichiers (respect des quotas d'upload de Tabadol), du format PDF/A, de la résolution des scans (300 DPI BPF) et du nommage normalisé imposé par la nomenclature ministérielle.
+2. **Submission Package Tabadol (Export 1-Clic) :** Génération d'une archive universelle (.zip) ordonnancée selon les rubriques officielles de Tabadol, accompagnée du manifeste d'intégrité cryptographique SHA-256.
+3. **Bordereau Récapitulatif de Dépôt Papier :** Impression du bordereau officiel d'accompagnement destiné à l'émargement et à l'apposition du cachet de décharge au bureau d'ordre central du Ministère de l'Industrie Pharmaceutique.
+
+---
+
+### 10.7 Modélisation de Données Backend Go & Schéma PostgreSQL
+Dans l'architecture technique de **Sanad Pharma**, le domaine Corporate s'articule autour des structures dédiées du package `internal/corporate` :
+```go
+// Category d'établissement selon le Décret 21-82
+type EstablishmentCategory string
+const (
+    CategoryFabrication  EstablishmentCategory = "FABRICATION"
+    CategoryImportation  EstablishmentCategory = "IMPORTATION"
+    CategoryDistribution EstablishmentCategory = "DISTRIBUTION"
+    CategoryExploitation EstablishmentCategory = "EXPLOITATION"
+)
+
+// Nature de la demande ministérielle
+type ApplicationNature string
+const (
+    NaturePrealableRealisation ApplicationNature = "PREALABLE_REALISATION"
+    NatureOuvertureInitiale    ApplicationNature = "OUVERTURE_INITIALE"
+    NatureSousTraitance        ApplicationNature = "SOUS_TRAITANCE"
+    NatureExercicePDT          ApplicationNature = "EXERCICE_PDT"
+    NatureExerciceAssistant    ApplicationNature = "EXERCICE_ASSISTANT"
+    NatureRenouvellement       ApplicationNature = "RENOUVELLEMENT"
+    NatureModifSubstantielle   ApplicationNature = "MODIF_SUBSTANTIELLE"
+    NatureModifNonSubst        ApplicationNature = "MODIF_NON_SUBSTANTIELLE"
+)
+
+// Dossier de demande d'agrément MIPH
+type CorporateApplication struct {
+    ID                uuid.UUID             `json:"id"`
+    OrganizationID    uuid.UUID             `json:"organization_id"`
+    Category          EstablishmentCategory `json:"category"`
+    Nature            ApplicationNature     `json:"nature"`
+    ReferenceNumber   string                `json:"reference_number"`
+    Status            string                `json:"status"` // DRAFT, CHECKER_REVIEW, PDT_SIGNED, TABADOL_SUBMITTED, GRANTED
+    FormData          map[string]any        `json:"form_data"` // Données e-Form structurées
+    CompletenessRatio float64               `json:"completeness_ratio"`
+    TabadolPackageURL string                `json:"tabadol_package_url,omitempty"`
+    CreatedAt         time.Time             `json:"created_at"`
+    UpdatedAt         time.Time             `json:"updated_at"`
+}
+```
+Les tables PostgreSQL associées (`corporate_applications`, `corporate_checklists`, `corporate_form_data`, `corporate_licenses`) garantissent l'isolation multi-tenant stricte (`organization_id`), l'immuabilité de l'audit trail et l'ancrage cryptographique CAS SHA-256 de chaque pièce justificative déposée.
+
+---
+
+## 11. Spécifications Exhaustives des États de Sortie & Reporting Réglementaire
 
 Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (**ANPP**), les états de sortie ne constituent pas de simples impressions bureautiques, mais des **actes réglementaires opposables**, des **pièces de dépôt officielles** et des **justificatifs d'audit BPF / 21 CFR Part 11**. La plateforme **Sanad Pharma** standardise et automatise l'intégralité des flux documentaires sortants à travers un moteur d'édition certifié garantissant l'intégrité, l'immuabilité et la valeur probante de chaque feuillet émis.
 
-### 10.1 Principes Directeurs et Dispositifs de Sécurisation BPF
+### 11.1 Principes Directeurs et Dispositifs de Sécurisation BPF
 
 Chaque état de sortie produit par le système intègre nativement une triple barrière de sécurisation et d'authentification conforme au principe **ALCOA+** :
 1. **Filigranes Dynamiques d'État de Cycle de Vie :**
@@ -972,7 +1171,7 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 
 ---
 
-### 10.2 Matrice Exhaustive des 20 États de Sortie Réglementaires (ES)
+### 11.2 Matrice Exhaustive des 20 États de Sortie Réglementaires (ES)
 
 | Code Réf. | Dénomination de l'État de Sortie | Format Cible | Déclencheur & Fréquence | Visa Légal Requis | Destinataire / Usage |
 |---|---|---|---|---|---|
@@ -1007,7 +1206,7 @@ Chaque état de sortie produit par le système intègre nativement une triple ba
 
 ---
 
-### 10.3 Matrice des 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel
+### 11.3 Matrice des 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel
 
 La constitution d'un dossier CTD s'étalant sur plusieurs mois et mobilisant des équipes pluridisciplinaires (Affaires Réglementaires, Contrôle Qualité, R&D, Production, Assurance Qualité, Façonniers et CROs), la plateforme **Sanad Pharma** fournit **huit états intermédiaires de liaison et de suivi opérationnel**.
 
@@ -1032,11 +1231,11 @@ Contrairement aux états réglementaires finaux destinés aux autorités sanitai
 
 ---
 
-### 10.4 Référentiels Officiels des Directions Spécialisées ANPP (DDM & DCE)
+### 11.4 Référentiels Officiels des Directions Spécialisées ANPP (DDM & DCE)
 
 L'intégration des trames réglementaires certifiées de l'ANPP (issues des répertoires de référence `C:\dev\document homolog\DM\` et `C:\dev\document homolog\DCE\`) enrichit la plateforme d'une conformité institutionnelle exacte :
 
-#### 10.4.1 Direction des Dispositifs Médicaux (DDM) : Homologation & Redevances BNA
+#### 11.4.1 Direction des Dispositifs Médicaux (DDM) : Homologation & Redevances BNA
 1. **Formulaire Officiel de Demande d'Homologation (6 sections intégrales) :**
    Conforme au **Décret exécutif n° 20-324 du 22 novembre 2020** et à l'**Arrêté du 10 mai 2021 (28 Ramadhan 1442)** :
    - *Section 1 (Renseignements Administratifs) :* Dénomination commerciale, désignation, caractéristiques, conditionnement, règle et classe de risque (I, IIa, IIb, III), durées et conditions de conservation, demandeur, détenteur, Pharmacien DT titulaire.
@@ -1064,7 +1263,7 @@ L'intégration des trames réglementaires certifiées de l'ANPP (issues des rép
      - *Modification de Décision d'Homologation DM :* **150 000 DA** (`BV-Modification-DM.docx`)
      - *Transfert de Décision d'Homologation DM :* **100 000 DA** (`BV-Tranfert-DM.docx`)
 
-#### 10.4.2 Direction du Contrôle et de l'Expertise (DCE) : Contrôle Analytique & Libération de Lot
+#### 11.4.2 Direction du Contrôle et de l'Expertise (DCE) : Contrôle Analytique & Libération de Lot
 1. **Table Officielle d'Échantillonnage des Produits Pharmaceutiques (Norme Fr-DCE02-F/V01) :**
    Grille statistique nationale opposable édictée par le Laboratoire de Contrôle de l'ANPP (version officielle du 01/06/2025, 10 pages) fixant les prélèvements minimaux et les contrôles exigibles selon les voies galéniques :
    - *Voie Ophtalmique :* Stérilité, uniformité des unidoses, pH, osmolarité, taille des particules (≥ 10 récipients doseurs si lot > 200 unités ; ≥ 20 unidoses si lot ≥ 500 ; ≥ 30 doses physico-chimie).
@@ -1112,7 +1311,7 @@ L'intégration des trames réglementaires certifiées de l'ANPP (issues des rép
 
 ---
 
-### 10.5 Standards Graphiques, Typographiques & Exigences d'Édition Haute Fidélité (Charte Print BPF 300 DPI)
+### 11.5 Standards Graphiques, Typographiques & Exigences d'Édition Haute Fidélité (Charte Print BPF 300 DPI)
 
 Pour conférer à chaque état de sortie une autorité indiscutable face à l'autorité sanitaire nationale (**ANPP**) et aux auditeurs internationaux, **Sanad Pharma** applique une charte graphique et typographique de niveau institutionnel :
 
@@ -1137,7 +1336,7 @@ Pour conférer à chaque état de sortie une autorité indiscutable face à l'au
 
 ---
 
-### 10.6 Architecture Technique du Moteur de Rendu et d'Exportation
+### 11.6 Architecture Technique du Moteur de Rendu et d'Exportation
 
 L'implémentation logicielle du sous-système de reporting dans le backend Go de Sanad Pharma repose sur une chaîne de traitement haute performance :
 
@@ -1162,7 +1361,7 @@ Les routes API associées au reporting sont protégées par les permissions gran
 
 ---
 
-## 11. Spécifications du Copilote IA & Intelligence Réglementaire Pharmaceutique (Phase 3 — Sanad Copilot)
+## 12. Spécifications du Copilote IA & Intelligence Réglementaire Pharmaceutique (Phase 3 — Sanad Copilot)
 
 Dans l'industrie pharmaceutique et face à l'autorité sanitaire nationale (**ANPP**), la constitution d'un dossier d'enregistrement CTD ou d'homologation de dispositif médical ne se résume pas à l'archivage passif de pièces administratives. Elle exige une intense activité de **rédaction scientifique**, de **justification technico-réglementaire** et de **croisement critique des données** (200 à plus de 1 000 pages).
 
@@ -1170,7 +1369,7 @@ La plateforme **Sanad Pharma** (via son module **Sanad Copilot**) intègre un so
 
 ---
 
-### 11.1 Principes Directeurs, Secret Industriel et Responsabilité Légale (Human-in-the-Loop)
+### 12.1 Principes Directeurs, Secret Industriel et Responsabilité Légale (Human-in-the-Loop)
 
 L'implémentation de l'IA dans Sanad Pharma est encadrée par trois piliers stricts garantissant la conformité aux Bonnes Pratiques de Fabrication (BPF), au 21 CFR Part 11 et au principe d'intégrité **ALCOA+** :
 
@@ -1190,7 +1389,7 @@ L'implémentation de l'IA dans Sanad Pharma est encadrée par trois piliers stri
 
 ---
 
-### 11.2 Assistant Intelligent de Rédaction Scientifique & Réglementaire par Rubrique
+### 12.2 Assistant Intelligent de Rédaction Scientifique & Réglementaire par Rubrique
 
 L'assistant de rédaction est accessible au niveau de chaque section du dossier CTD (Modules 1 à 5) et du dossier technique de dispositif médical :
 
@@ -1211,7 +1410,7 @@ L'assistant de rédaction est accessible au niveau de chaque section du dossier 
 
 ---
 
-### 11.3 Générateur Automatique de Procédures Opératoires Normalisées (SOP BPF)
+### 12.3 Générateur Automatique de Procédures Opératoires Normalisées (SOP BPF)
 
 Le module qualité permet de générer des procédures pharmaceutiques et qualité conformes aux exigences des Bonnes Pratiques de Fabrication (BPF algériennes, PIC/S et GAMP 5) :
 
@@ -1235,7 +1434,7 @@ Le module qualité permet de générer des procédures pharmaceutiques et qualit
 
 ---
 
-### 11.4 Assistant de Vérification Réglementaire & Audit de Cohérence Inter-Rubriques
+### 12.4 Assistant de Vérification Réglementaire & Audit de Cohérence Inter-Rubriques
 
 L'IA agit comme un auditeur qualité virtuel permanent, capable d'examiner le dossier dans son ensemble et de croiser les informations entre les différentes rubriques et pièces jointes :
 
@@ -1251,7 +1450,7 @@ L'IA agit comme un auditeur qualité virtuel permanent, capable d'examiner le do
 
 ---
 
-### 11.5 Assistant de Traduction Médicale & Glossaire Terminologique Bilingue (FR / AR / EN)
+### 12.5 Assistant de Traduction Médicale & Glossaire Terminologique Bilingue (FR / AR / EN)
 
 Pour répondre à l'obligation réglementaire stricte de bilinguisme des notices (1.P.2), résumés des caractéristiques (1.P.1) et étiquetages imposée par le Décret exécutif 20-325, l'assistant intègre une mémoire de traduction pharmaceutique spécialisée :
 1. **Base Terminologique & Glossaire Officiel ANPP / Pharmacopée :**
@@ -1262,7 +1461,7 @@ Pour répondre à l'obligation réglementaire stricte de bilinguisme des notices
 
 ---
 
-### 11.6 Architecture Technique Hybride, Base Vectorielle `pgvector` & RAG Souverain
+### 12.6 Architecture Technique Hybride, Base Vectorielle `pgvector` & RAG Souverain
 
 L'intégration de l'intelligence artificielle au cœur de Sanad Pharma repose sur une conception modulaire, évolutive et agnostique du fournisseur d'IA :
 
@@ -1317,6 +1516,6 @@ flowchart LR
 
 ---
 
-## 12. Conclusion et Validation
+## 13. Conclusion et Validation
 
 Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme **Sanad Pharma**. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF et les impératifs réglementaires de l'ANPP.
