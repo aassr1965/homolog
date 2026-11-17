@@ -1328,10 +1328,15 @@
                                     L'exigence réglementaire <strong>${item.item_code}</strong> est actuellement vacante dans le coffre-fort CTD.
                                 </div>
                                 <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+                                    <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; padding:8px 14px; font-size:11.5px; font-weight:700;" 
+                                            onclick="openNewGEDDocModal({ dossierId: '${currentDossierDetail.id}', dossierCode: '${escapeHTML(currentDossierDetail.dossier_code)}', itemId: '${item.id}', itemCode: '${item.item_code}', itemTitle: '${escapeHTML(item.title_fr)}', itemTitleAr: '${escapeHTML(item.title_ar || '')}' })"
+                                            ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                        ➕ Déposer &amp; Rattacher un Fichier
+                                    </button>
                                     <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:700;" 
                                             onclick="openAttachGEDModal('${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}', '${item.requirement_level}')"
                                             ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
-                                        📎 Rattacher une Pièce du Coffre-Fort GED
+                                        📎 Choisir une Pièce Déjà en GED
                                     </button>
                                     <button class="btn-pill" style="background:var(--bg-sub); border:1px solid var(--border-color); padding:8px 14px; font-size:11.5px; font-weight:700;" 
                                             onclick="switchPreviewSubTab('wf')">

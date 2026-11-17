@@ -81,8 +81,119 @@
         let selectedGEDDocId = null;
         const openedGEDBranches = new Set(['01', '02', '03', '04', '05']);
 
-        function openNewGEDDocModal() {
-            document.getElementById('form-new-ged-doc').reset();
+        function openNewGEDDocModal(ctx) {
+            const form = document.getElementById('form-new-ged-doc');
+            if (form) form.reset();
+
+            // Résolution automatique du contexte si non passé explicitement
+            if (!ctx && typeof currentDossierDetail !== 'undefined' && currentDossierDetail && typeof selectedDossierItemId !== 'undefined' && selectedDossierItemId) {
+                const items = currentDossierDetail.items || currentDossierDetail.checklist_data || [];
+                const it = items.find(i => i.id === selectedDossierItemId);
+                if (it) {
+                    ctx = {
+                        dossierId: currentDossierDetail.id,
+                        dossierCode: currentDossierDetail.dossier_code || 'DOSSIER',
+                        itemId: it.id,
+                        itemCode: it.item_code,
+                        itemTitle: it.title_fr,
+                        itemTitleAr: it.title_ar,
+                        department: it.assigned_department
+                    };
+                }
+            }
+
+            if (ctx && ctx.itemCode) {
+                window.pendingGEDTargetItem = {
+                    dossierId: ctx.dossierId,
+                    itemId: ctx.itemId,
+                    itemCode: ctx.itemCode
+                };
+
+                const code = ctx.itemCode || '';
+                const title = ctx.itemTitle || '';
+                const dCode = ctx.dossierCode || '';
+
+                // 1. Taxonomie intelligente selon le module CTD
+                const taxEl = document.getElementById('ged-doc-taxonomy');
+                if (taxEl) {
+                    if (code.startsWith('1.P.2') || /notice|étiquet|conditionnement/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_05_Notices_Articles_Conditionnement';
+                    } else if (code.startsWith('1.')) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_04_Dossiers_CTD_Reference';
+                    } else if (code.startsWith('3.2.P.8') || /stabilit/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_03_Etudes_Stabilite';
+                    } else if (code.startsWith('3.2.S') || /substance|api|dmf/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_01_Formules_Fabrication_DMF';
+                    } else if (code.startsWith('3.2.P') || /validation|fabrication|procédé/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_02_Methodes_Controle_Validation';
+                    } else {
+                        taxEl.value = '01_Affaires_Reglementaires/01_04_Dossiers_CTD_Reference';
+                    }
+                }
+
+                // 2. Type de document
+                const typeEl = document.getElementById('ged-doc-type');
+                if (typeEl) {
+                    if (/engagement|attestation|non-commercialisation/i.test(title) || code === '1.P.8') {
+                        typeEl.value = 'lettre_engagement';
+                    } else if (/validation|procédé|3 lots/i.test(title)) {
+                        typeEl.value = 'rapport_validation';
+                    } else if (/stabilit/i.test(title)) {
+                        typeEl.value = 'rapport_stabilite';
+                    } else if (/notice|maquette/i.test(title)) {
+                        typeEl.value = 'notice_conditionnement';
+                    } else if (/bpf|gmp/i.test(title)) {
+                        typeEl.value = 'certificat_bpf';
+                    }
+                }
+
+                // 3. Titre du document (FR)
+                const titleFrEl = document.getElementById('ged-doc-title-fr');
+                if (titleFrEl) {
+                    if (code === '1.P.8' || /engagement.*3 lots/i.test(title)) {
+                        titleFrEl.value = `Lettre d'Engagement de Non-Commercialisation & Validation 3 Lots [${dCode}]`;
+                    } else {
+                        titleFrEl.value = `[${code}] ${title} - ${dCode}`;
+                    }
+                }
+
+                // 4. Code Référence BPF
+                const codeEl = document.getElementById('ged-doc-code');
+                if (codeEl) {
+                    const cleanD = dCode.replace(/[^A-Za-z0-9]/g, '').substring(0, 10).toUpperCase();
+                    if (code === '1.P.8') {
+                        codeEl.value = `ENG-VAL-1P8-${cleanD || 'PARAC'}`;
+                    } else {
+                        const cleanC = code.replace(/\./g, '');
+                        codeEl.value = `DOC-CTD-${cleanC}-${cleanD}`;
+                    }
+                }
+
+                // 5. Intitulé en Arabe
+                const titleArEl = document.getElementById('ged-doc-title-ar');
+                if (titleArEl) {
+                    if (code === '1.P.8') {
+                        titleArEl.value = 'تعهد بعدم تسويق حصص الإنتاج قبل استكمال وتأكيد مطابقة المصادقة الصناعية';
+                    } else if (ctx.itemTitleAr) {
+                        titleArEl.value = ctx.itemTitleAr;
+                    }
+                }
+
+                // 6. Motif BPF
+                const sumEl = document.getElementById('ged-doc-summary');
+                if (sumEl) {
+                    sumEl.value = `Dépôt initial de la pièce justificative pour l'exigence CTD ${code} (${dCode})`;
+                }
+
+                // 7. Tags
+                const tagsEl = document.getElementById('ged-doc-tags');
+                if (tagsEl) {
+                    tagsEl.value = `${code}, CTD, Validation, BPF, Non-commercialisation, ${dCode}`;
+                }
+            } else {
+                window.pendingGEDTargetItem = null;
+            }
+
             document.getElementById('modal-new-ged-doc').classList.add('open');
         }
 
@@ -444,6 +555,37 @@
                 }
                 const created = await res.json();
                 closeModal('modal-new-ged-doc');
+
+                // Si le dépôt a été déclenché depuis un item de dossier CTD (contexte ciblé)
+                if (window.pendingGEDTargetItem && window.pendingGEDTargetItem.dossierId && window.pendingGEDTargetItem.itemId) {
+                    const target = window.pendingGEDTargetItem;
+                    window.pendingGEDTargetItem = null;
+
+                    try {
+                        const attachRes = await fetch(`/api/v1/dossiers/${target.dossierId}/items/${target.itemId}/attach`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                ged_document_id: created.id,
+                                notes: `Rattaché automatiquement lors du dépôt : [${created.document_code}] ${created.title_fr}`
+                            })
+                        });
+                        if (attachRes.ok) {
+                            showNotifyModal(
+                                "Pièce Déposée & Rattachée",
+                                `Le document <strong>[${created.document_code}] ${created.title_fr}</strong> a été stocké dans le CAS (SHA-256) et <strong>directement rattaché à l'exigence ${target.itemCode}</strong> !`,
+                                "✅"
+                            );
+                            if (typeof selectDossier === 'function') await selectDossier(target.dossierId);
+                            if (typeof selectDossierItem === 'function') selectDossierItem(target.itemId);
+                            if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('doc');
+                            return;
+                        }
+                    } catch (attachErr) {
+                        console.warn("Échec du rattachement automatique :", attachErr);
+                    }
+                }
+
                 showNotifyModal(
                     "Document Enregistré dans le Coffre-Fort",
                     `Le document <strong>[${created.document_code}] ${created.title_fr}</strong> a été stocké avec succès dans le Content-Addressable Storage (CAS) dédupliqué SHA-256.`,
