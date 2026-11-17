@@ -939,6 +939,11 @@
                                 }
                             }
 
+                            // Bouton d'assignation décentralisée (Pôle métier & Rédacteur - Jalon 2.1)
+                            if (!isLockedDossier) {
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px;" title="Assigner Pôle Métier & Rédacteur" onclick="event.stopPropagation(); openAssignModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${it.assigned_department}', '${it.due_date || ''}', '${it.assigned_user_id || ''}')">👥</button>`;
+                            }
+
                             if (it.workflow_status === 'drafting') {
                                 wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-blue); color:white; border:none;" title="Soumettre à revue Qualité" onclick="event.stopPropagation(); submitItemForReview('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">📤</button>`;
                             } else if (it.workflow_status === 'under_review') {
@@ -966,7 +971,9 @@
                             }
                         }
 
-                        const deptPill = (!isMasked && typeof formatDepartmentBadge === 'function') ? formatDepartmentBadge(it.assigned_department) : '';
+                        const deptPill = (!isMasked && typeof formatDepartmentBadge === 'function') 
+                            ? `<span onclick="event.stopPropagation(); openAssignModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${it.assigned_department}', '${it.due_date || ''}', '${it.assigned_user_id || ''}')" style="cursor:pointer;" title="Cliquer pour réassigner le pôle ou le rédacteur">${formatDepartmentBadge(it.assigned_department)}</span>` 
+                            : '';
 
                         const displayTitleFR = escapeHTML(it.title_fr);
                         const displayDescFR = escapeHTML(it.description_fr || '');
@@ -1284,13 +1291,19 @@
                             <div style="font-size:11.5px; color:var(--text-muted); font-weight:500; line-height:1.5; margin-bottom:16px;">
                                 L'exigence réglementaire <strong>${item.item_code}</strong> est actuellement vacante dans le coffre-fort CTD.
                             </div>
-                            <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:700; align-self:center;" 
-                                    onclick="openAttachGEDModal('${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}', '${item.requirement_level}')"
-                                    ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
-                                📎 Rattacher une Pièce du Coffre-Fort GED
-                            </button>
-                            <div style="margin-top:20px; font-size:11px; color:var(--text-dim); font-weight:600;">
-                                Basculez sur l'onglet <strong>📋 Fiche ANPP</strong> pour consulter les textes réglementaires applicables.
+                            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+                                <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:700;" 
+                                        onclick="openAttachGEDModal('${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}', '${item.requirement_level}')"
+                                        ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                    📎 Rattacher une Pièce du Coffre-Fort GED
+                                </button>
+                                <button class="btn-pill" style="background:var(--bg-sub); border:1px solid var(--border-color); padding:8px 14px; font-size:11.5px; font-weight:700;" 
+                                        onclick="switchPreviewSubTab('wf')">
+                                    🛠️ Ouvrir l'Atelier BPF &amp; Assigner (👥)
+                                </button>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-dim); font-weight:600;">
+                                Consultez l'onglet <strong>🛠️ Atelier BPF</strong> pour l'assignation et le workflow de rédaction, ou <strong>📋 Fiche ANPP</strong> pour les textes applicables.
                             </div>
                         </div>
                     `;
