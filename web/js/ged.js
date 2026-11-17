@@ -116,7 +116,9 @@
                 // 1. Taxonomie intelligente selon le module CTD & l'intitulé
                 const taxEl = document.getElementById('ged-doc-taxonomy');
                 if (taxEl) {
-                    if (code.startsWith('1.A.6') || code.startsWith('1.A.7') || /agrément|décision d'exercice/i.test(title)) {
+                    if (code === '1.A.1' || code === '1.A.2' || code === '1.A.5' || /récépissé|pré-soumission|correspondance.*anpp/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_06_Correspondances_ANPP';
+                    } else if (code.startsWith('1.A.6') || code.startsWith('1.A.7') || /agrément|décision d'exercice/i.test(title)) {
                         taxEl.value = '01_Affaires_Reglementaires/01_01_Agrements_Etablissement';
                     } else if (code.startsWith('1.A.9') || code.startsWith('1.H.2') || /décision d'enregistrement|\bamm\b/i.test(title)) {
                         taxEl.value = '01_Affaires_Reglementaires/01_02_Decisions_Enregistrement';
@@ -144,7 +146,15 @@
                 // 2. Type de document
                 const typeEl = document.getElementById('ged-doc-type');
                 if (typeEl) {
-                    if (/engagement|attestation|non-commercialisation/i.test(title) || code === '1.P.8' || code === '1.P.9') {
+                    if (code === '1.A.1' || /récépissé.*dépôt/i.test(title)) {
+                        typeEl.value = 'recepisse_depot';
+                    } else if (code === '1.A.5' || /pré-soumission|\bbv\b|bordereau.*versement/i.test(title)) {
+                        typeEl.value = 'courrier_officiel_anpp';
+                    } else if (code === '1.A.2' || /courrier.*demande/i.test(title)) {
+                        typeEl.value = 'courrier_officiel_anpp';
+                    } else if (code === '1.A.3' || /formulaire officiel.*pdt/i.test(title)) {
+                        typeEl.value = 'formulaire_demande_ctd';
+                    } else if (/engagement|attestation|non-commercialisation/i.test(title) || code === '1.P.8' || code === '1.P.9') {
                         typeEl.value = 'lettre_engagement';
                     } else if (/bulletin d'analyse|coa|libératoire|recontrôle/i.test(title) || code === '1.P.4' || code === '1.P.5') {
                         typeEl.value = 'bulletin_analyse_coa';
@@ -174,7 +184,15 @@
                 // 3. Titre du document (FR)
                 const titleFrEl = document.getElementById('ged-doc-title-fr');
                 if (titleFrEl) {
-                    if (code === '1.P.8') {
+                    if (code === '1.A.5' || /pré-soumission/i.test(title)) {
+                        titleFrEl.value = `Réponse à la Demande de Pré-soumission & Bordereau de Versement (BV) [${dCode}]`;
+                    } else if (code === '1.A.1' || /récépissé.*dépôt/i.test(title)) {
+                        titleFrEl.value = `Récépissé Officiel de Dépôt du Dossier ANPP [${dCode}]`;
+                    } else if (code === '1.A.2') {
+                        titleFrEl.value = `Courrier Officiel de Demande d'Enregistrement [${dCode}]`;
+                    } else if (code === '1.A.3') {
+                        titleFrEl.value = `Formulaire Officiel de Demande d'Enregistrement Visé PDT [${dCode}]`;
+                    } else if (code === '1.P.8') {
                         titleFrEl.value = `Lettre d'Engagement de Non-Commercialisation & Validation 3 Lots [${dCode}]`;
                     } else if (code === '1.P.9') {
                         titleFrEl.value = `Lettre d'Engagement de Suivi des Stabilités Zone IVb [${dCode}]`;
@@ -205,7 +223,11 @@
                     const cleanD = dCode.replace(/[^A-Za-z0-9]/g, '').substring(0, 10).toUpperCase() || 'DOS';
                     const cleanC = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
                     let prefix = 'DOC';
-                    if (/engagement|attestation/i.test(title) || code.startsWith('1.P.8') || code.startsWith('1.P.9')) prefix = 'ENG';
+                    if (code === '1.A.5') prefix = 'ANPP-PRESOUM';
+                    else if (code === '1.A.1') prefix = 'REC-DEPOT';
+                    else if (code === '1.A.2') prefix = 'COUR-DEM';
+                    else if (code === '1.A.3') prefix = 'FORM-REG';
+                    else if (/engagement|attestation/i.test(title) || code.startsWith('1.P.8') || code.startsWith('1.P.9')) prefix = 'ENG';
                     else if (/bulletin|coa|analyse/i.test(title) || code === '1.P.4' || code === '1.P.5') prefix = 'COA';
                     else if (/validation/i.test(title)) prefix = 'VAL';
                     else if (/stabilit/i.test(title)) prefix = 'STAB';
@@ -225,6 +247,14 @@
                 if (titleArEl) {
                     if (ctx.itemTitleAr && ctx.itemTitleAr.trim() !== '') {
                         titleArEl.value = ctx.itemTitleAr;
+                    } else if (code === '1.A.5') {
+                        titleArEl.value = 'الموافقة على طلب التقديم المسبق ووصل دفع أتعاب التسجيل (BV)';
+                    } else if (code === '1.A.1') {
+                        titleArEl.value = 'وصل إيداع ملف التسجيل الرسمي لدى الوكالة الوطنية للمواد الصيدلانية';
+                    } else if (code === '1.A.2') {
+                        titleArEl.value = 'طلب التسجيل الرسمي الموجه للمديرية العامة للوكالة الوطنية';
+                    } else if (code === '1.A.3') {
+                        titleArEl.value = 'استمارة طلب التسجيل الرسمية المؤشرة والموقعة من الصيدلي المدير التقني';
                     } else if (code === '1.P.8') {
                         titleArEl.value = 'تعهد بعدم تسويق حصص الإنتاج قبل استكمال وتأكيد مطابقة المصادقة الصناعية';
                     } else if (code === '1.P.9') {

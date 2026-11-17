@@ -1560,6 +1560,7 @@
         }
 
         async function openAttachGEDModal(itemId, itemCode, itemTitle, reqLvl) {
+            selectedDossierItemId = itemId;
             document.getElementById("attach-item-id").value = itemId;
             document.getElementById("attach-item-code").innerText = itemCode;
             document.getElementById("attach-item-title").innerText = itemTitle;
@@ -1587,6 +1588,22 @@
                 });
             } catch(e) {
                 selectEl.innerHTML = '<option value="">Erreur de chargement des documents</option>';
+            }
+        }
+
+        function openNewGEDDocModalFromAttachModal() {
+            const itemId = document.getElementById("attach-item-id").value;
+            const itemCode = document.getElementById("attach-item-code").innerText;
+            const itemTitle = document.getElementById("attach-item-title").innerText;
+            closeModal('modal-attach-ged');
+            if (typeof openNewGEDDocModal === 'function') {
+                openNewGEDDocModal({
+                    dossierId: currentDossierDetail ? currentDossierDetail.id : '',
+                    dossierCode: currentDossierDetail ? currentDossierDetail.dossier_code : '',
+                    itemId: itemId,
+                    itemCode: itemCode,
+                    itemTitle: itemTitle
+                });
             }
         }
 
