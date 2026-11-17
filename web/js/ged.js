@@ -113,28 +113,32 @@
                 const title = ctx.itemTitle || '';
                 const dCode = ctx.dossierCode || '';
 
-                // 1. Taxonomie intelligente selon le module CTD & l'intitulé
+                // 1. Taxonomie intelligente selon le module CTD / DM & l'intitulé
                 const taxEl = document.getElementById('ged-doc-taxonomy');
                 if (taxEl) {
-                    if (code === '1.A.1' || code === '1.A.2' || code === '1.A.5' || /récépissé|pré-soumission|correspondance.*anpp/i.test(title)) {
-                        taxEl.value = '01_Affaires_Reglementaires/01_06_Correspondances_ANPP';
-                    } else if (code.startsWith('1.A.6') || code.startsWith('1.A.7') || /agrément|décision d'exercice/i.test(title)) {
-                        taxEl.value = '01_Affaires_Reglementaires/01_01_Agrements_Etablissement';
-                    } else if (code.startsWith('1.A.9') || code.startsWith('1.H.2') || /décision d'enregistrement|\bamm\b/i.test(title)) {
-                        taxEl.value = '01_Affaires_Reglementaires/01_02_Decisions_Enregistrement';
-                    } else if (code.startsWith('1.P.1') || code.startsWith('1.P.2') || /notice|étiquet|conditionnement|rcp|maquette/i.test(title)) {
+                    if (code.startsWith('DM.T') || code.startsWith('DM.S') || code.startsWith('DM.C') || /dispositif médical|stérilisation|barrière stérile|iso 14971|iso 11135|dmdiv/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_05_Dossiers_Techniques_DM';
+                    } else if (code.startsWith('DM.I') || code.startsWith('1.P.1') || code.startsWith('1.P.2') || /notice|étiquet|conditionnement|rcp|maquette/i.test(title)) {
                         taxEl.value = '01_Affaires_Reglementaires/01_05_Notices_Articles_Conditionnement';
-                    } else if (code.startsWith('1.A.8') || /contrat|façonnage|qta|accord qualit/i.test(title)) {
+                    } else if (code === 'DM.A.1' || (/homologation/i.test(title) && !/redevance|quittance/i.test(title))) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_03_Decisions_Homologation';
+                    } else if (code.startsWith('DM.A.2') || code.startsWith('DM.A.3') || code.startsWith('1.A.6') || code.startsWith('1.A.7') || code.startsWith('1.M.S.1') || code.startsWith('1.M.P.1') || /agrément|décision d'exercice|manufacturing licen/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_01_Agrements_Etablissement';
+                    } else if (code === 'DM.A.5' || code === '1.A.1' || code === '1.A.2' || code === '1.A.5' || code.startsWith('1.H.1') || code.startsWith('1.H.6') || code.startsWith('1.H.7') || code.startsWith('1.H.10') || code.startsWith('1.H.11') || code.startsWith('1.H.12') || /récépissé|pré-soumission|quittance|redevance|correspondance.*anpp/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_06_Correspondances_ANPP';
+                    } else if (code === '1.A.9' || code === '1.H.2' || /décision d'enregistrement|décision d'homologation|ancienne de|\bamm pays/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_02_Decisions_Enregistrement';
+                    } else if (code.startsWith('DM.A.4') || code.startsWith('1.A.8') || /contrat|façonnage|qta|accord qualit/i.test(title)) {
                         taxEl.value = '05_Contrats_Tiers/05_01_Accords_Qualite_QTA';
-                    } else if (code.startsWith('1.M.S.3') || /cep|edqm|dmf/i.test(title)) {
+                    } else if (code.startsWith('1.M.S.3') || /cep|edqm|dmf|dpsa/i.test(title)) {
                         taxEl.value = '05_Contrats_Tiers/05_03_Certificats_Fournisseurs_APIs';
-                    } else if (code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2') || /certificat bpf|certificat gmp/i.test(title)) {
+                    } else if (code.startsWith('DM.Q') || code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2') || code === '1.H.3' || /certificat bpf|certificat gmp|iso 13485|certificat ce|\bcpp\b|vente libre|\bfsc\b/i.test(title)) {
                         taxEl.value = '02_Assurance_Qualite_BPF/02_02_Certificats_BPF_ISO';
                     } else if (code.startsWith('1.P.9') || code.startsWith('3.2.P.8') || /stabilit/i.test(title)) {
                         taxEl.value = '03_Developpement_Production/03_03_Etudes_Stabilite';
-                    } else if (code.startsWith('1.P.4') || code.startsWith('1.P.5') || /bulletin d'analyse|spécification/i.test(title)) {
+                    } else if (code.startsWith('1.P.4') || code.startsWith('1.P.5') || code === '1.P.7' || /bulletin d'analyse|spécification|libératoire/i.test(title)) {
                         taxEl.value = '03_Developpement_Production/03_04_Specifications_Matieres_PF';
-                    } else if (code.startsWith('3.2.S') || /substance active|dpsa/i.test(title)) {
+                    } else if (code.startsWith('3.2.S') || /substance active/i.test(title)) {
                         taxEl.value = '03_Developpement_Production/03_01_Formules_Fabrication_DMF';
                     } else if (code.startsWith('3.2.P') || /validation|fabrication|procédé/i.test(title)) {
                         taxEl.value = '03_Developpement_Production/03_02_Methodes_Controle_Validation';
@@ -148,33 +152,33 @@
                 if (typeEl) {
                     if (code === '1.A.1' || /récépissé.*dépôt/i.test(title)) {
                         typeEl.value = 'recepisse_depot';
-                    } else if (code === '1.A.5' || /pré-soumission|\bbv\b|bordereau.*versement/i.test(title)) {
+                    } else if (code === '1.A.5' || code === 'DM.A.5' || /quittance|redevance|pré-soumission|\bbv\b|bordereau.*versement/i.test(title)) {
                         typeEl.value = 'courrier_officiel_anpp';
-                    } else if (code === '1.A.2' || /courrier.*demande/i.test(title)) {
+                    } else if (code === '1.A.2' || code === '1.H.1' || /courrier.*demande/i.test(title)) {
                         typeEl.value = 'courrier_officiel_anpp';
-                    } else if (code === '1.A.3' || /formulaire officiel.*pdt/i.test(title)) {
+                    } else if (code === '1.A.3' || code === 'DM.A.1' || /formulaire officiel/i.test(title)) {
                         typeEl.value = 'formulaire_demande_ctd';
-                    } else if (/engagement|attestation|non-commercialisation/i.test(title) || code === '1.P.8' || code === '1.P.9') {
+                    } else if (/engagement|attestation|non-commercialisation|non-modification|similarité/i.test(title) || code === '1.P.8' || code === '1.P.9' || code === '1.H.9' || code === '1.H.10' || code === '1.H.12' || code === '1.P.6') {
                         typeEl.value = 'lettre_engagement';
-                    } else if (/bulletin d'analyse|coa|libératoire|recontrôle/i.test(title) || code === '1.P.4' || code === '1.P.5') {
+                    } else if (/bulletin d'analyse|coa|libératoire|recontrôle/i.test(title) || code === '1.P.4' || code === '1.P.5' || code === '1.P.7') {
                         typeEl.value = 'bulletin_analyse_coa';
-                    } else if (/validation|procédé|3 lots|master batch/i.test(title)) {
+                    } else if (/validation|procédé|3 lots|master batch|stérilisation|gestion des risques/i.test(title) || code.startsWith('DM.T') || code.startsWith('DM.S')) {
                         typeEl.value = 'rapport_validation';
                     } else if (/stabilit/i.test(title)) {
                         typeEl.value = 'rapport_stabilite';
-                    } else if (/bioéquivalence|biowaiver|clinique|pharmacocinétique/i.test(title) || code.startsWith('5.') || code === '1.M.P.3') {
+                    } else if (/bioéquivalence|biowaiver|clinique|pharmacocinétique|évaluation clinique|performances diagnostiques/i.test(title) || code.startsWith('5.') || code === '1.M.P.3' || code === 'DM.C.1') {
                         typeEl.value = 'etude_bioequivalence';
-                    } else if (/notice|maquette|rcp|étiquetage/i.test(title) || code.startsWith('1.P.1') || code.startsWith('1.P.2')) {
+                    } else if (/notice|maquette|rcp|étiquetage|étiquette/i.test(title) || code.startsWith('1.P.1') || code.startsWith('1.P.2') || code.startsWith('DM.I')) {
                         typeEl.value = 'notice_conditionnement';
-                    } else if (/bpf|gmp|certificat de conformité/i.test(title) || code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2')) {
+                    } else if (/bpf|gmp|certificat de conformité|iso 13485|certificat ce|\bcpp\b|vente libre|\bfsc\b/i.test(title) || code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2') || code.startsWith('DM.Q') || code === '1.H.3') {
                         typeEl.value = 'certificat_bpf';
-                    } else if (/agrément|décision d'exercice/i.test(title) || code === '1.A.6' || code === '1.A.7') {
+                    } else if (/agrément|décision d'exercice|manufacturing licen/i.test(title) || code === '1.A.6' || code === '1.A.7' || code === 'DM.A.2' || code === 'DM.A.3' || code === '1.M.S.1' || code === '1.M.P.1') {
                         typeEl.value = 'agrement_miph';
                     } else if (/dmf|dpsa|substance active|cep/i.test(title) || code === '1.M.S.3') {
                         typeEl.value = 'dmf_substance_active';
-                    } else if (/accord qualité|qta|contrat/i.test(title) || code === '1.A.8') {
+                    } else if (/accord qualité|qta|contrat/i.test(title) || code === '1.A.8' || code === 'DM.A.4') {
                         typeEl.value = 'accord_qualite';
-                    } else if (/décision d'enregistrement|\bde\b|\bamm\b/i.test(title) || code === '1.A.9' || code === '1.H.2') {
+                    } else if (/décision d'enregistrement|décision d'homologation|autorisation de mise sur le marché|\bamm\b/i.test(title) || code === '1.A.9' || code === '1.H.2' || code === '1.H.6' || code === '1.H.11') {
                         typeEl.value = 'decision_enregistrement';
                     } else {
                         typeEl.value = 'autre';
@@ -192,11 +196,15 @@
                         titleFrEl.value = `Courrier Officiel de Demande d'Enregistrement [${dCode}]`;
                     } else if (code === '1.A.3') {
                         titleFrEl.value = `Formulaire Officiel de Demande d'Enregistrement Visé PDT [${dCode}]`;
+                    } else if (code === 'DM.A.1') {
+                        titleFrEl.value = `Formulaire Officiel de Demande d'Homologation DM [${dCode}]`;
+                    } else if (code === 'DM.A.5') {
+                        titleFrEl.value = `Quittance de Paiement des Redevances d'Homologation DM [${dCode}]`;
                     } else if (code === '1.P.8') {
                         titleFrEl.value = `Lettre d'Engagement de Non-Commercialisation & Validation 3 Lots [${dCode}]`;
                     } else if (code === '1.P.9') {
                         titleFrEl.value = `Lettre d'Engagement de Suivi des Stabilités Zone IVb [${dCode}]`;
-                    } else if (code === '1.P.2.2') {
+                    } else if (code === '1.P.2.2' || code === 'DM.I.1') {
                         titleFrEl.value = `Notice Patient Bilingue Modèle Algérie [${dCode}]`;
                     } else if (code === '1.P.2.1') {
                         titleFrEl.value = `Résumé des Caractéristiques du Produit (RCP) Modèle Algérie [${dCode}]`;
@@ -210,8 +218,10 @@
                         titleFrEl.value = `Certificat BPF/GMP Site Produit Fini [${dCode}]`;
                     } else if (code === '1.M.S.3') {
                         titleFrEl.value = `Certificat de Conformité CEP EDQM / Accès API [${dCode}]`;
-                    } else if (code.startsWith('5.') || code === '1.M.P.3') {
-                        titleFrEl.value = `Rapport d'Étude de Bioéquivalence in vivo [${dCode}]`;
+                    } else if (code === '1.H.3') {
+                        titleFrEl.value = `Certificat de Produit Pharmaceutique (CPP Modèle OMS) [${dCode}]`;
+                    } else if (code.startsWith('5.') || code === '1.M.P.3' || code === 'DM.C.1') {
+                        titleFrEl.value = `Rapport d'Étude Clinique / Évaluation de Performance [${dCode}]`;
                     } else {
                         titleFrEl.value = `[${code}] ${title} [${dCode}]`;
                     }
@@ -223,7 +233,8 @@
                     const cleanD = dCode.replace(/[^A-Za-z0-9]/g, '').substring(0, 10).toUpperCase() || 'DOS';
                     const cleanC = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
                     let prefix = 'DOC';
-                    if (code === '1.A.5') prefix = 'ANPP-PRESOUM';
+                    if (code.startsWith('DM.')) prefix = 'DM';
+                    else if (code === '1.A.5') prefix = 'ANPP-PRESOUM';
                     else if (code === '1.A.1') prefix = 'REC-DEPOT';
                     else if (code === '1.A.2') prefix = 'COUR-DEM';
                     else if (code === '1.A.3') prefix = 'FORM-REG';
@@ -233,7 +244,7 @@
                     else if (/stabilit/i.test(title)) prefix = 'STAB';
                     else if (/notice|maquette/i.test(title)) prefix = 'NOT';
                     else if (/rcp/i.test(title)) prefix = 'RCP';
-                    else if (/bpf|gmp/i.test(title)) prefix = 'GMP';
+                    else if (/bpf|gmp|\bcpp\b/i.test(title)) prefix = 'GMP';
                     else if (/agrément|décision/i.test(title)) prefix = 'AGR';
                     else if (/bioéquivalence|biowaiver/i.test(title)) prefix = 'BE';
                     else if (/qta|accord qualité/i.test(title)) prefix = 'QTA';
@@ -255,6 +266,14 @@
                         titleArEl.value = 'طلب التسجيل الرسمي الموجه للمديرية العامة للوكالة الوطنية';
                     } else if (code === '1.A.3') {
                         titleArEl.value = 'استمارة طلب التسجيل الرسمية المؤشرة والموقعة من الصيدلي المدير التقني';
+                    } else if (code === 'DM.A.1') {
+                        titleArEl.value = 'استمارة طلب المصادقة على المستلزم الطبي الموقعة من الصيدلي المدير التقني';
+                    } else if (code === 'DM.A.5') {
+                        titleArEl.value = 'وصل دفع أتعاب ورسوم دراسة ملف المصادقة على المستلزم الطبي';
+                    } else if (code === 'DM.Q.1') {
+                        titleArEl.value = 'شهادة نظام إدارة الجودة للمستلزمات الطبية (ISO 13485)';
+                    } else if (code === 'DM.I.1') {
+                        titleArEl.value = 'دليل ونشرة الاستعمال ثنائية اللغة (عربية وفرنسية إجبارية)';
                     } else if (code === '1.P.8') {
                         titleArEl.value = 'تعهد بعدم تسويق حصص الإنتاج قبل استكمال وتأكيد مطابقة المصادقة الصناعية';
                     } else if (code === '1.P.9') {
@@ -263,7 +282,7 @@
                         titleArEl.value = 'النشرة الموجهة للمريض باللغتين العربية والفرنسية (نموذج الجزائر)';
                     } else if (code === '1.P.2.1') {
                         titleArEl.value = 'ملخص الخصائص الصيدلانية للمنتج (نموذج الجزائر معتمد من الصيدلي المدير التقني)';
-                    } else if (code === '1.P.2.3' || code === '1.P.2.4') {
+                    } else if (code === '1.P.2.3' || code === '1.P.2.4' || code === 'DM.I.2') {
                         titleArEl.value = 'تصميم الغلاف والوسم باللغتين العربية والفرنسية بالألوان الطبيعية';
                     } else if (code === '1.P.4') {
                         titleArEl.value = 'شهادة التحاليل المخبرية للمادة الفعالة وإعادة المراقبة النوعية';
@@ -273,14 +292,16 @@
                         titleArEl.value = 'شهادة حسن ممارسات التصنيع الصيدلاني (BPF / GMP)';
                     } else if (code === '1.M.S.3') {
                         titleArEl.value = 'شهادة المطابقة الأوروبية للمادة الفعالة (CEP) أو خطاب التفويض';
-                    } else if (code === '1.A.6') {
+                    } else if (code === '1.A.6' || code === 'DM.A.2') {
                         titleArEl.value = 'اعتماد المؤسسة الصيدلانية للاستغلال أو الصنع (وزارة الصناعة الصيدلانية)';
-                    } else if (code === '1.A.7') {
+                    } else if (code === '1.A.7' || code === 'DM.A.3') {
                         titleArEl.value = 'قرار ممارسة مهام الصيدلي المدير التقني وفق التنظيم المعمول به';
-                    } else if (code === '1.A.8') {
+                    } else if (code === '1.A.8' || code === 'DM.A.4') {
                         titleArEl.value = 'اتفاقية الجودة التقنية وعقود التصنيع المشترك والمناولة';
-                    } else if (code.startsWith('5.') || code === '1.M.P.3') {
-                        titleArEl.value = 'تقرير دراسة التكافؤ الحيوي السريري المقارن أو تبرير الإعفاء البيولوجي';
+                    } else if (code === '1.H.3') {
+                        titleArEl.value = 'شهادة المنتوج الصيدلاني وفق النموذج الرسمي لمنظمة الصحة العالمية (CPP)';
+                    } else if (code.startsWith('5.') || code === '1.M.P.3' || code === 'DM.C.1') {
+                        titleArEl.value = 'تقرير دراسة التكافؤ الحيوي السريري المقارن أو تقييم الأداء السريري';
                     }
                 }
 
