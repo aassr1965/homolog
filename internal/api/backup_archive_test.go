@@ -165,9 +165,12 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 			t.Fatalf("attendu 200 OK, reçu %d: %s", rr.Code, rr.Body.String())
 		}
 
-		seal := rr.Header().Get("X-Homolog-Seal")
+		seal := rr.Header().Get("X-Sanad-Seal")
 		if seal == "" {
-			t.Fatalf("entête X-Homolog-Seal manquante")
+			seal = rr.Header().Get("X-Homolog-Seal")
+		}
+		if seal == "" {
+			t.Fatalf("entête de scellement (X-Sanad-Seal / X-Homolog-Seal) manquante")
 		}
 
 		exportedHomologBytes = rr.Body.Bytes()
@@ -204,7 +207,7 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 				if err := json.Unmarshal(manifestBytes, &m); err != nil {
 					t.Fatalf("manifest json invalide: %v", err)
 				}
-				if m.Format != "HOMOLOG_PORTABLE_ARCHIVE_V1" {
+				if m.Format != "SANAD_PORTABLE_ARCHIVE_V1" && m.Format != "HOMOLOG_PORTABLE_ARCHIVE_V1" {
 					t.Errorf("format manifest inattendu: %s", m.Format)
 				}
 				if m.OrganizationID != testOrgID.String() {
@@ -287,7 +290,7 @@ func TestBackupArchiveAndSetupWizard(t *testing.T) {
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
-		part, err := writer.CreateFormFile("archive", "sauvegarde_officielle.homolog")
+		part, err := writer.CreateFormFile("archive", "sauvegarde_officielle.sanad")
 		if err != nil {
 			t.Fatalf("erreur create form file: %v", err)
 		}

@@ -100,6 +100,13 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 			LastName:  "ANPP (Auditeur Qualité)",
 		},
 		{
+			Email:     "api.holder@zhejiang-chem.com",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RolePartenaireFournisseurAPI,
+			FirstName: "Wei",
+			LastName:  "Zhang (API Holder Zhejiang Chem)",
+		},
+		{
 			Email:     "admin.sys@cloud.dz",
 			Password:  "Homolog2026!Dev",
 			Role:      domain.RoleAdminSystemeLocal,

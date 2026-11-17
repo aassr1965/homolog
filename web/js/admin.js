@@ -447,7 +447,7 @@ function renderAdminMatrixTable() {
                 <div style="font-size: 11px; font-weight: 700; color: var(--text-main); display:flex; align-items:center; gap:5px;">
                     <span>🛡️</span> Rôle Réglementaire BPF
                 </div>
-                <div style="font-size: 10px; color: var(--text-dim); font-weight: normal; margin-top:2px;">9 profils métier (CDC 7.1)</div>
+                <div style="font-size: 10px; color: var(--text-dim); font-weight: normal; margin-top:2px;">10 profils métier (CDC 7.1)</div>
             </th>
             <th colspan="2" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(3, 105, 161, 0.12); color: #0284c7; padding: 6px 4px; border-right: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;">
                 🏢 Référentiel MIPH
