@@ -1241,7 +1241,7 @@ function exportRBACMatrixCSV() {
         "Export CSV Certifié (Matrice des Habilitations)",
         `<div style="display:flex; flex-direction:column; gap:8px;">
             <div style="color:var(--accent-emerald); font-weight:700;">
-                ✓ Matrice 9 Rôles x 14 Permissions générée avec succès
+                ✓ Matrice 10 Rôles x 14 Permissions générée avec succès
             </div>
             <div style="font-size:11px; color:var(--text-main);">
                 Le fichier CSV est conforme aux exigences d'audit PSSI et prêt pour la revue annuelle de gestion des accès.
