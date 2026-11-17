@@ -337,6 +337,8 @@ const mockAuditTrail = [
                 case 'consultant_externe':
                 case 'consultant_cro_externe':
                     return isArabic ? 'مستشار خارجي (نطاق مخصص)' : 'Consultant Externe (CRO - Cloisonné)';
+                case 'partenaire_fournisseur_api':
+                    return isArabic ? 'شريك مورد المادة الفعالة (ASMF)' : 'Partenaire Fournisseur (API Holder)';
                 case 'auditeur_inspecteur':
                 case 'auditeur_qualite_anpp':
                     return isArabic ? 'مدقق الجودة / ANPP' : 'Auditeur Qualité ANPP';

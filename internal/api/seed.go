@@ -35,7 +35,7 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 		FirstName string
 		LastName  string
 	}{
-		// Comptes Démonstration & Matrice des 9 Rôles BPF
+		// Comptes Démonstration & Matrice des 10 Rôles BPF
 		{
 			Email:     "admin.lab@pharma.dz",
 			Password:  "Homolog2026!Dev",
@@ -98,6 +98,13 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 			Role:      domain.RoleAuditeurInspecteur,
 			FirstName: "Inspecteur",
 			LastName:  "ANPP (Auditeur Qualité)",
+		},
+		{
+			Email:     "api.holder@zhejiang-chem.com",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RolePartenaireFournisseurAPI,
+			FirstName: "Wei",
+			LastName:  "Zhang (API Holder Zhejiang Chem)",
 		},
 		{
 			Email:     "admin.sys@cloud.dz",

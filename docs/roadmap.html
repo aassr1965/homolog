@@ -557,7 +557,7 @@
                 </div>
                 <div class="cover-card">
                     <div class="cover-card-label">Gouvernance BPF</div>
-                    <div class="cover-card-value">9 Profils</div>
+                    <div class="cover-card-value">10 Profils</div>
                     <div class="cover-card-desc">Audit Trail 21 CFR 11</div>
                 </div>
                 <div class="cover-card">
@@ -769,10 +769,10 @@
     </div>
 
     <!-- Jalon 1.2 -->
-    <div class="milestone-card in-progress">
+    <div class="milestone-card done">
         <div class="milestone-header">
             <span class="milestone-title">Jalon 1.2 : Authentification Forte, 2FA Hors-Ligne, PSSI, RBAC 14 Perms & SoD (21 CFR Part 11)</span>
-            <span class="badge badge-progress">En cours (Extension RBAC / SoD) 🔄</span>
+            <span class="badge badge-done">Complété & Validé ✅</span>
         </div>
         <ul class="milestone-items">
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Socle d'authentification et sessions BPF :</strong> Argon2id, Cookies HttpOnly SameSite=Strict, table de révocation en base PostgreSQL.</li>
@@ -780,11 +780,11 @@
             <li class="milestone-item"><span class="check-icon checked">✓</span> Verrouillage automatique de session sur inactivité (Idle timeout 15 min BPF) et protection anti-brute force (5 échecs = 15 min).</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Signature électronique solennelle du Pharmacien Directeur Technique (PDT)</strong> avec déclaration légale sur l'honneur, re-authentification 2FA, horodatage UTC et scellement d'intégrité SHA-256.</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> Journal d'audit trail immuable (`audit_logs`) strictement *append-only* (triggers SQL interdisant `UPDATE` et `DELETE`).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Extension RBAC Dynamique à 14 Permissions (Section 7.2 CDC) :</strong> Matrice granulaire pour les 9 profils (tables `roles`, `permissions`, `role_permissions`, `user_permissions`, `permissions_version`).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Ségrégation Stricte des Tâches SoD :</strong> Interdiction absolue d'auto-approbation BPF (Règle Go hermétique : Rédacteur Maker ≠ Relecteur Checker ≠ Approbateur PDT).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Blocage Hermétique des Routes API (Backend Defense-in-Depth) :</strong> Interception immédiate `HTTP 403 Forbidden` pour tout jeton dépourvu de la permission requise et journalisation automatique de l'événement de sécurité dans `audit_logs`.</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :</strong> Back-Office autonome pour l'Administrateur de Laboratoire (gestion collaborateurs, matrice interactive, rattachement PDT 1.A.7, sites 1.H.8, surveillance audit trail, quotas CAS).</li>
-            <li class="milestone-item"><span class="check-icon unchecked">○</span> <strong>Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :</strong> Masquage strict (`display: none`) des volets de prix 1.H.4/5, signature PDT, menus admin ; mode cloisonné *Guest* pour consultants externes ; actions désactivées avec infobulles contextuelles (*Disabled + Tooltip*).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Extension RBAC Dynamique à 14 Permissions (Section 7.2 CDC) :</strong> Matrice granulaire pour les 10 profils stricts incluant le Partenaire Fournisseur / API Holder (tables `roles`, `permissions`, `role_permissions`, `user_permissions`, `permissions_version`).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Ségrégation Stricte des Tâches SoD :</strong> Interdiction absolue d'auto-approbation BPF (Règle Go hermétique : Rédacteur Maker ≠ Relecteur Checker ≠ Approbateur PDT).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Blocage Hermétique des Routes API (Backend Defense-in-Depth) :</strong> Interception immédiate `HTTP 403 Forbidden` pour tout jeton dépourvu de la permission requise et journalisation automatique de l'événement de sécurité dans `audit_logs`.</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Console Dédiée d'Administration du Laboratoire (Section 6.3 CDC) :</strong> Back-Office autonome pour l'Administrateur de Laboratoire (gestion collaborateurs, matrice interactive, rattachement PDT 1.A.7, sites 1.H.8, surveillance audit trail, quotas CAS).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Gardes de Navigation Frontend & Masquage Dynamique de l'UI (Pharma Explorer) :</strong> Masquage strict (`display: none`) des volets de prix 1.H.4/5, signature PDT, menus admin ; mode cloisonné *Guest* pour consultants externes ; actions désactivées avec infobulles contextuelles (*Disabled + Tooltip*).</li>
         </ul>
     </div>
 
@@ -904,20 +904,20 @@
     <!-- Jalon 1.8 -->
     <div class="milestone-card done">
         <div class="milestone-header">
-            <span class="milestone-title">Jalon 1.8 : Packaging Docker, Déploiement & Archive de Réversibilité .homolog</span>
+            <span class="milestone-title">Jalon 1.8 : Packaging Docker, Déploiement & Archive Universelle .sanad</span>
             <span class="badge badge-done">Complété (100% ✅)</span>
         </div>
         <ul class="milestone-items">
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Environnement Docker durci</strong> : `Dockerfile` multi-stage statique Alpine (v0.8.0), utilisateur non-root `homolog:homolog`, healthcheck `/health`, neutralisation PSSI des artefacts de dev/commercial (commutateur de rôle et Pitch Deck <code>/presentation</code>) et configuration de production `.env.production`.</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Assistant de Premier Démarrage (Setup Wizard BPF)</strong> : provisionnement de l'organisation MIPH et du compte Pharmacien DT (1.A.7), chiffrement Argon2id, scellement dans la piste d'audit et écran guidé `#screen-setup`.</li>
-            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Archive Universelle Portative .homolog</strong> : conteneur universel tar.gz regroupant les 17 tables relationnelles (`database/`), les fichiers du coffre-fort CAS (`blobs/`) et le manifeste signé avec sceau d'archive SHA-256 (`manifest.json`).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Archive Universelle Portative .sanad (Sanad Pharma)</strong> : conteneur universel tar.gz (`SANAD_PORTABLE_ARCHIVE_V1`) regroupant les 17 tables relationnelles (`database/`), les fichiers du coffre-fort CAS (`blobs/`) et le manifeste signé avec double sceau d'archive SHA-256 (`X-Sanad-Seal` / `X-Homolog-Seal`).</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Réversibilité ALCOA+ sans vendor lock-in</strong> : moteur d'export direct, réinjection transactionnelle avec contrôle systématique du hash SHA-256 de chaque document (rejet 422 si altération), interface cockpit IT et suite de tests validée à 100%.</li>
         </ul>
     </div>
 
     <div class="callout green" style="background:#ecfdf5; border-left:4px solid #10b981;">
         <div class="callout-title" style="color:#065f46;">Phase 1 Achevée à 100% — Socle Réglementaire Souverain Prêt</div>
-        Avec les 8 jalons de la Phase 1 validés de bout en bout, la plateforme <strong>Homolog</strong> constitue désormais un socle réglementaire complet, opposable et inviolable (Audit Trail ALCOA+, RBAC 14 permissions, Guide CTD 2025 & DM 2021, Studio Compléments, Redevances BV1/BV2, Veille RDV et Réversibilité .homolog). Le prochain jalon inaugurera la <strong>Phase 2</strong> avec l'Atelier d'Élaboration Collaboratif BPF (Maker-Checker-Approver).
+        Avec les 8 jalons de la Phase 1 validés de bout en bout, la plateforme <strong>Sanad Pharma</strong> constitue désormais un socle réglementaire complet, opposable et inviolable (Audit Trail ALCOA+, RBAC 10 profils et 14 permissions, Guide CTD 2025 & DM 2021, Studio Compléments, Redevances BV1/BV2, Veille RDV et Réversibilité universelle .sanad). Le prochain jalon inaugurera la <strong>Phase 2</strong> avec l'Atelier d'Élaboration Collaboratif BPF (Maker-Checker-Approver).
     </div>
 
     <div class="page-footer">
