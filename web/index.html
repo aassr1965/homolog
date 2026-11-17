@@ -1501,6 +1501,9 @@
                         <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Type de Document :</label>
                             <select id="ged-doc-type" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
+                                <option value="courrier_officiel_anpp">Courrier Officiel ANPP / Réponse Pré-soumission &amp; BV</option>
+                                <option value="recepisse_depot">Récépissé de Dépôt / Accusé de Réception ANPP</option>
+                                <option value="formulaire_demande_ctd">Formulaire Officiel de Demande d'Enregistrement</option>
                                 <option value="lettre_engagement">Lettre d'Engagement / Attestation Réglementaire</option>
                                 <option value="bulletin_analyse_coa">Bulletin d'Analyse (CoA) / Spécifications Analytiques</option>
                                 <option value="rapport_validation">Rapport de Validation de Procédé / BPF (3 lots)</option>
@@ -1733,7 +1736,7 @@
                     </select>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
                         <span style="font-size:10.5px; color:var(--text-dim);">La pièce n'est pas encore dans la GED ?</span>
-                        <button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:var(--bg-sub); border:1px solid var(--border-color);" onclick="closeModal('modal-attach-ged'); openNewGEDDocModal();">
+                        <button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:var(--bg-sub); border:1px solid var(--border-color);" onclick="openNewGEDDocModalFromAttachModal();">
                             ➕ Déposer un nouveau document en GED
                         </button>
                     </div>
@@ -3176,9 +3179,9 @@
     <script src="/js/system_admin.js?v=2026.11.17.5"></script>
     <script src="/js/referential.js?v=2026.11.17.5"></script>
     <script src="/js/variations.js?v=2026.11.17.5"></script>
-    <script src="/js/ged.js?v=2026.11.17.9"></script>
-    <script src="/js/dossiers.js?v=2026.11.17.9"></script>
-    <script src="/js/workflow.js?v=2026.11.17.9"></script>
+    <script src="/js/ged.js?v=2026.11.17.10"></script>
+    <script src="/js/dossiers.js?v=2026.11.17.10"></script>
+    <script src="/js/workflow.js?v=2026.11.17.10"></script>
     <script src="/js/deficiencies.js?v=2026.11.17.5"></script>
     <script src="/js/fees.js?v=2026.11.17.5"></script>
     <script src="/js/submissions.js?v=2026.11.17.5"></script>
