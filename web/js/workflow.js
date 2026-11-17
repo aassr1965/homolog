@@ -483,25 +483,29 @@ async function openItemReviewsModal(dossierId, itemId, itemCode) {
         }
 
         body.innerHTML = reviews.map(r => {
-            const isApproved = r.decision === 'approved';
+            const isApproved = r.review_type === 'approval' || r.decision === 'approved';
             const badge = isApproved 
                 ? `<span class="status-tag status-ok">APPROUVÉ</span>` 
                 : `<span class="status-tag status-rej">REJETÉ / REPRISE</span>`;
             
+            const reviewerName = r.author_name || (r.reviewer ? (r.reviewer.first_name + ' ' + r.reviewer.last_name) : 'Réviseur');
+            const reviewerRole = r.author_role || r.reviewer_role || 'AQ';
+            const commentText = r.comment || r.comments || '';
+
             return `
                 <div style="border-left:3px solid ${isApproved ? 'var(--accent-emerald)' : 'var(--accent-red)'}; background:var(--bg-panel); border-radius:4px; padding:10px 14px; margin-bottom:10px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             ${badge}
-                            <strong style="color:var(--text-main); font-size:12px;">${r.reviewer ? escapeHTML(r.reviewer.first_name + ' ' + r.reviewer.last_name) : 'Réviseur'}</strong>
-                            <span style="font-size:10px; color:var(--text-dim); background:var(--bg-sub); padding:1px 6px; border-radius:3px;">${escapeHTML(r.reviewer_role)}</span>
+                            <strong style="color:var(--text-main); font-size:12px;">${escapeHTML(reviewerName)}</strong>
+                            <span style="font-size:10px; color:var(--text-dim); background:var(--bg-sub); padding:1px 6px; border-radius:3px;">${escapeHTML(reviewerRole)}</span>
                         </div>
                         <div style="font-size:10.5px; color:var(--text-dim); font-family:monospace;">
                             ${new Date(r.created_at).toLocaleString()}
                         </div>
                     </div>
                     <div style="font-size:11.5px; color:var(--text-main); margin-bottom:4px; line-height:1.4;">
-                        ${escapeHTML(r.comments)}
+                        ${escapeHTML(commentText)}
                     </div>
                     ${r.required_actions ? `
                         <div style="font-size:11px; color:var(--accent-red); background:rgba(239,68,68,0.06); padding:4px 8px; border-radius:4px; margin-top:4px;">
