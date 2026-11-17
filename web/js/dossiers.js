@@ -1118,6 +1118,7 @@
                             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                                 ${typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(item.workflow_status) : ''}
                                 ${typeof formatDepartmentBadge === 'function' ? formatDepartmentBadge(item.assigned_department) : ''}
+                                ${item.assigned_user_name ? `<span style="font-size:10.5px; color:var(--text-main); background:var(--bg-sub); padding:1px 6px; border-radius:3px; border:1px solid var(--border-color);" title="Rédacteur assigné">👤 ${escapeHTML(item.assigned_user_name)}</span>` : ''}
                                 ${item.due_date ? `<span style="font-size:10.5px; color:var(--text-dim);">Échéance : <strong>${item.due_date.substring(0, 10)}</strong></span>` : ''}
                             </div>
                         </div>
@@ -1175,8 +1176,8 @@
                                         🔓 Restituer (Check-in)
                                     </button>
                                 ` : ''}
-                                <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="openAssignModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.assigned_department}', '${item.due_date}')">
-                                    👥 Assigner Pôle Métier
+                                <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="openAssignModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.assigned_department}', '${item.due_date}', '${item.assigned_user_id || ''}')">
+                                    👥 Assigner Responsabilité
                                 </button>
                                 ${item.workflow_status === 'drafting' ? `
                                     <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-blue); color:white; border:none;" onclick="submitItemForReview('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
