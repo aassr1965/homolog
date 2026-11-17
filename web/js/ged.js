@@ -113,16 +113,26 @@
                 const title = ctx.itemTitle || '';
                 const dCode = ctx.dossierCode || '';
 
-                // 1. Taxonomie intelligente selon le module CTD
+                // 1. Taxonomie intelligente selon le module CTD & l'intitulé
                 const taxEl = document.getElementById('ged-doc-taxonomy');
                 if (taxEl) {
-                    if (code.startsWith('1.P.2') || /notice|étiquet|conditionnement/i.test(title)) {
+                    if (code.startsWith('1.A.6') || code.startsWith('1.A.7') || /agrément|décision d'exercice/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_01_Agrements_Etablissement';
+                    } else if (code.startsWith('1.A.9') || code.startsWith('1.H.2') || /décision d'enregistrement|\bamm\b/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_02_Decisions_Enregistrement';
+                    } else if (code.startsWith('1.P.1') || code.startsWith('1.P.2') || /notice|étiquet|conditionnement|rcp|maquette/i.test(title)) {
                         taxEl.value = '01_Affaires_Reglementaires/01_05_Notices_Articles_Conditionnement';
-                    } else if (code.startsWith('1.')) {
-                        taxEl.value = '01_Affaires_Reglementaires/01_04_Dossiers_CTD_Reference';
-                    } else if (code.startsWith('3.2.P.8') || /stabilit/i.test(title)) {
+                    } else if (code.startsWith('1.A.8') || /contrat|façonnage|qta|accord qualit/i.test(title)) {
+                        taxEl.value = '05_Contrats_Tiers/05_01_Accords_Qualite_QTA';
+                    } else if (code.startsWith('1.M.S.3') || /cep|edqm|dmf/i.test(title)) {
+                        taxEl.value = '05_Contrats_Tiers/05_03_Certificats_Fournisseurs_APIs';
+                    } else if (code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2') || /certificat bpf|certificat gmp/i.test(title)) {
+                        taxEl.value = '02_Assurance_Qualite_BPF/02_02_Certificats_BPF_ISO';
+                    } else if (code.startsWith('1.P.9') || code.startsWith('3.2.P.8') || /stabilit/i.test(title)) {
                         taxEl.value = '03_Developpement_Production/03_03_Etudes_Stabilite';
-                    } else if (code.startsWith('3.2.S') || /substance|api|dmf/i.test(title)) {
+                    } else if (code.startsWith('1.P.4') || code.startsWith('1.P.5') || /bulletin d'analyse|spécification/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_04_Specifications_Matieres_PF';
+                    } else if (code.startsWith('3.2.S') || /substance active|dpsa/i.test(title)) {
                         taxEl.value = '03_Developpement_Production/03_01_Formules_Fabrication_DMF';
                     } else if (code.startsWith('3.2.P') || /validation|fabrication|procédé/i.test(title)) {
                         taxEl.value = '03_Developpement_Production/03_02_Methodes_Controle_Validation';
@@ -134,48 +144,113 @@
                 // 2. Type de document
                 const typeEl = document.getElementById('ged-doc-type');
                 if (typeEl) {
-                    if (/engagement|attestation|non-commercialisation/i.test(title) || code === '1.P.8') {
+                    if (/engagement|attestation|non-commercialisation/i.test(title) || code === '1.P.8' || code === '1.P.9') {
                         typeEl.value = 'lettre_engagement';
-                    } else if (/validation|procédé|3 lots/i.test(title)) {
+                    } else if (/bulletin d'analyse|coa|libératoire|recontrôle/i.test(title) || code === '1.P.4' || code === '1.P.5') {
+                        typeEl.value = 'bulletin_analyse_coa';
+                    } else if (/validation|procédé|3 lots|master batch/i.test(title)) {
                         typeEl.value = 'rapport_validation';
                     } else if (/stabilit/i.test(title)) {
                         typeEl.value = 'rapport_stabilite';
-                    } else if (/notice|maquette/i.test(title)) {
+                    } else if (/bioéquivalence|biowaiver|clinique|pharmacocinétique/i.test(title) || code.startsWith('5.') || code === '1.M.P.3') {
+                        typeEl.value = 'etude_bioequivalence';
+                    } else if (/notice|maquette|rcp|étiquetage/i.test(title) || code.startsWith('1.P.1') || code.startsWith('1.P.2')) {
                         typeEl.value = 'notice_conditionnement';
-                    } else if (/bpf|gmp/i.test(title)) {
+                    } else if (/bpf|gmp|certificat de conformité/i.test(title) || code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2')) {
                         typeEl.value = 'certificat_bpf';
+                    } else if (/agrément|décision d'exercice/i.test(title) || code === '1.A.6' || code === '1.A.7') {
+                        typeEl.value = 'agrement_miph';
+                    } else if (/dmf|dpsa|substance active|cep/i.test(title) || code === '1.M.S.3') {
+                        typeEl.value = 'dmf_substance_active';
+                    } else if (/accord qualité|qta|contrat/i.test(title) || code === '1.A.8') {
+                        typeEl.value = 'accord_qualite';
+                    } else if (/décision d'enregistrement|\bde\b|\bamm\b/i.test(title) || code === '1.A.9' || code === '1.H.2') {
+                        typeEl.value = 'decision_enregistrement';
+                    } else {
+                        typeEl.value = 'autre';
                     }
                 }
 
                 // 3. Titre du document (FR)
                 const titleFrEl = document.getElementById('ged-doc-title-fr');
                 if (titleFrEl) {
-                    if (code === '1.P.8' || /engagement.*3 lots/i.test(title)) {
+                    if (code === '1.P.8') {
                         titleFrEl.value = `Lettre d'Engagement de Non-Commercialisation & Validation 3 Lots [${dCode}]`;
+                    } else if (code === '1.P.9') {
+                        titleFrEl.value = `Lettre d'Engagement de Suivi des Stabilités Zone IVb [${dCode}]`;
+                    } else if (code === '1.P.2.2') {
+                        titleFrEl.value = `Notice Patient Bilingue Modèle Algérie [${dCode}]`;
+                    } else if (code === '1.P.2.1') {
+                        titleFrEl.value = `Résumé des Caractéristiques du Produit (RCP) Modèle Algérie [${dCode}]`;
+                    } else if (code === '1.P.4') {
+                        titleFrEl.value = `Bulletin d'Analyse Substance Active & Recontrôle Qualité [${dCode}]`;
+                    } else if (code === '1.P.5') {
+                        titleFrEl.value = `Bulletin d'Analyse Libératoire Produit Fini [${dCode}]`;
+                    } else if (code === '1.M.S.2') {
+                        titleFrEl.value = `Certificat BPF/GMP Fabricant Substance Active [${dCode}]`;
+                    } else if (code === '1.M.P.2') {
+                        titleFrEl.value = `Certificat BPF/GMP Site Produit Fini [${dCode}]`;
+                    } else if (code === '1.M.S.3') {
+                        titleFrEl.value = `Certificat de Conformité CEP EDQM / Accès API [${dCode}]`;
+                    } else if (code.startsWith('5.') || code === '1.M.P.3') {
+                        titleFrEl.value = `Rapport d'Étude de Bioéquivalence in vivo [${dCode}]`;
                     } else {
-                        titleFrEl.value = `[${code}] ${title} - ${dCode}`;
+                        titleFrEl.value = `[${code}] ${title} [${dCode}]`;
                     }
                 }
 
                 // 4. Code Référence BPF
                 const codeEl = document.getElementById('ged-doc-code');
                 if (codeEl) {
-                    const cleanD = dCode.replace(/[^A-Za-z0-9]/g, '').substring(0, 10).toUpperCase();
-                    if (code === '1.P.8') {
-                        codeEl.value = `ENG-VAL-1P8-${cleanD || 'PARAC'}`;
-                    } else {
-                        const cleanC = code.replace(/\./g, '');
-                        codeEl.value = `DOC-CTD-${cleanC}-${cleanD}`;
-                    }
+                    const cleanD = dCode.replace(/[^A-Za-z0-9]/g, '').substring(0, 10).toUpperCase() || 'DOS';
+                    const cleanC = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                    let prefix = 'DOC';
+                    if (/engagement|attestation/i.test(title) || code.startsWith('1.P.8') || code.startsWith('1.P.9')) prefix = 'ENG';
+                    else if (/bulletin|coa|analyse/i.test(title) || code === '1.P.4' || code === '1.P.5') prefix = 'COA';
+                    else if (/validation/i.test(title)) prefix = 'VAL';
+                    else if (/stabilit/i.test(title)) prefix = 'STAB';
+                    else if (/notice|maquette/i.test(title)) prefix = 'NOT';
+                    else if (/rcp/i.test(title)) prefix = 'RCP';
+                    else if (/bpf|gmp/i.test(title)) prefix = 'GMP';
+                    else if (/agrément|décision/i.test(title)) prefix = 'AGR';
+                    else if (/bioéquivalence|biowaiver/i.test(title)) prefix = 'BE';
+                    else if (/qta|accord qualité/i.test(title)) prefix = 'QTA';
+                    else if (code.startsWith('1.')) prefix = 'M1';
+                    else if (code.startsWith('3.')) prefix = 'M3';
+                    codeEl.value = `${prefix}-${cleanC}-${cleanD}`;
                 }
 
                 // 5. Intitulé en Arabe
                 const titleArEl = document.getElementById('ged-doc-title-ar');
                 if (titleArEl) {
-                    if (code === '1.P.8') {
-                        titleArEl.value = 'تعهد بعدم تسويق حصص الإنتاج قبل استكمال وتأكيد مطابقة المصادقة الصناعية';
-                    } else if (ctx.itemTitleAr) {
+                    if (ctx.itemTitleAr && ctx.itemTitleAr.trim() !== '') {
                         titleArEl.value = ctx.itemTitleAr;
+                    } else if (code === '1.P.8') {
+                        titleArEl.value = 'تعهد بعدم تسويق حصص الإنتاج قبل استكمال وتأكيد مطابقة المصادقة الصناعية';
+                    } else if (code === '1.P.9') {
+                        titleArEl.value = 'تعهد بمتابعة دراسات الاستقرار في الزمن الحقيقي في المنطقة المناخية الرابعة';
+                    } else if (code === '1.P.2.2') {
+                        titleArEl.value = 'النشرة الموجهة للمريض باللغتين العربية والفرنسية (نموذج الجزائر)';
+                    } else if (code === '1.P.2.1') {
+                        titleArEl.value = 'ملخص الخصائص الصيدلانية للمنتج (نموذج الجزائر معتمد من الصيدلي المدير التقني)';
+                    } else if (code === '1.P.2.3' || code === '1.P.2.4') {
+                        titleArEl.value = 'تصميم الغلاف والوسم باللغتين العربية والفرنسية بالألوان الطبيعية';
+                    } else if (code === '1.P.4') {
+                        titleArEl.value = 'شهادة التحاليل المخبرية للمادة الفعالة وإعادة المراقبة النوعية';
+                    } else if (code === '1.P.5') {
+                        titleArEl.value = 'شهادة التحاليل المخبرية لإطلاق وتسريح حصص المنتج النهائي';
+                    } else if (code === '1.M.S.2' || code === '1.M.P.2') {
+                        titleArEl.value = 'شهادة حسن ممارسات التصنيع الصيدلاني (BPF / GMP)';
+                    } else if (code === '1.M.S.3') {
+                        titleArEl.value = 'شهادة المطابقة الأوروبية للمادة الفعالة (CEP) أو خطاب التفويض';
+                    } else if (code === '1.A.6') {
+                        titleArEl.value = 'اعتماد المؤسسة الصيدلانية للاستغلال أو الصنع (وزارة الصناعة الصيدلانية)';
+                    } else if (code === '1.A.7') {
+                        titleArEl.value = 'قرار ممارسة مهام الصيدلي المدير التقني وفق التنظيم المعمول به';
+                    } else if (code === '1.A.8') {
+                        titleArEl.value = 'اتفاقية الجودة التقنية وعقود التصنيع المشترك والمناولة';
+                    } else if (code.startsWith('5.') || code === '1.M.P.3') {
+                        titleArEl.value = 'تقرير دراسة التكافؤ الحيوي السريري المقارن أو تبرير الإعفاء البيولوجي';
                     }
                 }
 
