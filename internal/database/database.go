@@ -71,6 +71,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/012_anpp_appointments_and_regulatory_watch.sql",
 		"migrations/013_maker_checker_workflow_and_reporting.sql",
 		"migrations/014_api_holder_role_and_branding.sql",
+		"migrations/015_realign_checklist_departments.sql",
 	}
 
 	for _, file := range migrationFiles {
