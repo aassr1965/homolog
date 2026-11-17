@@ -874,7 +874,7 @@
                             const revBadge = typeof formatRevisionBadge === 'function' ? formatRevisionBadge(it.current_revision, it.workflow_status === 'approved_sealed') : '';
                             let lockIndicator = '';
                             if (it.is_locked) {
-                                const lockerName = it.locked_by_name || (typeof it.locked_by === 'object' && it.locked_by ? (it.locked_by.first_name + ' ' + it.locked_by.last_name) : (it.assigned_user_name || 'Rédacteur'));
+                                const lockerName = (it.locked_by_name && it.locked_by_name.trim()) || it.assigned_user_name || 'Rédacteur';
                                 lockIndicator = `<div style="margin-top:2px;"><span class="lock-pill" title="Verrouillé par ${escapeHTML(lockerName)} : ${escapeHTML(it.lock_reason || '')}">🔒 ${escapeHTML(lockerName)}</span></div>`;
                             }
                             statusBadge = `
@@ -1142,7 +1142,7 @@
                     { id: 'approved_sealed', label: '5. Scellé v1.0', icon: '🛡️' }
                 ];
                 const curIdx = wfSteps.findIndex(s => s.id === item.workflow_status);
-                const lockerName = item.locked_by_name || (typeof item.locked_by === 'object' && item.locked_by ? (item.locked_by.first_name + ' ' + item.locked_by.last_name) : (item.assigned_user_name || (item.locked_by ? 'Rédacteur en cours' : 'Non verrouillé')));
+                const lockerName = (item.locked_by_name && item.locked_by_name.trim()) || item.assigned_user_name || (item.is_locked ? 'Rédacteur en cours' : 'Non verrouillé');
 
                 preview.innerHTML = `
                     <div class="pdf-sim-page">
