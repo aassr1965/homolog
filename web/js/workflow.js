@@ -148,9 +148,11 @@ async function submitWorkflowCheckin(e) {
 }
 
 // ----------------------------------------------------------------------------
-// Assignation Départementale
+// Assignation Départementale & Nominative (BPF / CDC §7.4)
 // ----------------------------------------------------------------------------
-function openAssignModal(dossierId, itemId, itemCode, currentDept, currentDueDate) {
+let assignableUsersCache = [];
+
+async function openAssignModal(dossierId, itemId, itemCode, currentDept, currentDueDate, currentUserId) {
     currentWfDossierId = dossierId;
     currentWfItemId = itemId;
 
@@ -163,12 +165,80 @@ function openAssignModal(dossierId, itemId, itemCode, currentDept, currentDueDat
     document.getElementById('wf-assign-notes').value = '';
     document.getElementById('wf-assign-err').style.display = 'none';
 
+    // Charger et peupler les collaborateurs selon le pôle métier
+    await loadAssignableUsersForWorkflow(dossierId, currentDept || 'RA', currentUserId);
+
     openModal('modal-workflow-assign');
+}
+
+async function loadAssignableUsersForWorkflow(dossierId, dept, selectedUserId) {
+    const userSelect = document.getElementById('wf-assign-user');
+    if (!userSelect) return;
+
+    try {
+        if (!assignableUsersCache || assignableUsersCache.length === 0) {
+            // 1. Tenter les membres du dossier
+            let res = await fetch(`/api/v1/dossiers/${dossierId}/members`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.members && data.members.length > 0) {
+                    assignableUsersCache = data.members.map(m => ({
+                        id: m.user_id,
+                        name: `${m.user_first_name || ''} ${m.user_last_name || ''}`.trim() || m.user_email,
+                        email: m.user_email,
+                        role: m.user_role
+                    }));
+                }
+            }
+            // 2. Si aucun membre spécifique, récupérer tous les utilisateurs du laboratoire
+            if (!assignableUsersCache || assignableUsersCache.length === 0) {
+                res = await fetch('/api/v1/admin/users');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.users && data.users.length > 0) {
+                        assignableUsersCache = data.users.map(u => ({
+                            id: u.id,
+                            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+                            email: u.email,
+                            role: u.role
+                        }));
+                    }
+                }
+            }
+        }
+
+        renderAssignUsersOptions(dept, selectedUserId);
+    } catch(err) {
+        console.error("loadAssignableUsersForWorkflow", err);
+        userSelect.innerHTML = '<option value="">-- Non assigné (Pôle global) --</option>';
+    }
+}
+
+function filterAssignUsersByDept() {
+    const dept = document.getElementById('wf-assign-dept').value;
+    const currentSelected = document.getElementById('wf-assign-user').value;
+    renderAssignUsersOptions(dept, currentSelected);
+}
+
+function renderAssignUsersOptions(dept, selectedUserId) {
+    const userSelect = document.getElementById('wf-assign-user');
+    if (!userSelect) return;
+
+    let html = '<option value="">-- Non assigné (Pôle global) --</option>';
+    if (assignableUsersCache && assignableUsersCache.length > 0) {
+        html += assignableUsersCache.map(u => {
+            const isSel = (selectedUserId && (u.id === selectedUserId || String(u.id) === String(selectedUserId))) ? 'selected' : '';
+            return `<option value="${u.id}" ${isSel}>${escapeHTML(u.name)} (${escapeHTML(u.role || '')})</option>`;
+        }).join('');
+    }
+    userSelect.innerHTML = html;
 }
 
 async function submitWorkflowAssign(e) {
     if (e) e.preventDefault();
     const dept = document.getElementById('wf-assign-dept').value;
+    const userSelect = document.getElementById('wf-assign-user');
+    const assignedUserId = userSelect && userSelect.value ? userSelect.value : null;
     const due = document.getElementById('wf-assign-due').value;
     const notes = document.getElementById('wf-assign-notes').value.trim();
     const errBox = document.getElementById('wf-assign-err');
@@ -178,8 +248,9 @@ async function submitWorkflowAssign(e) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                department: dept,
-                due_date: due ? due + "T00:00:00Z" : null,
+                assigned_department: dept,
+                assigned_user_id: assignedUserId,
+                due_date: due ? due : null,
                 notes: notes
             })
         });
