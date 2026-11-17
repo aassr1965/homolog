@@ -22,7 +22,7 @@ import (
 	"homolog/internal/auth"
 )
 
-// HomologManifest décrit l'inventaire cryptographique et les métadonnées de l'archive .homolog
+// SanadManifest (alias HomologManifest) décrit l'inventaire cryptographique et les métadonnées de l'archive .sanad
 type HomologManifest struct {
 	Version          string            `json:"version"`
 	Format           string            `json:"format"`
@@ -39,7 +39,10 @@ type HomologManifest struct {
 	ArchiveSeal      string            `json:"archive_seal"`
 }
 
-// ExportHomologArchive génère une archive universelle complète et auto-suffisante .homolog (tar.gz)
+// SanadManifest est l'alias officiel du manifeste d'archive universelle Sanad Pharma
+type SanadManifest = HomologManifest
+
+// ExportHomologArchive génère une archive universelle complète et auto-suffisante .sanad (tar.gz)
 func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := GetSessionUser(ctx)
@@ -70,7 +73,7 @@ func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Requ
 	}
 
 	now := time.Now().UTC()
-	archiveFilename := fmt.Sprintf("homolog-archive-%s-%s.homolog", orgSlug, now.Format("20060102-150405"))
+	archiveFilename := fmt.Sprintf("sanad-archive-%s-%s.sanad", orgSlug, now.Format("20060102-150405"))
 
 	// 1. Collecte structurée des données de la base (filtrée strictement par organisation)
 	tablesData, tableCounts, err := h.dumpTablesData(ctx, targetOrgID)
@@ -95,8 +98,8 @@ func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Requ
 
 	// 3. Préparation du manifeste officiel de conformité ALCOA+
 	manifest := HomologManifest{
-		Version:          "0.8.0",
-		Format:           "HOMOLOG_PORTABLE_ARCHIVE_V1",
+		Version:          "1.0.0",
+		Format:           "SANAD_PORTABLE_ARCHIVE_V1",
 		CreatedAt:        now,
 		CreatedByEmail:   user.Email,
 		CreatedByRole:    user.Role,
@@ -118,6 +121,7 @@ func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Requ
 	// 4. Flux de sortie HTTP avec compression Gzip et Tar
 	w.Header().Set("Content-Type", "application/x-gzip")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", archiveFilename))
+	w.Header().Set("X-Sanad-Seal", manifest.ArchiveSeal)
 	w.Header().Set("X-Homolog-Seal", manifest.ArchiveSeal)
 
 	gw := gzip.NewWriter(w)
@@ -156,7 +160,7 @@ func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Requ
 			UserID:         &user.UserID,
 			UserEmail:      user.Email,
 			UserRole:       user.Role,
-			Action:         "SYSTEM_ARCHIVE_EXPORTED_HOMOLOG",
+			Action:         "SYSTEM_ARCHIVE_EXPORTED_SANAD",
 			EntityType:     "ARCHIVE",
 			EntityID:       archiveFilename,
 			IPAddress:      getClientIP(r),
@@ -172,7 +176,7 @@ func (h *SystemHandler) ExportHomologArchive(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-// RestoreHomologArchive réceptionne une archive .homolog, valide son intégrité cryptographique et restaure l'instance
+// RestoreHomologArchive réceptionne une archive .sanad ou .homolog, valide son intégrité cryptographique et restaure l'instance
 func (h *SystemHandler) RestoreHomologArchive(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := GetSessionUser(ctx)
@@ -194,13 +198,14 @@ func (h *SystemHandler) RestoreHomologArchive(w http.ResponseWriter, r *http.Req
 
 	file, header, err := r.FormFile("archive")
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "Le fichier d'archive .homolog est obligatoire")
+		writeJSONError(w, http.StatusBadRequest, "Le fichier d'archive (.sanad ou .homolog) est obligatoire")
 		return
 	}
 	defer file.Close()
 
-	if !strings.HasSuffix(strings.ToLower(header.Filename), ".homolog") && !strings.HasSuffix(strings.ToLower(header.Filename), ".tar.gz") {
-		writeJSONError(w, http.StatusBadRequest, "Format non supporté : le fichier doit porter l'extension .homolog")
+	lowerFilename := strings.ToLower(header.Filename)
+	if !strings.HasSuffix(lowerFilename, ".sanad") && !strings.HasSuffix(lowerFilename, ".homolog") && !strings.HasSuffix(lowerFilename, ".tar.gz") {
+		writeJSONError(w, http.StatusBadRequest, "Format non supporté : le fichier doit porter l'extension .sanad ou .homolog")
 		return
 	}
 
@@ -311,7 +316,7 @@ func (h *SystemHandler) RestoreHomologArchive(w http.ResponseWriter, r *http.Req
 			UserID:         &user.UserID,
 			UserEmail:      user.Email,
 			UserRole:       user.Role,
-			Action:         "SYSTEM_ARCHIVE_RESTORED_HOMOLOG",
+			Action:         "SYSTEM_ARCHIVE_RESTORED_SANAD",
 			EntityType:     "ARCHIVE",
 			EntityID:       header.Filename,
 			IPAddress:      getClientIP(r),
@@ -331,7 +336,7 @@ func (h *SystemHandler) RestoreHomologArchive(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status":          "ok",
-		"message":         "Archive universelle .homolog restaurée avec succès et intégrité 100% vérifiée",
+		"message":         "Archive universelle Sanad Pharma (.sanad) restaurée avec succès et intégrité 100% vérifiée",
 		"tables_restored": len(restoredTables),
 		"blobs_verified":  verifiedBlobsCount,
 		"manifest": map[string]any{

@@ -108,7 +108,7 @@
                             <span>📑 Présentation Complète du Progiciel SANAD</span>
                         </div>
                         <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">
-                            Consultez la présentation exécutive interactive (10 diapositives : architecture souveraine, matrice des 9 rôles BPF et retour sur investissement).
+                            Consultez la présentation exécutive interactive (10 diapositives : architecture souveraine, matrice des 10 rôles BPF et retour sur investissement).
                         </div>
                     </div>
                     <a href="/presentation" target="_blank" class="btn-pill" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#ffffff; font-weight:700; font-size:12px; padding:8px 18px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; border:none; box-shadow:0 4px 12px rgba(2, 132, 199, 0.35); white-space:nowrap;">
@@ -254,7 +254,7 @@
                 <!-- Sélecteur rapide de comptes pour tests & démonstration -->
                 <div class="demo-accounts-box">
                     <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; margin-bottom:4px;">
-                        ⚡ Comptes de test & Matrice des 9 Rôles BPF (Homolog2026!Dev) :
+                        ⚡ Comptes de test & Matrice des 10 Rôles BPF (Homolog2026!Dev) :
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; max-height:180px; overflow-y:auto;">
                         <div class="demo-btn" onclick="fillDemoAccount('pdt@pharma.dz', 'Homolog2026!Dev')">
@@ -280,6 +280,9 @@
                         </div>
                         <div class="demo-btn" onclick="fillDemoAccount('consultant.ext@cro.com', 'Homolog2026!Dev')">
                             <div><strong>🤝 David M.</strong><div style="color:var(--text-dim); font-size:9px;">Consultant Externe CRO</div></div>
+                        </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('api.holder@zhejiang-chem.com', 'Homolog2026!Dev')">
+                            <div><strong>🧪 Dr. Wei Zhang</strong><div style="color:var(--text-dim); font-size:9px;">API Holder (ASMF 3.2.S)</div></div>
                         </div>
                         <div class="demo-btn" onclick="fillDemoAccount('auditeur.insp@anpp.dz', 'Homolog2026!Dev')">
                             <div><strong>🛡️ Inspecteur ANPP</strong><div style="color:var(--text-dim); font-size:9px;">Auditeur Qualité / PSSI</div></div>
@@ -2805,13 +2808,13 @@
         </div>
     </div>
 
-    <!-- Modal Restauration Archive Universelle .homolog (Réversibilité BPF) -->
+    <!-- Modal Restauration Archive Universelle .sanad (Réversibilité BPF) -->
     <div class="modal-overlay" id="modal-restore-homolog" onclick="if(event.target === this) closeModal('modal-restore-homolog')">
         <div class="modal modal-lg" style="width:640px; max-width:min(640px, calc(100vw - 24px));">
             <div class="modal-header">
                 <div class="modal-title">
                     <span style="font-size:16px;">📥</span>
-                    <span>Restauration d'une Archive Universelle (.homolog)</span>
+                    <span>Restauration d'une Archive Universelle (.sanad / .homolog)</span>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-restore-homolog')">✕</button>
             </div>
@@ -2824,8 +2827,8 @@
                     </div>
 
                     <div class="login-field" style="margin-bottom:14px;">
-                        <label for="restore-file-input" style="font-weight:700; margin-bottom:6px; display:block;">Sélectionnez le fichier d'archive universelle (.homolog ou .tar.gz) :</label>
-                        <input type="file" id="restore-file-input" accept=".homolog,.tar.gz" required class="login-input" style="padding:6px; font-size:12px;" />
+                        <label for="restore-file-input" style="font-weight:700; margin-bottom:6px; display:block;">Sélectionnez le fichier d'archive universelle (.sanad, .homolog ou .tar.gz) :</label>
+                        <input type="file" id="restore-file-input" accept=".sanad,.homolog,.tar.gz" required class="login-input" style="padding:6px; font-size:12px;" />
                         <small style="font-size:10px; color:var(--text-dim); display:block; margin-top:4px;">L'archive doit contenir le fichier <code>manifest.json</code> avec un sceau cryptographique valide.</small>
                     </div>
 

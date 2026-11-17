@@ -70,6 +70,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/011_anpp_fee_schedules_and_payment_slips.sql",
 		"migrations/012_anpp_appointments_and_regulatory_watch.sql",
 		"migrations/013_maker_checker_workflow_and_reporting.sql",
+		"migrations/014_api_holder_role_and_branding.sql",
 	}
 
 	for _, file := range migrationFiles {

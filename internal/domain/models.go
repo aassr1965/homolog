@@ -6,19 +6,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserRole defines the 9 strict profiles in the pharmaceutical platform (CDC Section 7.1)
+// UserRole defines the 10 strict profiles in the pharmaceutical platform (CDC Section 7.1)
 type UserRole string
 
 const (
-	RoleSuperAdminEditeur      UserRole = "super_admin_editeur"
-	RoleAdminSystemeLocal      UserRole = "admin_systeme_local"
-	RoleAdminLaboratoire       UserRole = "admin_laboratoire"
-	RoleResponsableAffairesReg UserRole = "responsable_affaires_reglementaires"
-	RoleDirecteurTechnique     UserRole = "directeur_technique"
-	RoleContributeurQualiteBPF UserRole = "contributeur_qualite_bpf"
-	RoleContributeurRDProd     UserRole = "contributeur_rd_production"
-	RoleConsultantExterne      UserRole = "consultant_externe"
-	RoleAuditeurInspecteur     UserRole = "auditeur_inspecteur"
+	RoleSuperAdminEditeur        UserRole = "super_admin_editeur"
+	RoleAdminSystemeLocal        UserRole = "admin_systeme_local"
+	RoleAdminLaboratoire         UserRole = "admin_laboratoire"
+	RoleResponsableAffairesReg   UserRole = "responsable_affaires_reglementaires"
+	RoleDirecteurTechnique       UserRole = "directeur_technique"
+	RoleContributeurQualiteBPF   UserRole = "contributeur_qualite_bpf"
+	RoleContributeurRDProd       UserRole = "contributeur_rd_production"
+	RoleConsultantExterne        UserRole = "consultant_externe"
+	RoleAuditeurInspecteur       UserRole = "auditeur_inspecteur"
+	RolePartenaireFournisseurAPI UserRole = "partenaire_fournisseur_api"
 
 	// Alias de compatibilité
 	RoleContributeurTechnique UserRole = "contributeur_technique"
