@@ -1727,6 +1727,12 @@
                     <select id="attach-ged-doc-select" style="width:100%; padding:8px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         <!-- Rempli dynamiquement -->
                     </select>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                        <span style="font-size:10.5px; color:var(--text-dim);">La pièce n'est pas encore dans la GED ?</span>
+                        <button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:var(--bg-sub); border:1px solid var(--border-color);" onclick="closeModal('modal-attach-ged'); openNewGEDDocModal();">
+                            ➕ Déposer un nouveau document en GED
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Notes de Conformité / Visa Qualité :</label>
@@ -2905,9 +2911,21 @@
                 </div>
                 <div id="wf-checkin-err" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
                 <form onsubmit="submitWorkflowCheckin(event)">
-                    <div class="login-field">
-                        <label for="wf-checkin-summary">Sommaire des modifications apportées (Exigence ALCOA+) :</label>
+                    <div class="login-field" style="margin-bottom:12px;">
+                        <label for="wf-checkin-summary">Sommaire des modifications apportées (Exigence ALCOA+) * :</label>
                         <textarea id="wf-checkin-summary" class="login-input" rows="3" placeholder="Ex: Intégration des résultats de stabilité à 6 mois et validation des limites analytiques." required style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="login-field" style="margin-bottom:12px;">
+                        <label for="wf-checkin-ged-select">Pièce du Coffre-Fort GED à associer à cette révision (Optionnel) :</label>
+                        <select id="wf-checkin-ged-select" class="login-input" style="font-size:11.5px; padding:6px;">
+                            <option value="">-- Conserver la pièce actuelle ou rattacher ultérieurement --</option>
+                        </select>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                            <span style="font-size:10px; color:var(--text-dim);">Fichier non encore déposé ?</span>
+                            <button type="button" class="btn-pill" style="font-size:10px; padding:1px 6px; background:var(--bg-sub); border:1px solid var(--border-color);" onclick="closeModal('modal-workflow-checkin'); openNewGEDDocModal();">
+                                ➕ Déposer en GED
+                            </button>
+                        </div>
                     </div>
                     <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-checkin')">Annuler</button>
@@ -3155,8 +3173,8 @@
     <script src="/js/referential.js?v=2026.11.17.5"></script>
     <script src="/js/variations.js?v=2026.11.17.5"></script>
     <script src="/js/ged.js?v=2026.11.17.5"></script>
-    <script src="/js/dossiers.js?v=2026.11.17.6"></script>
-    <script src="/js/workflow.js?v=2026.11.17.6"></script>
+    <script src="/js/dossiers.js?v=2026.11.17.7"></script>
+    <script src="/js/workflow.js?v=2026.11.17.7"></script>
     <script src="/js/deficiencies.js?v=2026.11.17.5"></script>
     <script src="/js/fees.js?v=2026.11.17.5"></script>
     <script src="/js/submissions.js?v=2026.11.17.5"></script>
