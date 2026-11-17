@@ -101,7 +101,7 @@ async function submitWorkflowCheckout(e) {
 // ----------------------------------------------------------------------------
 // Check-in (Restitution et incrément de révision)
 // ----------------------------------------------------------------------------
-function openCheckinModal(dossierId, itemId, itemCode, currentRev) {
+async function openCheckinModal(dossierId, itemId, itemCode, currentRev) {
     currentWfDossierId = dossierId;
     currentWfItemId = itemId;
 
@@ -112,6 +112,24 @@ function openCheckinModal(dossierId, itemId, itemCode, currentRev) {
     document.getElementById('wf-checkin-rev').textContent = currentRev || 'v0.1';
     document.getElementById('wf-checkin-summary').value = '';
     document.getElementById('wf-checkin-err').style.display = 'none';
+
+    const gedSelect = document.getElementById('wf-checkin-ged-select');
+    if (gedSelect) {
+        gedSelect.innerHTML = '<option value="">-- Conserver la pièce actuelle ou rattacher ultérieurement --</option>';
+        try {
+            const res = await fetch('/api/v1/ged/documents?limit=100');
+            if (res.ok) {
+                const data = await res.json();
+                const docs = data.documents || data.items || [];
+                docs.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = `[${d.document_code || 'GED'}] ${d.title_fr} (${d.current_version || 'v1.0'})`;
+                    gedSelect.appendChild(opt);
+                });
+            }
+        } catch (_) {}
+    }
 
     openModal('modal-workflow-checkin');
 }
@@ -127,11 +145,20 @@ async function submitWorkflowCheckin(e) {
         return;
     }
 
+    const gedDocId = document.getElementById('wf-checkin-ged-select') ? document.getElementById('wf-checkin-ged-select').value : null;
+    const payload = {
+        revision_summary: summary,
+        comment: summary
+    };
+    if (gedDocId) {
+        payload.ged_document_id = gedDocId;
+    }
+
     try {
         const resp = await fetch(`/api/v1/dossiers/${currentWfDossierId}/items/${currentWfItemId}/checkin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ revision_summary: summary })
+            body: JSON.stringify(payload)
         });
         const data = await resp.json();
         if (!resp.ok) {

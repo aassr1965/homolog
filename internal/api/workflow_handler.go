@@ -116,13 +116,17 @@ func (h *WorkflowHandler) CheckinSection(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req struct {
-		Content       *string    `json:"content"`
-		GEDDocumentID *uuid.UUID `json:"ged_document_id"`
-		Comment       string     `json:"comment"`
+		Content         *string    `json:"content"`
+		GEDDocumentID   *uuid.UUID `json:"ged_document_id"`
+		Comment         string     `json:"comment"`
+		RevisionSummary string     `json:"revision_summary"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Corps de requête invalide")
 		return
+	}
+	if strings.TrimSpace(req.Comment) == "" && strings.TrimSpace(req.RevisionSummary) != "" {
+		req.Comment = strings.TrimSpace(req.RevisionSummary)
 	}
 	if strings.TrimSpace(req.Comment) == "" {
 		req.Comment = "Mise à jour de la documentation"
