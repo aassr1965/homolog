@@ -29,7 +29,7 @@ function renderSystemTree() {
         <div class="tree-node ${currentSystemSection === 'reversibility' ? 'selected' : ''}" onclick="loadSystemSection('reversibility')">
             <span class="chevron">📦</span>
             <span>Souveraineté &amp; Réversibilité</span>
-            <span class="count-badge ok">.homolog</span>
+            <span class="count-badge ok">.sanad</span>
         </div>
         <div class="tree-node ${currentSystemSection === 'sessions' ? 'selected' : ''}" onclick="loadSystemSection('sessions')">
             <span class="chevron">🔒</span>
@@ -71,7 +71,7 @@ async function loadSystemSection(section) {
         loadSystemStorage();
     } else if (currentSystemSection === 'reversibility') {
         if (prodEl) prodEl.innerText = "Souveraineté & Réversibilité";
-        if (modEl) modEl.innerText = "Archive Universelle .homolog";
+        if (modEl) modEl.innerText = "Archive Universelle .sanad";
         loadSystemReversibility();
     } else if (currentSystemSection === 'sessions') {
         if (prodEl) prodEl.innerText = "Sécurité Accès";
@@ -156,7 +156,7 @@ function renderSystemDashboard(data) {
         },
         {
             comp: "🖥️ Serveur Go",
-            label: "Processus & Runtime Homolog",
+            label: "Processus & Runtime Sanad Pharma",
             val: `OS: ${s.operating_system || ''} | Goroutines: ${s.num_goroutines || 0} | RAM: ${(s.mem_alloc_mb || 0).toFixed(1)} Mo / ${(s.mem_sys_mb || 0).toFixed(1)} Mo Sys`,
             status: `<span class="status-tag status-ok">UPTIME ${Math.floor((s.uptime_seconds || 0)/60)}m 🟢</span>`,
             action: `<button class="btn-pill" style="font-size:10px; padding:2px 8px; border-color:#0284c7; color:#0284c7;" onclick="loadSystemMetrics()">🔄 Rafraîchir</button>`,
@@ -277,7 +277,7 @@ function renderSystemDetailPane(key, data) {
         const s = data.server || {};
         contentHtml = `
             <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
-                DIAGNOSTIC PROCESSUS HOMOLOG (RUNTIME GO)
+                DIAGNOSTIC PROCESSUS SANAD PHARMA (RUNTIME GO)
             </div>
             <div style="font-size:11px; line-height:1.7;">
                 <strong>Version binaire :</strong> <code>v0.7.0 (Production Ready)</code><br>
@@ -296,7 +296,7 @@ function renderSystemDetailPane(key, data) {
         <div class="pdf-sim-page">
             <div class="pdf-sim-header">
                 RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE<br>
-                PLATEFORME PHARMACEUTIQUE SOUTERRAINE HOMOLOG — AUDIT TECHNIQUE IT
+                PLATEFORME PHARMACEUTIQUE SANAD PHARMA — AUDIT TECHNIQUE IT
             </div>
             ${contentHtml}
         </div>
@@ -593,7 +593,7 @@ function renderReversibilityDetailPane(key) {
                 MANIFESTE DE SOUVERAINETÉ (MANIFEST.JSON)
             </div>
             <div style="font-size:11px; line-height:1.7;">
-                <strong>Format conteneur :</strong> <code>HOMOLOG_PORTABLE_ARCHIVE_V1</code><br>
+                <strong>Format conteneur :</strong> <code>SANAD_PORTABLE_ARCHIVE_V1</code><br>
                 <strong>Encapsulation :</strong> Flux tar.gz universel, lisible par n'importe quel outil standard (tar, gzip, python, Go)<br>
                 <strong>Sceau d'archive :</strong> Empreinte SHA-256 calculée sur l'intégralité du contenu relationnel et binaire<br>
                 <strong>Horodatage opposable :</strong> Norme ISO 8601 UTC avec signature de l'auteur légal BPF<br>
@@ -601,7 +601,7 @@ function renderReversibilityDetailPane(key) {
             </div>
             <div style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
                 <button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none; padding:8px; font-weight:700;" onclick="exportHomologArchive()">
-                    📦 Télécharger l'Archive Universelle .homolog
+                    📦 Télécharger l'Archive Universelle .sanad
                 </button>
             </div>
         `;
@@ -622,7 +622,7 @@ function renderReversibilityDetailPane(key) {
             </div>
             <div style="margin-top:14px;">
                 <button class="btn-pill" style="width:100%; background:var(--accent-blue); color:white; border:none; padding:8px; font-weight:700;" onclick="openRestoreHomologModal()">
-                    📥 Restaurer une Archive Universelle .homolog
+                    📥 Restaurer une Archive Universelle (.sanad / .homolog)
                 </button>
             </div>
         `;
@@ -639,7 +639,7 @@ function renderReversibilityDetailPane(key) {
             </div>
             <div style="margin-top:14px;">
                 <button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none; padding:8px; font-weight:700;" onclick="exportHomologArchive()">
-                    📦 Télécharger l'Archive Universelle .homolog
+                    📦 Télécharger l'Archive Universelle .sanad
                 </button>
             </div>
         `;
@@ -649,11 +649,11 @@ function renderReversibilityDetailPane(key) {
                 GARANTIE SOUVERAINE DE RÉVERSIBILITÉ BPF
             </div>
             <div style="font-size:11px; line-height:1.7;">
-                <strong>Pourquoi le format .homolog ?</strong><br>
+                <strong>Pourquoi le format universel .sanad ?</strong><br>
                 Dans l'industrie pharmaceutique, la dépendance à un éditeur logiciel (vendor lock-in) représente un risque critique pour l'homologation des médicaments.<br><br>
                 <strong>Notre engagement éthique &amp; réglementaire :</strong><br>
                 1. Vos dossiers d'enregistrement vous appartiennent à 100%.<br>
-                2. L'archive <code>.homolog</code> peut être restaurée sur n'importe quel serveur On-Premise ou instance Cloud sans licence restrictive.<br>
+                2. L'archive <code>.sanad</code> (ou <code>.homolog</code>) peut être restaurée sur n'importe quel serveur On-Premise ou instance Cloud sans licence restrictive.<br>
                 3. Les visas électroniques du Pharmacien DT (21 CFR Part 11) et les traces ALCOA+ restent vérifiables en toute circonstance.
             </div>
         `;
@@ -663,17 +663,17 @@ function renderReversibilityDetailPane(key) {
         <div class="pdf-sim-page">
             <div class="pdf-sim-header">
                 RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE<br>
-                HOMOLOG PHARMA — SOUVERAINETÉ NUMÉRIQUE &amp; RÉVERSIBILITÉ BPF
+                SANAD PHARMA — SOUVERAINETÉ NUMÉRIQUE &amp; RÉVERSIBILITÉ BPF
             </div>
             ${contentHtml}
         </div>
     `;
 }
 
-// Déclenchement de l'exportation .homolog
+// Déclenchement de l'exportation .sanad (Sanad Pharma)
 async function exportHomologArchive() {
     showNotifyModal(
-        "Génération de l'Archive Universelle .homolog",
+        "Génération de l'Archive Universelle .sanad",
         "Exportation des 17 tables relationnelles, collecte des blobs du coffre-fort CAS et calcul du sceau SHA-256 en cours...",
         "📦",
         "Veuillez patienter"
@@ -688,9 +688,9 @@ async function exportHomologArchive() {
             return;
         }
 
-        const seal = response.headers.get("X-Homolog-Seal") || "N/A";
+        const seal = response.headers.get("X-Sanad-Seal") || response.headers.get("X-Homolog-Seal") || "N/A";
         const disposition = response.headers.get("Content-Disposition");
-        let filename = "homolog_backup.homolog";
+        let filename = "sanad_backup.sanad";
         if (disposition && disposition.indexOf("filename=") !== -1) {
             const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
             if (matches != null && matches[1]) { 
@@ -710,7 +710,7 @@ async function exportHomologArchive() {
         a.remove();
 
         showNotifyModal(
-            "Archive Universelle .homolog Générée &amp; Scellée",
+            "Archive Universelle .sanad Générée &amp; Scellée",
             `<div style="font-size:11px; line-height:1.6;">
                 <strong>Fichier téléchargé :</strong> <code>${escapeAdminHtml(filename)}</code><br>
                 <strong>Taille :</strong> <code>${(blob.size / 1024 / 1024).toFixed(2)} Mo</code> (${blob.size.toLocaleString()} octets)<br>
@@ -750,7 +750,7 @@ async function submitRestoreHomolog(e) {
     e.preventDefault();
     const fileInput = document.getElementById("restore-file-input");
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        alert("Veuillez sélectionner un fichier .homolog.");
+        alert("Veuillez sélectionner un fichier d'archive .sanad ou .homolog.");
         return;
     }
 
@@ -806,7 +806,7 @@ async function submitRestoreHomolog(e) {
             resultBox.innerHTML = `
                 <div style="background:rgba(16,185,129,0.12); border:1px solid var(--accent-emerald); border-radius:4px; padding:10px; color:var(--accent-emerald);">
                     <strong style="font-size:12px;">✓ Restauration certifiée 100% conforme !</strong><br>
-                    • Format : <code>${escapeAdminHtml((data.manifest && data.manifest.format) || 'HOMOLOG_PORTABLE_ARCHIVE_V1')}</code><br>
+                    • Format : <code>${escapeAdminHtml((data.manifest && data.manifest.format) || 'SANAD_PORTABLE_ARCHIVE_V1')}</code><br>
                     • Tables relationnelles restaurées : <strong>${data.tables_restored || 0}</strong><br>
                     • Documents CAS vérifiés et restaurés : <strong>${data.blobs_restored || 0}</strong><br>
                     • Sceau d'archive SHA-256 : <code style="word-break:break-all; font-size:10px;">${escapeAdminHtml((data.manifest && data.manifest.archive_seal) || '')}</code>
