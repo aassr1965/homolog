@@ -263,8 +263,11 @@ async function submitWorkflowAssign(e) {
 
         closeModal('modal-workflow-assign');
         showToast("👥 Section assignée avec succès au pôle métier.", "success");
-        if (typeof loadDossierDetail === 'function') {
-            await loadDossierDetail(currentWfDossierId);
+        if (typeof selectDossier === 'function') {
+            await selectDossier(currentWfDossierId);
+            if (typeof selectDossierItem === 'function' && currentWfItemId) {
+                selectDossierItem(currentWfItemId);
+            }
         }
     } catch (err) {
         errBox.textContent = err.message || "Erreur réseau";

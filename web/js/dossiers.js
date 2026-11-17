@@ -988,6 +988,8 @@
                                     <span style="font-weight:700; color:var(--text-main); font-size:12px;">${displayTitleFR}</span>
                                     ${securityPill}
                                     ${deptPill}
+                                    ${it.assigned_user_name ? `<span style="font-size:10px; color:var(--text-main); background:var(--bg-sub); padding:1px 6px; border-radius:3px; border:1px solid var(--border-color); font-weight:600;" title="Rédacteur assigné">👤 ${escapeHTML(it.assigned_user_name)}</span>` : ''}
+                                    ${it.due_date ? `<span style="font-size:9.5px; color:var(--text-dim); font-family:monospace;" title="Date d'échéance">📅 ${it.due_date.substring(0, 10)}</span>` : ''}
                                 </div>
                                 ${(!isMasked && it.title_ar) ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
                                 ${displayDescFR ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${displayDescFR}</div>` : ''}
@@ -1095,6 +1097,30 @@
             if (item.requirement_level === 'E') reqDesc = "Exigé [E] : La pièce doit être obligatoirement présente dans le dossier sous peine de rejet d'irrecevabilité.";
             else if (item.requirement_level === 'F') reqDesc = "Facultatif [F] : L'Agence Nationale des Produits Pharmaceutiques peut exiger cette pièce à tout moment en cours d'évaluation.";
             else if (item.requirement_level === 'P') reqDesc = "Partiel [P] : Requis selon les caractéristiques du produit (ex: étude bioéquivalence ou justification biowaiver).";
+
+            const assignmentHeaderHTML = `
+                <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; gap:8px;">
+                        <div>
+                            <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">[${escapeHTML(item.item_code)}]</span>
+                            <strong style="color:var(--text-main); font-size:12.5px; margin-left:4px;">${escapeHTML(item.title_fr)}</strong>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            ${typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(item.workflow_status) : ''}
+                            ${typeof formatDepartmentBadge === 'function' ? formatDepartmentBadge(item.assigned_department) : ''}
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; padding-top:6px; border-top:1px dashed var(--border-color); flex-wrap:wrap; gap:6px;">
+                        <div>
+                            ${item.assigned_user_name ? `<span style="font-weight:700; color:var(--text-main); background:var(--bg-sub); padding:2px 8px; border-radius:3px; border:1px solid var(--border-color);">👤 Rédacteur : ${escapeHTML(item.assigned_user_name)}</span>` : `<span style="color:var(--text-dim); font-style:italic;">👤 Aucun rédacteur désigné</span>`}
+                            ${item.due_date ? `<span style="margin-left:8px; color:var(--text-muted);">📅 Échéance : <strong>${item.due_date.substring(0, 10)}</strong></span>` : ''}
+                        </div>
+                        <button class="btn-pill" style="font-size:10.5px; padding:2px 8px;" onclick="openAssignModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.assigned_department}', '${item.due_date || ''}', '${item.assigned_user_id || ''}')">
+                            👥 Modifier l'Assignation
+                        </button>
+                    </div>
+                </div>
+            `;
 
             const isLocked = currentDossierDetail && currentDossierDetail.is_locked_for_deposit;
 
@@ -1224,6 +1250,7 @@
                     const doc = item.ged_document;
                     preview.innerHTML = `
                         <div class="pdf-sim-page">
+                            ${assignmentHeaderHTML}
                             <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
                                 <span>📄 Pièce GED Certifiée — [${escapeHTML(item.item_code)}]</span>
                                 <span class="status-tag status-ok">COFFRE-FORT SÉCURISÉ</span>
@@ -1283,27 +1310,30 @@
                 } else {
                     // Aucune pièce rattachée
                     preview.innerHTML = `
-                        <div class="pdf-sim-page" style="text-align:center; display:flex; flex-direction:column; justify-content:center; padding:30px 20px;">
-                            <div style="font-size:36px; margin-bottom:12px;">📁</div>
-                            <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:6px;">
-                                Aucune Pièce GED Rattachée
-                            </div>
-                            <div style="font-size:11.5px; color:var(--text-muted); font-weight:500; line-height:1.5; margin-bottom:16px;">
-                                L'exigence réglementaire <strong>${item.item_code}</strong> est actuellement vacante dans le coffre-fort CTD.
-                            </div>
-                            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
-                                <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:700;" 
-                                        onclick="openAttachGEDModal('${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}', '${item.requirement_level}')"
-                                        ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
-                                    📎 Rattacher une Pièce du Coffre-Fort GED
-                                </button>
-                                <button class="btn-pill" style="background:var(--bg-sub); border:1px solid var(--border-color); padding:8px 14px; font-size:11.5px; font-weight:700;" 
-                                        onclick="switchPreviewSubTab('wf')">
-                                    🛠️ Ouvrir l'Atelier BPF &amp; Assigner (👥)
-                                </button>
-                            </div>
-                            <div style="font-size:11px; color:var(--text-dim); font-weight:600;">
-                                Consultez l'onglet <strong>🛠️ Atelier BPF</strong> pour l'assignation et le workflow de rédaction, ou <strong>📋 Fiche ANPP</strong> pour les textes applicables.
+                        <div class="pdf-sim-page">
+                            ${assignmentHeaderHTML}
+                            <div style="text-align:center; display:flex; flex-direction:column; justify-content:center; padding:20px 20px;">
+                                <div style="font-size:36px; margin-bottom:12px;">📁</div>
+                                <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:6px;">
+                                    Aucune Pièce GED Rattachée
+                                </div>
+                                <div style="font-size:11.5px; color:var(--text-muted); font-weight:500; line-height:1.5; margin-bottom:16px;">
+                                    L'exigence réglementaire <strong>${item.item_code}</strong> est actuellement vacante dans le coffre-fort CTD.
+                                </div>
+                                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+                                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:700;" 
+                                            onclick="openAttachGEDModal('${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}', '${item.requirement_level}')"
+                                            ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                        📎 Rattacher une Pièce du Coffre-Fort GED
+                                    </button>
+                                    <button class="btn-pill" style="background:var(--bg-sub); border:1px solid var(--border-color); padding:8px 14px; font-size:11.5px; font-weight:700;" 
+                                            onclick="switchPreviewSubTab('wf')">
+                                        🛠️ Ouvrir l'Atelier BPF &amp; Assigner (👥)
+                                    </button>
+                                </div>
+                                <div style="font-size:11px; color:var(--text-dim); font-weight:600;">
+                                    Consultez l'onglet <strong>🛠️ Atelier BPF</strong> pour l'assignation et le workflow de rédaction, ou <strong>📋 Fiche ANPP</strong> pour les textes applicables.
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1312,6 +1342,7 @@
                 // ONGLET 2 : Fiche Réglementaire ANPP
                 preview.innerHTML = `
                     <div class="pdf-sim-page">
+                        ${assignmentHeaderHTML}
                         <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
                             <span>Exigence ANPP — [${escapeHTML(item.item_code)}]</span>
                             <span class="badge-req-e">${reqDesc.startsWith('Exigé') ? '[E] OBLIGATOIRE' : (reqDesc.startsWith('Facultatif') ? '[F] FACULTATIF' : '[P] PARTIEL')}</span>
