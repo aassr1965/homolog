@@ -874,8 +874,8 @@
                             const revBadge = typeof formatRevisionBadge === 'function' ? formatRevisionBadge(it.current_revision, it.workflow_status === 'approved_sealed') : '';
                             let lockIndicator = '';
                             if (it.is_locked) {
-                                const lockerName = it.locked_by ? (it.locked_by.first_name + ' ' + it.locked_by.last_name) : 'Rédacteur';
-                                lockIndicator = `<div style="margin-top:2px;"><span class="lock-pill" title="Verrouillé par ${escapeHTML(lockerName)} : ${escapeHTML(it.lock_reason || '')}">🔒 ${escapeHTML(it.locked_by ? it.locked_by.last_name : 'En cours')}</span></div>`;
+                                const lockerName = it.locked_by_name || (typeof it.locked_by === 'object' && it.locked_by ? (it.locked_by.first_name + ' ' + it.locked_by.last_name) : (it.assigned_user_name || 'Rédacteur'));
+                                lockIndicator = `<div style="margin-top:2px;"><span class="lock-pill" title="Verrouillé par ${escapeHTML(lockerName)} : ${escapeHTML(it.lock_reason || '')}">🔒 ${escapeHTML(lockerName)}</span></div>`;
                             }
                             statusBadge = `
                                 <div style="display:flex; flex-direction:column; gap:2px;">
@@ -1098,6 +1098,12 @@
             else if (item.requirement_level === 'F') reqDesc = "Facultatif [F] : L'Agence Nationale des Produits Pharmaceutiques peut exiger cette pièce à tout moment en cours d'évaluation.";
             else if (item.requirement_level === 'P') reqDesc = "Partiel [P] : Requis selon les caractéristiques du produit (ex: étude bioéquivalence ou justification biowaiver).";
 
+            const lockPillHTML = item.is_locked ? `
+                <span class="status-tag status-rej" style="font-size:10px; padding:2px 6px;" title="Verrouillé par ${escapeHTML(item.locked_by_name || 'Rédacteur')} : ${escapeHTML(item.lock_reason || '')}">
+                    🔒 ${escapeHTML(item.locked_by_name || 'Verrouillé en cours')}
+                </span>
+            ` : '';
+
             const assignmentHeaderHTML = `
                 <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; margin-bottom:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; gap:8px;">
@@ -1108,6 +1114,7 @@
                         <div style="display:flex; gap:6px; align-items:center;">
                             ${typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(item.workflow_status) : ''}
                             ${typeof formatDepartmentBadge === 'function' ? formatDepartmentBadge(item.assigned_department) : ''}
+                            ${lockPillHTML}
                         </div>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; padding-top:6px; border-top:1px dashed var(--border-color); flex-wrap:wrap; gap:6px;">
@@ -1135,7 +1142,7 @@
                     { id: 'approved_sealed', label: '5. Scellé v1.0', icon: '🛡️' }
                 ];
                 const curIdx = wfSteps.findIndex(s => s.id === item.workflow_status);
-                const lockerName = item.locked_by ? (item.locked_by.first_name + ' ' + item.locked_by.last_name) : 'Non verrouillé';
+                const lockerName = item.locked_by_name || (typeof item.locked_by === 'object' && item.locked_by ? (item.locked_by.first_name + ' ' + item.locked_by.last_name) : (item.assigned_user_name || (item.locked_by ? 'Rédacteur en cours' : 'Non verrouillé')));
 
                 preview.innerHTML = `
                     <div class="pdf-sim-page">

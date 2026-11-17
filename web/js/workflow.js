@@ -85,6 +85,7 @@ async function submitWorkflowCheckout(e) {
 
         closeModal('modal-workflow-checkout');
         showToast("🔒 Section verrouillée avec succès en Check-out pour édition.", "success");
+        if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
             await selectDossier(currentWfDossierId);
             if (typeof selectDossierItem === 'function' && currentWfItemId) {
@@ -141,6 +142,7 @@ async function submitWorkflowCheckin(e) {
 
         closeModal('modal-workflow-checkin');
         showToast(`🔓 Check-in validé. Nouvelle révision : ${data.new_revision}`, "success");
+        if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
             await selectDossier(currentWfDossierId);
             if (typeof selectDossierItem === 'function' && currentWfItemId) {
@@ -269,6 +271,7 @@ async function submitWorkflowAssign(e) {
 
         closeModal('modal-workflow-assign');
         showToast("👥 Section assignée avec succès au pôle métier.", "success");
+        if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
             await selectDossier(currentWfDossierId);
             if (typeof selectDossierItem === 'function' && currentWfItemId) {
@@ -302,6 +305,7 @@ async function submitItemForReview(dossierId, itemId, itemCode) {
         }
 
         showToast("📤 Section soumise avec succès pour revue Qualité (Checker).", "success");
+        if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
             await selectDossier(dossierId);
             if (typeof selectDossierItem === 'function' && itemId) {
@@ -373,6 +377,7 @@ async function submitWorkflowReviewDecision(decision) {
             showToast("↩️ Relecture défavorable : section renvoyée au Maker pour corrections.", "info");
         }
 
+        if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
             await selectDossier(currentWfDossierId);
             if (typeof selectDossierItem === 'function' && currentWfItemId) {
@@ -435,6 +440,7 @@ async function submitWorkflowPdtApproval(e) {
         closeModal('modal-workflow-pdt-seal');
         showToast(`✍️ Section approuvée et scellée v1.0 avec empreinte SHA-256 : ${data.signature_seal ? data.signature_seal.substring(0, 16) + '...' : ''}`, "success");
 
+        if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
             await selectDossier(currentWfDossierId);
             if (typeof selectDossierItem === 'function' && currentWfItemId) {
