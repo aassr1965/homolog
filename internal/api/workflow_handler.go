@@ -310,22 +310,28 @@ func (h *WorkflowHandler) ReviewDecision(w http.ResponseWriter, r *http.Request)
 	var req struct {
 		Decision string `json:"decision"` // "approved" ou "rejected"
 		Notes    string `json:"notes"`
+		Comments string `json:"comments"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Corps de requête invalide")
 		return
 	}
 
+	notesFinal := strings.TrimSpace(req.Notes)
+	if notesFinal == "" {
+		notesFinal = strings.TrimSpace(req.Comments)
+	}
+
 	if req.Decision != "approved" && req.Decision != "rejected" {
 		writeJSONError(w, http.StatusBadRequest, "Décision invalide (valeurs attendues : approved ou rejected)")
 		return
 	}
-	if strings.TrimSpace(req.Notes) == "" {
+	if notesFinal == "" {
 		writeJSONError(w, http.StatusBadRequest, "Un motif de revue qualité est obligatoire (ALCOA+)")
 		return
 	}
 
-	item, err := h.workflowRepo.ReviewItem(r.Context(), itemID, user.UserID, user.Role, req.Decision, req.Notes)
+	item, err := h.workflowRepo.ReviewItem(r.Context(), itemID, user.UserID, user.Role, req.Decision, notesFinal)
 	if err != nil {
 		if errors.Is(err, repository.ErrSelfReviewNotAllowed) {
 			writeJSONError(w, http.StatusForbidden, "Ségrégation des fonctions BPF : Le rédacteur ne peut pas valider ou rejeter son propre document")

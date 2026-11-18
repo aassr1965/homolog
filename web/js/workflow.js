@@ -359,11 +359,49 @@ function openReviewDecisionModal(dossierId, itemId, itemCode, title) {
     currentWfDossierId = dossierId;
     currentWfItemId = itemId;
 
+    // Résolution robuste de l'item depuis currentDossierDetail
+    let itemObj = null;
+    if (typeof currentDossierDetail === 'object' && currentDossierDetail && Array.isArray(currentDossierDetail.checklist)) {
+        itemObj = currentDossierDetail.checklist.find(i => i.id === itemId);
+    }
+    if (itemObj) {
+        if (!itemCode) itemCode = itemObj.item_code;
+        if (!title) title = itemObj.title_fr;
+    }
+
+    // Garde-fou BPF côté client : Ségrégation des Fonctions (Maker ≠ Checker)
+    const user = (typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : window.currentUser);
+    if (user && itemObj && itemObj.maker_user_id && itemObj.maker_user_id === user.id) {
+        if (typeof showNotifyModal === 'function') {
+            showNotifyModal(
+                "Ségrégation des Fonctions (BPF / ALCOA+)",
+                `<div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="color:var(--accent-amber); font-weight:700; font-size:13px;">
+                        ⚖️ Règle du Double Regard Obligatoire (Maker ≠ Checker)
+                    </div>
+                    <div style="font-size:12px; line-height:1.5; color:var(--text-main);">
+                        Vous êtes enregistré comme le <strong>Rédacteur (Maker)</strong> de la section <code>[${escapeHTML(itemCode || '')}]</code>.
+                    </div>
+                    <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:10px; font-size:11.5px; color:var(--text-muted); line-height:1.4;">
+                        Conformément à l'Annexe 11 des BPF et au 21 CFR Part 11, un contributeur ne peut en aucun cas relire, valider ou approuver son propre document.<br><br>
+                        👉 Cette revue contradictoire doit être effectuée par un vérificateur indépendant (ex: <strong>Responsable Assurance Qualité</strong> ou pair technique).
+                    </div>
+                    <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+                        <em>💡 Astuce de test : Utilisez le commutateur de rôle <strong>(Dev-Switcher en haut à droite)</strong> pour basculer sur un profil indépendant tel que 'Responsable AQ' ou 'Pharmacien Directeur Technique'.</em>
+                    </div>
+                </div>`,
+                "⚖️",
+                "Compris"
+            );
+            return;
+        }
+    }
+
     const modal = document.getElementById('modal-workflow-review-decision');
     if (!modal) return;
 
-    document.getElementById('wf-review-code').textContent = itemCode;
-    document.getElementById('wf-review-title').textContent = title;
+    document.getElementById('wf-review-code').textContent = itemCode || '';
+    document.getElementById('wf-review-title').textContent = title || '';
     document.getElementById('wf-review-comments').value = '';
     document.getElementById('wf-review-actions').value = '';
     document.getElementById('wf-review-err').style.display = 'none';
@@ -394,6 +432,7 @@ async function submitWorkflowReviewDecision(decision) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 decision: decision,
+                notes: comments,
                 comments: comments,
                 required_actions: reqActions
             })
@@ -402,6 +441,9 @@ async function submitWorkflowReviewDecision(decision) {
         if (!resp.ok) {
             errBox.textContent = data.message || "Erreur lors de l'enregistrement de la décision";
             errBox.style.display = 'block';
+            if (resp.status === 403 && typeof showNotifyModal === 'function') {
+                showNotifyModal("Action Non Autorisée (SoD)", data.message, "🚫", "Fermer");
+            }
             return;
         }
 
@@ -432,11 +474,20 @@ function openPdtSealModal(dossierId, itemId, itemCode, title) {
     currentWfDossierId = dossierId;
     currentWfItemId = itemId;
 
+    let itemObj = null;
+    if (typeof currentDossierDetail === 'object' && currentDossierDetail && Array.isArray(currentDossierDetail.checklist)) {
+        itemObj = currentDossierDetail.checklist.find(i => i.id === itemId);
+    }
+    if (itemObj) {
+        if (!itemCode) itemCode = itemObj.item_code;
+        if (!title) title = itemObj.title_fr;
+    }
+
     const modal = document.getElementById('modal-workflow-pdt-seal');
     if (!modal) return;
 
-    document.getElementById('wf-pdt-code').textContent = itemCode;
-    document.getElementById('wf-pdt-title').textContent = title;
+    document.getElementById('wf-pdt-code').textContent = itemCode || '';
+    document.getElementById('wf-pdt-title').textContent = title || '';
     document.getElementById('wf-pdt-totp').value = '';
     document.getElementById('wf-pdt-solemn-check').checked = false;
     document.getElementById('wf-pdt-err').style.display = 'none';
