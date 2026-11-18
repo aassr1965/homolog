@@ -37,10 +37,10 @@
             const role = user.role || '';
             const userId = user.id || null;
             let depts = [];
-            if (role === 'contributeur_qualite_bpf') depts = ['ASSURANCE_QUALITE', 'CONTROLE_QUALITE'];
-            else if (role === 'responsable_affaires_reglementaires') depts = ['AFFAIRES_REGLEMENTAIRES', 'DIRECTION_TECHNIQUE'];
-            else if (role === 'contributeur_rd_production') depts = ['PRODUCTION_RD'];
-            else if (role === 'directeur_technique') depts = ['DIRECTION_TECHNIQUE', 'AFFAIRES_REGLEMENTAIRES', 'ASSURANCE_QUALITE'];
+            if (role === 'contributeur_qualite_bpf') depts = ['QC', 'QA', 'QUALITE', 'ASSURANCE_QUALITE', 'CONTROLE_QUALITE'];
+            else if (role === 'responsable_affaires_reglementaires') depts = ['RA', 'REG', 'AFFAIRES_REGLEMENTAIRES', 'DIRECTION_TECHNIQUE', 'DT'];
+            else if (role === 'contributeur_rd_production') depts = ['RD', 'PROD', 'PRODUCTION', 'PRODUCTION_RD'];
+            else if (role === 'directeur_technique') depts = ['DT', 'DIRECTION_TECHNIQUE', 'RA', 'AFFAIRES_REGLEMENTAIRES', 'QA', 'QC'];
             return { role, depts, isDT: role === 'directeur_technique', userId, user };
         }
 
@@ -53,9 +53,13 @@
                 if (it.locked_by && uid && it.locked_by === uid) return true;
                 if (it.locked_by_name && uLastName && it.locked_by_name.toLowerCase().includes(uLastName)) return true;
             }
-            // 2. Assigné spécifiquement à cet utilisateur
-            if (it.assigned_user_id && uid && it.assigned_user_id === uid && it.workflow_status !== 'approved_sealed') {
-                return true;
+            // 2. Assigné spécifiquement à cet utilisateur OU assigné au pôle global de l'utilisateur (sans rédacteur désigné, à prendre en charge)
+            if (it.workflow_status !== 'approved_sealed') {
+                if (it.assigned_user_id && uid && it.assigned_user_id === uid) return true;
+                // Si la tâche est confiée au pôle globalement et non encore prise par un tiers : action pour les membres du pôle
+                if (!it.assigned_user_id && isItemUserDept(it, userCtx) && !it.is_locked) {
+                    return true;
+                }
             }
             // 3. Directeur Technique : visas/signatures à apposer
             if (userCtx.isDT) {
@@ -74,10 +78,16 @@
         function isItemUserDept(it, userCtx) {
             if (!userCtx || !userCtx.user) return true;
             if (userCtx.isDT) return true;
-            if (it.assigned_department && userCtx.depts && userCtx.depts.includes(it.assigned_department)) return true;
-            if (userCtx.role === 'contributeur_qualite_bpf' && it.module_number === 3) return true;
-            if (userCtx.role === 'responsable_affaires_reglementaires' && (it.module_number === 1 || it.module_number === 2)) return true;
-            if (userCtx.role === 'contributeur_rd_production' && it.module_number === 3) return true;
+            const d = (it.assigned_department || '').toUpperCase().trim();
+            if (d && userCtx.depts) {
+                if (userCtx.depts.includes(d)) return true;
+                if (d === 'RA' && userCtx.depts.some(x => x.includes('REG') || x === 'RA')) return true;
+                if ((d === 'QC' || d === 'QA') && userCtx.depts.some(x => x.includes('QUAL') || x === 'QC' || x === 'QA')) return true;
+                if ((d === 'RD' || d === 'PROD') && userCtx.depts.some(x => x === 'RD' || x === 'PROD')) return true;
+            }
+            if (userCtx.role === 'contributeur_qualite_bpf' && (it.module_number === 3 || d === 'QC' || d === 'QA')) return true;
+            if (userCtx.role === 'responsable_affaires_reglementaires' && (it.module_number === 1 || it.module_number === 2 || d === 'RA')) return true;
+            if (userCtx.role === 'contributeur_rd_production' && (it.module_number === 3 || d === 'PROD' || d === 'RD')) return true;
             return false;
         }
 
