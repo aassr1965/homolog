@@ -868,10 +868,6 @@ async function loadReportView(reportCode) {
         frameContainer.innerHTML = `<div style="color:var(--accent-red); padding:20px;">${err.message || 'Erreur'}</div>`;
     }
 }
-    } catch (err) {
-        frameContainer.innerHTML = `<div style="color:var(--accent-red); padding:20px;">${err.message || 'Erreur'}</div>`;
-    }
-}
 
 function printActiveReport() {
     const iframe = document.getElementById('report-active-iframe');
