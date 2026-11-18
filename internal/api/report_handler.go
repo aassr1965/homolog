@@ -214,6 +214,23 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 		htmlOutput = reporting.RenderCommitmentLetter1P9(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-ENG-1H10", "1.H.10", "1H10":
 		htmlOutput = reporting.RenderCommitmentLetter1H10(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	// Matrice des 8 États Intermédiaires (EI) de Pilotage Opérationnel BPF
+	case "EI-AVT-01":
+		htmlOutput = reporting.RenderEIAVT01HTML(dossier, estName, estAgreement, pdtName, reportSHA256, now)
+	case "EI-AVT-02":
+		htmlOutput = reporting.RenderEIAVT02HTML(dossier, estName, estAgreement, pdtName, reportSHA256, now)
+	case "EI-AVT-03":
+		htmlOutput = reporting.RenderEIAVT03HTML(dossier, "", "", "", "", "", "", estName, pdtName, reportSHA256, now)
+	case "EI-CHR-01":
+		htmlOutput = reporting.RenderEICHR01HTML(dossier, estName, pdtName, reportSHA256, now)
+	case "EI-CHR-02":
+		htmlOutput = reporting.RenderEICHR02HTML(dossier, "", "", "", 98.4, 101.2, estName, pdtName, reportSHA256, now)
+	case "EI-VIG-01":
+		htmlOutput = reporting.RenderEIVIG01HTML(dossier, "", "", 60, 4, estName, pdtName, reportSHA256, now)
+	case "EI-CHG-01":
+		htmlOutput = reporting.RenderEICHG01HTML(dossier, "", "", "", 60000.0, 60, estName, pdtName, reportSHA256, now)
+	case "EI-PIP-01":
+		htmlOutput = reporting.RenderEIPIP01HTML(dossier, estName, pdtName, reportSHA256, now)
 	default: // "ES-REG-01"
 		htmlOutput = renderESREG01HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, moduleCounts, watermark, reportSHA256, qrURL, now)
 	}

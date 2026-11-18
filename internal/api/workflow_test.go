@@ -426,4 +426,38 @@ func TestWorkflowMakerCheckerCycle(t *testing.T) {
 			t.Fatalf("Test 14: Rapport %s ne contient pas la pagination indélébile BPF", tc.code)
 		}
 	}
+
+	// =========================================================================
+	// Test 15 : Génération des 8 États Intermédiaires de Pilotage (EI) (Jalon 2.2)
+	// =========================================================================
+	eiCodes := []struct {
+		code        string
+		expectedSub string
+	}{
+		{"EI-AVT-01", "Fiche Navette d'Avancement CTD / DM"},
+		{"EI-AVT-02", "Relevé des Écarts & Pièces Manquantes"},
+		{"EI-AVT-03", "Fiche de Revue & d'Annotation Checker"},
+		{"EI-CHR-01", "Suivi des Stabilités Zone IVb"},
+		{"EI-CHR-02", "Rapport d'Étape de l'Étude de Bioéquivalence"},
+		{"EI-VIG-01", "Instruction des Compléments & Plan d'Action Interne"},
+		{"EI-CHG-01", "Évaluation d'Impact Réglementaire"},
+		{"EI-PIP-01", "Point de Situation Hebdomadaire du Pipeline"},
+	}
+
+	for _, tc := range eiCodes {
+		reqEI := httptest.NewRequest("GET", "/api/v1/dossiers/"+dossierID.String()+"/reports/"+tc.code, nil)
+		rrEI := httptest.NewRecorder()
+		rPDT.ServeHTTP(rrEI, reqEI)
+
+		if rrEI.Code != http.StatusOK {
+			t.Fatalf("Test 15: Échec génération rapport EI %s: attendu 200, reçu %d", tc.code, rrEI.Code)
+		}
+		bodyEI := rrEI.Body.String()
+		if !strings.Contains(bodyEI, tc.expectedSub) {
+			t.Fatalf("Test 15: Rapport %s ne contient pas le sous-titre attendu '%s'", tc.code, tc.expectedSub)
+		}
+		if !strings.Contains(bodyEI, "DOCUMENT INTERNE DE TRAVAIL") {
+			t.Fatalf("Test 15: Rapport %s ne contient pas le filigrane confidentiel", tc.code)
+		}
+	}
 }
