@@ -3147,19 +3147,26 @@
         </div>
     </div>
 
-    <!-- Modal Moteur des États de Sortie Réglementaires (ES-REG-01, 02, ES-FIN-01) -->
+    <!-- Modal Moteur des États de Sortie Réglementaires (ES) & Pilotage (EI) -->
     <div class="modal-overlay" id="modal-dossier-reports" onclick="if(event.target === this) closeModal('modal-dossier-reports')">
-        <div class="modal modal-xl" style="width:960px; max-width:min(960px, calc(100vw - 24px)); height:92vh; display:flex; flex-direction:column;">
+        <div class="modal modal-xl" style="width:1020px; max-width:min(1020px, calc(100vw - 24px)); height:94vh; display:flex; flex-direction:column;">
             <div class="modal-header" style="flex-wrap:wrap; gap:8px;">
-                <div class="modal-title">
-                    <span>📄 Moteur des États de Sortie Réglementaires Officiels ANPP</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <div class="modal-title">
+                        <span>📄 Moteur Universel d'Édition Documentaire BPF & ANPP (28 États)</span>
+                    </div>
+                    <button class="close-btn" onclick="closeModal('modal-dossier-reports')">✕</button>
                 </div>
-                <div id="report-tabs-bar" style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau CTD</button>
-                    <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02 : Formulaire 1.A.3</button>
-                    <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV1</button>
+                <div style="display:flex; gap:12px; align-items:center; width:100%; margin-top:4px;">
+                    <div style="display:inline-flex; background:rgba(0,0,0,0.06); border-radius:6px; padding:2px; border:1px solid var(--border-color);">
+                        <button type="button" id="report-mode-es" class="btn-pill active" style="font-weight:700; font-size:12px; padding:4px 12px; cursor:pointer;" onclick="setReportMode('ES')">📜 Sorties Réglementaires (ES)</button>
+                        <button type="button" id="report-mode-ei" class="btn-pill" style="font-weight:700; font-size:12px; padding:4px 12px; cursor:pointer;" onclick="setReportMode('EI')">📊 Pilotage Opérationnel (EI)</button>
+                    </div>
+                    <span id="report-category-description" style="font-size:11px; color:var(--text-dim); flex:1;">États réglementaires opposables ANPP avec cachet 2FA et horodatage indélébile.</span>
                 </div>
-                <button class="close-btn" onclick="closeModal('modal-dossier-reports')">✕</button>
+                <div id="report-tabs-bar" style="display:flex; gap:6px; flex-wrap:wrap; width:100%; margin-top:4px;">
+                    <!-- Rempli dynamiquement -->
+                </div>
             </div>
             <div class="modal-body" style="flex:1; display:flex; flex-direction:column; padding:10px;">
                 <div id="report-iframe-container" style="flex:1; display:flex; flex-direction:column;">
@@ -3175,7 +3182,7 @@
                     <button type="button" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="printActiveReport()">
                         🖨️ Imprimer / PDF 300 DPI
                     </button>
-                    <button type="button" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:700;" onclick="sealActiveReport()">
+                    <button type="button" id="btn-seal-active-report" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:700;" onclick="sealActiveReport()">
                         🔏 Sceller le Rapport (Visa PDT)
                     </button>
                     <button type="button" class="btn-pill" onclick="closeModal('modal-dossier-reports')">Fermer</button>
@@ -3193,7 +3200,7 @@
     <script src="/js/variations.js?v=2026.11.17.5"></script>
     <script src="/js/ged.js?v=2026.11.17.11"></script>
     <script src="/js/dossiers.js?v=2026.11.18.6"></script>
-    <script src="/js/workflow.js?v=2026.11.18.6"></script>
+    <script src="/js/workflow.js?v=2026.11.18.7"></script>
     <script src="/js/deficiencies.js?v=2026.11.17.5"></script>
     <script src="/js/fees.js?v=2026.11.17.5"></script>
     <script src="/js/submissions.js?v=2026.11.17.5"></script>
