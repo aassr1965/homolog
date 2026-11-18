@@ -544,9 +544,17 @@ func renderESREG01HTML(
         <div><strong>Homolog Reporting BPF</strong> • ES-REG-01 Bordereau Officiel CTD</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
-            <a href="/" class="btn btn-outline">✕ Fermer</a>
+            <button type="button" class="btn btn-outline" onclick="if(window.parent && window.parent !== window && typeof window.parent.closeModal === 'function'){ window.parent.closeModal('modal-dossier-reports'); } else { window.close(); }">✕ Fermer</button>
         </div>
     </div>
+    <script>
+        if (window.parent && window.parent !== window) {
+            var tb = document.querySelector('.no-print-toolbar');
+            if (tb) tb.style.display = 'none';
+            var sh = document.querySelector('.sheet');
+            if (sh) sh.style.marginTop = '15px';
+        }
+    </script>
 
     <div class="sheet">
         <div class="watermark %s">%s</div>
@@ -817,9 +825,17 @@ func renderESREG02HTML(
         <div><strong>Homolog Reporting BPF</strong> • ES-REG-02 Formulaire Officiel 1.A.3 (Demande d'Enregistrement ANPP)</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
-            <a href="/" class="btn btn-outline">✕ Fermer</a>
+            <button type="button" class="btn btn-outline" onclick="if(window.parent && window.parent !== window && typeof window.parent.closeModal === 'function'){ window.parent.closeModal('modal-dossier-reports'); } else { window.close(); }">✕ Fermer</button>
         </div>
     </div>
+    <script>
+        if (window.parent && window.parent !== window) {
+            var tb = document.querySelector('.no-print-toolbar');
+            if (tb) tb.style.display = 'none';
+            var sh = document.querySelector('.sheet');
+            if (sh) sh.style.marginTop = '15px';
+        }
+    </script>
 
     <div class="sheet">
         <div class="watermark %s">%s</div>
@@ -1099,9 +1115,17 @@ func renderESFIN01HTML(
         <div><strong>Homolog Reporting BPF</strong> • ES-FIN-01 Bordereau de Versement Réglementaire (%s)</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
-            <a href="/" class="btn btn-outline">✕ Fermer</a>
+            <button type="button" class="btn btn-outline" onclick="if(window.parent && window.parent !== window && typeof window.parent.closeModal === 'function'){ window.parent.closeModal('modal-dossier-reports'); } else { window.close(); }">✕ Fermer</button>
         </div>
     </div>
+    <script>
+        if (window.parent && window.parent !== window) {
+            var tb = document.querySelector('.no-print-toolbar');
+            if (tb) tb.style.display = 'none';
+            var sh = document.querySelector('.sheet');
+            if (sh) sh.style.marginTop = '15px';
+        }
+    </script>
 
     <div class="sheet">
         <div class="watermark %s">%s</div>
