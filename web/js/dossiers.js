@@ -56,6 +56,10 @@
             // 2. Assigné spécifiquement et NOMINATIVEMENT à cet utilisateur
             if (it.workflow_status !== 'approved_sealed') {
                 if (it.assigned_user_id && uid && it.assigned_user_id === uid) return true;
+                // 3. Tâche de pôle expressément confiée par la hiérarchie (mission active avec échéance planifiée)
+                if (!it.assigned_user_id && isItemUserDept(it, userCtx) && (it.due_date || it.assigned_at) && !it.is_locked) {
+                    return true;
+                }
             }
             // 3. Directeur Technique : visas/signatures à apposer
             if (userCtx.isDT) {
