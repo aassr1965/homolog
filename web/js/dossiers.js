@@ -947,9 +947,9 @@
                             if (it.workflow_status === 'drafting') {
                                 wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-blue); color:white; border:none;" title="Soumettre à revue Qualité" onclick="event.stopPropagation(); submitItemForReview('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">📤</button>`;
                             } else if (it.workflow_status === 'under_review') {
-                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-amber); color:white; border:none;" title="Revue Qualité &amp; Double Regard (Checker)" onclick="event.stopPropagation(); openReviewDecisionModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}')">🔍</button>`;
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-amber); color:white; border:none;" title="Revue Qualité &amp; Double Regard (Checker)" onclick="event.stopPropagation(); openReviewDecisionModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">🔍</button>`;
                             } else if (it.workflow_status === 'pending_approval') {
-                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:#7e22ce; color:white; border:none;" title="Visa Pharmacien DT" onclick="event.stopPropagation(); openPdtSealModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}')">✍️</button>`;
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:#7e22ce; color:white; border:none;" title="Visa Pharmacien DT" onclick="event.stopPropagation(); openPdtSealModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">✍️</button>`;
                             }
 
                             wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px;" title="Historique des revues" onclick="event.stopPropagation(); openItemReviewsModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">📜</button>`;
@@ -1225,12 +1225,12 @@
                                     </button>
                                 ` : ''}
                                 ${item.workflow_status === 'under_review' ? `
-                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-amber); color:white; border:none;" onclick="openReviewDecisionModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}')">
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-amber); color:white; border:none;" onclick="openReviewDecisionModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
                                         🔍 Relecture Checker (Double Regard)
                                     </button>
                                 ` : ''}
                                 ${item.workflow_status === 'pending_approval' ? `
-                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:#7e22ce; color:white; border:none;" onclick="openPdtSealModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}')">
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:#7e22ce; color:white; border:none;" onclick="openPdtSealModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
                                         ✍️ Apposer Visa Pharmacien DT (2FA)
                                     </button>
                                 ` : ''}
