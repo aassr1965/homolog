@@ -1143,3 +1143,41 @@ async function showDossierGatingSummaryModal() {
         contentEl.innerHTML = `<div style="color:var(--accent-red); padding:16px;">Erreur lors du calcul du chemin critique : ${escapeHTML(err.message)}</div>`;
     }
 }
+
+function showBlockingPrereqModal(itemId, itemCode, blocksCount, blockedCodesStr) {
+    const titleEl = document.getElementById('gating-modal-sub');
+    const contentEl = document.getElementById('gating-modal-content');
+    if (!contentEl) return;
+
+    if (titleEl) {
+        titleEl.textContent = `Tâche Prioritaire & Débloqueur Critique : Section [${itemCode}]`;
+    }
+
+    contentEl.innerHTML = `
+        <div style="background:rgba(245,158,11,0.08); border:1.5px solid #f59e0b; border-radius:6px; padding:12px; margin-bottom:14px;">
+            <div style="font-size:13px; font-weight:800; color:#b45309; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                <span>⚡</span>
+                <span>PIÈCE CLÉ DE VOÛTE (PRÉREQUIS BLOQUANT DU CHEMIN CRITIQUE)</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-main); line-height:1.5;">
+                Cette section constitue un <strong>jalon bloquant amont</strong>. Tant qu'elle n'est pas rédigée, validée par le Checker et scellée en v1.0 par le Pharmacien DT, <strong>${blocksCount} autre(s) section(s)</strong> du dossier restent en attente forcée.
+            </div>
+        </div>
+
+        <div style="font-size:11.5px; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">
+            Rubriques En Attente Du Déverrouillage Par Cette Pièce (${blocksCount}) :
+        </div>
+
+        <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-left:3.5px solid #f59e0b; border-radius:4px; padding:10px 12px; margin-bottom:14px;">
+            <div style="font-family:monospace; font-size:11.5px; font-weight:700; color:var(--text-main); word-break:break-word; line-height:1.6;">
+                ${escapeHTML(blockedCodesStr)}
+            </div>
+        </div>
+
+        <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; font-size:11px; color:var(--text-dim); line-height:1.5;">
+            🎯 <strong>Recommandation Chef de Projet BPF :</strong> Traitez en priorité absolue cette section (Check-out ➔ Rédaction ➔ Revue Checker ➔ Visa PDT). Son scellement débloquera automatiquement le travail des équipes sur les pièces dépendantes.
+        </div>
+    `;
+
+    openModal('modal-workflow-gating-info');
+}

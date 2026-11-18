@@ -655,6 +655,14 @@ func (r *WorkflowRepository) EvaluateItemGating(ctx context.Context, itemID uuid
 	return &res, nil
 }
 
+// BlockingPrerequisiteSummary détaille une tâche bloquante prioritaire (clé de voûte)
+type BlockingPrerequisiteSummary struct {
+	ItemCode     string   `json:"item_code"`
+	TitleFR      string   `json:"title_fr"`
+	BlocksCount  int      `json:"blocks_count"`
+	BlockedCodes []string `json:"blocked_codes"`
+}
+
 // DossierGatingSummary représente la synthèse globale du DAG de dépendances du dossier
 type DossierGatingSummary struct {
 	DossierID       uuid.UUID                       `json:"dossier_id"`
@@ -663,6 +671,7 @@ type DossierGatingSummary struct {
 	TotalItems      int                             `json:"total_items"`
 	BlockedCount    int                             `json:"blocked_count"`
 	BlockedItems    []domain.GatingEvaluationResult `json:"blocked_items"`
+	BlockingPrereqs []BlockingPrerequisiteSummary   `json:"blocking_prereqs"`
 }
 
 // GetDossierGatingSummary calcule la phase DAG active et recense toutes les sections bloquées
@@ -687,6 +696,7 @@ func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, dossie
 		ActivePhaseName: phaseNames[activePhase],
 		TotalItems:      len(allItems),
 		BlockedItems:    make([]domain.GatingEvaluationResult, 0),
+		BlockingPrereqs: make([]BlockingPrerequisiteSummary, 0),
 	}
 
 	for i := range allItems {
@@ -697,6 +707,42 @@ func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, dossie
 		}
 	}
 	summary.BlockedCount = len(summary.BlockedItems)
+
+	// Recenser les pièces bloquantes (débloqueurs critiques)
+	blockingMap := make(map[string]*BlockingPrerequisiteSummary)
+	titlesByCode := make(map[string]string)
+	for _, it := range allItems {
+		titlesByCode[it.ItemCode] = it.TitleFR
+	}
+
+	for _, b := range summary.BlockedItems {
+		for _, u := range b.UnmetPrerequisites {
+			reqCode := u.RequiredItemCode
+			if reqCode == "" {
+				continue
+			}
+			bp, exists := blockingMap[reqCode]
+			if !exists {
+				title := u.RequiredTitle
+				if t, ok := titlesByCode[reqCode]; ok && t != "" {
+					title = t
+				}
+				bp = &BlockingPrerequisiteSummary{
+					ItemCode:     reqCode,
+					TitleFR:      title,
+					BlocksCount:  0,
+					BlockedCodes: make([]string, 0),
+				}
+				blockingMap[reqCode] = bp
+			}
+			bp.BlocksCount++
+			bp.BlockedCodes = append(bp.BlockedCodes, b.TargetItemCode)
+		}
+	}
+
+	for _, bp := range blockingMap {
+		summary.BlockingPrereqs = append(summary.BlockingPrereqs, *bp)
+	}
 
 	return summary, nil
 }
