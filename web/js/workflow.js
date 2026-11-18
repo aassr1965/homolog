@@ -439,10 +439,27 @@ async function submitWorkflowReviewDecision(decision) {
         });
         const data = await resp.json();
         if (!resp.ok) {
-            errBox.textContent = data.message || "Erreur lors de l'enregistrement de la décision";
+            const errorMsg = data.message || data.error || "Erreur lors de l'enregistrement de la décision";
+            errBox.textContent = errorMsg;
             errBox.style.display = 'block';
             if (resp.status === 403 && typeof showNotifyModal === 'function') {
-                showNotifyModal("Action Non Autorisée (SoD)", data.message, "🚫", "Fermer");
+                showNotifyModal(
+                    "Ségrégation des Fonctions (SoD BPF)",
+                    `<div style="display:flex; flex-direction:column; gap:10px;">
+                        <div style="color:var(--accent-red); font-weight:700; font-size:13px;">
+                            🚫 Action Réglementaire Interdite (21 CFR Part 11)
+                        </div>
+                        <div style="font-size:12px; line-height:1.5; color:var(--text-main);">
+                            ${escapeHTML(errorMsg)}
+                        </div>
+                        <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:10px; font-size:11.5px; color:var(--text-muted); line-height:1.4;">
+                            <strong>Règle Maker ≠ Checker :</strong> Conformément à l'Annexe 11 BPF et aux normes ALCOA+, le rédacteur d'une section ne peut pas valider ou approuver son propre document.<br><br>
+                            👉 <strong>Pour valider la revue :</strong> Utilisez le commutateur de rôle en haut à droite <em>(Dev-Switcher)</em> pour basculer sur le profil d'un vérificateur indépendant tel que <strong>Karim Belkacem (Pharmacien Responsable Qualité / Checker)</strong> ou <strong>Directeur Technique</strong>.
+                        </div>
+                    </div>`,
+                    "🚫",
+                    "Compris"
+                );
             }
             return;
         }
