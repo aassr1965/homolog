@@ -394,16 +394,18 @@ func (h *WorkflowHandler) ApproveSection(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req struct {
-		Password          string `json:"password"`
-		TOTPCode          string `json:"totp_code"`
-		SolemnDeclaration bool   `json:"solemn_declaration"`
+		Password                  string `json:"password"`
+		TOTPCode                  string `json:"totp_code"`
+		SolemnDeclaration         bool   `json:"solemn_declaration"`
+		SolemnDeclarationAccepted bool   `json:"solemn_declaration_accepted"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Corps de requête invalide")
 		return
 	}
 
-	if !req.SolemnDeclaration {
+	isAccepted := req.SolemnDeclaration || req.SolemnDeclarationAccepted
+	if !isAccepted {
 		writeJSONError(w, http.StatusBadRequest, "La déclaration solennelle sur l'honneur du Pharmacien DT est obligatoire pour sceller le document")
 		return
 	}

@@ -530,6 +530,8 @@ async function submitWorkflowPdtApproval(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 totp_code: totp,
+                password: totp,
+                solemn_declaration: true,
                 solemn_declaration_accepted: true
             })
         });
