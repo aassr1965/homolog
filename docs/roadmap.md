@@ -35,7 +35,8 @@ gantt
     Packaging Docker & Archive .sanad (1.8)          :done, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
     Atelier Élaboration, Smart Planning & Workflow BPF (2.1):done, p2_1, after p1_8, 4d
-    Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1, 4d
+    Moteur Gating DAG & Dépendances CTD (2.1b)       :done, p2_1b, after p2_1, 2d
+    Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1b, 4d
     Redevances, Devises & Settings du Tenant (2.3)   :active, p2_3, after p2_2, 3d
     Moteur Variations ANPP & Impact Tree (2.4)       :p2_4, after p2_3, 4d
     Espace Consultants & Extranet Fournisseur API (2.5):p2_5, after p2_4, 2d
@@ -249,7 +250,7 @@ gantt
 ## Phase 2 : Complétude, Moteur de Variations ANPP & Efficacité (Priorité S)
 > **Objectif stratégique :** Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), les modèles maîtres ANPP/ICH, le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, le module Sanad Corporate de gestion des agréments d'établissements MIPH (Fabrication, Importation, Distribution, Exploitation) avec passerelle Tabadol, la recherche plein texte et le multi-tenant SaaS.
 
-### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver) — *[Terminé : Workflow Maker-Checker, Baux ALCOA+ & Signature PDT 2FA]*
+### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver) — *[Terminé : Workflow Maker-Checker, Baux ALCOA+, Signature PDT 2FA & Moteur Gating DAG 5 Phases]*
 - [x] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
   - Matrice d'affectation métier selon l'expertise (Section 7.4 du Cahier des Charges) :
     - *Affaires Réglementaires (RA)* : Module 1 complet, notices patient bilingues FR/AR (1.P.2), résumés des caractéristiques (RCP 1.P.1), maquettes, bordereaux BV1/BV2, lettres d'engagements (1.P.8, 1.P.9, 1.H.10) et dossiers de variations (LD-DEPP07/V01).
@@ -264,12 +265,14 @@ gantt
   - Mécanisme de verrouillage collaboratif (**Check-out / Check-in**) avec bail d'expiration automatique (*TTL Lease Lock* 30 min) et verrouillage transactionnel pessimiste PostgreSQL (`SELECT ... FOR UPDATE`), interdisant l'écrasement concurrent entre Maker et Checker avec bandeau d'avertissement en lecture seule.
   - Gestion granulaire du versionnage : révisions de travail mineures incrémentales (`v0.1`, `v0.2`, `v0.3`...) jusqu'à la révision majeure officielle scellée (`v1.0`) par le PDT.
   - Circuit de revue par les pairs / AQ (*Checker*) avec annotations, demandes d'ajustements motivées et journal d'audit complet.
-- [x] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
+- [x] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) — [Jalon 2.1b Validé] :**
   - Modélisation du graphe orienté acyclique (DAG) des dépendances techniques et réglementaires CTD/DM en 5 phases successives (Matières & Méthodes ➔ Lots pilotes & CoA ➔ Stabilités Zone IVb & Bioéquivalence ➔ QOS & Notice/RCP ➔ Engagements & Visa PDT).
-  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé).
-  - **Verrou de parité linguistique synchrone FR ↔ AR (Règle bloquante GxP) :** Mécanisme de blocage technique interdisant formellement le passage du dossier au statut *« Prêt pour Visa DT »* si la notice patient en langue arabe (1.P.2.2) n'est pas au même indice de révision validé manuellement que la notice française (1.P.2.1), garantissant la stricte symétrie médico-légale exigée par l'ANPP avant toute soumission. *(Note d'architecture : ce verrou de complétude est purement déterministe en Phase 2 ; l'assistant IA d'aide à la traduction médicale et de glossaire bilingue relève du Jalon 3.1)*.
+  - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé) avec interception HTTP 422 `GATING_BLOCKED`.
+  - **Verrou de parité linguistique synchrone FR ↔ AR (Règle bloquante GxP) :** Mécanisme de blocage technique interdisant formellement le passage du dossier au statut *« Prêt pour Visa DT »* si la notice patient en langue arabe (1.P.2.2) n'est pas au même indice de révision validé manuellement que la notice française (1.P.2.1), garantissant la stricte symétrie médico-légale exigée par l'ANPP avant toute soumission. *(Décret exécutif n° 20-324 / 20-325 Art. 12)*.
   - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
+  - Interface utilisateur intégrée : bandeau de progression DAG 5 phases, badges dynamiques `🔒 Verrou GxP` dans la table de checklist, cartouche d'alerte dans l'Atelier BPF et modale explicative complète avec références juridiques ANPP.
+  - Qualification complète : 100% de tests unitaires et d'intégration validés (`gating_test.go`, `workflow_gating_test.go`) et validation visuelle par robot navigateur (`docs/recette_gating_jalon_2_1b.md`).
 - [x] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
   - Calcul automatique du chemin critique à rebours à partir d'une date butoir ou de l'échéance légale de renouvellement quinquennal à **J-180** : planification dynamique des stabilités M6 (J-240), de la rédaction, de la revue qualité Checker (J-150), de la réservation du créneau RDV E-TASJIL (J-60), du visa légal DT et de la liquidation des bordereaux BV1/BV2 (J-15).
   - Alertes graduées (Jaune / Orange / Rouge) dans le cockpit DT en cas de dérive calendaire sur un jalon critique amont.
