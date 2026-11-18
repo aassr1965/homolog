@@ -282,7 +282,13 @@ async function submitWorkflowAssign(e) {
     const dept = document.getElementById('wf-assign-dept').value;
     const userSelect = document.getElementById('wf-assign-user');
     const assignedUserId = userSelect && userSelect.value ? userSelect.value : null;
-    const due = document.getElementById('wf-assign-due').value;
+    let due = document.getElementById('wf-assign-due').value;
+    if (!due) {
+        // Fixe par défaut une échéance à +14 jours si non renseignée pour planifier la mission
+        const targetD = new Date();
+        targetD.setDate(targetD.getDate() + 14);
+        due = targetD.toISOString().split('T')[0];
+    }
     const notes = document.getElementById('wf-assign-notes').value.trim();
     const errBox = document.getElementById('wf-assign-err');
 
