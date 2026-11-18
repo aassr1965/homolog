@@ -756,7 +756,26 @@
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
-            flex: 1;
+            flex: 1 1 auto;
+            min-height: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
+        }
+        .modal-body > * {
+            flex-shrink: 0;
+        }
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.4);
+            border-radius: 4px;
+        }
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
         }
         .legal-notice {
             background: rgba(16, 185, 129, 0.1);
@@ -2046,3 +2065,54 @@ html[data-theme="dark"] .badge-wf-approved_sealed { background: rgba(16, 185, 12
 .badge-rev-sealed { font-family: monospace; font-size: 10px; font-weight: 800; background: rgba(16, 185, 129, 0.18); color: #047857; border: 1px solid #10b981; padding: 1px 5px; border-radius: 3px; }
 
 .lock-pill { font-size: 9.5px; padding: 1px 5px; border-radius: 3px; font-weight: 700; background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+/* Barre de Focalisation Progressive (Progressive Disclosure) */
+.dossier-focus-bar {
+    background: var(--bg-sub);
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.btn-focus-mode {
+    border: none;
+    background: transparent;
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-focus-mode:hover {
+    color: var(--text-main);
+    background: var(--bg-hover);
+}
+.btn-focus-mode.active {
+    background: var(--accent-blue);
+    color: #ffffff !important;
+    font-weight: 800;
+    box-shadow: 0 1px 3px rgba(37,99,235,0.3);
+}
+.btn-focus-badge {
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 800;
+    background: rgba(0,0,0,0.1);
+}
+.btn-focus-mode.active .btn-focus-badge {
+    background: rgba(255,255,255,0.25);
+    color: #ffffff;
+}
+html[data-theme="dark"] .btn-focus-mode:hover {
+    background: rgba(255,255,255,0.06);
+}
+
