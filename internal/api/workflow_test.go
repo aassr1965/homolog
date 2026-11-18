@@ -395,7 +395,7 @@ func TestWorkflowMakerCheckerCycle(t *testing.T) {
 	// Test 14 : Génération des Nouveaux États Réglementaires BPF (Jalon 2.2)
 	// =========================================================================
 	extendedCodes := []struct {
-		code       string
+		code        string
 		expectedSub string
 	}{
 		{"ES-REG-03", "Table des Matières Exhaustive & Index Paginé CTD"},
