@@ -1091,3 +1091,62 @@
 
         // Initialisation des splitters glissants
         initSplitters();
+
+        // Système global de notifications Toast (ALCOA+ / Feedback Utilisateur)
+        function showToast(message, type = 'info', duration = 3800) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:999999; display:flex; flex-direction:column; gap:10px; max-width:440px; pointer-events:none;';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast-item toast-${type}`;
+            
+            let bg = '#1e293b';
+            let border = '#334155';
+            let icon = 'ℹ️';
+            if (type === 'success') { bg = '#064e3b'; border = '#059669'; icon = '✅'; }
+            else if (type === 'error' || type === 'danger') { bg = '#7f1d1d'; border = '#dc2626'; icon = '⚠️'; }
+            else if (type === 'warning') { bg = '#78350f'; border = '#d97706'; icon = '⚠️'; }
+
+            toast.style.cssText = `
+                background: ${bg};
+                color: #ffffff;
+                border: 1px solid ${border};
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+                border-radius: 8px;
+                padding: 12px 16px;
+                font-size: 13px;
+                font-weight: 600;
+                line-height: 1.4;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                pointer-events: auto;
+                opacity: 0;
+                transform: translateY(12px);
+                transition: opacity 0.25s ease, transform 0.25s ease;
+                cursor: pointer;
+            `;
+
+            toast.innerHTML = `<span style="font-size:16px;">${icon}</span><span style="flex:1;">${escapeHTML(message)}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            });
+
+            const removeToast = () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(12px)';
+                setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 250);
+            };
+
+            toast.addEventListener('click', removeToast);
+            setTimeout(removeToast, duration);
+        }
+        window.showToast = showToast;

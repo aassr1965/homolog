@@ -48,6 +48,7 @@ func RequirePermission(auditService *audit.Service, requiredPerm domain.Permissi
 				w.WriteHeader(http.StatusForbidden)
 				_ = json.NewEncoder(w).Encode(map[string]any{
 					"error":               "Accès réglementaire refusé : permissions insuffisantes",
+					"message":             fmt.Sprintf("Votre rôle actuel (%s) ne dispose pas de la permission requise [%s] pour effectuer cette action réglementaire (Ségrégation des Fonctions BPF / 21 CFR Part 11).", user.Role, requiredPerm),
 					"code":                "ERR_RBAC_FORBIDDEN",
 					"required_permission": requiredPerm,
 					"user_role":           user.Role,

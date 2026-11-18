@@ -502,5 +502,9 @@ func getClientIP(r *http.Request) string {
 func writeJSONError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]any{"error": message})
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"error":   message,
+		"message": message,
+		"status":  "error",
+	})
 }

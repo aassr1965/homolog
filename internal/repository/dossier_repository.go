@@ -879,23 +879,55 @@ func (r *DossierRepository) RemoveDossierMember(ctx context.Context, dossierID, 
 
 // determineDefaultDepartment affecte le pôle métier selon la matrice de responsabilités BPF (Section 7.4 CDC)
 func determineDefaultDepartment(itemCode, subModule string, moduleNum int) string {
-	if moduleNum == 1 {
+	// 1. Spécificités Dispositifs Médicaux (DM - Décret 20-324 / Arrêté 10 mai 2021)
+	if strings.HasPrefix(itemCode, "DM.") {
+		if strings.HasPrefix(itemCode, "DM.A") || strings.HasPrefix(itemCode, "DM.I") {
+			return "RA"
+		}
+		if strings.HasPrefix(itemCode, "DM.Q") {
+			return "QA"
+		}
+		if strings.HasPrefix(itemCode, "DM.T.3") || strings.HasPrefix(itemCode, "DM.S") {
+			return "PROD"
+		}
+		if strings.HasPrefix(itemCode, "DM.T") || strings.HasPrefix(itemCode, "DM.C") {
+			return "RD"
+		}
 		return "RA"
 	}
+
+	// 2. Règles spécifiques prioritaires par code d'exigence (dérogation au découpage par module)
+	// Production Industrielle & Procédés (3.2.P.3 et engagement 1.P.8 sur 3 lots industriels)
 	if strings.HasPrefix(itemCode, "3.2.P.3") || strings.HasPrefix(itemCode, "1.P.8") {
 		return "PROD"
 	}
+
+	// Contrôle Qualité & Stabilités (CoA 1.P.4, 1.P.5, spécifications 3.2.S.4, méthodes 3.2.P.5, stabilités 3.2.P.8)
+	if strings.HasPrefix(itemCode, "1.P.4") || strings.HasPrefix(itemCode, "1.P.5") ||
+		strings.HasPrefix(itemCode, "3.2.S.4") || strings.HasPrefix(itemCode, "3.2.P.5") || strings.HasPrefix(itemCode, "3.2.P.8") {
+		return "QC"
+	}
+
+	// Recherche & Développement / Galénique (Formulation 3.2.P.2, Biowaiver 1.M.P.3, QOS Module 2)
 	if strings.HasPrefix(itemCode, "3.2.P.2") || strings.HasPrefix(itemCode, "1.M.P.3") || moduleNum == 2 {
 		return "RD"
 	}
-	if strings.HasPrefix(itemCode, "3.2.S.4") || strings.HasPrefix(itemCode, "3.2.P.5") || strings.HasPrefix(itemCode, "3.2.P.8") || strings.HasPrefix(itemCode, "1.P.4") || strings.HasPrefix(itemCode, "1.P.5") {
-		return "QC"
-	}
-	if strings.HasPrefix(itemCode, "5.3.1") || strings.HasPrefix(itemCode, "3.2.S") || strings.HasPrefix(itemCode, "1.M.S") {
+
+	// Partenaires Externes / Tiers / CRO & API Holder (ASMF/DMF 3.2.S, CEP/Accès 1.M.S, Bioéquivalence Module 5)
+	if strings.HasPrefix(itemCode, "1.M.S") || strings.HasPrefix(itemCode, "3.2.S") || strings.HasPrefix(itemCode, "5.3.1") || moduleNum == 5 {
 		return "EXTERNAL"
+	}
+
+	// 3. Fallbacks généraux par module CTD
+	if moduleNum == 1 {
+		return "RA"
 	}
 	if moduleNum == 3 {
 		return "QC"
 	}
+	if moduleNum == 4 {
+		return "RD"
+	}
+
 	return "RA"
 }

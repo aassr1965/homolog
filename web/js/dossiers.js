@@ -874,8 +874,8 @@
                             const revBadge = typeof formatRevisionBadge === 'function' ? formatRevisionBadge(it.current_revision, it.workflow_status === 'approved_sealed') : '';
                             let lockIndicator = '';
                             if (it.is_locked) {
-                                const lockerName = it.locked_by ? (it.locked_by.first_name + ' ' + it.locked_by.last_name) : 'Rédacteur';
-                                lockIndicator = `<div style="margin-top:2px;"><span class="lock-pill" title="Verrouillé par ${escapeHTML(lockerName)} : ${escapeHTML(it.lock_reason || '')}">🔒 ${escapeHTML(it.locked_by ? it.locked_by.last_name : 'En cours')}</span></div>`;
+                                const lockerName = (it.locked_by_name && it.locked_by_name.trim()) || it.assigned_user_name || 'Rédacteur';
+                                lockIndicator = `<div style="margin-top:2px;"><span class="lock-pill" title="Verrouillé par ${escapeHTML(lockerName)} : ${escapeHTML(it.lock_reason || '')}">🔒 ${escapeHTML(lockerName)}</span></div>`;
                             }
                             statusBadge = `
                                 <div style="display:flex; flex-direction:column; gap:2px;">
@@ -939,12 +939,17 @@
                                 }
                             }
 
+                            // Bouton d'assignation décentralisée (Pôle métier & Rédacteur - Jalon 2.1)
+                            if (!isLockedDossier) {
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px;" title="Assigner Pôle Métier & Rédacteur" onclick="event.stopPropagation(); openAssignModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${it.assigned_department}', '${it.due_date || ''}', '${it.assigned_user_id || ''}')">👥</button>`;
+                            }
+
                             if (it.workflow_status === 'drafting') {
                                 wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-blue); color:white; border:none;" title="Soumettre à revue Qualité" onclick="event.stopPropagation(); submitItemForReview('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">📤</button>`;
                             } else if (it.workflow_status === 'under_review') {
-                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-amber); color:white; border:none;" title="Revue Qualité &amp; Double Regard (Checker)" onclick="event.stopPropagation(); openReviewDecisionModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}')">🔍</button>`;
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:var(--accent-amber); color:white; border:none;" title="Revue Qualité &amp; Double Regard (Checker)" onclick="event.stopPropagation(); openReviewDecisionModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">🔍</button>`;
                             } else if (it.workflow_status === 'pending_approval') {
-                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:#7e22ce; color:white; border:none;" title="Visa Pharmacien DT" onclick="event.stopPropagation(); openPdtSealModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${escapeHTML(it.title_fr)}')">✍️</button>`;
+                                wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px; background:#7e22ce; color:white; border:none;" title="Visa Pharmacien DT" onclick="event.stopPropagation(); openPdtSealModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">✍️</button>`;
                             }
 
                             wfBtns += `<button class="btn-pill" style="height:22px; padding:1px 5px; font-size:10px;" title="Historique des revues" onclick="event.stopPropagation(); openItemReviewsModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}')">📜</button>`;
@@ -966,7 +971,9 @@
                             }
                         }
 
-                        const deptPill = (!isMasked && typeof formatDepartmentBadge === 'function') ? formatDepartmentBadge(it.assigned_department) : '';
+                        const deptPill = (!isMasked && typeof formatDepartmentBadge === 'function') 
+                            ? `<span onclick="event.stopPropagation(); openAssignModal('${currentDossierDetail.id}', '${it.id}', '${it.item_code}', '${it.assigned_department}', '${it.due_date || ''}', '${it.assigned_user_id || ''}')" style="cursor:pointer;" title="Cliquer pour réassigner le pôle ou le rédacteur">${formatDepartmentBadge(it.assigned_department)}</span>` 
+                            : '';
 
                         const displayTitleFR = escapeHTML(it.title_fr);
                         const displayDescFR = escapeHTML(it.description_fr || '');
@@ -981,6 +988,8 @@
                                     <span style="font-weight:700; color:var(--text-main); font-size:12px;">${displayTitleFR}</span>
                                     ${securityPill}
                                     ${deptPill}
+                                    ${it.assigned_user_name ? `<span style="font-size:10px; color:var(--text-main); background:var(--bg-sub); padding:1px 6px; border-radius:3px; border:1px solid var(--border-color); font-weight:600;" title="Rédacteur assigné">👤 ${escapeHTML(it.assigned_user_name)}</span>` : ''}
+                                    ${it.due_date ? `<span style="font-size:9.5px; color:var(--text-dim); font-family:monospace;" title="Date d'échéance">📅 ${it.due_date.substring(0, 10)}</span>` : ''}
                                 </div>
                                 ${(!isMasked && it.title_ar) ? `<div style="font-size:11px; font-weight:600; color:var(--text-main); font-family:tahoma,sans-serif; margin-top:2px;" dir="rtl">${escapeHTML(it.title_ar)}</div>` : ''}
                                 ${displayDescFR ? `<div style="font-size:11px; font-weight:500; color:var(--text-muted); margin-top:3px; line-height:1.4;">${displayDescFR}</div>` : ''}
@@ -1089,6 +1098,37 @@
             else if (item.requirement_level === 'F') reqDesc = "Facultatif [F] : L'Agence Nationale des Produits Pharmaceutiques peut exiger cette pièce à tout moment en cours d'évaluation.";
             else if (item.requirement_level === 'P') reqDesc = "Partiel [P] : Requis selon les caractéristiques du produit (ex: étude bioéquivalence ou justification biowaiver).";
 
+            const lockPillHTML = item.is_locked ? `
+                <span class="status-tag status-rej" style="font-size:10px; padding:2px 6px;" title="Verrouillé par ${escapeHTML(item.locked_by_name || 'Rédacteur')} : ${escapeHTML(item.lock_reason || '')}">
+                    🔒 ${escapeHTML(item.locked_by_name || 'Verrouillé en cours')}
+                </span>
+            ` : '';
+
+            const assignmentHeaderHTML = `
+                <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; gap:8px;">
+                        <div>
+                            <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">[${escapeHTML(item.item_code)}]</span>
+                            <strong style="color:var(--text-main); font-size:12.5px; margin-left:4px;">${escapeHTML(item.title_fr)}</strong>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            ${typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(item.workflow_status) : ''}
+                            ${typeof formatDepartmentBadge === 'function' ? formatDepartmentBadge(item.assigned_department) : ''}
+                            ${lockPillHTML}
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; padding-top:6px; border-top:1px dashed var(--border-color); flex-wrap:wrap; gap:6px;">
+                        <div>
+                            ${item.assigned_user_name ? `<span style="font-weight:700; color:var(--text-main); background:var(--bg-sub); padding:2px 8px; border-radius:3px; border:1px solid var(--border-color);">👤 Rédacteur : ${escapeHTML(item.assigned_user_name)}</span>` : `<span style="color:var(--text-dim); font-style:italic;">👤 Aucun rédacteur désigné</span>`}
+                            ${item.due_date ? `<span style="margin-left:8px; color:var(--text-muted);">📅 Échéance : <strong>${item.due_date.substring(0, 10)}</strong></span>` : ''}
+                        </div>
+                        <button class="btn-pill" style="font-size:10.5px; padding:2px 8px;" onclick="openAssignModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.assigned_department}', '${item.due_date || ''}', '${item.assigned_user_id || ''}')">
+                            👥 Modifier l'Assignation
+                        </button>
+                    </div>
+                </div>
+            `;
+
             const isLocked = currentDossierDetail && currentDossierDetail.is_locked_for_deposit;
 
             if (currentPreviewSubTab === 'wf') {
@@ -1102,7 +1142,7 @@
                     { id: 'approved_sealed', label: '5. Scellé v1.0', icon: '🛡️' }
                 ];
                 const curIdx = wfSteps.findIndex(s => s.id === item.workflow_status);
-                const lockerName = item.locked_by ? (item.locked_by.first_name + ' ' + item.locked_by.last_name) : 'Non verrouillé';
+                const lockerName = (item.locked_by_name && item.locked_by_name.trim()) || item.assigned_user_name || (item.is_locked ? 'Rédacteur en cours' : 'Non verrouillé');
 
                 preview.innerHTML = `
                     <div class="pdf-sim-page">
@@ -1118,6 +1158,7 @@
                             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                                 ${typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(item.workflow_status) : ''}
                                 ${typeof formatDepartmentBadge === 'function' ? formatDepartmentBadge(item.assigned_department) : ''}
+                                ${item.assigned_user_name ? `<span style="font-size:10.5px; color:var(--text-main); background:var(--bg-sub); padding:1px 6px; border-radius:3px; border:1px solid var(--border-color);" title="Rédacteur assigné">👤 ${escapeHTML(item.assigned_user_name)}</span>` : ''}
                                 ${item.due_date ? `<span style="font-size:10.5px; color:var(--text-dim);">Échéance : <strong>${item.due_date.substring(0, 10)}</strong></span>` : ''}
                             </div>
                         </div>
@@ -1175,8 +1216,8 @@
                                         🔓 Restituer (Check-in)
                                     </button>
                                 ` : ''}
-                                <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="openAssignModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.assigned_department}', '${item.due_date}')">
-                                    👥 Assigner Pôle Métier
+                                <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="openAssignModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${item.assigned_department}', '${item.due_date}', '${item.assigned_user_id || ''}')">
+                                    👥 Assigner Responsabilité
                                 </button>
                                 ${item.workflow_status === 'drafting' ? `
                                     <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-blue); color:white; border:none;" onclick="submitItemForReview('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
@@ -1184,12 +1225,12 @@
                                     </button>
                                 ` : ''}
                                 ${item.workflow_status === 'under_review' ? `
-                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-amber); color:white; border:none;" onclick="openReviewDecisionModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}')">
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-amber); color:white; border:none;" onclick="openReviewDecisionModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
                                         🔍 Relecture Checker (Double Regard)
                                     </button>
                                 ` : ''}
                                 ${item.workflow_status === 'pending_approval' ? `
-                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:#7e22ce; color:white; border:none;" onclick="openPdtSealModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}')">
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:#7e22ce; color:white; border:none;" onclick="openPdtSealModal('${currentDossierDetail.id}', '${item.id}', '${item.item_code}')">
                                         ✍️ Apposer Visa Pharmacien DT (2FA)
                                     </button>
                                 ` : ''}
@@ -1216,6 +1257,7 @@
                     const doc = item.ged_document;
                     preview.innerHTML = `
                         <div class="pdf-sim-page">
+                            ${assignmentHeaderHTML}
                             <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
                                 <span>📄 Pièce GED Certifiée — [${escapeHTML(item.item_code)}]</span>
                                 <span class="status-tag status-ok">COFFRE-FORT SÉCURISÉ</span>
@@ -1275,21 +1317,35 @@
                 } else {
                     // Aucune pièce rattachée
                     preview.innerHTML = `
-                        <div class="pdf-sim-page" style="text-align:center; display:flex; flex-direction:column; justify-content:center; padding:30px 20px;">
-                            <div style="font-size:36px; margin-bottom:12px;">📁</div>
-                            <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:6px;">
-                                Aucune Pièce GED Rattachée
-                            </div>
-                            <div style="font-size:11.5px; color:var(--text-muted); font-weight:500; line-height:1.5; margin-bottom:16px;">
-                                L'exigence réglementaire <strong>${item.item_code}</strong> est actuellement vacante dans le coffre-fort CTD.
-                            </div>
-                            <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:700; align-self:center;" 
-                                    onclick="openAttachGEDModal('${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}', '${item.requirement_level}')"
-                                    ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
-                                📎 Rattacher une Pièce du Coffre-Fort GED
-                            </button>
-                            <div style="margin-top:20px; font-size:11px; color:var(--text-dim); font-weight:600;">
-                                Basculez sur l'onglet <strong>📋 Fiche ANPP</strong> pour consulter les textes réglementaires applicables.
+                        <div class="pdf-sim-page">
+                            ${assignmentHeaderHTML}
+                            <div style="text-align:center; display:flex; flex-direction:column; justify-content:center; padding:20px 20px;">
+                                <div style="font-size:36px; margin-bottom:12px;">📁</div>
+                                <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:6px;">
+                                    Aucune Pièce GED Rattachée
+                                </div>
+                                <div style="font-size:11.5px; color:var(--text-muted); font-weight:500; line-height:1.5; margin-bottom:16px;">
+                                    L'exigence réglementaire <strong>${item.item_code}</strong> est actuellement vacante dans le coffre-fort CTD.
+                                </div>
+                                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+                                    <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; padding:8px 14px; font-size:11.5px; font-weight:700;" 
+                                            onclick="openNewGEDDocModal({ dossierId: '${currentDossierDetail.id}', dossierCode: '${escapeHTML(currentDossierDetail.dossier_code)}', itemId: '${item.id}', itemCode: '${item.item_code}', itemTitle: '${escapeHTML(item.title_fr)}', itemTitleAr: '${escapeHTML(item.title_ar || '')}' })"
+                                            ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                        ➕ Déposer &amp; Rattacher un Fichier
+                                    </button>
+                                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:700;" 
+                                            onclick="openAttachGEDModal('${item.id}', '${item.item_code}', '${escapeHTML(item.title_fr)}', '${item.requirement_level}')"
+                                            ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                        📎 Choisir une Pièce Déjà en GED
+                                    </button>
+                                    <button class="btn-pill" style="background:var(--bg-sub); border:1px solid var(--border-color); padding:8px 14px; font-size:11.5px; font-weight:700;" 
+                                            onclick="switchPreviewSubTab('wf')">
+                                        🛠️ Ouvrir l'Atelier BPF &amp; Assigner (👥)
+                                    </button>
+                                </div>
+                                <div style="font-size:11px; color:var(--text-dim); font-weight:600;">
+                                    Consultez l'onglet <strong>🛠️ Atelier BPF</strong> pour l'assignation et le workflow de rédaction, ou <strong>📋 Fiche ANPP</strong> pour les textes applicables.
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1298,6 +1354,7 @@
                 // ONGLET 2 : Fiche Réglementaire ANPP
                 preview.innerHTML = `
                     <div class="pdf-sim-page">
+                        ${assignmentHeaderHTML}
                         <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
                             <span>Exigence ANPP — [${escapeHTML(item.item_code)}]</span>
                             <span class="badge-req-e">${reqDesc.startsWith('Exigé') ? '[E] OBLIGATOIRE' : (reqDesc.startsWith('Facultatif') ? '[F] FACULTATIF' : '[P] PARTIEL')}</span>
@@ -1503,6 +1560,7 @@
         }
 
         async function openAttachGEDModal(itemId, itemCode, itemTitle, reqLvl) {
+            selectedDossierItemId = itemId;
             document.getElementById("attach-item-id").value = itemId;
             document.getElementById("attach-item-code").innerText = itemCode;
             document.getElementById("attach-item-title").innerText = itemTitle;
@@ -1530,6 +1588,22 @@
                 });
             } catch(e) {
                 selectEl.innerHTML = '<option value="">Erreur de chargement des documents</option>';
+            }
+        }
+
+        function openNewGEDDocModalFromAttachModal() {
+            const itemId = document.getElementById("attach-item-id").value;
+            const itemCode = document.getElementById("attach-item-code").innerText;
+            const itemTitle = document.getElementById("attach-item-title").innerText;
+            closeModal('modal-attach-ged');
+            if (typeof openNewGEDDocModal === 'function') {
+                openNewGEDDocModal({
+                    dossierId: currentDossierDetail ? currentDossierDetail.id : '',
+                    dossierCode: currentDossierDetail ? currentDossierDetail.dossier_code : '',
+                    itemId: itemId,
+                    itemCode: itemCode,
+                    itemTitle: itemTitle
+                });
             }
         }
 

@@ -130,7 +130,7 @@ type ChecklistItem struct {
 	DueDate               *time.Time     `json:"due_date,omitempty"`
 	IsLocked              bool           `json:"is_locked"`
 	LockedBy              *uuid.UUID     `json:"locked_by,omitempty"`
-	LockedByName          string         `json:"locked_by_name,omitempty"`
+	LockedByName          string         `json:"locked_by_name"`
 	LockedAt              *time.Time     `json:"locked_at,omitempty"`
 	LockReason            *string        `json:"lock_reason,omitempty"`
 	CurrentRevision       string         `json:"current_revision"`

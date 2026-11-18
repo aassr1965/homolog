@@ -1501,14 +1501,21 @@
                         <div>
                             <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Type de Document :</label>
                             <select id="ged-doc-type" style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
-                                <option value="sop_qualite">Procédure Opératoire (SOP / POS)</option>
-                                <option value="agrement_miph">Agrément Ministériel MIPH</option>
-                                <option value="decision_enregistrement">Décision d'Enregistrement (DE)</option>
-                                <option value="certificat_bpf">Certificat BPF / GMP</option>
-                                <option value="dmf_substance_active">Drug Master File (DMF / DPSA)</option>
-                                <option value="rapport_stabilite">Rapport d'Étude de Stabilité</option>
-                                <option value="notice_conditionnement">Notice ou Maquette Article Conditionnement</option>
-                                <option value="accord_qualite">Accord Qualité BPF (QTA)</option>
+                                <option value="courrier_officiel_anpp">Courrier Officiel ANPP / Réponse Pré-soumission &amp; BV</option>
+                                <option value="recepisse_depot">Récépissé de Dépôt / Accusé de Réception ANPP</option>
+                                <option value="formulaire_demande_ctd">Formulaire Officiel de Demande d'Enregistrement</option>
+                                <option value="lettre_engagement">Lettre d'Engagement / Attestation Réglementaire</option>
+                                <option value="bulletin_analyse_coa">Bulletin d'Analyse (CoA) / Spécifications Analytiques</option>
+                                <option value="rapport_validation">Rapport de Validation de Procédé / BPF (3 lots)</option>
+                                <option value="rapport_stabilite">Rapport d'Étude de Stabilité (Zone IVb)</option>
+                                <option value="notice_conditionnement">Notice, RCP ou Maquette Article Conditionnement</option>
+                                <option value="etude_bioequivalence">Rapport d'Étude Clinique / Bioéquivalence (BE / Biowaiver)</option>
+                                <option value="certificat_bpf">Certificat BPF / GMP / CPP</option>
+                                <option value="agrement_miph">Agrément Ministériel MIPH / Décision d'Exercice PDT</option>
+                                <option value="decision_enregistrement">Décision d'Enregistrement (DE) / AMM d'Origine</option>
+                                <option value="dmf_substance_active">Drug Master File (DMF / DPSA / CEP EDQM)</option>
+                                <option value="accord_qualite">Accord Technique Qualité BPF (QTA) / Façonnage</option>
+                                <option value="sop_qualite">Procédure Opératoire Normalisée (SOP / POS)</option>
                                 <option value="autre">Autre Document Pharmaceutique</option>
                             </select>
                         </div>
@@ -1727,6 +1734,12 @@
                     <select id="attach-ged-doc-select" style="width:100%; padding:8px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                         <!-- Rempli dynamiquement -->
                     </select>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                        <span style="font-size:10.5px; color:var(--text-dim);">La pièce n'est pas encore dans la GED ?</span>
+                        <button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:var(--bg-sub); border:1px solid var(--border-color);" onclick="openNewGEDDocModalFromAttachModal();">
+                            ➕ Déposer un nouveau document en GED
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Notes de Conformité / Visa Qualité :</label>
@@ -2905,9 +2918,21 @@
                 </div>
                 <div id="wf-checkin-err" class="login-error-banner" style="display:none; margin-bottom:10px;"></div>
                 <form onsubmit="submitWorkflowCheckin(event)">
-                    <div class="login-field">
-                        <label for="wf-checkin-summary">Sommaire des modifications apportées (Exigence ALCOA+) :</label>
+                    <div class="login-field" style="margin-bottom:12px;">
+                        <label for="wf-checkin-summary">Sommaire des modifications apportées (Exigence ALCOA+) * :</label>
                         <textarea id="wf-checkin-summary" class="login-input" rows="3" placeholder="Ex: Intégration des résultats de stabilité à 6 mois et validation des limites analytiques." required style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="login-field" style="margin-bottom:12px;">
+                        <label for="wf-checkin-ged-select">Pièce du Coffre-Fort GED à associer à cette révision (Optionnel) :</label>
+                        <select id="wf-checkin-ged-select" class="login-input" style="font-size:11.5px; padding:6px;">
+                            <option value="">-- Conserver la pièce actuelle ou rattacher ultérieurement --</option>
+                        </select>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                            <span style="font-size:10px; color:var(--text-dim);">Fichier non encore déposé ?</span>
+                            <button type="button" class="btn-pill" style="font-size:10px; padding:1px 6px; background:var(--bg-sub); border:1px solid var(--border-color);" onclick="closeModal('modal-workflow-checkin'); openNewGEDDocModal();">
+                                ➕ Déposer en GED
+                            </button>
+                        </div>
                     </div>
                     <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-workflow-checkin')">Annuler</button>
@@ -2937,13 +2962,19 @@
                 <form onsubmit="submitWorkflowAssign(event)">
                     <div class="login-field">
                         <label for="wf-assign-dept">Pôle / Département Métier :</label>
-                        <select id="wf-assign-dept" class="login-input">
+                        <select id="wf-assign-dept" class="login-input" onchange="filterAssignUsersByDept()">
                             <option value="RA">RA — Affaires Réglementaires (Module 1, notices)</option>
                             <option value="QC">QC — Contrôle Qualité &amp; Stabilités (3.2.S.4, 3.2.P.5, 3.2.P.8)</option>
                             <option value="RD">RD — R&amp;D / Galénique (3.2.P.2, Dissolution, QOS 2.3)</option>
                             <option value="PROD">PROD — Production Industrielle (Procédés 3.2.P.3, BPF)</option>
                             <option value="QA">QA — Assurance Qualité (Revue Checker, SOP, PQR)</option>
-                            <option value="EXTERNAL">EXTERNAL — Tiers / CRO (DMF, Bioéquivalence Module 5)</option>
+                            <option value="EXTERNAL">EXTERNAL — Tiers / CRO &amp; API Holder (ASMF 3.2.S, Bioéquivalence)</option>
+                        </select>
+                    </div>
+                    <div class="login-field">
+                        <label for="wf-assign-user">Collaborateur désigné (Maker / Rédacteur) :</label>
+                        <select id="wf-assign-user" class="login-input">
+                            <option value="">-- Non assigné (Pôle global) --</option>
                         </select>
                     </div>
                     <div class="login-field">
@@ -3142,19 +3173,19 @@
     </div>
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.15.2"></script>
-    <script src="/js/auth.js?v=2026.11.15.2"></script>
-    <script src="/js/admin.js?v=2026.11.15.2"></script>
-    <script src="/js/system_admin.js?v=2026.11.15.2"></script>
-    <script src="/js/referential.js?v=2026.11.15.2"></script>
-    <script src="/js/variations.js?v=2026.11.15.2"></script>
-    <script src="/js/ged.js?v=2026.11.15.2"></script>
-    <script src="/js/dossiers.js?v=2026.11.15.2"></script>
-    <script src="/js/workflow.js?v=2026.11.15.2"></script>
-    <script src="/js/deficiencies.js?v=2026.11.15.2"></script>
-    <script src="/js/fees.js?v=2026.11.15.2"></script>
-    <script src="/js/submissions.js?v=2026.11.15.2"></script>
-    <script src="/js/appointments.js?v=2026.11.15.2"></script>
-    <script src="/js/regulatory_watch.js?v=2026.11.15.2"></script>
+    <script src="/js/app.js?v=2026.11.18.1"></script>
+    <script src="/js/auth.js?v=2026.11.18.2"></script>
+    <script src="/js/admin.js?v=2026.11.17.5"></script>
+    <script src="/js/system_admin.js?v=2026.11.17.5"></script>
+    <script src="/js/referential.js?v=2026.11.17.5"></script>
+    <script src="/js/variations.js?v=2026.11.17.5"></script>
+    <script src="/js/ged.js?v=2026.11.17.11"></script>
+    <script src="/js/dossiers.js?v=2026.11.18.2"></script>
+    <script src="/js/workflow.js?v=2026.11.18.4"></script>
+    <script src="/js/deficiencies.js?v=2026.11.17.5"></script>
+    <script src="/js/fees.js?v=2026.11.17.5"></script>
+    <script src="/js/submissions.js?v=2026.11.17.5"></script>
+    <script src="/js/appointments.js?v=2026.11.17.5"></script>
+    <script src="/js/regulatory_watch.js?v=2026.11.17.5"></script>
 </body>
 </html>

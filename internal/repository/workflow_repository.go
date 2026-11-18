@@ -31,6 +31,88 @@ func NewWorkflowRepository(pool *pgxpool.Pool) *WorkflowRepository {
 	return &WorkflowRepository{pool: pool}
 }
 
+// LockExpiryResult représente le résultat de l'auto-libération d'un verrou expiré
+type LockExpiryResult struct {
+	ItemID   uuid.UUID
+	ItemCode string
+	LockedBy uuid.UUID
+	LockedAt time.Time
+}
+
+// ReleaseExpiredLocks libère automatiquement les verrous de Check-out dont le bail a expiré.
+// Conforme ALCOA+ "Timely" : un verrou non restitué dans le délai BPF (bailMinutes) est
+// libéré automatiquement avec traçabilité complète dans l'audit trail de revue.
+// Retourne la liste des items libérés et le nombre total traité.
+func (r *WorkflowRepository) ReleaseExpiredLocks(ctx context.Context, bailMinutes int) ([]LockExpiryResult, error) {
+	if bailMinutes <= 0 {
+		bailMinutes = 30
+	}
+	cutoff := time.Now().UTC().Add(-time.Duration(bailMinutes) * time.Minute)
+
+	// Identifier les items dont le bail est expiré
+	selectQuery := `
+		SELECT i.id, i.item_code, i.locked_by, i.locked_at
+		FROM dossier_checklist_items i
+		WHERE i.is_locked = TRUE
+		  AND i.locked_at IS NOT NULL
+		  AND i.locked_at < $1
+	`
+	rows, err := r.pool.Query(ctx, selectQuery, cutoff)
+	if err != nil {
+		return nil, fmt.Errorf("échec lecture des verrous expirés : %w", err)
+	}
+	defer rows.Close()
+
+	var expired []LockExpiryResult
+	for rows.Next() {
+		var res LockExpiryResult
+		if err := rows.Scan(&res.ItemID, &res.ItemCode, &res.LockedBy, &res.LockedAt); err != nil {
+			continue
+		}
+		expired = append(expired, res)
+	}
+	rows.Close()
+
+	if len(expired) == 0 {
+		return nil, nil
+	}
+
+	now := time.Now().UTC()
+
+	for _, item := range expired {
+		// Libération du verrou avec retour à l'état précédent
+		releaseQuery := `
+			UPDATE dossier_checklist_items
+			SET is_locked      = FALSE,
+			    locked_by      = NULL,
+			    locked_at      = NULL,
+			    lock_reason    = NULL,
+			    workflow_status = CASE
+			        WHEN workflow_status = 'drafting' THEN 'draft_pending'
+			        ELSE workflow_status
+			    END,
+			    updated_at     = $1
+			WHERE id = $2
+			  AND is_locked = TRUE
+			  AND locked_at < $3
+		`
+		_, err := r.pool.Exec(ctx, releaseQuery, now, item.ItemID, cutoff)
+		if err != nil {
+			continue // Meilleur effort : on continue sur les autres items
+		}
+
+		// Entrée d'audit trail ALCOA+ — traçabilité immuable de l'expiration
+		auditMsg := fmt.Sprintf(
+			"Verrou de Check-out expiré automatiquement après %d minutes d'inactivité (ALCOA+ Timely). "+
+				"Section restituée à l'état draft_pending. Rédacteur précédent : %s.",
+			bailMinutes, item.LockedBy.String(),
+		)
+		_ = r.AddReviewEntry(ctx, item.ItemID, item.LockedBy, "SYSTEM", domain.ReviewTypeAnnotation, auditMsg, "")
+	}
+
+	return expired, nil
+}
+
 // GetChecklistItemByID charge un item de checklist avec son contexte de workflow
 func (r *WorkflowRepository) GetChecklistItemByID(ctx context.Context, itemID uuid.UUID) (*domain.ChecklistItem, error) {
 	query := `
