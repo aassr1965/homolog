@@ -81,8 +81,245 @@
         let selectedGEDDocId = null;
         const openedGEDBranches = new Set(['01', '02', '03', '04', '05']);
 
-        function openNewGEDDocModal() {
-            document.getElementById('form-new-ged-doc').reset();
+        function openNewGEDDocModal(ctx) {
+            const form = document.getElementById('form-new-ged-doc');
+            if (form) form.reset();
+
+            // Résolution automatique du contexte si non passé explicitement
+            if (!ctx && typeof currentDossierDetail !== 'undefined' && currentDossierDetail && typeof selectedDossierItemId !== 'undefined' && selectedDossierItemId) {
+                const items = currentDossierDetail.items || currentDossierDetail.checklist_data || [];
+                const it = items.find(i => i.id === selectedDossierItemId);
+                if (it) {
+                    ctx = {
+                        dossierId: currentDossierDetail.id,
+                        dossierCode: currentDossierDetail.dossier_code || 'DOSSIER',
+                        itemId: it.id,
+                        itemCode: it.item_code,
+                        itemTitle: it.title_fr,
+                        itemTitleAr: it.title_ar,
+                        department: it.assigned_department
+                    };
+                }
+            }
+
+            if (ctx && ctx.itemCode) {
+                window.pendingGEDTargetItem = {
+                    dossierId: ctx.dossierId,
+                    itemId: ctx.itemId,
+                    itemCode: ctx.itemCode
+                };
+
+                const code = ctx.itemCode || '';
+                const title = ctx.itemTitle || '';
+                const dCode = ctx.dossierCode || '';
+
+                // 1. Taxonomie intelligente selon le module CTD / DM & l'intitulé
+                const taxEl = document.getElementById('ged-doc-taxonomy');
+                if (taxEl) {
+                    if (code.startsWith('DM.T') || code.startsWith('DM.S') || code.startsWith('DM.C') || /dispositif médical|stérilisation|barrière stérile|iso 14971|iso 11135|dmdiv/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_05_Dossiers_Techniques_DM';
+                    } else if (code.startsWith('DM.I') || code.startsWith('1.P.1') || code.startsWith('1.P.2') || /notice|étiquet|conditionnement|rcp|maquette/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_05_Notices_Articles_Conditionnement';
+                    } else if (code === 'DM.A.1' || (/homologation/i.test(title) && !/redevance|quittance/i.test(title))) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_03_Decisions_Homologation';
+                    } else if (code.startsWith('DM.A.2') || code.startsWith('DM.A.3') || code.startsWith('1.A.6') || code.startsWith('1.A.7') || code.startsWith('1.M.S.1') || code.startsWith('1.M.P.1') || /agrément|décision d'exercice|manufacturing licen/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_01_Agrements_Etablissement';
+                    } else if (code === 'DM.A.5' || code === '1.A.1' || code === '1.A.2' || code === '1.A.5' || code.startsWith('1.H.1') || code.startsWith('1.H.6') || code.startsWith('1.H.7') || code.startsWith('1.H.10') || code.startsWith('1.H.11') || code.startsWith('1.H.12') || /récépissé|pré-soumission|quittance|redevance|correspondance.*anpp/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_06_Correspondances_ANPP';
+                    } else if (code === '1.A.9' || code === '1.H.2' || /décision d'enregistrement|décision d'homologation|ancienne de|\bamm pays/i.test(title)) {
+                        taxEl.value = '01_Affaires_Reglementaires/01_02_Decisions_Enregistrement';
+                    } else if (code.startsWith('DM.A.4') || code.startsWith('1.A.8') || /contrat|façonnage|qta|accord qualit/i.test(title)) {
+                        taxEl.value = '05_Contrats_Tiers/05_01_Accords_Qualite_QTA';
+                    } else if (code.startsWith('1.M.S.3') || /cep|edqm|dmf|dpsa/i.test(title)) {
+                        taxEl.value = '05_Contrats_Tiers/05_03_Certificats_Fournisseurs_APIs';
+                    } else if (code.startsWith('DM.Q') || code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2') || code === '1.H.3' || /certificat bpf|certificat gmp|iso 13485|certificat ce|\bcpp\b|vente libre|\bfsc\b/i.test(title)) {
+                        taxEl.value = '02_Assurance_Qualite_BPF/02_02_Certificats_BPF_ISO';
+                    } else if (code.startsWith('1.P.9') || code.startsWith('3.2.P.8') || /stabilit/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_03_Etudes_Stabilite';
+                    } else if (code.startsWith('1.P.4') || code.startsWith('1.P.5') || code === '1.P.7' || /bulletin d'analyse|spécification|libératoire/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_04_Specifications_Matieres_PF';
+                    } else if (code.startsWith('3.2.S') || /substance active/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_01_Formules_Fabrication_DMF';
+                    } else if (code.startsWith('3.2.P') || /validation|fabrication|procédé/i.test(title)) {
+                        taxEl.value = '03_Developpement_Production/03_02_Methodes_Controle_Validation';
+                    } else {
+                        taxEl.value = '01_Affaires_Reglementaires/01_04_Dossiers_CTD_Reference';
+                    }
+                }
+
+                // 2. Type de document
+                const typeEl = document.getElementById('ged-doc-type');
+                if (typeEl) {
+                    if (code === '1.A.1' || /récépissé.*dépôt/i.test(title)) {
+                        typeEl.value = 'recepisse_depot';
+                    } else if (code === '1.A.5' || code === 'DM.A.5' || /quittance|redevance|pré-soumission|\bbv\b|bordereau.*versement/i.test(title)) {
+                        typeEl.value = 'courrier_officiel_anpp';
+                    } else if (code === '1.A.2' || code === '1.H.1' || /courrier.*demande/i.test(title)) {
+                        typeEl.value = 'courrier_officiel_anpp';
+                    } else if (code === '1.A.3' || code === 'DM.A.1' || /formulaire officiel/i.test(title)) {
+                        typeEl.value = 'formulaire_demande_ctd';
+                    } else if (/engagement|attestation|non-commercialisation|non-modification|similarité/i.test(title) || code === '1.P.8' || code === '1.P.9' || code === '1.H.9' || code === '1.H.10' || code === '1.H.12' || code === '1.P.6') {
+                        typeEl.value = 'lettre_engagement';
+                    } else if (/bulletin d'analyse|coa|libératoire|recontrôle/i.test(title) || code === '1.P.4' || code === '1.P.5' || code === '1.P.7') {
+                        typeEl.value = 'bulletin_analyse_coa';
+                    } else if (/validation|procédé|3 lots|master batch|stérilisation|gestion des risques/i.test(title) || code.startsWith('DM.T') || code.startsWith('DM.S')) {
+                        typeEl.value = 'rapport_validation';
+                    } else if (/stabilit/i.test(title)) {
+                        typeEl.value = 'rapport_stabilite';
+                    } else if (/bioéquivalence|biowaiver|clinique|pharmacocinétique|évaluation clinique|performances diagnostiques/i.test(title) || code.startsWith('5.') || code === '1.M.P.3' || code === 'DM.C.1') {
+                        typeEl.value = 'etude_bioequivalence';
+                    } else if (/notice|maquette|rcp|étiquetage|étiquette/i.test(title) || code.startsWith('1.P.1') || code.startsWith('1.P.2') || code.startsWith('DM.I')) {
+                        typeEl.value = 'notice_conditionnement';
+                    } else if (/bpf|gmp|certificat de conformité|iso 13485|certificat ce|\bcpp\b|vente libre|\bfsc\b/i.test(title) || code.startsWith('1.M.S.2') || code.startsWith('1.M.P.2') || code.startsWith('DM.Q') || code === '1.H.3') {
+                        typeEl.value = 'certificat_bpf';
+                    } else if (/agrément|décision d'exercice|manufacturing licen/i.test(title) || code === '1.A.6' || code === '1.A.7' || code === 'DM.A.2' || code === 'DM.A.3' || code === '1.M.S.1' || code === '1.M.P.1') {
+                        typeEl.value = 'agrement_miph';
+                    } else if (/dmf|dpsa|substance active|cep/i.test(title) || code === '1.M.S.3') {
+                        typeEl.value = 'dmf_substance_active';
+                    } else if (/accord qualité|qta|contrat/i.test(title) || code === '1.A.8' || code === 'DM.A.4') {
+                        typeEl.value = 'accord_qualite';
+                    } else if (/décision d'enregistrement|décision d'homologation|autorisation de mise sur le marché|\bamm\b/i.test(title) || code === '1.A.9' || code === '1.H.2' || code === '1.H.6' || code === '1.H.11') {
+                        typeEl.value = 'decision_enregistrement';
+                    } else {
+                        typeEl.value = 'autre';
+                    }
+                }
+
+                // 3. Titre du document (FR)
+                const titleFrEl = document.getElementById('ged-doc-title-fr');
+                if (titleFrEl) {
+                    if (code === '1.A.5' || /pré-soumission/i.test(title)) {
+                        titleFrEl.value = `Réponse à la Demande de Pré-soumission & Bordereau de Versement (BV) [${dCode}]`;
+                    } else if (code === '1.A.1' || /récépissé.*dépôt/i.test(title)) {
+                        titleFrEl.value = `Récépissé Officiel de Dépôt du Dossier ANPP [${dCode}]`;
+                    } else if (code === '1.A.2') {
+                        titleFrEl.value = `Courrier Officiel de Demande d'Enregistrement [${dCode}]`;
+                    } else if (code === '1.A.3') {
+                        titleFrEl.value = `Formulaire Officiel de Demande d'Enregistrement Visé PDT [${dCode}]`;
+                    } else if (code === 'DM.A.1') {
+                        titleFrEl.value = `Formulaire Officiel de Demande d'Homologation DM [${dCode}]`;
+                    } else if (code === 'DM.A.5') {
+                        titleFrEl.value = `Quittance de Paiement des Redevances d'Homologation DM [${dCode}]`;
+                    } else if (code === '1.P.8') {
+                        titleFrEl.value = `Lettre d'Engagement de Non-Commercialisation & Validation 3 Lots [${dCode}]`;
+                    } else if (code === '1.P.9') {
+                        titleFrEl.value = `Lettre d'Engagement de Suivi des Stabilités Zone IVb [${dCode}]`;
+                    } else if (code === '1.P.2.2' || code === 'DM.I.1') {
+                        titleFrEl.value = `Notice Patient Bilingue Modèle Algérie [${dCode}]`;
+                    } else if (code === '1.P.2.1') {
+                        titleFrEl.value = `Résumé des Caractéristiques du Produit (RCP) Modèle Algérie [${dCode}]`;
+                    } else if (code === '1.P.4') {
+                        titleFrEl.value = `Bulletin d'Analyse Substance Active & Recontrôle Qualité [${dCode}]`;
+                    } else if (code === '1.P.5') {
+                        titleFrEl.value = `Bulletin d'Analyse Libératoire Produit Fini [${dCode}]`;
+                    } else if (code === '1.M.S.2') {
+                        titleFrEl.value = `Certificat BPF/GMP Fabricant Substance Active [${dCode}]`;
+                    } else if (code === '1.M.P.2') {
+                        titleFrEl.value = `Certificat BPF/GMP Site Produit Fini [${dCode}]`;
+                    } else if (code === '1.M.S.3') {
+                        titleFrEl.value = `Certificat de Conformité CEP EDQM / Accès API [${dCode}]`;
+                    } else if (code === '1.H.3') {
+                        titleFrEl.value = `Certificat de Produit Pharmaceutique (CPP Modèle OMS) [${dCode}]`;
+                    } else if (code.startsWith('5.') || code === '1.M.P.3' || code === 'DM.C.1') {
+                        titleFrEl.value = `Rapport d'Étude Clinique / Évaluation de Performance [${dCode}]`;
+                    } else {
+                        titleFrEl.value = `[${code}] ${title} [${dCode}]`;
+                    }
+                }
+
+                // 4. Code Référence BPF
+                const codeEl = document.getElementById('ged-doc-code');
+                if (codeEl) {
+                    const cleanD = dCode.replace(/[^A-Za-z0-9]/g, '').substring(0, 10).toUpperCase() || 'DOS';
+                    const cleanC = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                    let prefix = 'DOC';
+                    if (code.startsWith('DM.')) prefix = 'DM';
+                    else if (code === '1.A.5') prefix = 'ANPP-PRESOUM';
+                    else if (code === '1.A.1') prefix = 'REC-DEPOT';
+                    else if (code === '1.A.2') prefix = 'COUR-DEM';
+                    else if (code === '1.A.3') prefix = 'FORM-REG';
+                    else if (/engagement|attestation/i.test(title) || code.startsWith('1.P.8') || code.startsWith('1.P.9')) prefix = 'ENG';
+                    else if (/bulletin|coa|analyse/i.test(title) || code === '1.P.4' || code === '1.P.5') prefix = 'COA';
+                    else if (/validation/i.test(title)) prefix = 'VAL';
+                    else if (/stabilit/i.test(title)) prefix = 'STAB';
+                    else if (/notice|maquette/i.test(title)) prefix = 'NOT';
+                    else if (/rcp/i.test(title)) prefix = 'RCP';
+                    else if (/bpf|gmp|\bcpp\b/i.test(title)) prefix = 'GMP';
+                    else if (/agrément|décision/i.test(title)) prefix = 'AGR';
+                    else if (/bioéquivalence|biowaiver/i.test(title)) prefix = 'BE';
+                    else if (/qta|accord qualité/i.test(title)) prefix = 'QTA';
+                    else if (code.startsWith('1.')) prefix = 'M1';
+                    else if (code.startsWith('3.')) prefix = 'M3';
+                    codeEl.value = `${prefix}-${cleanC}-${cleanD}`;
+                }
+
+                // 5. Intitulé en Arabe
+                const titleArEl = document.getElementById('ged-doc-title-ar');
+                if (titleArEl) {
+                    if (ctx.itemTitleAr && ctx.itemTitleAr.trim() !== '') {
+                        titleArEl.value = ctx.itemTitleAr;
+                    } else if (code === '1.A.5') {
+                        titleArEl.value = 'الموافقة على طلب التقديم المسبق ووصل دفع أتعاب التسجيل (BV)';
+                    } else if (code === '1.A.1') {
+                        titleArEl.value = 'وصل إيداع ملف التسجيل الرسمي لدى الوكالة الوطنية للمواد الصيدلانية';
+                    } else if (code === '1.A.2') {
+                        titleArEl.value = 'طلب التسجيل الرسمي الموجه للمديرية العامة للوكالة الوطنية';
+                    } else if (code === '1.A.3') {
+                        titleArEl.value = 'استمارة طلب التسجيل الرسمية المؤشرة والموقعة من الصيدلي المدير التقني';
+                    } else if (code === 'DM.A.1') {
+                        titleArEl.value = 'استمارة طلب المصادقة على المستلزم الطبي الموقعة من الصيدلي المدير التقني';
+                    } else if (code === 'DM.A.5') {
+                        titleArEl.value = 'وصل دفع أتعاب ورسوم دراسة ملف المصادقة على المستلزم الطبي';
+                    } else if (code === 'DM.Q.1') {
+                        titleArEl.value = 'شهادة نظام إدارة الجودة للمستلزمات الطبية (ISO 13485)';
+                    } else if (code === 'DM.I.1') {
+                        titleArEl.value = 'دليل ونشرة الاستعمال ثنائية اللغة (عربية وفرنسية إجبارية)';
+                    } else if (code === '1.P.8') {
+                        titleArEl.value = 'تعهد بعدم تسويق حصص الإنتاج قبل استكمال وتأكيد مطابقة المصادقة الصناعية';
+                    } else if (code === '1.P.9') {
+                        titleArEl.value = 'تعهد بمتابعة دراسات الاستقرار في الزمن الحقيقي في المنطقة المناخية الرابعة';
+                    } else if (code === '1.P.2.2') {
+                        titleArEl.value = 'النشرة الموجهة للمريض باللغتين العربية والفرنسية (نموذج الجزائر)';
+                    } else if (code === '1.P.2.1') {
+                        titleArEl.value = 'ملخص الخصائص الصيدلانية للمنتج (نموذج الجزائر معتمد من الصيدلي المدير التقني)';
+                    } else if (code === '1.P.2.3' || code === '1.P.2.4' || code === 'DM.I.2') {
+                        titleArEl.value = 'تصميم الغلاف والوسم باللغتين العربية والفرنسية بالألوان الطبيعية';
+                    } else if (code === '1.P.4') {
+                        titleArEl.value = 'شهادة التحاليل المخبرية للمادة الفعالة وإعادة المراقبة النوعية';
+                    } else if (code === '1.P.5') {
+                        titleArEl.value = 'شهادة التحاليل المخبرية لإطلاق وتسريح حصص المنتج النهائي';
+                    } else if (code === '1.M.S.2' || code === '1.M.P.2') {
+                        titleArEl.value = 'شهادة حسن ممارسات التصنيع الصيدلاني (BPF / GMP)';
+                    } else if (code === '1.M.S.3') {
+                        titleArEl.value = 'شهادة المطابقة الأوروبية للمادة الفعالة (CEP) أو خطاب التفويض';
+                    } else if (code === '1.A.6' || code === 'DM.A.2') {
+                        titleArEl.value = 'اعتماد المؤسسة الصيدلانية للاستغلال أو الصنع (وزارة الصناعة الصيدلانية)';
+                    } else if (code === '1.A.7' || code === 'DM.A.3') {
+                        titleArEl.value = 'قرار ممارسة مهام الصيدلي المدير التقني وفق التنظيم المعمول به';
+                    } else if (code === '1.A.8' || code === 'DM.A.4') {
+                        titleArEl.value = 'اتفاقية الجودة التقنية وعقود التصنيع المشترك والمناولة';
+                    } else if (code === '1.H.3') {
+                        titleArEl.value = 'شهادة المنتوج الصيدلاني وفق النموذج الرسمي لمنظمة الصحة العالمية (CPP)';
+                    } else if (code.startsWith('5.') || code === '1.M.P.3' || code === 'DM.C.1') {
+                        titleArEl.value = 'تقرير دراسة التكافؤ الحيوي السريري المقارن أو تقييم الأداء السريري';
+                    }
+                }
+
+                // 6. Motif BPF
+                const sumEl = document.getElementById('ged-doc-summary');
+                if (sumEl) {
+                    sumEl.value = `Dépôt initial de la pièce justificative pour l'exigence CTD ${code} (${dCode})`;
+                }
+
+                // 7. Tags
+                const tagsEl = document.getElementById('ged-doc-tags');
+                if (tagsEl) {
+                    tagsEl.value = `${code}, CTD, Validation, BPF, Non-commercialisation, ${dCode}`;
+                }
+            } else {
+                window.pendingGEDTargetItem = null;
+            }
+
             document.getElementById('modal-new-ged-doc').classList.add('open');
         }
 
@@ -444,6 +681,37 @@
                 }
                 const created = await res.json();
                 closeModal('modal-new-ged-doc');
+
+                // Si le dépôt a été déclenché depuis un item de dossier CTD (contexte ciblé)
+                if (window.pendingGEDTargetItem && window.pendingGEDTargetItem.dossierId && window.pendingGEDTargetItem.itemId) {
+                    const target = window.pendingGEDTargetItem;
+                    window.pendingGEDTargetItem = null;
+
+                    try {
+                        const attachRes = await fetch(`/api/v1/dossiers/${target.dossierId}/items/${target.itemId}/attach`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                ged_document_id: created.id,
+                                notes: `Rattaché automatiquement lors du dépôt : [${created.document_code}] ${created.title_fr}`
+                            })
+                        });
+                        if (attachRes.ok) {
+                            showNotifyModal(
+                                "Pièce Déposée & Rattachée",
+                                `Le document <strong>[${created.document_code}] ${created.title_fr}</strong> a été stocké dans le CAS (SHA-256) et <strong>directement rattaché à l'exigence ${target.itemCode}</strong> !`,
+                                "✅"
+                            );
+                            if (typeof selectDossier === 'function') await selectDossier(target.dossierId);
+                            if (typeof selectDossierItem === 'function') selectDossierItem(target.itemId);
+                            if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('doc');
+                            return;
+                        }
+                    } catch (attachErr) {
+                        console.warn("Échec du rattachement automatique :", attachErr);
+                    }
+                }
+
                 showNotifyModal(
                     "Document Enregistré dans le Coffre-Fort",
                     `Le document <strong>[${created.document_code}] ${created.title_fr}</strong> a été stocké avec succès dans le Content-Addressable Storage (CAS) dédupliqué SHA-256.`,

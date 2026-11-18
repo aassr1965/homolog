@@ -25,6 +25,9 @@ const mockAuditTrail = [
         let currentOrg = null;
         let isGateRequired = false;
 
+        window.getCurrentUser = function() { return currentUser; };
+        window.currentUser = null;
+
         // Sas d'Accès Partenaire Confidentiel (Private Preview Gate)
         function showGateView(data) {
             const screenGate = document.getElementById("screen-gate");
@@ -543,6 +546,7 @@ const mockAuditTrail = [
             document.getElementById("screen-app").style.display = "flex";
             if (user) {
                 currentUser = user;
+                window.currentUser = user;
                 const roleLabel = formatRole(user.role);
                 document.getElementById("user-badge").innerText = `${user.first_name} ${user.last_name} (${roleLabel})`;
                 document.getElementById("u-drop-name").innerText = `${user.first_name} ${user.last_name}`;
