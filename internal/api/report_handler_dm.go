@@ -157,9 +157,17 @@ func renderESREG02DMHTML(
         <div><strong>Homolog Reporting BPF</strong> • ES-REG-02-DM Formulaire Officiel d'Homologation DM (Décret 20-324 & Arrêté 10/05/2021)</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
-            <a href="/" class="btn btn-outline">✕ Fermer</a>
+            <button type="button" class="btn btn-outline" onclick="if(window.parent && window.parent !== window && typeof window.parent.closeModal === 'function'){ window.parent.closeModal('modal-dossier-reports'); } else { window.close(); }">✕ Fermer</button>
         </div>
     </div>
+    <script>
+        if (window.parent && window.parent !== window) {
+            var tb = document.querySelector('.no-print-toolbar');
+            if (tb) tb.style.display = 'none';
+            var sh = document.querySelector('.sheet');
+            if (sh) sh.style.marginTop = '15px';
+        }
+    </script>
 
     <div class="sheet">
         <div class="watermark %s">%s</div>
@@ -474,9 +482,17 @@ func renderESREG03DMHTML(
         <div><strong>Homolog Reporting BPF</strong> • ES-REG-03-DM Récépissé Officiel de Dépôt DM (Grille en 13 Points)</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
-            <a href="/" class="btn btn-outline">✕ Fermer</a>
+            <button type="button" class="btn btn-outline" onclick="if(window.parent && window.parent !== window && typeof window.parent.closeModal === 'function'){ window.parent.closeModal('modal-dossier-reports'); } else { window.close(); }">✕ Fermer</button>
         </div>
     </div>
+    <script>
+        if (window.parent && window.parent !== window) {
+            var tb = document.querySelector('.no-print-toolbar');
+            if (tb) tb.style.display = 'none';
+            var sh = document.querySelector('.sheet');
+            if (sh) sh.style.marginTop = '15px';
+        }
+    </script>
 
     <div class="sheet">
         <div class="watermark %s">%s</div>

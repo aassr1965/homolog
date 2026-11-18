@@ -929,6 +929,10 @@
                 const iframe = document.getElementById("doc-preview-iframe");
                 if (iframe) iframe.src = "about:blank";
             }
+            if (id === 'modal-dossier-reports') {
+                const container = document.getElementById("report-iframe-container");
+                if (container) container.innerHTML = "";
+            }
         }
 
         // Visualiseur universel de documents & scans in-app (Agrandissable)
