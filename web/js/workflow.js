@@ -3,6 +3,14 @@
 // Conformité BPF / 21 CFR Part 11 / ALCOA+ / Guide ANPP 2025
 // ============================================================================
 
+// Fallback de sécurité globale pour les notifications Toast
+if (typeof window.showToast !== 'function') {
+    window.showToast = function(msg, type) {
+        console.log(`[TOAST ${type || 'info'}] ${msg}`);
+        if (typeof alert === 'function' && type === 'error') alert(msg);
+    };
+}
+
 let currentWfDossierId = null;
 let currentWfItemId = null;
 let currentReportCode = 'ES-REG-01';
