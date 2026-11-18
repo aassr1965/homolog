@@ -341,7 +341,11 @@ async function submitItemForReview(dossierId, itemId, itemCode) {
         });
         const data = await resp.json();
         if (!resp.ok) {
-            alert(data.message || "Erreur lors de la soumission à revue");
+            if (resp.status === 422 && data.code === 'GATING_BLOCKED') {
+                showGatingBlockedAlert(data);
+                return;
+            }
+            alert(data.message || data.error || "Erreur lors de la soumission à revue");
             return;
         }
 
@@ -543,7 +547,12 @@ async function submitWorkflowPdtApproval(e) {
         });
         const data = await resp.json();
         if (!resp.ok) {
-            errBox.textContent = data.message || "Erreur lors du visa PDT";
+            if (resp.status === 422 && data.code === 'GATING_BLOCKED') {
+                closeModal('modal-workflow-pdt-seal');
+                showGatingBlockedAlert(data);
+                return;
+            }
+            errBox.textContent = data.message || data.error || "Erreur lors du visa PDT";
             errBox.style.display = 'block';
             return;
         }
@@ -904,5 +913,233 @@ async function sealActiveReport() {
         loadReportView(currentReportCode);
     } catch (err) {
         alert(err.message || "Erreur réseau");
+    }
+}
+
+// ============================================================================
+// Jalon 2.1b : Fonctions UI Gating & Chemin Critique Réglementaire
+// ============================================================================
+
+function showGatingBlockedAlert(data) {
+    const titleEl = document.getElementById('gating-modal-sub');
+    const contentEl = document.getElementById('gating-modal-content');
+    if (!contentEl) {
+        alert(data.error || "Action bloquée par verrou réglementaire");
+        return;
+    }
+
+    if (titleEl) {
+        titleEl.textContent = "Tentative de transition rejetée par le contrôle des dépendances BPF";
+    }
+
+    const unfulfilled = data.unmet_prerequisites || (data.evaluation && data.evaluation.unmet_prerequisites) || [];
+
+    contentEl.innerHTML = `
+        <div style="background:rgba(239,68,68,0.08); border:1.5px solid #f87171; border-radius:6px; padding:12px; margin-bottom:14px;">
+            <div style="font-size:13px; font-weight:800; color:#b91c1c; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                <span>⛔</span>
+                <span>TRANSITION BLOQUÉE PAR RÈGLE RÉGLEMENTAIRE (GATING)</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-main); line-height:1.5;">
+                ${escapeHTML(data.error || "Cette pièce ne peut franchir cette étape tant que ses dépendances critiques ne sont pas résolues.")}
+            </div>
+        </div>
+
+        <div style="font-size:11.5px; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">
+            Prérequis Réglementaires Non Satisfaits (${unfulfilled.length}) :
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            ${unfulfilled.map(u => `
+                <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-left:3px solid #ef4444; border-radius:4px; padding:10px 12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">
+                            [${escapeHTML(u.required_item_code)}] ${escapeHTML(u.required_title || '')}
+                        </span>
+                        <span class="status-tag status-rej" style="font-size:10px;">
+                            Statut actuel : ${escapeHTML(u.current_status || 'non scellé')}
+                        </span>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-main); margin-bottom:6px;">
+                        ${escapeHTML(u.blocking_reason)}
+                    </div>
+                    <div style="font-size:10.5px; color:var(--text-dim); background:var(--bg-sub); padding:4px 8px; border-radius:3px;">
+                        ⚖️ <strong>Fondement légal :</strong> ${escapeHTML(u.legal_ref)}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div style="margin-top:14px; font-size:11px; color:var(--text-dim); font-style:italic; border-top:1px solid var(--border-color); padding-top:8px;">
+            💡 <strong>Action requise :</strong> Complétez, relisez et scellez la ou les pièces prérequises listées ci-dessus avant de renouveler cette soumission.
+        </div>
+    `;
+
+    openModal('modal-workflow-gating-info');
+}
+
+async function showGatingInfoModal(itemId, itemCode) {
+    const dossierId = currentWfDossierId || (typeof currentDossierDetail === 'object' && currentDossierDetail ? currentDossierDetail.id : null);
+    if (!dossierId) return;
+
+    const titleEl = document.getElementById('gating-modal-sub');
+    const contentEl = document.getElementById('gating-modal-content');
+    if (!contentEl) return;
+
+    if (titleEl) {
+        titleEl.textContent = `Diagnostic du chemin critique pour la section [${itemCode}]`;
+    }
+
+    contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-dim);">Analyse des dépendances en cours...</div>`;
+    openModal('modal-workflow-gating-info');
+
+    try {
+        const resp = await fetch(`/api/v1/dossiers/${dossierId}/items/${itemId}/gating`);
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const data = await resp.json();
+        const evalRes = data.evaluation;
+
+        if (evalRes.is_blocked) {
+            contentEl.innerHTML = `
+                <div style="background:rgba(239,68,68,0.08); border:1.5px solid #f87171; border-radius:6px; padding:12px; margin-bottom:14px;">
+                    <div style="font-size:13px; font-weight:800; color:#b91c1c; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                        <span>🔒</span>
+                        <span>SECTION ACTUELLEMENT VERROUILLÉE</span>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-main); line-height:1.5;">
+                        ${escapeHTML(evalRes.summary_message)}
+                    </div>
+                </div>
+
+                <div style="font-size:11.5px; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">
+                    Détail des Verrous &amp; Dépendances BPF :
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${(evalRes.unmet_prerequisites || []).map(u => `
+                        <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-left:3px solid #ef4444; border-radius:4px; padding:10px 12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span style="font-family:monospace; font-weight:800; color:var(--accent-blue); font-size:12px;">
+                                    [${escapeHTML(u.required_item_code)}]
+                                </span>
+                                <span class="status-tag status-rej" style="font-size:10px;">
+                                    Exigé : ${escapeHTML(u.expected_condition)} (Actuel: ${escapeHTML(u.current_status)})
+                                </span>
+                            </div>
+                            <div style="font-size:11.5px; color:var(--text-main); margin-bottom:6px;">
+                                ${escapeHTML(u.blocking_reason)}
+                            </div>
+                            <div style="font-size:10.5px; color:var(--text-dim); background:var(--bg-sub); padding:4px 8px; border-radius:3px;">
+                                ⚖️ <strong>Réf :</strong> ${escapeHTML(u.legal_ref)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            contentEl.innerHTML = `
+                <div style="background:rgba(16,185,129,0.08); border:1.5px solid #10b981; border-radius:6px; padding:14px; text-align:center;">
+                    <div style="font-size:28px; margin-bottom:8px;">🔓</div>
+                    <div style="font-size:13px; font-weight:800; color:var(--accent-emerald); margin-bottom:6px;">
+                        SECTION TOTALEMENT ÉLIGIBLE (AUCUN VERROU ACTIF)
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-main); line-height:1.5;">
+                        Toutes les dépendances réglementaires et chronologiques de la section [${escapeHTML(itemCode)}] sont validées. Le document peut être rédigé, soumis ou approuvé conformément à votre rôle habilité.
+                    </div>
+                </div>
+            `;
+        }
+    } catch(err) {
+        contentEl.innerHTML = `<div style="color:var(--accent-red); padding:16px;">Erreur lors du chargement des verrous : ${escapeHTML(err.message)}</div>`;
+    }
+}
+
+async function showDossierGatingSummaryModal() {
+    const dossierId = currentWfDossierId || (typeof currentDossierDetail === 'object' && currentDossierDetail ? currentDossierDetail.id : null);
+    if (!dossierId) return;
+
+    const titleEl = document.getElementById('gating-modal-sub');
+    const contentEl = document.getElementById('gating-modal-content');
+    if (!contentEl) return;
+
+    if (titleEl) {
+        titleEl.textContent = "Synthèse Globale du Chemin Critique & Progression DAG (5 Phases CTD)";
+    }
+
+    contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-dim);">Calcul du chemin critique...</div>`;
+    openModal('modal-workflow-gating-info');
+
+    try {
+        const resp = await fetch(`/api/v1/dossiers/${dossierId}/gating-summary`);
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const data = await resp.json();
+        const s = data.summary;
+
+        const phases = [
+            { num: 1, name: "Méthodes Analytiques & Spécifications Matières", desc: "Spécifications API (3.2.S) et Méthodes de contrôle Produit Fini (3.2.P.5)" },
+            { num: 2, name: "Validation Procédé & Lots Pilotes", desc: "Validation de fabrication (3.2.P.3.5) et Certificats d'Analyse 3 lots (1.P.4 / 1.P.5)" },
+            { num: 3, name: "Stabilités Zone IVb & Bioéquivalence", desc: "Données de stabilité M6 30°C/75% RH (3.2.P.8) et Études cliniques / BE (Module 5.3)" },
+            { num: 4, name: "QOS (Module 2.3), Notice & RCP", desc: "Notice Patient FR & AR (1.P.2), RCP (1.P.1) et Résumé Global Qualité (2.3)" },
+            { num: 5, name: "Engagements Réglementaires & Dépôt Légal PDT", desc: "Engagements de commercialisation (1.P.3), Quittance redevance et Dépôt officiel" }
+        ];
+
+        contentEl.innerHTML = `
+            <!-- Frise chronologique des 5 phases DAG -->
+            <div style="margin-bottom:16px; background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
+                <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px;">
+                    Progression du Dossier dans le Graphe de Dépendances (DAG) :
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    ${phases.map(p => {
+                        const isDone = p.num < s.active_phase;
+                        const isCurrent = p.num === s.active_phase;
+                        return `
+                            <div style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:4px; ${isCurrent ? 'background:rgba(37,99,235,0.12); border:1px solid var(--accent-blue);' : (isDone ? 'background:rgba(16,185,129,0.08);' : 'background:transparent; opacity:0.6;')}">
+                                <span style="font-size:14px;">${isDone ? '✅' : (isCurrent ? '▶️' : '⚪')}</span>
+                                <div style="flex:1;">
+                                    <div style="font-size:11.5px; font-weight:${isCurrent ? '800' : '600'}; color:${isCurrent ? 'var(--accent-blue)' : (isDone ? 'var(--accent-emerald)' : 'var(--text-muted)')};">
+                                        Phase ${p.num} : ${p.name}
+                                    </div>
+                                    <div style="font-size:10px; color:var(--text-dim);">${p.desc}</div>
+                                </div>
+                                ${isCurrent ? '<span style="font-size:9.5px; background:var(--accent-blue); color:white; font-weight:800; padding:1px 6px; border-radius:8px;">EN COURS</span>' : ''}
+                                ${isDone ? '<span style="font-size:9.5px; color:var(--accent-emerald); font-weight:700;">VALIDÉ</span>' : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Liste des sections actuellement bloquées -->
+            <div style="font-size:11.5px; font-weight:700; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">
+                Sections Actuellement Bloquées par Verrous (${s.blocked_count}) :
+            </div>
+
+            ${s.blocked_count === 0 ? `
+                <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:12px; text-align:center; color:var(--accent-emerald); font-weight:600; font-size:12px;">
+                    ✅ Aucun verrou bloquant ! Toutes les pièces requises pour la phase active sont satisfaites.
+                </div>
+            ` : `
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${(s.blocked_items || []).map(b => `
+                        <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-left:3px solid #ef4444; border-radius:4px; padding:8px 12px;">
+                            <div style="font-weight:800; color:var(--accent-blue); font-size:12px; margin-bottom:4px;">
+                                [${escapeHTML(b.target_item_code)}] ${escapeHTML(b.target_item_title || '')}
+                            </div>
+                            <div style="font-size:11px; color:var(--text-main); margin-bottom:4px;">
+                                ${escapeHTML(b.summary_message)}
+                            </div>
+                            <div style="font-size:10px; color:var(--text-dim);">
+                                ${(b.unmet_prerequisites || []).map(u => `
+                                    <div>• Requiert <strong>[${escapeHTML(u.required_item_code)}]</strong> en statut <code>${escapeHTML(u.expected_condition)}</code></div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `}
+        `;
+    } catch(err) {
+        contentEl.innerHTML = `<div style="color:var(--accent-red); padding:16px;">Erreur lors du calcul du chemin critique : ${escapeHTML(err.message)}</div>`;
     }
 }
