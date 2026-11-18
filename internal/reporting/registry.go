@@ -1,8 +1,8 @@
 package reporting
 
 import (
-	"strings"
 	"homolog/internal/domain"
+	"strings"
 )
 
 // ReportKind qualifie la nature légale de l'état documenté (Chapitre 11 CDC)
@@ -18,33 +18,33 @@ const (
 type ReportCategory string
 
 const (
-	CategoryDossiersCTD         ReportCategory = "DOSSIERS_CTD"          // Famille 1 : Dossiers Réglementaires & Dépôts ANPP
-	CategoryDispositifsMedicaux ReportCategory = "DISPOSITIFS_MEDICAUX" // Volet DDM : Homologation & Redevances DM
-	CategoryFinancesRedevances  ReportCategory = "FINANCES_REDEVANCES"   // Famille 2 : États Financiers & Redevances ANPP
+	CategoryDossiersCTD          ReportCategory = "DOSSIERS_CTD"          // Famille 1 : Dossiers Réglementaires & Dépôts ANPP
+	CategoryDispositifsMedicaux  ReportCategory = "DISPOSITIFS_MEDICAUX"  // Volet DDM : Homologation & Redevances DM
+	CategoryFinancesRedevances   ReportCategory = "FINANCES_REDEVANCES"   // Famille 2 : États Financiers & Redevances ANPP
 	CategoryVigilanceComplements ReportCategory = "VIGILANCE_COMPLEMENTS" // Famille 3 : Vigilance, Compléments & RDV ANPP
-	CategoryQualiteBPF          ReportCategory = "QUALITE_BPF"           // Famille 4 : Assurance Qualité, Intégrité BPF & 21 CFR Part 11
-	CategoryPilotageStrategique ReportCategory = "PILOTAGE_STRATEGIQUE"  // Famille 5 : Pilotage Stratégique, Direction Générale
-	CategoryControleLiberation  ReportCategory = "CONTROLE_LIBERATION"   // Famille 6 : Contrôle DCE, Métrologie & Libération
-	CategorySuiviAvancement     ReportCategory = "SUIVI_AVANCEMENT"      // Volet EI : Pilotage interne & comités de projet
+	CategoryQualiteBPF           ReportCategory = "QUALITE_BPF"           // Famille 4 : Assurance Qualité, Intégrité BPF & 21 CFR Part 11
+	CategoryPilotageStrategique  ReportCategory = "PILOTAGE_STRATEGIQUE"  // Famille 5 : Pilotage Stratégique, Direction Générale
+	CategoryControleLiberation   ReportCategory = "CONTROLE_LIBERATION"   // Famille 6 : Contrôle DCE, Métrologie & Libération
+	CategorySuiviAvancement      ReportCategory = "SUIVI_AVANCEMENT"      // Volet EI : Pilotage interne & comités de projet
 )
 
 // ReportDefinition encapsule les métadonnées normatives d'un état réglementaire ou intermédiaire
 type ReportDefinition struct {
-	Code                 string                `json:"code"`                   // Ex: ES-REG-01, ES-FIN-01, EI-AVT-01
-	Kind                 ReportKind            `json:"kind"`                   // ES, EI, MT
-	Category             ReportCategory        `json:"category"`               // Famille fonctionnelle
-	Title                string                `json:"title"`                  // Dénomination officielle
-	Subtitle             string                `json:"subtitle"`               // Sous-titre explicatif
-	LegalReference       string                `json:"legal_reference"`        // Base juridique (Loi, Décret, Arrêté, Guide CTD ANPP)
-	DefaultFormat        string                `json:"default_format"`         // pdf, html, xlsx
-	SupportedFormats     []string              `json:"supported_formats"`      // Formats autorisés à l'export
-	RequiresPDTSignature bool                  `json:"requires_pdt_signature"` // Nécessite le visa 2FA du Pharmacien DT
-	IsPubliclyVerifiable bool                  `json:"is_publicly_verifiable"` // Vérifiable publiquement par QR-Code (/verify/{sha256})
+	Code                 string                 `json:"code"`                   // Ex: ES-REG-01, ES-FIN-01, EI-AVT-01
+	Kind                 ReportKind             `json:"kind"`                   // ES, EI, MT
+	Category             ReportCategory         `json:"category"`               // Famille fonctionnelle
+	Title                string                 `json:"title"`                  // Dénomination officielle
+	Subtitle             string                 `json:"subtitle"`               // Sous-titre explicatif
+	LegalReference       string                 `json:"legal_reference"`        // Base juridique (Loi, Décret, Arrêté, Guide CTD ANPP)
+	DefaultFormat        string                 `json:"default_format"`         // pdf, html, xlsx
+	SupportedFormats     []string               `json:"supported_formats"`      // Formats autorisés à l'export
+	RequiresPDTSignature bool                   `json:"requires_pdt_signature"` // Nécessite le visa 2FA du Pharmacien DT
+	IsPubliclyVerifiable bool                   `json:"is_publicly_verifiable"` // Vérifiable publiquement par QR-Code (/verify/{sha256})
 	DefaultWatermark     domain.WatermarkStatus `json:"default_watermark"`      // BROUILLON, OFFICIEL, ARCHIVE
-	FrequencyTrigger     string                `json:"frequency_trigger"`      // Déclencheur & Fréquence d'émission
-	IssuerRole           string                `json:"issuer_role"`            // Rôle habilité à émettre
-	Recipient            string                `json:"recipient"`              // Destinataire officiel
-	Description          string                `json:"description"`            // Description détaillée CDC
+	FrequencyTrigger     string                 `json:"frequency_trigger"`      // Déclencheur & Fréquence d'émission
+	IssuerRole           string                 `json:"issuer_role"`            // Rôle habilité à émettre
+	Recipient            string                 `json:"recipient"`              // Destinataire officiel
+	Description          string                 `json:"description"`            // Description détaillée CDC
 }
 
 // MasterRegistry répertorie les 28 états documentaires BPF officiels (20 ES + 8 EI) et le template maître MT-LCQ-01
