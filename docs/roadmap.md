@@ -1,7 +1,7 @@
 # Feuille de route du projet (Roadmap)
 ## Plateforme SANAD PHARMA — Gestion de l'Enregistrement des Médicaments, de l'Homologation des DM et GED Pharmaceutique en Algérie
 
-**Dernière mise à jour :** 16 novembre 2026  
+**Dernière mise à jour :** 18 novembre 2026  
 **Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP/MIPH, Chapitre 10 - Sanad Corporate & Chapitre 11 - Spécifications Exhaustives des États de Sortie)  
 **Textes réglementaires officiels algériens intégrés :**
 - **Décret exécutif n° 21-82 du 23 février 2021** relatif aux établissements pharmaceutiques et aux conditions de leur agrément.
@@ -34,9 +34,9 @@ gantt
     Studio Compléments & Assistant Soumission ANPP (1.7) :done, p1_7, after p1_6, 3d
     Packaging Docker & Archive .sanad (1.8)          :done, p1_8, after p1_7, 2d
     section Phase 2 : Complétude & Variations
-    Atelier Élaboration, Smart Planning & Workflow BPF (2.1):active, p2_1, after p1_8, 4d
-    Moteur Édition & 28 États de Sortie BPF (2.2)    :p2_2, after p2_1, 4d
-    Redevances, Devises & Settings du Tenant (2.3)   :p2_3, after p2_2, 3d
+    Atelier Élaboration, Smart Planning & Workflow BPF (2.1):done, p2_1, after p1_8, 4d
+    Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1, 4d
+    Redevances, Devises & Settings du Tenant (2.3)   :active, p2_3, after p2_2, 3d
     Moteur Variations ANPP & Impact Tree (2.4)       :p2_4, after p2_3, 4d
     Espace Consultants & Extranet Fournisseur API (2.5):p2_5, after p2_4, 2d
     Régularisation DM Décret 20-324 (2.6)            :p2_6, after p2_5, 3d
@@ -249,7 +249,7 @@ gantt
 ## Phase 2 : Complétude, Moteur de Variations ANPP & Efficacité (Priorité S)
 > **Objectif stratégique :** Intégrer l'atelier d'élaboration documentaire collaborative BPF (Maker-Checker-Approver), les modèles maîtres ANPP/ICH, le moteur expert de modifications post-enregistrement selon la ligne directrice ANPP LD-DEPP07/V01 (Avril 2026), la gestion des redevances, la régularisation des DM, le module Sanad Corporate de gestion des agréments d'établissements MIPH (Fabrication, Importation, Distribution, Exploitation) avec passerelle Tabadol, la recherche plein texte et le multi-tenant SaaS.
 
-### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver)
+### Jalon 2.1 : Atelier d'Élaboration Documentaire, Templates Maîtres & Workflow Multi-Rôles BPF (Maker-Checker-Approver) — *[Terminé : Workflow Maker-Checker, Baux ALCOA+ & Signature PDT 2FA]*
 - [x] **Cartographie & Attribution Décentralisée des Responsabilités Rédactionnelles :**
   - Matrice d'affectation métier selon l'expertise (Section 7.4 du Cahier des Charges) :
     - *Affaires Réglementaires (RA)* : Module 1 complet, notices patient bilingues FR/AR (1.P.2), résumés des caractéristiques (RCP 1.P.1), maquettes, bordereaux BV1/BV2, lettres d'engagements (1.P.8, 1.P.9, 1.H.10) et dossiers de variations (LD-DEPP07/V01).
@@ -259,52 +259,52 @@ gantt
     - *Assurance Qualité (AQ)* : Rôle de relecture indépendante (*Checker*), procédures opératoires (SOP/POS), revue annuelle de la qualité (PQR), audits BPF et gestion des CAPA.
     - *Partenaires Externes (Tiers)* : Dépôt sécurisé des ASMF/DMF Substance Active (3.2.S) par les fabricants d'API et rapports d'essais cliniques/bioéquivalence (Module 5) par les CROs.
   - Assignation des sections CTD/DM à des contributeurs désignés avec dates butoirs et notifications automatiques de suivi.
-- [ ] **Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :**
+- [x] **Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :**
   - Cycle de vie : `À Rédiger` ➔ `En Cours` ➔ `En Revue Qualité/Checker` ➔ `Prêt pour Visa DT` ➔ `Approuvé & Scellé`.
   - Mécanisme de verrouillage collaboratif (**Check-out / Check-in**) avec bail d'expiration automatique (*TTL Lease Lock* 30 min) et verrouillage transactionnel pessimiste PostgreSQL (`SELECT ... FOR UPDATE`), interdisant l'écrasement concurrent entre Maker et Checker avec bandeau d'avertissement en lecture seule.
   - Gestion granulaire du versionnage : révisions de travail mineures incrémentales (`v0.1`, `v0.2`, `v0.3`...) jusqu'à la révision majeure officielle scellée (`v1.0`) par le PDT.
   - Circuit de revue par les pairs / AQ (*Checker*) avec annotations, demandes d'ajustements motivées et journal d'audit complet.
-- [ ] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
+- [x] **Moteur de Dépendances Chronologiques, Chemin Critique & Déverrouillage Conditionnel (*Gating*) :**
   - Modélisation du graphe orienté acyclique (DAG) des dépendances techniques et réglementaires CTD/DM en 5 phases successives (Matières & Méthodes ➔ Lots pilotes & CoA ➔ Stabilités Zone IVb & Bioéquivalence ➔ QOS & Notice/RCP ➔ Engagements & Visa PDT).
   - Système de verrous bloquants prévenant les erreurs de rédaction prématurée (verrouillage de la notice 1.P.2 et du RCP 1.P.1 tant que les stabilités 3.2.P.8 ne sont pas conclues ; verrouillage du QOS 2.3 tant que le Module 3 n'est pas validé).
   - **Verrou de parité linguistique synchrone FR ↔ AR (Règle bloquante GxP) :** Mécanisme de blocage technique interdisant formellement le passage du dossier au statut *« Prêt pour Visa DT »* si la notice patient en langue arabe (1.P.2.2) n'est pas au même indice de révision validé manuellement que la notice française (1.P.2.1), garantissant la stricte symétrie médico-légale exigée par l'ANPP avant toute soumission. *(Note d'architecture : ce verrou de complétude est purement déterministe en Phase 2 ; l'assistant IA d'aide à la traduction médicale et de glossaire bilingue relève du Jalon 3.1)*.
   - Horloge de suivi des épreuves temporelles incompressibles : suivi des jalons de stabilité Zone IVb (M0, M3, M6, M9, M12, M24) et alerte automatique à l'atteinte du seuil minimal légal de soumission (M6).
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
-- [ ] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
+- [x] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
   - Calcul automatique du chemin critique à rebours à partir d'une date butoir ou de l'échéance légale de renouvellement quinquennal à **J-180** : planification dynamique des stabilités M6 (J-240), de la rédaction, de la revue qualité Checker (J-150), de la réservation du créneau RDV E-TASJIL (J-60), du visa légal DT et de la liquidation des bordereaux BV1/BV2 (J-15).
   - Alertes graduées (Jaune / Orange / Rouge) dans le cockpit DT en cas de dérive calendaire sur un jalon critique amont.
-- [ ] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
+- [x] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
   - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
   - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).
-- [ ] **Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic :**
+- [x] **Générateur Automatisé de Formulaires & Lettres d'Engagement en 1 Clic :**
   - Moteur de génération automatique instantanée de documents officiels au format PDF/A prêt pour visa PDT :
     - Lettre d'engagement de validation sur 3 premiers lots industriels de fabrication locale (1.P.8).
     - Lettre d'engagement de suivi de stabilité continue post-commercialisation en Zone IVb (1.P.9).
     - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
     - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
-- [ ] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
+- [x] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
   - Tableau de bord de pilotage temps réel : vue matricielle d'avancement par module CTD et par département rédacteur, alertes sur retards et goulots d'étranglement.
   - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
   - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
 
-### Jalon 2.2 : Moteur Universel d'Édition Haute Fidélité & Référentiel des 28 États Documentaires BPF (Chapitre 11 du CDC)
-- [ ] **Architecture du Moteur d'Édition Backend Go & Formats Opposables :**
+### Jalon 2.2 : Moteur Universel d'Édition Haute Fidélité & Référentiel des 28 États Documentaires BPF (Chapitre 11 du CDC) — *[Terminé : Référentiel 28 États (20 ES + 8 EI), Moteur Vectoriel 300 DPI & Scellement 2FA]*
+- [x] **Architecture du Moteur d'Édition Backend Go & Formats Opposables :**
   - Architecture du moteur backend Go (`ReportingService` dans `internal/reporting`) et génération haute fidélité au format **PDF/A-1b et PDF/A-2b** (ISO 19005).
   - Système de **Filigranes Dynamiques BPF** selon l'état de cycle de vie : `BROUILLON (DRAFT)` ou `DOCUMENT DE TRAVAIL / EN COURS` (translucide), `OFFICIEL / APPROUVÉ` (vert BPF avec visa PDT), `ARCHIVÉ / PÉRIMÉ` (rouge).
   - Dispositif anti-falsification par **QR-Code cryptographique** en pied de page renvoyant vers l'URL de vérification instantanée (`https://sanad.labo.dz/verify/{sha256}`) pour contrôle mobile immédiat par l'ANPP ou auditeurs.
   - Paginage légal indélébile **`Page X sur Y`** et cartouche d'identification normalisé (raison sociale, agrément MIPH, DCI, version, horodatage UTC+1 certifié).
-- [ ] **Volet A : Les 20 États Réglementaires & Finaux Opposables (ES) :**
+- [x] **Volet A : Les 20 États Réglementaires & Finaux Opposables (ES) :**
   - *Famille 1 (Dépôt & Procédures CTD / DM) :* ES-REG-01 (Bordereau de transmission 5 modules), ES-REG-02 (Formulaire 1.A.3 Médicament & Formulaire d'Homologation DM en 6 sections Décret 20-324), ES-REG-03 (Index et table des matières CTD avec SHA-256), ES-REG-03-DM (Récépissé de dépôt DM en 13 points), ES-REG-04 (Fiche de variation LD-DEPP07/V01), ES-REG-05 (Bordereau d'envoi échantillons LNCPP/ANPP calculé selon la table Fr-DCE02-F/V01).
   - *Famille 2 (Redevances & Financier Décret 21-82 & Ordonnance 21-07) :* ES-FIN-01 (Bordereau BV1 initial Médicament Trésor Public CAS 302.145 ou BV DM BNA Chéraga RIB `00100622030000064395` - 300 000 DA), ES-FIN-02 (Bordereau BV2 variations/renouvellements avec décompte Grouping PP et BV DM BNA Modification 150k DA / Renouvellement 300k DA / Transfert 100k DA), ES-FIN-03 (Fiche d'imputation et rapprochement quittance bancaire).
   - *Famille 3 (Vigilance & Compléments) :* ES-VIG-01 (Bordereau de réponse aux compléments avec compte à rebours 60j/90j), ES-VIG-02 (Fiche de préparation RDV ANPP PP/DM), ES-VIG-03 (Rapport périodique de veille et échéancier AMM J-180/90/30).
   - *Famille 4 (Qualité & Audit Trail BPF) :* ES-QUA-01 (Registre d'Audit Trail scellé ALCOA+), ES-QUA-02 (Manifeste de signature électronique Maker-Checker), ES-QUA-03 (Fiche de contrôle documentaire pré-dépôt).
   - *Famille 5 (Pilotage & Réversibilité) :* ES-DIR-01 (Dashboard exécutif du portefeuille AMM/DM), ES-EXP-01 (Procès-verbal de réversibilité archive universelle `.sanad`).
   - *Famille 6 (Contrôle de Conformité, Métrologie & Libération DCE) :* ES-DCE-01 (Certificat Officiel de Libération de Lot du Pharmacien DT avec traçabilité PF/SA/Semi-fini et validation LCQ), ES-DCE-02 (Formulaires de réception à l'importation PP Arrêté 14/02/2021 et DM Arrêté 20/02/2025), ES-DCE-03 (Exportateur automatisé des canevas journaliers Excel ANPP unifiés), ES-DCE-04 (Bordereau de composition du dossier de libération en 8 pièces PDF), MT-LCQ-01 (Template Maître Standard de Référence Secondaire ISO 17034).
-- [ ] **Volet B : Les 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel (EI) :**
+- [x] **Volet B : Les 8 États Intermédiaires de Suivi d'Avancement & Pilotage Opérationnel (EI) :**
   - *Suivi de montage CTD & Gating :* EI-AVT-01 (Fiche Navette d'avancement 360° et verrous bloquants), EI-AVT-02 (Relevé des écarts et pièces manquantes Gap Analysis par département), EI-AVT-03 (Fiche d'annotation et d'arbitrage Checker / AQ lors d'un rejet).
   - *Épreuves temporelles incompressibles :* EI-CHR-01 (Fiche de suivi des stabilités Zone IVb M0 à M24 avec alerte seuil légal M6), EI-CHR-02 (Rapport d'étape bioéquivalence CRO avec suivi IC 90%).
   - *Compléments, Changes & Pipeline :* EI-VIG-01 (Fiche d'instruction des compléments et plan d'action avec jalons internes J-15/J-5), EI-CHG-01 (Fiche d'évaluation d'impact réglementaire Change Control 1-34), EI-PIP-01 (Point hebdomadaire du pipeline de soumissions pour CoDir).
-- [ ] **Exports Tabulaires & API Sécurisée :**
+- [x] **Exports Tabulaires & API Sécurisée :**
   - Exports tabulaires certifiés **Excel (XLSX) et CSV UTF-8** avec métadonnées d'audit trail (pour comptabilité, finance et analyses de portefeuille).
   - Routes REST API sécurisées (`GET /api/v1/dossiers/{id}/reports/{code}`, `POST .../seal`, `GET /api/v1/public/verify/{sha256}`).
 
