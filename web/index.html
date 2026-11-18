@@ -2286,7 +2286,7 @@
                     <!-- Injecté dynamiquement -->
                 </div>
             </div>
-            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <div class="modal-footer" style="flex-shrink:0; padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:11px; color:var(--text-dim);">Les réponses visées par le Pharmacien DT sont immédiatement scellées dans l'Audit Trail.</span>
                 <button type="button" class="btn-pill" onclick="closeModal('modal-deficiency-detail')">Fermer</button>
             </div>
@@ -2512,15 +2512,21 @@
 
     <!-- Modal Assistant de Soumission E-Services ANPP & Validation Pré-Dépôt -->
     <div class="modal-overlay" id="modal-pre-submission-audit" onclick="if(event.target === this) closeModal('modal-pre-submission-audit')">
-        <div class="modal modal-xl" style="width:860px; max-width:min(860px, calc(100vw - 24px)); max-height:90vh; display:flex; flex-direction:column;">
-            <div class="modal-header">
+        <div class="modal modal-xl" style="width:920px; max-width:min(920px, calc(100vw - 24px)); height:88vh; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="flex-shrink:0;">
                 <div class="modal-title">
                     <span>🚀</span>
                     <span>Assistant de Soumission E-Services ANPP &amp; Validation Pré-Dépôt</span>
                 </div>
-                <button class="close-btn" onclick="closeModal('modal-pre-submission-audit')">✕</button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="btn-pill btn-modal-expand" onclick="toggleModalFullscreen('modal-pre-submission-audit')" title="Agrandir en plein écran" style="height:26px; padding:2px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                        <span class="expand-icon">⛶</span>
+                        <span class="expand-label">Plein écran</span>
+                    </button>
+                    <button class="close-btn" onclick="closeModal('modal-pre-submission-audit')">✕</button>
+                </div>
             </div>
-            <div class="modal-body" style="overflow-y:auto; flex:1;">
+            <div class="modal-body" style="overflow-y:auto; flex:1 1 auto; min-height:0; padding:16px;">
                 <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">Dossier d'Enregistrement Cible :</div>
@@ -2567,7 +2573,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <div class="modal-footer" style="flex-shrink:0; padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:11px; color:var(--text-dim);">La certification pré-dépôt requiert l'habilitation légale du Pharmacien Directeur Technique (1.A.7).</span>
                 <div style="display:flex; gap:8px;">
                     <button type="button" class="btn-pill" onclick="closeModal('modal-pre-submission-audit')">Fermer</button>
@@ -2581,15 +2587,21 @@
 
     <!-- Modal Gestion des Séances & Rendez-vous Dépôt ANPP -->
     <div class="modal-overlay" id="modal-appointments" onclick="if(event.target === this) closeModal('modal-appointments')">
-        <div class="modal modal-xl" style="width:920px; max-width:min(920px, calc(100vw - 24px)); max-height:90vh; display:flex; flex-direction:column;">
-            <div class="modal-header">
+        <div class="modal modal-xl" style="width:920px; max-width:min(920px, calc(100vw - 24px)); height:88vh; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="flex-shrink:0;">
                 <div class="modal-title">
                     <span>📅</span>
                     <span>Gestion des Séances &amp; Rendez-vous Dépôt ANPP</span>
                 </div>
-                <button class="close-btn" onclick="closeModal('modal-appointments')">✕</button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="btn-pill btn-modal-expand" onclick="toggleModalFullscreen('modal-appointments')" title="Agrandir en plein écran" style="height:26px; padding:2px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                        <span class="expand-icon">⛶</span>
+                        <span class="expand-label">Plein écran</span>
+                    </button>
+                    <button class="close-btn" onclick="closeModal('modal-appointments')">✕</button>
+                </div>
             </div>
-            <div class="modal-body" style="overflow-y:auto; flex:1;">
+            <div class="modal-body" style="overflow-y:auto; flex:1 1 auto; min-height:0; padding:16px;">
                 <div style="font-size:11px; color:var(--text-dim); margin-bottom:12px;">
                     Planification officielle des créneaux de dépôt physique, auditions de commission d'enregistrement et remises d'échantillons au LNCM avec compte à rebours de convocation.
                 </div>
@@ -3126,7 +3138,7 @@
                 </div>
                 <textarea id="tpl-detail-content" class="login-input" style="flex:1; min-height:360px; font-family:monospace; font-size:11px; line-height:1.5; resize:none;" readonly></textarea>
             </div>
-            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <div class="modal-footer" style="flex-shrink:0; padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                 <button type="button" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="copyTemplateContentToClipboard()">
                     📋 Copier la Trame dans le Presse-Papier
                 </button>
