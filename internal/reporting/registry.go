@@ -171,6 +171,57 @@ var MasterRegistry = []ReportDefinition{
 		Recipient:            "Laboratoire National de Contrôle des Produits Pharmaceutiques (LNCPP / DCE)",
 		Description:          "Bordereau opposable d'expédition des lots de produit fini, substances de référence, colonnes et réactifs spécifiques requis pour l'expertise analytique.",
 	},
+	{
+		Code:                 "ES-ENG-1P8",
+		Kind:                 KindEtatReglementaire,
+		Category:             CategoryDossiersCTD,
+		Title:                "Engagement de Disponibilité Continue sur le Marché National (1.P.8)",
+		Subtitle:             "Attestation solennelle de constitution de stock de sécurité 3 mois et approvisionnement ininterrompu",
+		LegalReference:       "Décret exécutif n° 20-325 du 22 novembre 2020 • Guide CTD ANPP Juillet 2025",
+		DefaultFormat:        "pdf",
+		SupportedFormats:     []string{"pdf", "html"},
+		RequiresPDTSignature: true,
+		IsPubliclyVerifiable: true,
+		DefaultWatermark:     domain.WatermarkDraft,
+		FrequencyTrigger:     "Constitution de tout dossier de fabrication locale (NF) ou importation (NI)",
+		IssuerRole:           "Pharmacien Directeur Technique Titulaire",
+		Recipient:            "Direction de la Production & de la Régulation MIPH / ANPP",
+		Description:          "Lettre d'engagement légal obligatoire par laquelle le Pharmacien DT garantit sous serment la disponibilité permanente du médicament et un stock de 3 mois.",
+	},
+	{
+		Code:                 "ES-ENG-1P9",
+		Kind:                 KindEtatReglementaire,
+		Category:             CategoryDossiersCTD,
+		Title:                "Engagement de Pharmacovigilance & Notification Immédiate (1.P.9)",
+		Subtitle:             "Maintien du système permanent 24/7, désignation du QPPV et délais de déclaration 15j / 48h",
+		LegalReference:       "Loi sanitaire n° 18-11 • Lignes Directrices de Pharmacovigilance ANPP / CNPM",
+		DefaultFormat:        "pdf",
+		SupportedFormats:     []string{"pdf", "html"},
+		RequiresPDTSignature: true,
+		IsPubliclyVerifiable: true,
+		DefaultWatermark:     domain.WatermarkDraft,
+		FrequencyTrigger:     "Dépôt de toute demande d'enregistrement (NI, NF, RI, RF)",
+		IssuerRole:           "Pharmacien Directeur Technique Titulaire",
+		Recipient:            "Centre National de Pharmacovigilance & Matériovigilance (CNPM) / ANPP",
+		Description:          "Acte officiel certifiant l'organisation de la pharmacovigilance, la nomination du QPPV et l'engagement de transmission sans délai de toute alerte sanitaire.",
+	},
+	{
+		Code:                 "ES-ENG-1H10",
+		Kind:                 KindEtatReglementaire,
+		Category:             CategoryDossiersCTD,
+		Title:                "Déclaration Solennelle de Non-Modification (1.H.10)",
+		Subtitle:             "Attestation formelle de conformité bit-à-bit du produit pour renouvellement quinquennal",
+		LegalReference:       "Arrêté ministériel du 16 décembre 2020 fixant les modalités de renouvellement",
+		DefaultFormat:        "pdf",
+		SupportedFormats:     []string{"pdf", "html"},
+		RequiresPDTSignature: true,
+		IsPubliclyVerifiable: true,
+		DefaultWatermark:     domain.WatermarkDraft,
+		FrequencyTrigger:     "Dossier de renouvellement d'enregistrement (RI / RF / DM)",
+		IssuerRole:           "Pharmacien Directeur Technique Titulaire",
+		Recipient:            "Direction de l'Enregistrement des Produits Pharmaceutiques (DEPP)",
+		Description:          "Déclaration solennelle sous la foi du serment certifiant qu'aucune modification non autorisée n'a été apportée depuis la décision d'enregistrement précédente.",
+	},
 
 	// =========================================================================
 	// FAMILLE 2 : ÉTATS FINANCIERS & REDEVANCES ANPP
@@ -612,9 +663,26 @@ func GetAllReportDefinitions() []ReportDefinition {
 	return result
 }
 
-// GetReportDefinition recherche une définition par son code (insensible à la casse)
+// GetReportDefinition recherche une définition par son code ou alias réglementaire (insensible à la casse)
 func GetReportDefinition(code string) (ReportDefinition, bool) {
 	upperCode := strings.ToUpper(strings.TrimSpace(code))
+
+	// Résolution des alias usuels ANPP
+	switch upperCode {
+	case "1.P.8", "1P8", "ENG-1P8":
+		upperCode = "ES-ENG-1P8"
+	case "1.P.9", "1P9", "ENG-1P9":
+		upperCode = "ES-ENG-1P9"
+	case "1.H.10", "1H10", "ENG-1H10":
+		upperCode = "ES-ENG-1H10"
+	case "BV1", "BV-1":
+		upperCode = "ES-FIN-01"
+	case "BV2", "BV-2":
+		upperCode = "ES-FIN-02"
+	case "BV-DM":
+		upperCode = "ES-FIN-01"
+	}
+
 	for _, def := range MasterRegistry {
 		if strings.EqualFold(def.Code, upperCode) {
 			return def, true

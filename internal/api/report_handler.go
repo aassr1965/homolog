@@ -196,10 +196,24 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 		}
 	case "ES-REG-02-DM":
 		htmlOutput = renderESREG02DMHTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-REG-03":
+		htmlOutput = reporting.RenderESREG03HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-REG-03-DM":
 		htmlOutput = renderESREG03DMHTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-REG-04":
+		htmlOutput = reporting.RenderESREG04HTML(dossier, "", "", "", "", "", estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-REG-05":
+		htmlOutput = reporting.RenderESREG05HTML(dossier, "", "", "", "", "", "", 300, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-FIN-01":
 		htmlOutput = renderESFIN01HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-FIN-02":
+		htmlOutput = reporting.RenderESFIN02HTML(dossier, "", 0, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-ENG-1P8", "1.P.8", "1P8":
+		htmlOutput = reporting.RenderCommitmentLetter1P8(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-ENG-1P9", "1.P.9", "1P9":
+		htmlOutput = reporting.RenderCommitmentLetter1P9(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-ENG-1H10", "1.H.10", "1H10":
+		htmlOutput = reporting.RenderCommitmentLetter1H10(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	default: // "ES-REG-01"
 		htmlOutput = renderESREG01HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, moduleCounts, watermark, reportSHA256, qrURL, now)
 	}
