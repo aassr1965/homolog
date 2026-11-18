@@ -1036,8 +1036,27 @@
                 // Si la section n'est pas repliée, afficher ses items
                 if (!isCollapsed) {
                     section.items.forEach(it => {
+                        // Diagnostic Gating & Rôles dans le Chemin Critique
+                        let isGatedBlocked = false;
+                        let blockedEval = null;
+                        if (currentDossierGatingSummary && Array.isArray(currentDossierGatingSummary.blocked_items)) {
+                            blockedEval = currentDossierGatingSummary.blocked_items.find(b => b.target_item_code === it.item_code);
+                            if (blockedEval) isGatedBlocked = true;
+                        }
+
+                        let isBlockingPrereq = false;
+                        let blockingPrereqInfo = null;
+                        if (currentDossierGatingSummary && Array.isArray(currentDossierGatingSummary.blocking_prereqs)) {
+                            blockingPrereqInfo = currentDossierGatingSummary.blocking_prereqs.find(p => p.item_code === it.item_code || it.item_code.startsWith(p.item_code));
+                            if (blockingPrereqInfo && it.workflow_status !== 'approved_sealed') {
+                                isBlockingPrereq = true;
+                            }
+                        }
+
                         const tr = document.createElement("tr");
                         if (it.id === selectedDossierItemId) tr.classList.add("selected");
+                        if (isGatedBlocked) tr.classList.add("row-gating-blocked");
+                        if (isBlockingPrereq) tr.classList.add("row-gating-blocking");
                         tr.onclick = () => selectDossierItem(it.id);
 
                         const rawTitle = it.title_fr || '';
@@ -1062,11 +1081,12 @@
                             const wfBadge = typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(it.workflow_status || 'draft_pending') : '';
                             const revBadge = typeof formatRevisionBadge === 'function' ? formatRevisionBadge(it.current_revision, it.workflow_status === 'approved_sealed') : '';
                             let gatingPill = '';
-                            if (currentDossierGatingSummary && Array.isArray(currentDossierGatingSummary.blocked_items)) {
-                                const isBlocked = currentDossierGatingSummary.blocked_items.some(b => b.target_item_code === it.item_code);
-                                if (isBlocked) {
-                                    gatingPill = `<span class="badge" style="background:rgba(239,68,68,0.15); border:1px solid #f87171; color:#dc2626; font-size:10px; font-weight:700; cursor:pointer;" onclick="event.stopPropagation(); showGatingInfoModal('${it.id}', '${escapeHTML(it.item_code)}')" title="Verrou GxP actif : prérequis réglementaires non satisfaits. Cliquez pour inspecter.">🔒 Verrou GxP</span>`;
-                                }
+                            if (isGatedBlocked) {
+                                gatingPill += `<span class="badge badge-gating-blocked" onclick="event.stopPropagation(); showGatingInfoModal('${it.id}', '${escapeHTML(it.item_code)}')" title="Tâche en attente : bloquée par prérequis amont non scellé. Cliquez pour inspecter.">🔒 En attente</span>`;
+                            }
+                            if (isBlockingPrereq) {
+                                const bCodes = blockingPrereqInfo.blocked_codes ? blockingPrereqInfo.blocked_codes.join(', ') : '';
+                                gatingPill += `<span class="badge badge-gating-blocking" onclick="event.stopPropagation(); showBlockingPrereqModal('${it.id}', '${escapeHTML(it.item_code)}', ${blockingPrereqInfo.blocks_count}, '${escapeHTML(bCodes)}')" title="⚡ Débloqueur Critique : cette pièce conditionne ${blockingPrereqInfo.blocks_count} autre(s) section(s) du CTD">⚡ Débloqueur (${blockingPrereqInfo.blocks_count})</span>`;
                             }
                             let lockIndicator = '';
                             if (it.is_locked) {
@@ -1405,15 +1425,21 @@
                             if (currentDossierGatingSummary && Array.isArray(currentDossierGatingSummary.blocked_items)) {
                                 itemBlocked = currentDossierGatingSummary.blocked_items.find(b => b.target_item_code === item.item_code);
                             }
+                            let itemBlockingPrereq = null;
+                            if (currentDossierGatingSummary && Array.isArray(currentDossierGatingSummary.blocking_prereqs)) {
+                                itemBlockingPrereq = currentDossierGatingSummary.blocking_prereqs.find(p => p.item_code === item.item_code || item.item_code.startsWith(p.item_code));
+                                if (item.workflow_status === 'approved_sealed') itemBlockingPrereq = null;
+                            }
+
                             if (itemBlocked) {
                                 return `
                                     <div style="background:rgba(239,68,68,0.08); border:1.5px solid #f87171; border-radius:6px; padding:10px 12px; margin-bottom:14px;">
                                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                                             <span style="font-size:11.5px; font-weight:800; color:#b91c1c; display:flex; align-items:center; gap:6px;">
                                                 <span>🔒</span>
-                                                <span>VERROU RÉGLEMENTAIRE BPF (GATING ACTIF)</span>
+                                                <span>TÂCHE EN ATTENTE DE DÉVERROUILLAGE (GATING ACTIF)</span>
                                             </span>
-                                            <span style="background:rgba(239,68,68,0.2); color:#991b1b; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;">Bloquant</span>
+                                            <span style="background:rgba(239,68,68,0.2); color:#991b1b; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;">Bloquée</span>
                                         </div>
                                         <div style="font-size:11px; color:var(--text-main); margin-bottom:8px; line-height:1.4;">
                                             ${escapeHTML(itemBlocked.summary_message)}
@@ -1425,6 +1451,24 @@
                                                     <span style="color:#b91c1c; font-size:9.5px;">⚖️ Référence légale : ${escapeHTML(u.legal_ref)} (Statut actuel : ${escapeHTML(u.current_status)})</span>
                                                 </div>
                                             `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            } else if (itemBlockingPrereq) {
+                                return `
+                                    <div style="background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.03)); border:1.5px solid #f59e0b; border-radius:6px; padding:10px 12px; margin-bottom:14px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                            <span style="font-size:11.5px; font-weight:800; color:#b45309; display:flex; align-items:center; gap:6px;">
+                                                <span>⚡</span>
+                                                <span>PIÈCE CLÉ DE VOÛTE (PRÉREQUIS BLOQUANT DU DOSSIER)</span>
+                                            </span>
+                                            <span style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; border:1px solid #f59e0b;">Prioritaire</span>
+                                        </div>
+                                        <div style="font-size:11.5px; color:var(--text-main); margin-bottom:6px; line-height:1.4;">
+                                            Cette section est un <strong>débloqueur critique</strong> du chemin critique. Tant qu'elle n'est pas scellée en v1.0 par le Pharmacien DT, elle bloque <strong>${itemBlockingPrereq.blocks_count} autre(s) section(s)</strong>.
+                                        </div>
+                                        <div style="font-size:10.5px; color:var(--text-dim); background:var(--bg-panel); border:1px solid rgba(245,158,11,0.25); border-radius:4px; padding:6px 8px;">
+                                            📌 <strong>Sections en attente :</strong> <code>${escapeHTML(itemBlockingPrereq.blocked_codes.join(', '))}</code>
                                         </div>
                                     </div>
                                 `;

@@ -2116,3 +2116,85 @@ html[data-theme="dark"] .btn-focus-mode:hover {
     background: rgba(255,255,255,0.06);
 }
 
+/* ==========================================================================
+   Jalon 2.1b : Ergonomie Gating — Tâches Bloquantes (Débloqueurs) & Bloquées
+   ========================================================================== */
+
+/* Tâches Bloquées (en attente de déverrouillage amont) : Grisage atténué */
+.row-gating-blocked {
+    opacity: 0.62;
+    background-color: rgba(148, 163, 184, 0.04);
+    transition: opacity 0.18s ease, background-color 0.18s ease;
+}
+.row-gating-blocked:hover {
+    opacity: 0.95;
+    background-color: var(--bg-hover) !important;
+}
+.badge-gating-blocked {
+    font-size: 9.5px;
+    font-weight: 700;
+    background: rgba(148, 163, 184, 0.15);
+    color: #64748b;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 1px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+.badge-gating-blocked:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+    border-color: #f87171;
+}
+
+/* Tâches Bloquantes (Débloqueurs Critiques / Clés de Voûte) : Mise en lumière */
+.row-gating-blocking {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.09) 0%, rgba(245, 158, 11, 0.02) 100%) !important;
+    border-left: 4px solid #f59e0b !important;
+    position: relative;
+}
+.row-gating-blocking:hover {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.06) 100%) !important;
+}
+.badge-gating-blocking {
+    font-size: 10px;
+    font-weight: 800;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.25);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+.badge-gating-blocking:hover {
+    transform: scale(1.04);
+    background: #fde68a;
+    border-color: #d97706;
+}
+
+html[data-theme="dark"] .row-gating-blocked {
+    opacity: 0.50;
+    background-color: rgba(15, 23, 42, 0.3);
+}
+html[data-theme="dark"] .row-gating-blocked:hover {
+    opacity: 0.90;
+    background-color: rgba(30, 41, 59, 0.5) !important;
+}
+html[data-theme="dark"] .row-gating-blocking {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.03) 100%) !important;
+    border-left: 4px solid #fbbf24 !important;
+}
+html[data-theme="dark"] .badge-gating-blocking {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fde68a;
+    border-color: #f59e0b;
+}
+
+
