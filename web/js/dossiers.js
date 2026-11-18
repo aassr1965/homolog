@@ -53,13 +53,9 @@
                 if (it.locked_by && uid && it.locked_by === uid) return true;
                 if (it.locked_by_name && uLastName && it.locked_by_name.toLowerCase().includes(uLastName)) return true;
             }
-            // 2. Assigné spécifiquement à cet utilisateur OU assigné au pôle global de l'utilisateur (sans rédacteur désigné, à prendre en charge)
+            // 2. Assigné spécifiquement et NOMINATIVEMENT à cet utilisateur
             if (it.workflow_status !== 'approved_sealed') {
                 if (it.assigned_user_id && uid && it.assigned_user_id === uid) return true;
-                // Si la tâche est confiée au pôle globalement et non encore prise par un tiers : action pour les membres du pôle
-                if (!it.assigned_user_id && isItemUserDept(it, userCtx) && !it.is_locked) {
-                    return true;
-                }
             }
             // 3. Directeur Technique : visas/signatures à apposer
             if (userCtx.isDT) {
