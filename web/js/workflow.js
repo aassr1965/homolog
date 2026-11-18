@@ -725,53 +725,108 @@ function copyTemplateContentToClipboard() {
 }
 
 // ----------------------------------------------------------------------------
-// Moteur Dynamique des États de Sortie Réglementaires (ES-REG-01, 02, ES-FIN-01)
+// Moteur Universel des États Documentaires BPF (ES 1-20 & EI 1-8)
 // ----------------------------------------------------------------------------
-function openDossierReportsModal(dossierId) {
-    currentWfDossierId = dossierId;
-    currentReportCode = 'ES-REG-01';
+let currentReportMode = 'ES';
 
-    const modal = document.getElementById('modal-dossier-reports');
-    if (!modal) return;
+function setReportMode(mode) {
+    currentReportMode = mode;
+    const btnES = document.getElementById('report-mode-es');
+    const btnEI = document.getElementById('report-mode-ei');
+    const desc = document.getElementById('report-category-description');
+    const sealBtn = document.getElementById('btn-seal-active-report');
 
-    // Détection si Dispositif Médical
+    if (btnES) btnES.classList.toggle('active', mode === 'ES');
+    if (btnEI) btnEI.classList.toggle('active', mode === 'EI');
+
+    if (mode === 'ES') {
+        if (desc) desc.textContent = "États réglementaires opposables ANPP avec cachet 2FA et horodatage indélébile.";
+        if (sealBtn) sealBtn.style.display = 'inline-block';
+        currentReportCode = 'ES-REG-01';
+    } else {
+        if (desc) desc.textContent = "Documents internes de travail et matrices de pilotage BPF (non opposables).";
+        if (sealBtn) sealBtn.style.display = 'none';
+        currentReportCode = 'EI-AVT-01';
+    }
+
+    renderReportTabs();
+    switchReportTab(currentReportCode);
+}
+
+function renderReportTabs() {
+    const tabsBar = document.getElementById('report-tabs-bar');
+    if (!tabsBar) return;
+
     let isDM = false;
-    if (typeof currentDossierDetail !== 'undefined' && currentDossierDetail && currentDossierDetail.id === dossierId) {
+    if (typeof currentDossierDetail !== 'undefined' && currentDossierDetail && currentDossierDetail.id === currentWfDossierId) {
         if (currentDossierDetail.product_type === 'dispositif_medical' || currentDossierDetail.procedure_code === 'HOMOLOG_DM' || currentDossierDetail.medical_device) {
             isDM = true;
         }
     } else if (typeof currentDossiers !== 'undefined' && currentDossiers) {
-        const found = currentDossiers.find(d => d.id === dossierId);
+        const found = currentDossiers.find(d => d.id === currentWfDossierId);
         if (found && (found.product_type === 'dispositif_medical' || found.procedure_code === 'HOMOLOG_DM')) {
             isDM = true;
         }
     }
 
-    const tabsBar = document.getElementById('report-tabs-bar');
-    if (tabsBar) {
+    if (currentReportMode === 'ES') {
         if (isDM) {
             tabsBar.innerHTML = `
-                <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau Dépôt</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02-DM : Demande Homologation (6 sections)</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-REG-03-DM" onclick="switchReportTab('ES-REG-03-DM')">ES-REG-03-DM : Récépissé Dépôt (13 points)</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV (BNA Chéraga)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau Dépôt</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02-DM : Demande (6 sections)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-03-DM" onclick="switchReportTab('ES-REG-03-DM')">ES-REG-03-DM : Récépissé Dépôt</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-05" onclick="switchReportTab('ES-REG-05')">ES-REG-05 : Échantillons</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : BV Initial BNA</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-02" onclick="switchReportTab('ES-FIN-02')">ES-FIN-02 : BV Modif/Renouv</button>
             `;
         } else {
             tabsBar.innerHTML = `
-                <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau CTD</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau CTD</button>
                 <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02 : Formulaire 1.A.3</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV1 (Trésor Public)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-03" onclick="switchReportTab('ES-REG-03')">ES-REG-03 : Index CTD (M1-M5)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-04" onclick="switchReportTab('ES-REG-04')">ES-REG-04 : Variation LD</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-05" onclick="switchReportTab('ES-REG-05')">ES-REG-05 : Échantillons LNCPP</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : BV1 Initial</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-02" onclick="switchReportTab('ES-FIN-02')">ES-FIN-02 : BV2 Variations</button>
+                <button class="btn-pill report-tab-btn" data-code="1.P.8" onclick="switchReportTab('1.P.8')">1.P.8 : Stock 3 mois</button>
+                <button class="btn-pill report-tab-btn" data-code="1.P.9" onclick="switchReportTab('1.P.9')">1.P.9 : Vigilance</button>
+                <button class="btn-pill report-tab-btn" data-code="1.H.10" onclick="switchReportTab('1.H.10')">1.H.10 : Non-Modif.</button>
             `;
         }
     } else {
-        // Fallback
-        document.querySelectorAll('.report-tab-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.code === 'ES-REG-01');
-        });
+        tabsBar.innerHTML = `
+            <button class="btn-pill report-tab-btn" data-code="EI-AVT-01" onclick="switchReportTab('EI-AVT-01')">EI-AVT-01 : Navette CTD/DM</button>
+            <button class="btn-pill report-tab-btn" data-code="EI-AVT-02" onclick="switchReportTab('EI-AVT-02')">EI-AVT-02 : Relevé Écarts</button>
+            <button class="btn-pill report-tab-btn" data-code="EI-AVT-03" onclick="switchReportTab('EI-AVT-03')">EI-AVT-03 : Fiche Checker</button>
+            <button class="btn-pill report-tab-btn" data-code="EI-CHR-01" onclick="switchReportTab('EI-CHR-01')">EI-CHR-01 : Stabilités Zone IVb</button>
+            <button class="btn-pill report-tab-btn" data-code="EI-CHR-02" onclick="switchReportTab('EI-CHR-02')">EI-CHR-02 : Bioéquivalence</button>
+            <button class="btn-pill report-tab-btn" data-code="EI-VIG-01" onclick="switchReportTab('EI-VIG-01')">EI-VIG-01 : Plan d'Action Carence</button>
+            <button class="btn-pill report-tab-btn" data-code="EI-CHG-01" onclick="switchReportTab('EI-CHG-01')">EI-CHG-01 : Change Control</button>
+            <button class="btn-pill report-tab-btn" data-code="EI-PIP-01" onclick="switchReportTab('EI-PIP-01')">EI-PIP-01 : Pipeline CoDir</button>
+        `;
     }
+}
 
+function openDossierReportsModal(dossierId) {
+    currentWfDossierId = dossierId;
+    currentReportMode = 'ES';
+    currentReportCode = 'ES-REG-01';
+
+    const modal = document.getElementById('modal-dossier-reports');
+    if (!modal) return;
+
+    const btnES = document.getElementById('report-mode-es');
+    const btnEI = document.getElementById('report-mode-ei');
+    const desc = document.getElementById('report-category-description');
+    const sealBtn = document.getElementById('btn-seal-active-report');
+    if (btnES) btnES.classList.add('active');
+    if (btnEI) btnEI.classList.remove('active');
+    if (desc) desc.textContent = "États réglementaires opposables ANPP avec cachet 2FA et horodatage indélébile.";
+    if (sealBtn) sealBtn.style.display = 'inline-block';
+
+    renderReportTabs();
     openModal('modal-dossier-reports');
-    loadReportView(currentReportCode);
+    switchReportTab(currentReportCode);
 }
 
 function switchReportTab(code) {
@@ -789,7 +844,7 @@ async function loadReportView(reportCode) {
 
     frameContainer.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-dim);">
         <div style="font-size:24px; margin-bottom:10px;">⏳</div>
-        <div>Compilation certifiée de l'état de sortie officiel ANPP...</div>
+        <div>Compilation certifiée du document BPF / ANPP...</div>
     </div>`;
 
     try {
@@ -799,9 +854,15 @@ async function loadReportView(reportCode) {
         `;
 
         if (sealStatusBox) {
-            sealStatusBox.innerHTML = `
-                <span style="color:var(--text-dim); font-size:11px;">État : Non scellé formellement (Aperçu de travail)</span>
-            `;
+            if (currentReportMode === 'EI') {
+                sealStatusBox.innerHTML = `
+                    <span style="color:#0284c7; font-size:11px; font-weight:600;">ℹ️ Document de travail interne — Filigrane de confidentialité BPF appliqué (Pas de visa PDT requis)</span>
+                `;
+            } else {
+                sealStatusBox.innerHTML = `
+                    <span style="color:var(--text-dim); font-size:11px;">État : Non scellé formellement (Aperçu de travail opposable)</span>
+                `;
+            }
         }
     } catch (err) {
         frameContainer.innerHTML = `<div style="color:var(--accent-red); padding:20px;">${err.message || 'Erreur'}</div>`;

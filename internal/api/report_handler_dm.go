@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"homolog/internal/domain"
+	"homolog/internal/reporting"
 )
 
 // renderESREG02DMHTML génère le Formulaire Officiel de Demande d'Homologation de Dispositif Médical
@@ -349,25 +350,7 @@ func renderESREG02DMHTML(
             </div>
         </div>
 
-        <div class="footer-legal">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <svg width="32" height="32" viewBox="0 0 100 100" fill="#091e36">
-                    <rect width="100" height="100" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-                    <rect x="10" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="65" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="10" y="65" width="25" height="25" fill="#091e36"/>
-                    <rect x="42" y="42" width="16" height="16" fill="#047857"/>
-                </svg>
-                <div>
-                    <strong>Sceau Cryptographique SHA-256 :</strong> %s...<br/>
-                    Vérification d'authenticité DDM : <a href="%s" style="color:#0284c7; text-decoration:none;">%s</a>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                <span>Page <strong>1 sur 1</strong></span><br/>
-                <span>Édité le %s</span>
-            </div>
-        </div>
+        %s
     </div>
 </body>
 </html>`,
@@ -401,8 +384,7 @@ func renderESREG02DMHTML(
 		estName, estAddress,
 		pdtName, pdtDecision,
 		estName,
-		hashShort, qrURL, qrURL,
-		generatedAt.Format("02/01/2006 à 15:04:05 UTC+1"),
+		reporting.RenderLegalFooter("ES-REG-02-DM", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
 	)
 }
 
@@ -670,25 +652,7 @@ func renderESREG03DMHTML(
             </div>
         </div>
 
-        <div class="footer-legal">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <svg width="32" height="32" viewBox="0 0 100 100" fill="#091e36">
-                    <rect width="100" height="100" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-                    <rect x="10" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="65" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="10" y="65" width="25" height="25" fill="#091e36"/>
-                    <rect x="42" y="42" width="16" height="16" fill="#047857"/>
-                </svg>
-                <div>
-                    <strong>Sceau Cryptographique SHA-256 :</strong> %s...<br/>
-                    Vérification publique ANPP : <a href="%s" style="color:#0284c7; text-decoration:none;">%s</a>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                <span>Page <strong>1 sur 1</strong></span><br/>
-                <span>Édité le %s</span>
-            </div>
-        </div>
+        %s
     </div>
 </body>
 </html>`,
@@ -705,7 +669,6 @@ func renderESREG03DMHTML(
 		estAgreement,
 		pdtName, pdtDecision,
 		generatedAt.Format("02/01/2006"),
-		hashShort, qrURL, qrURL,
-		generatedAt.Format("02/01/2006 à 15:04:05 UTC+1"),
+		reporting.RenderLegalFooter("ES-REG-03-DM", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
 	)
 }
