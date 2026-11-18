@@ -127,6 +127,33 @@ func main() {
 		workflowRepo := repository.NewWorkflowRepository(db.Pool)
 		workflowHandler = api.NewWorkflowHandler(workflowRepo, dossierRepo, auditService, db.Pool)
 		reportHandler = api.NewReportHandler(dossierRepo, workflowRepo, pharmaRepo, auditService, db.Pool)
+
+		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
+		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
+		// avec entrée immuable dans l'audit trail de revue.
+		go func() {
+			const bailMinutes = 30
+			const tickInterval = 5 * time.Minute
+			ticker := time.NewTicker(tickInterval)
+			defer ticker.Stop()
+			log.Printf("[BailWatcher] Job d'auto-libération des verrous BPF démarré (bail=%dmin, intervalle=%v)", bailMinutes, tickInterval)
+			for {
+				select {
+				case <-ticker.C:
+					jobCtx, jobCancel := context.WithTimeout(context.Background(), 30*time.Second)
+					released, err := workflowRepo.ReleaseExpiredLocks(jobCtx, bailMinutes)
+					jobCancel()
+					if err != nil {
+						log.Printf("[BailWatcher] Erreur lors de la libération des verrous expirés : %v", err)
+					} else if len(released) > 0 {
+						for _, item := range released {
+							log.Printf("[BailWatcher] Verrou expiré libéré automatiquement — Section %s (bail dépassé depuis %s)",
+								item.ItemCode, time.Since(item.LockedAt).Round(time.Second))
+						}
+					}
+				}
+			}
+		}()
 	}
 
 	// 3. Configuration du Routeur HTTP
