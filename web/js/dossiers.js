@@ -28,6 +28,86 @@
         let expandedDossierTreeIds = new Set();
         let collapsedSections = new Set();
         let currentPreviewSubTab = 'doc'; // 'doc' ou 'anpp'
+        let currentDossierViewMode = 'my_actions'; // 'my_actions', 'my_dept', 'all'
+        let currentDossierViewModeManual = false;
+
+        function getUserRoleAndDept() {
+            const user = (typeof window.getCurrentUser === 'function') ? window.getCurrentUser() : (window.currentUser || null);
+            if (!user) return { role: '', depts: [], isDT: false, userId: null, user: null };
+            const role = user.role || '';
+            const userId = user.id || null;
+            let depts = [];
+            if (role === 'contributeur_qualite_bpf') depts = ['QC', 'QA', 'QUALITE', 'ASSURANCE_QUALITE', 'CONTROLE_QUALITE'];
+            else if (role === 'responsable_affaires_reglementaires') depts = ['RA', 'REG', 'AFFAIRES_REGLEMENTAIRES', 'DIRECTION_TECHNIQUE', 'DT'];
+            else if (role === 'contributeur_rd_production') depts = ['RD', 'PROD', 'PRODUCTION', 'PRODUCTION_RD'];
+            else if (role === 'directeur_technique') depts = ['DT', 'DIRECTION_TECHNIQUE', 'RA', 'AFFAIRES_REGLEMENTAIRES', 'QA', 'QC'];
+            return { role, depts, isDT: role === 'directeur_technique', userId, user };
+        }
+
+        function isItemUserAction(it, userCtx) {
+            if (!userCtx || !userCtx.user) return false;
+            const uid = userCtx.userId;
+            const uLastName = (userCtx.user.last_name || '').toLowerCase();
+            // 1. Verrouillé par l'utilisateur connecté (Check-out actif)
+            if (it.is_locked) {
+                if (it.locked_by && uid && it.locked_by === uid) return true;
+                if (it.locked_by_name && uLastName && it.locked_by_name.toLowerCase().includes(uLastName)) return true;
+            }
+            // 2. Assigné spécifiquement et NOMINATIVEMENT à cet utilisateur
+            if (it.workflow_status !== 'approved_sealed') {
+                if (it.assigned_user_id && uid && it.assigned_user_id === uid) return true;
+                // 3. Tâche de pôle expressément confiée par la hiérarchie (mission active avec échéance planifiée)
+                if (!it.assigned_user_id && isItemUserDept(it, userCtx) && (it.due_date || it.assigned_at) && !it.is_locked) {
+                    return true;
+                }
+            }
+            // 3. Directeur Technique : visas/signatures à apposer
+            if (userCtx.isDT) {
+                if (it.workflow_status === 'pending_approval') return true;
+                if (it.requirement_level === 'E' && ['1.A.7', '1.A.8'].includes(it.item_code) && it.workflow_status !== 'approved_sealed') return true;
+            }
+            // 4. Checker : en attente de revue Qualité (under_review) si l'utilisateur est habilité et n'est pas le maker (SoD)
+            if (it.workflow_status === 'under_review') {
+                const isMaker = (it.maker_user_id && uid && it.maker_user_id === uid) || 
+                                (it.maker_user_name && uLastName && it.maker_user_name.toLowerCase().includes(uLastName));
+                if (!isMaker && (userCtx.isDT || isItemUserDept(it, userCtx))) return true;
+            }
+            return false;
+        }
+
+        function isItemUserDept(it, userCtx) {
+            if (!userCtx || !userCtx.user) return true;
+            if (userCtx.isDT) return true;
+            const d = (it.assigned_department || '').toUpperCase().trim();
+            if (d && userCtx.depts) {
+                if (userCtx.depts.includes(d)) return true;
+                if (d === 'RA' && userCtx.depts.some(x => x.includes('REG') || x === 'RA')) return true;
+                if ((d === 'QC' || d === 'QA') && userCtx.depts.some(x => x.includes('QUAL') || x === 'QC' || x === 'QA')) return true;
+                if ((d === 'RD' || d === 'PROD') && userCtx.depts.some(x => x === 'RD' || x === 'PROD')) return true;
+            }
+            if (userCtx.role === 'contributeur_qualite_bpf' && (it.module_number === 3 || d === 'QC' || d === 'QA')) return true;
+            if (userCtx.role === 'responsable_affaires_reglementaires' && (it.module_number === 1 || it.module_number === 2 || d === 'RA')) return true;
+            if (userCtx.role === 'contributeur_rd_production' && (it.module_number === 3 || d === 'PROD' || d === 'RD')) return true;
+            return false;
+        }
+
+        function setDossierViewMode(mode) {
+            currentDossierViewMode = mode;
+            currentDossierViewModeManual = true;
+            if (currentDossierDetail) {
+                const items = currentDossierDetail.items || currentDossierDetail.checklist_data || [];
+                renderDossierTableRows(items);
+                document.querySelectorAll('.btn-focus-mode').forEach(btn => {
+                    if (btn.getAttribute('data-mode') === mode) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        }
+        window.setDossierViewMode = setDossierViewMode;
+
 
         function formatFileSize(bytes) {
             if (!bytes || bytes === 0) return '0 B';
@@ -401,6 +481,7 @@
 
         async function selectDossier(id) {
             selectedDossierId = id;
+            currentDossierViewModeManual = false;
             expandedDossierTreeIds.add(id);
             renderDossiersTree();
 
@@ -555,6 +636,48 @@
                 const k = it.module_number;
                 countByModule[k] = (countByModule[k] || 0) + 1;
             });
+
+            const userCtx = getUserRoleAndDept();
+            const myActions = items.filter(it => isItemUserAction(it, userCtx));
+            const myDeptItems = items.filter(it => isItemUserDept(it, userCtx));
+
+            if (!currentDossierViewModeManual) {
+                if (myActions.length > 0) {
+                    currentDossierViewMode = 'my_actions';
+                } else if (myDeptItems.length > 0 && !userCtx.isDT) {
+                    currentDossierViewMode = 'my_dept';
+                } else {
+                    currentDossierViewMode = 'all';
+                }
+            }
+
+            let focusBarHTML = `
+                <div class="dossier-focus-bar">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-size:11px; font-weight:800; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">🎯 Mode d'Affichage :</span>
+                        <div style="display:inline-flex; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:2px; gap:2px;">
+                            <button class="btn-focus-mode ${currentDossierViewMode === 'my_actions' ? 'active' : ''}" data-mode="my_actions" onclick="setDossierViewMode('my_actions')">
+                                <span>⚡ Mes Actions</span>
+                                <span class="btn-focus-badge" style="${myActions.length > 0 ? 'background:var(--accent-red); color:white;' : ''}">${myActions.length}</span>
+                            </button>
+                            <button class="btn-focus-mode ${currentDossierViewMode === 'my_dept' ? 'active' : ''}" data-mode="my_dept" onclick="setDossierViewMode('my_dept')">
+                                <span>🏢 Mon Pôle Métier</span>
+                                <span class="btn-focus-badge">${myDeptItems.length}</span>
+                            </button>
+                            <button class="btn-focus-mode ${currentDossierViewMode === 'all' ? 'active' : ''}" data-mode="all" onclick="setDossierViewMode('all')">
+                                <span>🗂️ Dossier Complet</span>
+                                <span class="btn-focus-badge">${items.length}</span>
+                            </button>
+                        </div>
+                    </div>
+                    ${currentDossierViewMode === 'my_actions' && myActions.length === 0 ? `
+                        <div style="font-size:11px; color:var(--accent-emerald); font-weight:600; display:flex; align-items:center; gap:4px;">
+                            <span>✨</span> Aucune tâche urgente en attente.
+                            <button class="btn-pill" style="height:20px; padding:1px 6px; font-size:10px; margin-left:6px;" onclick="setDossierViewMode('my_dept')">Consulter mon pôle</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
 
             let tabsHTML = `
                 <div class="module-tab-bar">
@@ -724,6 +847,7 @@
 
             tableContainer.innerHTML = `
                 ${headerKPI}
+                ${focusBarHTML}
                 ${tabsHTML}
                 ${quickFilterBarHTML}
                 <div style="overflow-y:auto; flex:1;">
@@ -752,8 +876,17 @@
             const tbody = document.getElementById("doc-tbody");
             if (!tbody) return;
 
-            // 1. Filtrage par module
             let filtered = items;
+
+            // 0. Filtrage par mode de focalisation (Progressive Disclosure)
+            const userCtx = getUserRoleAndDept();
+            if (currentDossierViewMode === 'my_actions') {
+                filtered = filtered.filter(it => isItemUserAction(it, userCtx));
+            } else if (currentDossierViewMode === 'my_dept') {
+                filtered = filtered.filter(it => isItemUserDept(it, userCtx));
+            }
+
+            // 1. Filtrage par module
             if (currentDossierModuleFilter !== 'all') {
                 const targetMod = Number(currentDossierModuleFilter);
                 filtered = filtered.filter(it => it.module_number === targetMod);
@@ -786,12 +919,32 @@
             }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">
-                    <div style="font-size:20px; margin-bottom:6px;">🔍</div>
-                    <div>Aucun élément ne correspond aux filtres appliqués.</div>
-                    <div style="margin-top:8px;">
-                        <button class="btn-pill" style="font-size:11px;" onclick="setQuickStatusFilter('all'); handleChecklistSearch('');">Réinitialiser les filtres</button>
-                    </div>
+                let emptyIcon = '🔍';
+                let emptyTitle = 'Aucun élément ne correspond aux filtres appliqués.';
+                let emptySub = '';
+                let emptyBtns = `<button class="btn-pill" style="font-size:11px;" onclick="setQuickStatusFilter('all'); handleChecklistSearch('');">Réinitialiser les filtres</button>`;
+
+                if (currentDossierViewMode === 'my_actions') {
+                    emptyIcon = '🎉';
+                    emptyTitle = 'Toutes vos tâches sont à jour !';
+                    emptySub = 'Aucune section n\'attend votre intervention immédiate sur ce dossier.';
+                    emptyBtns = `
+                        <div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">
+                            <button class="btn-pill" style="font-size:11px; font-weight:700; background:var(--accent-blue); color:white; border:none; padding:4px 12px;" onclick="setDossierViewMode('my_dept')">🏢 Consulter mon pôle métier</button>
+                            <button class="btn-pill" style="font-size:11px; font-weight:700; padding:4px 12px;" onclick="setDossierViewMode('all')">🗂️ Voir tout le dossier</button>
+                        </div>
+                    `;
+                } else if (currentDossierViewMode === 'my_dept') {
+                    emptyIcon = '🏢';
+                    emptyTitle = 'Aucune exigence spécifique assignée à votre pôle sur ce filtre.';
+                    emptyBtns = `<button class="btn-pill" style="font-size:11px; font-weight:700; padding:4px 12px;" onclick="setDossierViewMode('all')">🗂️ Voir le dossier complet</button>`;
+                }
+
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:35px 20px; color:var(--text-muted);">
+                    <div style="font-size:26px; margin-bottom:8px;">${emptyIcon}</div>
+                    <div style="font-size:13px; font-weight:700; color:var(--text-main);">${emptyTitle}</div>
+                    ${emptySub ? `<div style="font-size:11.5px; color:var(--text-dim); margin-top:4px;">${emptySub}</div>` : ''}
+                    <div style="margin-top:10px;">${emptyBtns}</div>
                 </td></tr>`;
                 return;
             }
