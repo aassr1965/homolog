@@ -752,15 +752,24 @@ function openDossierReportsModal(dossierId) {
         if (isDM) {
             tabsBar.innerHTML = `
                 <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau Dépôt</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02-DM : Demande Homologation (6 sections)</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-REG-03-DM" onclick="switchReportTab('ES-REG-03-DM')">ES-REG-03-DM : Récépissé Dépôt (13 points)</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV (BNA Chéraga)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02-DM : Demande (6 sections)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-03-DM" onclick="switchReportTab('ES-REG-03-DM')">ES-REG-03-DM : Récépissé Dépôt</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-05" onclick="switchReportTab('ES-REG-05')">ES-REG-05 : Échantillons</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : BV Initial BNA</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-02" onclick="switchReportTab('ES-FIN-02')">ES-FIN-02 : BV Modif/Renouv</button>
             `;
         } else {
             tabsBar.innerHTML = `
                 <button class="btn-pill report-tab-btn active" data-code="ES-REG-01" onclick="switchReportTab('ES-REG-01')">ES-REG-01 : Bordereau CTD</button>
                 <button class="btn-pill report-tab-btn" data-code="ES-REG-02" onclick="switchReportTab('ES-REG-02')">ES-REG-02 : Formulaire 1.A.3</button>
-                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : Bordereau BV1 (Trésor Public)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-03" onclick="switchReportTab('ES-REG-03')">ES-REG-03 : Index CTD (M1-M5)</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-04" onclick="switchReportTab('ES-REG-04')">ES-REG-04 : Variation LD</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-REG-05" onclick="switchReportTab('ES-REG-05')">ES-REG-05 : Échantillons LNCPP</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-01" onclick="switchReportTab('ES-FIN-01')">ES-FIN-01 : BV1 Initial</button>
+                <button class="btn-pill report-tab-btn" data-code="ES-FIN-02" onclick="switchReportTab('ES-FIN-02')">ES-FIN-02 : BV2 Variations</button>
+                <button class="btn-pill report-tab-btn" data-code="1.P.8" onclick="switchReportTab('1.P.8')">1.P.8 : Stock 3 mois</button>
+                <button class="btn-pill report-tab-btn" data-code="1.P.9" onclick="switchReportTab('1.P.9')">1.P.9 : Vigilance</button>
+                <button class="btn-pill report-tab-btn" data-code="1.H.10" onclick="switchReportTab('1.H.10')">1.H.10 : Non-Modif.</button>
             `;
         }
     } else {

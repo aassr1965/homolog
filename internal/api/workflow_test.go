@@ -390,4 +390,40 @@ func TestWorkflowMakerCheckerCycle(t *testing.T) {
 	if tmplResp.Total < 3 {
 		t.Fatalf("Attendu au moins 3 templates maîtres pré-enregistrés, reçu: %d", tmplResp.Total)
 	}
+
+	// =========================================================================
+	// Test 14 : Génération des Nouveaux États Réglementaires BPF (Jalon 2.2)
+	// =========================================================================
+	extendedCodes := []struct {
+		code       string
+		expectedSub string
+	}{
+		{"ES-REG-03", "Table des Matières Exhaustive & Index Paginé CTD"},
+		{"ES-REG-04", "Fiche Récapitulative de Modification"},
+		{"ES-REG-05", "Bordereau d'Envoi des Échantillons & Réactifs (1.P)"},
+		{"ES-FIN-02", "Bordereau de Versement Variations, Renouvellements & Transferts"},
+		{"1.P.8", "Module 1.P.8 — Engagement de Disponibilité Continue"},
+		{"1.P.9", "Module 1.P.9 — Engagement de Pharmacovigilance"},
+		{"1.H.10", "Module 1.H.10 — Déclaration Solennelle de Non-Modification"},
+	}
+
+	for _, tc := range extendedCodes {
+		reqExt := httptest.NewRequest("GET", "/api/v1/dossiers/"+dossierID.String()+"/reports/"+tc.code, nil)
+		rrExt := httptest.NewRecorder()
+		rPDT.ServeHTTP(rrExt, reqExt)
+
+		if rrExt.Code != http.StatusOK {
+			t.Fatalf("Test 14: Échec génération rapport %s: attendu 200, reçu %d", tc.code, rrExt.Code)
+		}
+		bodyExt := rrExt.Body.String()
+		if !strings.Contains(bodyExt, tc.expectedSub) {
+			t.Fatalf("Test 14: Rapport %s ne contient pas le sous-titre attendu '%s'", tc.code, tc.expectedSub)
+		}
+		if !strings.Contains(bodyExt, "data:image/png;base64,") {
+			t.Fatalf("Test 14: Rapport %s ne contient pas le QR-code cryptographique", tc.code)
+		}
+		if !strings.Contains(bodyExt, "Page 1 sur 1") {
+			t.Fatalf("Test 14: Rapport %s ne contient pas la pagination indélébile BPF", tc.code)
+		}
+	}
 }
