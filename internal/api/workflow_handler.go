@@ -264,6 +264,19 @@ func (h *WorkflowHandler) SubmitReview(w http.ResponseWriter, r *http.Request) {
 
 	item, err := h.workflowRepo.SubmitForReview(r.Context(), itemID, user.UserID, user.Role, req.Notes)
 	if err != nil {
+		var gatingErr *repository.GatingBlockedError
+		if errors.As(err, &gatingErr) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"success":             false,
+				"code":                "GATING_BLOCKED",
+				"error":               gatingErr.Error(),
+				"evaluation":          gatingErr.Result,
+				"unmet_prerequisites": gatingErr.Result.UnmetPrerequisites,
+			})
+			return
+		}
 		log.Printf("[ERROR] SubmitForReview %s: %v", itemID, err)
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
@@ -417,6 +430,19 @@ func (h *WorkflowHandler) ApproveSection(w http.ResponseWriter, r *http.Request)
 
 	item, err := h.workflowRepo.ApproveItem(r.Context(), itemID, user.UserID, user.Role, sealHash)
 	if err != nil {
+		var gatingErr *repository.GatingBlockedError
+		if errors.As(err, &gatingErr) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"success":             false,
+				"code":                "GATING_BLOCKED",
+				"error":               gatingErr.Error(),
+				"evaluation":          gatingErr.Result,
+				"unmet_prerequisites": gatingErr.Result.UnmetPrerequisites,
+			})
+			return
+		}
 		if errors.Is(err, repository.ErrSelfReviewNotAllowed) {
 			writeJSONError(w, http.StatusForbidden, "Ségrégation des fonctions BPF : Le rédacteur ne peut pas s'auto-approuver")
 			return
@@ -510,6 +536,54 @@ func (h *WorkflowHandler) GetMasterTemplateByCode(w http.ResponseWriter, r *http
 	}
 
 	writeJSON(w, http.StatusOK, template)
+}
+
+// GetItemGating retourne l'évaluation complète des verrous réglementaires et prérequis d'une section
+func (h *WorkflowHandler) GetItemGating(w http.ResponseWriter, r *http.Request) {
+	itemIDStr := chi.URLParam(r, "itemId")
+	itemID, err := uuid.Parse(itemIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant d'élément invalide")
+		return
+	}
+
+	eval, err := h.workflowRepo.EvaluateItemGating(r.Context(), itemID)
+	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
+		log.Printf("[ERROR] GetItemGating %s: %v", itemID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible d'évaluer les verrous réglementaires")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":    true,
+		"evaluation": eval,
+	})
+}
+
+// GetDossierGatingSummary retourne la phase active du DAG et la liste des sections bloquées
+func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http.Request) {
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	summary, err := h.workflowRepo.GetDossierGatingSummary(r.Context(), dossierID)
+	if err != nil {
+		log.Printf("[ERROR] GetDossierGatingSummary %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de calculer la synthèse du chemin critique")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"summary": summary,
+	})
 }
 
 func (h *WorkflowHandler) logAudit(ctx context.Context, orgID, userID uuid.UUID, email, role, action, entityType, entityID string, details map[string]any) {

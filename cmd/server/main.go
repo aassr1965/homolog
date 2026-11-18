@@ -469,6 +469,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/items/{itemId}/approve", workflowHandler.ApproveSection)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/items/{itemId}/approve-pdt", workflowHandler.ApproveSection)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/items/{itemId}/reviews", workflowHandler.GetItemReviews)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/items/{itemId}/gating", workflowHandler.GetItemGating)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/gating-summary", workflowHandler.GetDossierGatingSummary)
 
 				// Modèles Maîtres ANPP / ICH
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates", workflowHandler.GetMasterTemplates)

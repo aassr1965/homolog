@@ -21,6 +21,15 @@ var (
 	ErrSelfReviewNotAllowed = errors.New("ségrégation des fonctions BPF : le rédacteur ne peut pas relire ou approuver son propre document")
 )
 
+// GatingBlockedError indique qu'une transition est bloquée par une dépendance réglementaire CTD/DM
+type GatingBlockedError struct {
+	Result domain.GatingEvaluationResult
+}
+
+func (e *GatingBlockedError) Error() string {
+	return e.Result.SummaryMessage
+}
+
 // WorkflowRepository gère la persistance de l'atelier documentaire et des revues BPF
 type WorkflowRepository struct {
 	pool *pgxpool.Pool
@@ -180,6 +189,45 @@ func (r *WorkflowRepository) GetChecklistItemByID(ctx context.Context, itemID uu
 	return &it, nil
 }
 
+// GetDossierItems charge tous les items d'un dossier pour évaluer le DAG de dépendances et le gating
+func (r *WorkflowRepository) GetDossierItems(ctx context.Context, dossierID uuid.UUID) ([]domain.ChecklistItem, error) {
+	query := `
+		SELECT 
+			id, dossier_id, module_number, COALESCE(sub_module, ''), item_code,
+			title_fr, COALESCE(title_ar, ''), COALESCE(description_fr, ''),
+			requirement_level, is_mandatory, ged_document_id, status,
+			COALESCE(workflow_status, 'draft_pending'), COALESCE(current_revision, 'v0.1')
+		FROM dossier_checklist_items
+		WHERE dossier_id = $1
+		ORDER BY module_number ASC, sort_order ASC, item_code ASC
+	`
+	rows, err := r.pool.Query(ctx, query, dossierID)
+	if err != nil {
+		return nil, fmt.Errorf("lecture items du dossier échouée : %w", err)
+	}
+	defer rows.Close()
+
+	var items []domain.ChecklistItem
+	for rows.Next() {
+		var it domain.ChecklistItem
+		var reqStr, stStr, wfStr string
+		err := rows.Scan(
+			&it.ID, &it.DossierID, &it.ModuleNumber, &it.SubModule, &it.ItemCode,
+			&it.TitleFR, &it.TitleAR, &it.DescriptionFR,
+			&reqStr, &it.IsMandatory, &it.GEDDocumentID, &stStr,
+			&wfStr, &it.CurrentRevision,
+		)
+		if err != nil {
+			return nil, err
+		}
+		it.RequirementLevel = domain.RequirementLevel(reqStr)
+		it.Status = domain.ChecklistItemStatus(stStr)
+		it.WorkflowStatus = domain.WorkflowStatus(wfStr)
+		items = append(items, it)
+	}
+	return items, nil
+}
+
 // CheckoutItem verrouille une section CTD pour rédaction exclusive
 func (r *WorkflowRepository) CheckoutItem(ctx context.Context, itemID, userID uuid.UUID, userRole, reason string) (*domain.ChecklistItem, error) {
 	item, err := r.GetChecklistItemByID(ctx, itemID)
@@ -284,6 +332,17 @@ func (r *WorkflowRepository) SubmitForReview(ctx context.Context, itemID, makerI
 		return nil, errors.New("veuillez effectuer le Check-in de la section avant de la soumettre en revue")
 	}
 
+	// Contrôle des verrous réglementaires chronologiques (Gating CTD)
+	allItems, err := r.GetDossierItems(ctx, item.DossierID)
+	if err != nil {
+		return nil, fmt.Errorf("contrôle des verrous réglementaires impossible : %w", err)
+	}
+
+	gatingResult := domain.EvaluateItemGating(allItems, item, domain.GatingActionSubmitReview)
+	if gatingResult.IsBlocked {
+		return nil, &GatingBlockedError{Result: gatingResult}
+	}
+
 	now := time.Now().UTC()
 	query := `
 		UPDATE dossier_checklist_items
@@ -357,6 +416,17 @@ func (r *WorkflowRepository) ApproveItem(ctx context.Context, itemID, approverID
 	// Garde-fou SoD : le Maker ne peut pas être l'Approver unique
 	if item.MakerUserID != nil && *item.MakerUserID == approverID {
 		return nil, ErrSelfReviewNotAllowed
+	}
+
+	// Contrôle des verrous réglementaires chronologiques (Gating CTD)
+	allItems, err := r.GetDossierItems(ctx, item.DossierID)
+	if err != nil {
+		return nil, fmt.Errorf("contrôle des verrous réglementaires impossible : %w", err)
+	}
+
+	gatingResult := domain.EvaluateItemGating(allItems, item, domain.GatingActionApprovePDT)
+	if gatingResult.IsBlocked {
+		return nil, &GatingBlockedError{Result: gatingResult}
 	}
 
 	now := time.Now().UTC()
@@ -567,4 +637,66 @@ func (r *WorkflowRepository) GetReportBySHA256(ctx context.Context, sha256 strin
 	rep.SignedByPDTName = pdtName
 	_ = json.Unmarshal(metaBytes, &rep.ReportMetadata)
 	return &rep, nil
+}
+
+// EvaluateItemGating évalue l'état des verrous pour une section donnée (utilisé pour l'inspection UI)
+func (r *WorkflowRepository) EvaluateItemGating(ctx context.Context, itemID uuid.UUID) (*domain.GatingEvaluationResult, error) {
+	item, err := r.GetChecklistItemByID(ctx, itemID)
+	if err != nil {
+		return nil, err
+	}
+
+	allItems, err := r.GetDossierItems(ctx, item.DossierID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := domain.EvaluateItemGating(allItems, item, domain.GatingActionInspection)
+	return &res, nil
+}
+
+// DossierGatingSummary représente la synthèse globale du DAG de dépendances du dossier
+type DossierGatingSummary struct {
+	DossierID       uuid.UUID                       `json:"dossier_id"`
+	ActivePhase     int                             `json:"active_phase"`
+	ActivePhaseName string                          `json:"active_phase_name"`
+	TotalItems      int                             `json:"total_items"`
+	BlockedCount    int                             `json:"blocked_count"`
+	BlockedItems    []domain.GatingEvaluationResult `json:"blocked_items"`
+}
+
+// GetDossierGatingSummary calcule la phase DAG active et recense toutes les sections bloquées
+func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, dossierID uuid.UUID) (*DossierGatingSummary, error) {
+	allItems, err := r.GetDossierItems(ctx, dossierID)
+	if err != nil {
+		return nil, err
+	}
+
+	activePhase := domain.CalculateDossierDAGPhase(allItems)
+	phaseNames := map[int]string{
+		1: "Phase 1 : Méthodes Analytiques & Spécifications Matières",
+		2: "Phase 2 : Validation Procédé & Lots Pilotes",
+		3: "Phase 3 : Stabilités Zone IVb & Bioéquivalence",
+		4: "Phase 4 : QOS (Module 2.3), Notice & RCP",
+		5: "Phase 5 : Engagements Réglementaires & Dépôt Légal PDT",
+	}
+
+	summary := &DossierGatingSummary{
+		DossierID:       dossierID,
+		ActivePhase:     activePhase,
+		ActivePhaseName: phaseNames[activePhase],
+		TotalItems:      len(allItems),
+		BlockedItems:    make([]domain.GatingEvaluationResult, 0),
+	}
+
+	for i := range allItems {
+		it := &allItems[i]
+		res := domain.EvaluateItemGating(allItems, it, domain.GatingActionInspection)
+		if res.IsBlocked {
+			summary.BlockedItems = append(summary.BlockedItems, res)
+		}
+	}
+	summary.BlockedCount = len(summary.BlockedItems)
+
+	return summary, nil
 }

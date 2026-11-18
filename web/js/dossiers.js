@@ -19,6 +19,7 @@
         let currentDossiers = [];
         let selectedDossierId = null;
         let currentDossierDetail = null;
+        let currentDossierGatingSummary = null;
         let currentDossierFilterProc = '';
         let currentDossierModuleFilter = 'all'; // 'all', 1, 2, 3, 4, 5, 0
         let currentDossierSubModuleFilter = 'all'; // 'all', '1.A', '1.H', '1.M', '1.P', 'DM.A', 'DM.Q', 'DM.T', 'DM.S', 'DM.I'
@@ -512,6 +513,20 @@
                     await loadDossierPaymentSlips(id);
                 }
 
+                // Chargement du statut Gating & Chemin Critique DAG (Jalon 2.1b)
+                try {
+                    const gatingRes = await fetch(`/api/v1/dossiers/${id}/gating-summary`);
+                    if (gatingRes.ok) {
+                        const gatingData = await gatingRes.json();
+                        currentDossierGatingSummary = gatingData.summary || null;
+                    } else {
+                        currentDossierGatingSummary = null;
+                    }
+                } catch(e) {
+                    console.warn("Échec chargement gating summary:", e);
+                    currentDossierGatingSummary = null;
+                }
+
                 // KPI toolbar
                 const kpiEl = document.getElementById("kpi-dossier-completeness");
                 if (kpiEl) {
@@ -764,6 +779,27 @@
                     <div class="kpi-gauge-bar" style="height:6px;">
                         <div class="kpi-gauge-fill ${pct === 100 ? 'high' : (pct >= 50 ? 'mid' : 'low')}" style="width:${pct}%;"></div>
                     </div>
+
+                    <!-- Chemin Critique & Déverrouillage Conditionnel (Gating DAG 5 Phases - Jalon 2.1b) -->
+                    ${currentDossierGatingSummary ? `
+                        <div style="margin-top:8px; background:linear-gradient(135deg, rgba(37,99,235,0.08), rgba(126,34,206,0.08)); border:1px solid rgba(37,99,235,0.25); border-radius:6px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <span style="font-size:14px;">🧭</span>
+                                <span style="font-size:11px; font-weight:800; color:var(--text-main); text-transform:uppercase; letter-spacing:0.5px;">Chemin Critique CTD :</span>
+                                <span style="background:var(--accent-blue); color:white; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:12px;">Phase ${currentDossierGatingSummary.active_phase} / 5</span>
+                                <span style="font-size:12px; font-weight:700; color:var(--text-main);">${escapeHTML(currentDossierGatingSummary.active_phase_name)}</span>
+                            </div>
+                            <div>
+                                ${currentDossierGatingSummary.blocked_count === 0 ? `
+                                    <span class="status-tag status-ok" style="font-size:10px; padding:2px 8px;">✅ Aucun verrou bloquant</span>
+                                ` : `
+                                    <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #f87171; font-weight:700; cursor:pointer;" onclick="showDossierGatingSummaryModal()">
+                                        🔒 ${currentDossierGatingSummary.blocked_count} Section(s) Verrouillée(s) (Consulter)
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    ` : ''}
 
                     ${dossier.pdt_signed_at ? `
                         <div style="margin-top:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center; font-size:11px;">
@@ -1025,6 +1061,13 @@
                         } else {
                             const wfBadge = typeof formatWorkflowBadge === 'function' ? formatWorkflowBadge(it.workflow_status || 'draft_pending') : '';
                             const revBadge = typeof formatRevisionBadge === 'function' ? formatRevisionBadge(it.current_revision, it.workflow_status === 'approved_sealed') : '';
+                            let gatingPill = '';
+                            if (currentDossierGatingSummary && Array.isArray(currentDossierGatingSummary.blocked_items)) {
+                                const isBlocked = currentDossierGatingSummary.blocked_items.some(b => b.target_item_code === it.item_code);
+                                if (isBlocked) {
+                                    gatingPill = `<span class="badge" style="background:rgba(239,68,68,0.15); border:1px solid #f87171; color:#dc2626; font-size:10px; font-weight:700; cursor:pointer;" onclick="event.stopPropagation(); showGatingInfoModal('${it.id}', '${escapeHTML(it.item_code)}')" title="Verrou GxP actif : prérequis réglementaires non satisfaits. Cliquez pour inspecter.">🔒 Verrou GxP</span>`;
+                                }
+                            }
                             let lockIndicator = '';
                             if (it.is_locked) {
                                 const lockerName = (it.locked_by_name && it.locked_by_name.trim()) || it.assigned_user_name || 'Rédacteur';
@@ -1035,6 +1078,7 @@
                                     <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
                                         ${wfBadge}
                                         ${revBadge}
+                                        ${gatingPill}
                                     </div>
                                     ${lockIndicator}
                                 </div>
@@ -1354,6 +1398,45 @@
                                 </div>
                             `}
                         </div>
+
+                        <!-- Cartouche Gating Réglementaire CTD (Jalon 2.1b) -->
+                        ${(() => {
+                            let itemBlocked = null;
+                            if (currentDossierGatingSummary && Array.isArray(currentDossierGatingSummary.blocked_items)) {
+                                itemBlocked = currentDossierGatingSummary.blocked_items.find(b => b.target_item_code === item.item_code);
+                            }
+                            if (itemBlocked) {
+                                return `
+                                    <div style="background:rgba(239,68,68,0.08); border:1.5px solid #f87171; border-radius:6px; padding:10px 12px; margin-bottom:14px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                            <span style="font-size:11.5px; font-weight:800; color:#b91c1c; display:flex; align-items:center; gap:6px;">
+                                                <span>🔒</span>
+                                                <span>VERROU RÉGLEMENTAIRE BPF (GATING ACTIF)</span>
+                                            </span>
+                                            <span style="background:rgba(239,68,68,0.2); color:#991b1b; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;">Bloquant</span>
+                                        </div>
+                                        <div style="font-size:11px; color:var(--text-main); margin-bottom:8px; line-height:1.4;">
+                                            ${escapeHTML(itemBlocked.summary_message)}
+                                        </div>
+                                        <div style="font-size:10.5px; color:var(--text-muted); background:var(--bg-panel); border:1px solid rgba(239,68,68,0.2); border-radius:4px; padding:6px 8px;">
+                                            ${itemBlocked.unmet_prerequisites.map(u => `
+                                                <div style="margin-bottom:4px;">
+                                                    • <strong>Prérequis [${escapeHTML(u.required_item_code)}] :</strong> ${escapeHTML(u.blocking_reason)}<br>
+                                                    <span style="color:#b91c1c; font-size:9.5px;">⚖️ Référence légale : ${escapeHTML(u.legal_ref)} (Statut actuel : ${escapeHTML(u.current_status)})</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                return `
+                                    <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:8px 10px; margin-bottom:14px; display:flex; align-items:center; gap:6px; font-size:11px; color:var(--accent-emerald); font-weight:600;">
+                                        <span>🔓</span>
+                                        <span>Chemin critique : Aucun verrou BPF actif sur cette pièce. Éligible aux transitions de workflow.</span>
+                                    </div>
+                                `;
+                            }
+                        })()}
 
                         <!-- Actions Opérationnelles Atelier -->
                         <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
