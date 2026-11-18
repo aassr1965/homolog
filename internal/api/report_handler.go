@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"homolog/internal/audit"
 	"homolog/internal/domain"
+	"homolog/internal/reporting"
 	"homolog/internal/repository"
 )
 
@@ -264,6 +265,27 @@ func (h *ReportHandler) SealDossierReport(w http.ResponseWriter, r *http.Request
 	})
 }
 
+// GetReportRegistry renvoie la nomenclature exhaustive des 28 états documentaires BPF (20 ES + 8 EI)
+func (h *ReportHandler) GetReportRegistry(w http.ResponseWriter, r *http.Request) {
+	category := r.URL.Query().Get("category")
+	kind := r.URL.Query().Get("kind")
+
+	var defs []reporting.ReportDefinition
+	if category != "" {
+		defs = reporting.GetReportsByCategory(reporting.ReportCategory(category))
+	} else if kind != "" {
+		defs = reporting.GetReportsByKind(reporting.ReportKind(kind))
+	} else {
+		defs = reporting.GetAllReportDefinitions()
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"count":   len(defs),
+		"reports": defs,
+	})
+}
+
 // VerifyReportPublic permet la vérification instantanée d'authenticité par scan de QR-code par l'ANPP
 func (h *ReportHandler) VerifyReportPublic(w http.ResponseWriter, r *http.Request) {
 	sha256Hash := chi.URLParam(r, "sha256")
@@ -278,24 +300,30 @@ func (h *ReportHandler) VerifyReportPublic(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`
 			<!DOCTYPE html>
-			<html lang="fr"><head><meta charset="UTF-8"><title>Vérification ANPP — Document Non Trouvé</title>
-			<style>body{font-family:sans-serif;text-align:center;padding:40px;background:#f8fafc;color:#1e293b;}</style>
+			<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Vérification ANPP — Document Non Trouvé</title>
+			<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-align:center;padding:50px 20px;background:#091e36;color:#f8fafc;}
+			.card{background:#ffffff;color:#0f172a;max-width:560px;margin:0 auto;padding:36px;border-radius:12px;box-shadow:0 20px 40px rgba(0,0,0,0.35);}
+			</style>
 			</head><body>
-				<h1 style="color:#dc2626;">❌ Document Non Reconnu</h1>
-				<p>Aucun document officiel correspondant à cette empreinte SHA-256 n'est enregistré dans le registre certifié Homolog.</p>
-				<p style="font-family:monospace;background:#e2e8f0;padding:8px 16px;display:inline-block;border-radius:4px;">` + html.EscapeString(sha256Hash) + `</p>
+				<div class="card">
+					<div style="font-size:48px;margin-bottom:12px;">❌</div>
+					<h2 style="color:#dc2626;margin:0 0 10px 0;">Document Non Reconnu</h2>
+					<p style="color:#475569;font-size:14px;line-height:1.5;">Aucun document réglementaire officiel correspondant à cette empreinte SHA-256 n'est enregistré ou scellé dans le registre certifié Homolog.</p>
+					<p style="font-family:monospace;background:#f1f5f9;padding:10px;border-radius:6px;word-break:break-all;font-size:12px;color:#334155;border:1px solid #cbd5e1;">` + html.EscapeString(sha256Hash) + `</p>
+					<div style="margin-top:24px;font-size:12px;color:#94a3b8;">Plateforme Sanad Pharma • Homolog Algérie</div>
+				</div>
 			</body></html>
 		`))
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	signedDateStr := "En attente de visa"
+	signedDateStr := "En attente de visa réglementaire"
 	if rep.SignedAt != nil {
 		signedDateStr = rep.SignedAt.Format("02/01/2006 à 15:04:05 UTC+1")
 	}
 
-	pdtDisplay := "Pharmacien DT Titulaire"
+	pdtDisplay := "Pharmacien Directeur Technique Titulaire"
 	if rep.SignedByPDTName != "" {
 		pdtDisplay = rep.SignedByPDTName
 	}
@@ -305,63 +333,100 @@ func (h *ReportHandler) VerifyReportPublic(w http.ResponseWriter, r *http.Reques
 	if rep.WatermarkStatus == domain.WatermarkDraft {
 		badgeColor = "#d97706"
 		badgeText = "BROUILLON (DOCUMENT DE TRAVAIL) ⚠️"
+	} else if rep.WatermarkStatus == domain.WatermarkArchived {
+		badgeColor = "#b91c1c"
+		badgeText = "ARCHIVÉ (VERSION ANTÉRIEURE) 🛑"
 	}
 
-	output := fmt.Sprintf(`
-		<!DOCTYPE html>
-		<html lang="fr"><head><meta charset="UTF-8"><title>Vérification d'Authenticité ANPP — Homolog</title>
-		<style>
-			body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #091e36; color: #f8fafc; margin: 0; padding: 32px 16px; display: flex; justify-content: center; }
-			.card { background: #ffffff; color: #0f172a; max-width: 620px; width: 100%%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); padding: 32px; }
-			.badge { background: %s; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 13px; display: inline-block; margin-bottom: 20px; }
-			table { width: 100%%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-			th, td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-			th { color: #64748b; font-weight: 600; width: 38%%; }
-			td { font-weight: 600; color: #091e36; }
-			.hash-box { background: #f1f5f9; font-family: monospace; font-size: 11px; padding: 10px; border-radius: 6px; word-break: break-all; color: #334155; margin-top: 20px; }
-		</style>
-		</head><body>
-		<div class="card">
-			<div style="text-align:center;">
-				<div class="badge">%s</div>
-				<h2 style="margin: 0 0 8px 0; color: #091e36;">Certificat d'Authenticité Réglementaire</h2>
-				<p style="color: #64748b; font-size: 13px; margin: 0;">Plateforme Homolog • Contrôle d'Intégrité BPF / 21 CFR Part 11</p>
-			</div>
-			<table>
-				<tr><th>Réf. Document :</th><td>%s — %s</td></tr>
-				<tr><th>Statut d'Opposabilité :</th><td>%s</td></tr>
-				<tr><th>Signataire Légal :</th><td>%s</td></tr>
-				<tr><th>Date & Heure Scellement :</th><td>%s</td></tr>
-				<tr><th>Format & Conformité :</th><td>A4 300+ DPI (Norme ISO 19005 / ALCOA+)</td></tr>
-			</table>
-			<div class="hash-box">
-				<strong>Empreinte SHA-256 scellée :</strong><br/>%s
-			</div>
-			<p style="text-align:center; font-size:11px; color:#94a3b8; margin-top:24px;">Ce certificat atteste que la version imprimée est bit-à-bit identique à l'acte scellé dans le coffre-fort Homolog.</p>
-		</div>
-		</body></html>
-	`, badgeColor, badgeText, html.EscapeString(rep.ReportCode), html.EscapeString(rep.ReportTitle), string(rep.WatermarkStatus), html.EscapeString(pdtDisplay), signedDateStr, html.EscapeString(rep.SHA256Hash))
+	// Lookup métadonnées CDC
+	legalRef := "Réglementation Pharmaceutique Algérienne • BPF"
+	docSubtitle := "Acte officiel d'enregistrement / homologation"
+	if def, ok := reporting.GetReportDefinition(rep.ReportCode); ok {
+		legalRef = def.LegalReference
+		docSubtitle = def.Subtitle
+	}
+
+	// QR Code de vérification
+	qrDataURI, _ := reporting.GenerateQRCodeDataURI(rep.QRVerificationURL, 140)
+	qrTag := ""
+	if qrDataURI != "" {
+		qrTag = fmt.Sprintf(`<img src="%s" style="width:110px;height:110px;border:1px solid #cbd5e1;border-radius:6px;padding:4px;background:#ffffff;" alt="QR Code" />`, qrDataURI)
+	}
+
+	output := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification d'Authenticité ANPP — %s</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #091e36; color: #f8fafc; margin: 0; padding: 32px 16px; display: flex; justify-content: center; }
+        .card { background: #ffffff; color: #0f172a; max-width: 640px; width: 100%%; border-radius: 12px; box-shadow: 0 20px 45px rgba(0,0,0,0.35); padding: 32px; }
+        .badge { background: %s; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 13px; display: inline-block; margin-bottom: 16px; }
+        table { width: 100%%; border-collapse: collapse; margin-top: 18px; font-size: 13.5px; }
+        th, td { padding: 9px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { color: #64748b; font-weight: 600; width: 36%%; }
+        td { font-weight: 600; color: #091e36; }
+        .hash-box { background: #f8fafc; font-family: monospace; font-size: 11px; padding: 12px; border-radius: 6px; word-break: break-all; color: #334155; margin-top: 20px; border: 1px solid #cbd5e1; position: relative; }
+        .btn-copy { background: #0284c7; color: white; border: none; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; float: right; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="text-align:center;">
+            <div class="badge">%s</div>
+            <h2 style="margin: 0 0 6px 0; color: #091e36;">Certificat d'Authenticité Réglementaire</h2>
+            <p style="color: #64748b; font-size: 13px; margin: 0;">Plateforme Homolog • Contrôle d'Intégrité BPF / 21 CFR Part 11</p>
+        </div>
+
+        <div style="display:flex; justify-content:center; margin:16px 0;">
+            %s
+        </div>
+
+        <table>
+            <tr><th>Réf. Document :</th><td><strong>%s</strong> — %s</td></tr>
+            <tr><th>Objet / Portée :</th><td style="color:#475569; font-size:12px;">%s</td></tr>
+            <tr><th>Base Légale :</th><td style="font-size:12px; color:#047857;">%s</td></tr>
+            <tr><th>Statut Opposable :</th><td>%s</td></tr>
+            <tr><th>Signataire Légal :</th><td>%s</td></tr>
+            <tr><th>Date & Heure Scellement :</th><td>%s</td></tr>
+            <tr><th>Standard Technique :</th><td>Norme ISO 19005 (PDF/A) • ALCOA+ Attributable</td></tr>
+        </table>
+
+        <div class="hash-box">
+            <button class="btn-copy" onclick="navigator.clipboard.writeText('%s'); alert('Empreinte copiée dans le presse-papier !');">Copier SHA-256</button>
+            <strong>Empreinte SHA-256 scellée :</strong><br/>
+            <span style="display:inline-block; margin-top:6px;">%s</span>
+        </div>
+
+        <p style="text-align:center; font-size:11.5px; color:#94a3b8; margin-top:20px; line-height:1.4;">
+            Ce certificat atteste que la version imprimée ou transmise à l'ANPP est rigoureusement conforme bit-à-bit à l'acte scellé dans le coffre-fort réglementaire Sanad Vault.
+        </p>
+    </div>
+</body>
+</html>`,
+		html.EscapeString(rep.ReportCode),
+		badgeColor,
+		badgeText,
+		qrTag,
+		html.EscapeString(rep.ReportCode), html.EscapeString(rep.ReportTitle),
+		html.EscapeString(docSubtitle),
+		html.EscapeString(legalRef),
+		string(rep.WatermarkStatus),
+		html.EscapeString(pdtDisplay),
+		signedDateStr,
+		html.EscapeString(rep.SHA256Hash),
+		html.EscapeString(rep.SHA256Hash),
+	)
 
 	_, _ = w.Write([]byte(output))
 }
 
 func getReportTitle(code string) string {
-	switch code {
-	case "ES-REG-01":
-		return "Bordereau Officiel de Transmission CTD (5 Modules)"
-	case "ES-REG-02":
-		return "Formulaire Officiel de Demande d'Enregistrement (1.A.3) & Homologation DM"
-	case "ES-REG-02-DM":
-		return "Formulaire Officiel de Demande d'Homologation DM (Décret 20-324)"
-	case "ES-REG-03-DM":
-		return "Récépissé Officiel de Dépôt des Dossiers soumis à Homologation DM"
-	case "ES-FIN-01":
-		return "Bordereau de Versement BV1 / BV DM (Ordonnance 21-07 & Décret 21-82)"
-	case "EI-AVT-01":
-		return "Fiche Navette d'Avancement CTD / DM (Dossier Progress Sheet)"
-	default:
-		return "État de Sortie Réglementaire BPF"
+	if def, ok := reporting.GetReportDefinition(code); ok {
+		return def.Title
 	}
+	return "État de Sortie Réglementaire BPF"
 }
 
 // renderESREG01HTML injecte les données réelles du dossier dans le template HTML haute fidélité A4 300 DPI
@@ -577,24 +642,7 @@ func renderESREG01HTML(
             </div>
         </div>
 
-        <div class="footer-legal">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <svg width="34" height="34" viewBox="0 0 100 100" fill="#091e36">
-                    <rect width="100" height="100" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-                    <rect x="10" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="65" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="10" y="65" width="25" height="25" fill="#091e36"/>
-                    <rect x="42" y="42" width="16" height="16" fill="#047857"/>
-                </svg>
-                <div>
-                    <strong>Sceau Numérique SHA-256 :</strong> %s...<br/>
-                    Vérification instantanée en ligne : <a href="%s" style="color:#0284c7; text-decoration:none;">%s</a>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                Édition certifiée le %s • <strong>Page 1 sur 1</strong>
-            </div>
-        </div>
+        %s
     </div>
 </body>
 </html>`,
@@ -610,8 +658,7 @@ func renderESREG01HTML(
 		m5Total, m5Att,
 		totTotal, totAtt,
 		pdtName,
-		sha256Hash[:24], qrURL, qrURL,
-		generatedAt.Format("02/01/2006 à 15:04:05 UTC+1"),
+		reporting.RenderLegalFooter("ES-REG-01", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
 	)
 }
 
@@ -863,24 +910,7 @@ func renderESREG02HTML(
             </div>
         </div>
 
-        <div class="footer-legal">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <svg width="34" height="34" viewBox="0 0 100 100" fill="#091e36">
-                    <rect width="100" height="100" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-                    <rect x="10" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="65" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="10" y="65" width="25" height="25" fill="#091e36"/>
-                    <rect x="42" y="42" width="16" height="16" fill="#047857"/>
-                </svg>
-                <div>
-                    <strong>Sceau Numérique SHA-256 :</strong> %s...<br/>
-                    Vérification publique ANPP : <a href="%s" style="color:#0284c7; text-decoration:none;">%s</a>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                Édition certifiée le %s • <strong>Page 1 sur 1</strong>
-            </div>
-        </div>
+        %s
     </div>
 </body>
 </html>`,
@@ -893,8 +923,7 @@ func renderESREG02HTML(
 		economicType,
 		pdtName, estName,
 		pdtName,
-		hashShort, qrURL, qrURL,
-		generatedAt.Format("02/01/2006 à 15:04:05 UTC+1"),
+		reporting.RenderLegalFooter("ES-REG-02", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
 	)
 }
 
@@ -1178,24 +1207,7 @@ func renderESFIN01HTML(
             </div>
         </div>
 
-        <div class="footer-legal">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <svg width="34" height="34" viewBox="0 0 100 100" fill="#091e36">
-                    <rect width="100" height="100" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-                    <rect x="10" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="65" y="10" width="25" height="25" fill="#091e36"/>
-                    <rect x="10" y="65" width="25" height="25" fill="#091e36"/>
-                    <rect x="42" y="42" width="16" height="16" fill="#047857"/>
-                </svg>
-                <div>
-                    <strong>Sceau Numérique SHA-256 :</strong> %s...<br/>
-                    Vérification publique ANPP : <a href="%s" style="color:#0284c7; text-decoration:none;">%s</a>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                Édition certifiée le %s • <strong>Page 1 sur 1</strong>
-            </div>
-        </div>
+        %s
     </div>
 </body>
 </html>`,
@@ -1218,7 +1230,6 @@ func renderESFIN01HTML(
 		ribCode,
 		d.DossierCode,
 		pdtName,
-		hashShort, qrURL, qrURL,
-		generatedAt.Format("02/01/2006 à 15:04:05 UTC+1"),
+		reporting.RenderLegalFooter("ES-FIN-01", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
 	)
 }

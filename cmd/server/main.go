@@ -477,8 +477,9 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates/{code}", workflowHandler.GetMasterTemplateByCode)
 			}
 
-			// Moteur de Reporting Réglementaire BPF & États de Sortie (Jalon 2.1)
+			// Moteur de Reporting Réglementaire BPF & Référentiel des 28 États Documentaires (Jalon 2.2)
 			if reportHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/reports/registry", reportHandler.GetReportRegistry)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/reports/{code}", reportHandler.GenerateDossierReport)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/reports/{code}/seal", reportHandler.SealDossierReport)
 			}
