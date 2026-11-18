@@ -62,11 +62,11 @@
                 if (it.workflow_status === 'pending_approval') return true;
                 if (it.requirement_level === 'E' && ['1.A.7', '1.A.8'].includes(it.item_code) && it.workflow_status !== 'approved_sealed') return true;
             }
-            // 4. Checker : en attente de revue Qualité (under_review) si l'utilisateur n'est pas le maker
+            // 4. Checker : en attente de revue Qualité (under_review) si l'utilisateur est habilité et n'est pas le maker (SoD)
             if (it.workflow_status === 'under_review') {
                 const isMaker = (it.maker_user_id && uid && it.maker_user_id === uid) || 
                                 (it.maker_user_name && uLastName && it.maker_user_name.toLowerCase().includes(uLastName));
-                if (!isMaker) return true;
+                if (!isMaker && (userCtx.isDT || isItemUserDept(it, userCtx))) return true;
             }
             return false;
         }
