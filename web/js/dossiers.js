@@ -2552,7 +2552,7 @@
 
                 closeModal('modal-smart-planning-config');
                 showNotifyModal("Rétroplanning Mis à Jour", "La date cible a été enregistrée et le chemin critique a été recalculé.", "✅");
-                await loadDossierDetails(selectedDossierId);
+                await selectDossier(selectedDossierId);
             } catch(e) {
                 showNotifyModal("Erreur Configuration", e.message, "⚠️");
             }
@@ -2577,8 +2577,11 @@
 
                 const data = await res.json();
                 showNotifyModal("Échéances Synchronisées", data.message || "Toutes les sections ont été alignées sur le chemin critique.", "⚡");
-                await loadDossierDetails(selectedDossierId);
+                await selectDossier(selectedDossierId);
             } catch(e) {
                 showNotifyModal("Erreur Synchronisation", e.message, "⚠️");
             }
         }
+
+        // Alias de compatibilité
+        const loadDossierDetails = selectDossier;
