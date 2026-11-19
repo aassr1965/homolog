@@ -128,12 +128,12 @@ func TestEvaluateSmartPlanning_CompletedMilestones(t *testing.T) {
 	trackingNum := "ETASJIL-2026-9941"
 	pdtSigned := now.AddDate(0, 0, -2)
 	d := &Dossier{
-		ID:                uuid.New(),
-		DossierCode:       "DOS-2026-ADVANCED-NI",
-		ProcedureCode:     ProcedureNI,
-		TargetDepositDate: &targetDeposit,
-		TrackingNumber:    &trackingNum,
-		PDTSignedAt:       &pdtSigned,
+		ID:                 uuid.New(),
+		DossierCode:        "DOS-2026-ADVANCED-NI",
+		ProcedureCode:      ProcedureNI,
+		TargetDepositDate:  &targetDeposit,
+		TrackingNumber:     &trackingNum,
+		PDTSignedAt:        &pdtSigned,
 		IsLockedForDeposit: true,
 	}
 

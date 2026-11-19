@@ -12,11 +12,11 @@ import (
 type SmartPlanningHealth string
 
 const (
-	HealthCompleted       SmartPlanningHealth = "COMPLETED"        // Jalon accompli / validé
-	HealthOnTrack         SmartPlanningHealth = "ON_TRACK"         // Dans les temps (marge >= 30j)
-	HealthWarningTight    SmartPlanningHealth = "WARNING_TIGHT"    // Marge restreinte (7j à 30j)
-	HealthCriticalDelay   SmartPlanningHealth = "CRITICAL_DELAY"   // Retard critique (-15j à 7j)
-	HealthFatalBlock      SmartPlanningHealth = "FATAL_BLOCK"      // Dépassement majeur (> 15j de retard sur jalon incompressible)
+	HealthCompleted     SmartPlanningHealth = "COMPLETED"      // Jalon accompli / validé
+	HealthOnTrack       SmartPlanningHealth = "ON_TRACK"       // Dans les temps (marge >= 30j)
+	HealthWarningTight  SmartPlanningHealth = "WARNING_TIGHT"  // Marge restreinte (7j à 30j)
+	HealthCriticalDelay SmartPlanningHealth = "CRITICAL_DELAY" // Retard critique (-15j à 7j)
+	HealthFatalBlock    SmartPlanningHealth = "FATAL_BLOCK"    // Dépassement majeur (> 15j de retard sur jalon incompressible)
 )
 
 // SmartPlanningMilestoneCode identifie de manière unique les 6 jalons incompressibles du rétroplanning
@@ -33,38 +33,38 @@ const (
 
 // SmartPlanningMilestone modélise une étape critique calculée à rebours
 type SmartPlanningMilestone struct {
-	Code               SmartPlanningMilestoneCode `json:"code"`
-	NameFR             string                     `json:"name_fr"`
-	DayOffset          int                        `json:"day_offset"` // -240, -150, -60, -30, -15, 0
-	TargetDate         time.Time                  `json:"target_date"`
-	DaysRemaining      int                        `json:"days_remaining"` // TargetDate - Now (en jours)
-	Health             SmartPlanningHealth        `json:"health"`
-	IsCompleted        bool                       `json:"is_completed"`
-	CompletionNote     string                     `json:"completion_note,omitempty"`
-	AssociatedItemCodes []string                  `json:"associated_item_codes"`
-	DepartmentOwner    string                     `json:"department_owner"` // "RD", "QA", "RA", "PDT"
-	LegalReference     string                     `json:"legal_reference"`
-	ExplanationFR      string                     `json:"explanation_fr"`
-	AlertMessage       string                     `json:"alert_message,omitempty"`
+	Code                SmartPlanningMilestoneCode `json:"code"`
+	NameFR              string                     `json:"name_fr"`
+	DayOffset           int                        `json:"day_offset"` // -240, -150, -60, -30, -15, 0
+	TargetDate          time.Time                  `json:"target_date"`
+	DaysRemaining       int                        `json:"days_remaining"` // TargetDate - Now (en jours)
+	Health              SmartPlanningHealth        `json:"health"`
+	IsCompleted         bool                       `json:"is_completed"`
+	CompletionNote      string                     `json:"completion_note,omitempty"`
+	AssociatedItemCodes []string                   `json:"associated_item_codes"`
+	DepartmentOwner     string                     `json:"department_owner"` // "RD", "QA", "RA", "PDT"
+	LegalReference      string                     `json:"legal_reference"`
+	ExplanationFR       string                     `json:"explanation_fr"`
+	AlertMessage        string                     `json:"alert_message,omitempty"`
 }
 
 // SmartPlanningAnalysis encapsule la restitution complète du rétroplanning inversé d'un dossier
 type SmartPlanningAnalysis struct {
-	DossierID             uuid.UUID                `json:"dossier_id"`
-	DossierCode           string                   `json:"dossier_code"`
-	ProcedureCode         ProcedureCode            `json:"procedure_code"`
-	IsRenewalProcedure    bool                     `json:"is_renewal_procedure"`
-	TargetDepositDate     time.Time                `json:"target_deposit_date"`
-	IsEstimatedTargetDate bool                     `json:"is_estimated_target_date"`
-	TargetDateOrigin      string                   `json:"target_date_origin"` // "dossier_target_date", "anpp_validity_j180", "default_estimated"
-	DaysToTargetDeposit   int                      `json:"days_to_target_deposit"`
-	OverallHealth         SmartPlanningHealth      `json:"overall_health"`
-	OverallHealthLabel    string                   `json:"overall_health_label"`
-	ActiveCriticalMilestone *SmartPlanningMilestone `json:"active_critical_milestone,omitempty"`
-	Milestones            []SmartPlanningMilestone `json:"milestones"`
-	CriticalWarnings      []string                 `json:"critical_warnings"`
-	RecommendedActionFR   string                   `json:"recommended_action_fr"`
-	EvaluatedAt           time.Time                `json:"evaluated_at"`
+	DossierID               uuid.UUID                `json:"dossier_id"`
+	DossierCode             string                   `json:"dossier_code"`
+	ProcedureCode           ProcedureCode            `json:"procedure_code"`
+	IsRenewalProcedure      bool                     `json:"is_renewal_procedure"`
+	TargetDepositDate       time.Time                `json:"target_deposit_date"`
+	IsEstimatedTargetDate   bool                     `json:"is_estimated_target_date"`
+	TargetDateOrigin        string                   `json:"target_date_origin"` // "dossier_target_date", "anpp_validity_j180", "default_estimated"
+	DaysToTargetDeposit     int                      `json:"days_to_target_deposit"`
+	OverallHealth           SmartPlanningHealth      `json:"overall_health"`
+	OverallHealthLabel      string                   `json:"overall_health_label"`
+	ActiveCriticalMilestone *SmartPlanningMilestone  `json:"active_critical_milestone,omitempty"`
+	Milestones              []SmartPlanningMilestone `json:"milestones"`
+	CriticalWarnings        []string                 `json:"critical_warnings"`
+	RecommendedActionFR     string                   `json:"recommended_action_fr"`
+	EvaluatedAt             time.Time                `json:"evaluated_at"`
 }
 
 // MilestoneTemplate définit les métadonnées statiques des 6 jalons incompressibles du CDC
