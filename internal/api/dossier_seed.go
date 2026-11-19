@@ -328,30 +328,44 @@ func SeedWorkflowPendingApprovals(ctx context.Context, pool *pgxpool.Pool, orgSl
 		}
 	}
 
-	// Initialiser une délégation active pour le Pharmacien Assistant (Décret 21-82 Art. 24)
-	var assistantID uuid.UUID
-	err = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND role = 'pharmacien_assistant' LIMIT 1", orgID).Scan(&assistantID)
-	if err == nil && dtUserID != uuid.Nil && assistantID != uuid.Nil {
-		var hasActiveDelegation bool
-		_ = pool.QueryRow(ctx, `
-			SELECT EXISTS(
-				SELECT 1 FROM dt_delegations 
-				WHERE organization_id = $1 AND delegate_id = $2 AND is_active = TRUE
-			)
-		`, orgID, assistantID).Scan(&hasActiveDelegation)
+	log.Println("[Seed Parapheur] Pièces de démonstration prêtes pour visa DT initialisées dans le parapheur.")
+}
 
-		if !hasActiveDelegation {
-			now := time.Now()
-			startDate := now.Add(-3 * 24 * time.Hour)
-			endDate := now.Add(45 * 24 * time.Hour)
-			delegQuery := `
-				INSERT INTO dt_delegations (organization_id, delegator_id, delegate_id, miph_notification_ref, reason, start_date, end_date, is_active)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
-			`
-			_, _ = pool.Exec(ctx, delegQuery, orgID, dtUserID, assistantID, "NOTIF-MIPH-INT-2026/088", "Intérim légal et suppléance technique pendant mission d'audit BPF (Décret 21-82 Art. 24)", startDate, endDate)
+// SeedWorkflowDTDelegations initialise un mandat d'intérim de démonstration pour le Pharmacien Assistant (Décret 21-82 Art. 24)
+func SeedWorkflowDTDelegations(ctx context.Context, pool *pgxpool.Pool, orgSlug string) {
+	var orgID uuid.UUID
+	err := pool.QueryRow(ctx, "SELECT id FROM organizations WHERE slug = $1", orgSlug).Scan(&orgID)
+	if err != nil {
+		return
+	}
+
+	var dtUserID, assistantID uuid.UUID
+	_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND role = 'directeur_technique' LIMIT 1", orgID).Scan(&dtUserID)
+	_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND (role = 'pharmacien_assistant' OR email = 'assistant.dt@pharma.dz') LIMIT 1", orgID).Scan(&assistantID)
+
+	if dtUserID == uuid.Nil || assistantID == uuid.Nil {
+		return
+	}
+
+	var hasActiveDelegation bool
+	_ = pool.QueryRow(ctx, `
+		SELECT EXISTS(
+			SELECT 1 FROM dt_delegations 
+			WHERE organization_id = $1 AND delegate_id = $2 AND is_active = TRUE
+		)
+	`, orgID, assistantID).Scan(&hasActiveDelegation)
+
+	if !hasActiveDelegation {
+		now := time.Now()
+		startDate := now.Add(-3 * 24 * time.Hour)
+		endDate := now.Add(45 * 24 * time.Hour)
+		delegQuery := `
+			INSERT INTO dt_delegations (organization_id, delegator_id, delegate_id, miph_notification_ref, reason, start_date, end_date, is_active)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+		`
+		_, err := pool.Exec(ctx, delegQuery, orgID, dtUserID, assistantID, "NOTIF-MIPH-INT-2026/088", "Intérim légal et suppléance technique pendant mission d'audit BPF (Décret 21-82 Art. 24)", startDate, endDate)
+		if err == nil {
 			log.Println("[Seed Parapheur] Mandat d'intérim DT actif (Décret 21-82 Art. 24) initialisé pour le Pharmacien Assistant Dr. Lynda Amrani.")
 		}
 	}
-
-	log.Println("[Seed Parapheur] Pièces de démonstration prêtes pour visa DT initialisées dans le parapheur.")
 }

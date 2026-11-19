@@ -999,12 +999,11 @@
         if (!select) return;
 
         try {
-            const res = await fetch('/api/v1/users');
+            const res = await fetch('/api/v1/parapheur/assistants');
             if (!res.ok) return;
-            const users = await res.json();
-            const assistants = users.filter(u => u.role === 'pharmacien_assistant' || u.role === 'directeur_technique');
+            const assistants = await res.json();
 
-            if (assistants.length === 0) {
+            if (!assistants || assistants.length === 0) {
                 select.innerHTML = '<option value="">Aucun Pharmacien Assistant trouvé dans l\'établissement</option>';
                 return;
             }
