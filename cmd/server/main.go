@@ -485,6 +485,10 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates/{code}", workflowHandler.GetMasterTemplateByCode)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates", workflowHandler.GetMasterTemplates)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates/{code}", workflowHandler.GetMasterTemplateByCode)
+
+				// Cockpit de Supervision & Parapheur Électronique Pharmacien DT (CDC Section 7.4.6)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierView)).Get("/api/v1/parapheur/pending", workflowHandler.GetParapheurPendingItems)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/parapheur/batch-approve", workflowHandler.BatchApproveSections)
 			}
 
 			// Moteur de Reporting Réglementaire BPF & Référentiel des 28 États Documentaires (Jalon 2.2)

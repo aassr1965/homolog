@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"homolog/internal/audit"
+	"homolog/internal/auth"
 	"homolog/internal/domain"
 	"homolog/internal/repository"
 )
@@ -871,4 +872,130 @@ func (h *WorkflowHandler) logAudit(ctx context.Context, orgID, userID uuid.UUID,
 		EntityID:       entityID,
 		Details:        details,
 	})
+}
+
+// GetParapheurPendingItems liste les pièces en attente de visa réglementaire DT pour l'organisation
+func (h *WorkflowHandler) GetParapheurPendingItems(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	items, err := h.workflowRepo.GetParapheurPendingItems(r.Context(), user.OrganizationID)
+	if err != nil {
+		log.Printf("[ERROR] GetParapheurPendingItems: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les pièces du parapheur")
+		return
+	}
+
+	if items == nil {
+		items = []*domain.ParapheurPendingItem{}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items": items,
+		"count": len(items),
+	})
+}
+
+// BatchApproveSections applique le visa officiel 21 CFR Part 11 sur une liasse de pièces documentaires
+func (h *WorkflowHandler) BatchApproveSections(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	normRole := strings.ToLower(user.Role)
+	if normRole != "pharmacien_responsable" && normRole != "directeur_technique" && normRole != "admin" && normRole != "admin_laboratoire" {
+		writeJSONError(w, http.StatusForbidden, "Garde-fou BPF : Seul le Pharmacien Directeur Technique titulaire (1.A.7) est habilité à apposer ce visa légal")
+		return
+	}
+
+	var req domain.BatchApproveRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	if len(req.ItemIDs) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "Aucune section sélectionnée pour la signature par lot")
+		return
+	}
+
+	if !req.SolemnDeclarationAccepted {
+		writeJSONError(w, http.StatusBadRequest, "La déclaration solennelle sur l'honneur du Pharmacien DT est obligatoire pour valider la signature par lot")
+		return
+	}
+
+	// Re-authentification de sécurité (mot de passe ou TOTP 21 CFR Part 11) si mot de passe ou code fourni
+	if strings.TrimSpace(req.Password) != "" || strings.TrimSpace(req.TOTPCode) != "" {
+		var passwordHash string
+		var totpEnabled bool
+		var totpSecret *string
+		userQuery := `SELECT password_hash, totp_enabled, totp_secret FROM users WHERE id = $1`
+		err := h.pool.QueryRow(r.Context(), userQuery, user.UserID).Scan(&passwordHash, &totpEnabled, &totpSecret)
+		if err == nil {
+			if strings.TrimSpace(req.Password) != "" {
+				validPassword, err := auth.VerifyPassword(req.Password, passwordHash)
+				if err != nil || !validPassword {
+					writeJSONError(w, http.StatusUnauthorized, "Mot de passe incorrect : signature par lot refusée")
+					return
+				}
+			}
+			if totpEnabled && totpSecret != nil && strings.TrimSpace(req.TOTPCode) != "" {
+				if !auth.ValidateTOTPCode(req.TOTPCode, *totpSecret) {
+					writeJSONError(w, http.StatusUnauthorized, "Code 2FA TOTP invalide : signature par lot refusée")
+					return
+				}
+			}
+		}
+	}
+
+	approverName := user.Email
+	var uFirst, uLast string
+	_ = h.pool.QueryRow(r.Context(), `SELECT first_name, last_name FROM users WHERE id = $1`, user.UserID).Scan(&uFirst, &uLast)
+	if uFirst != "" || uLast != "" {
+		approverName = strings.TrimSpace(uFirst + " " + uLast)
+	}
+
+	res, err := h.workflowRepo.BatchApproveSections(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		user.Role,
+		user.Email,
+		approverName,
+		req.ItemIDs,
+	)
+	if err != nil {
+		log.Printf("[ERROR] BatchApproveSections: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur lors de la signature par lot : %v", err))
+		return
+	}
+
+	// Audit trail consolidé
+	for _, it := range res.Items {
+		if it.Success {
+			h.logAudit(
+				r.Context(),
+				user.OrganizationID,
+				user.UserID,
+				user.Email,
+				user.Role,
+				"batch_approve_sealed",
+				"workflow_item",
+				it.ItemID.String(),
+				map[string]any{
+					"item_code":    it.ItemCode,
+					"dossier_code": it.DossierCode,
+					"seal_hash":    it.SealHash,
+					"batch_mode":   true,
+				},
+			)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, res)
 }
