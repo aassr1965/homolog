@@ -210,3 +210,122 @@ func SeedInitialDossiers(ctx context.Context, pool *pgxpool.Pool, orgSlug string
 
 	log.Println("[Seed Dossier] Dossiers réglementaires modèles ANPP initialisés avec succès.")
 }
+
+// SeedWorkflowPendingApprovals initialise des pièces de démonstration au statut 'pending_approval' (Prêt pour Visa DT)
+// pour alimenter le Parapheur Électronique et le Cockpit DT dès l'ouverture de l'application
+func SeedWorkflowPendingApprovals(ctx context.Context, pool *pgxpool.Pool, orgSlug string) {
+	var orgID uuid.UUID
+	err := pool.QueryRow(ctx, "SELECT id FROM organizations WHERE slug = $1", orgSlug).Scan(&orgID)
+	if err != nil {
+		return
+	}
+
+	// Vérifier si des pièces sont déjà en attente d'approbation
+	var pendingCount int
+	_ = pool.QueryRow(ctx, `
+		SELECT COUNT(*) 
+		FROM dossier_checklist_items i 
+		JOIN dossiers d ON d.id = i.dossier_id 
+		WHERE d.organization_id = $1 AND i.workflow_status = 'pending_approval'
+	`, orgID).Scan(&pendingCount)
+
+	if pendingCount > 0 {
+		return
+	}
+
+	// Récupérer le Maker (RA Lead) et le Checker (QA Manager)
+	var makerID, checkerID uuid.UUID
+	_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND email = 'ra.lead@pharma.dz'", orgID).Scan(&makerID)
+	_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND email = 'qa.lead@pharma.dz'", orgID).Scan(&checkerID)
+
+	if makerID == uuid.Nil {
+		_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND role = 'responsable_affaires_reg' LIMIT 1", orgID).Scan(&makerID)
+	}
+	if checkerID == uuid.Nil {
+		_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND role = 'contributeur_qualite_bpf' LIMIT 1", orgID).Scan(&checkerID)
+	}
+
+	now := time.Now().UTC()
+	subTime := now.Add(-4 * time.Hour)
+	revTime := now.Add(-1 * time.Hour)
+
+	type pendingSeedItem struct {
+		dossierCode  string
+		itemCode     string
+		currentRev   string
+		checkerNotes string
+	}
+
+	seeds := []pendingSeedItem{
+		{
+			dossierCode:  "DOS-2026-AMOX-NI",
+			itemCode:     "1.P.8",
+			currentRev:   "v0.2",
+			checkerNotes: "Revue qualité favorable. Engagement sur les 3 premiers lots industriels conforme aux exigences de l'ANPP.",
+		},
+		{
+			dossierCode:  "DOS-2026-AMOX-NI",
+			itemCode:     "1.P.9",
+			currentRev:   "v0.2",
+			checkerNotes: "Protocole de pharmacovigilance et suivi de stabilité en Zone IVb validé. Prêt pour scellement légal du Pharmacien DT.",
+		},
+		{
+			dossierCode:  "DOS-2026-PARAC-NF",
+			itemCode:     "1.H.10",
+			currentRev:   "v0.2",
+			checkerNotes: "Déclaration solennelle d'évaluation vérifiée par l'Assurance Qualité. Conforme BPF.",
+		},
+		{
+			dossierCode:  "DOS-2026-PARAC-NF",
+			itemCode:     "3.2.P.5",
+			currentRev:   "v0.3",
+			checkerNotes: "Spécifications de libération et de péremption du produit fini conformes aux monographies Ph. Eur. et validation analytique ICH Q2(R1).",
+		},
+		{
+			dossierCode:  "DOS-2026-SERINGUE-DM",
+			itemCode:     "DM.T.1",
+			currentRev:   "v0.2",
+			checkerNotes: "Dossier technique DM vérifié selon l'arrêté du 10 mai 2021. Nomenclature et biocompatibilité conformes.",
+		},
+	}
+
+	for _, s := range seeds {
+		var itemID uuid.UUID
+		err := pool.QueryRow(ctx, `
+			SELECT i.id 
+			FROM dossier_checklist_items i 
+			JOIN dossiers d ON d.id = i.dossier_id 
+			WHERE d.organization_id = $1 AND d.dossier_code = $2 AND i.item_code = $3
+		`, orgID, s.dossierCode, s.itemCode).Scan(&itemID)
+
+		if err != nil {
+			continue
+		}
+
+		updateQuery := `
+			UPDATE dossier_checklist_items
+			SET workflow_status = 'pending_approval',
+			    current_revision = $1,
+			    status = 'valide_qualite',
+			    maker_user_id = $2,
+			    maker_submitted_at = $3,
+			    checker_user_id = $4,
+			    checker_reviewed_at = $5,
+			    checker_decision = 'approved',
+			    checker_notes = $6,
+			    updated_at = $5
+			WHERE id = $7
+		`
+		_, err = pool.Exec(ctx, updateQuery, s.currentRev, makerID, subTime, checkerID, revTime, s.checkerNotes, itemID)
+		if err == nil {
+			// Inscription dans l'audit trail dossier_item_reviews
+			reviewQuery := `
+				INSERT INTO dossier_item_reviews (dossier_item_id, author_id, author_role, review_type, comment, revision_version)
+				VALUES ($1, $2, 'contributeur_qualite_bpf', 'quality_passed', $3, $4)
+			`
+			_, _ = pool.Exec(ctx, reviewQuery, itemID, checkerID, s.checkerNotes, s.currentRev)
+		}
+	}
+
+	log.Println("[Seed Parapheur] Pièces de démonstration prêtes pour visa DT initialisées dans le parapheur.")
+}
