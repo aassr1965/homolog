@@ -3380,8 +3380,18 @@
 
     <!-- Modal Parapheur Électronique & Cockpit DT (CDC Section 7.4.6) -->
     <div class="modal-overlay" id="modal-parapheur-dt" onclick="if(event.target === this) closeParapheurModal()">
-        <div class="modal modal-lg" id="modal-parapheur-dialog" style="width:1120px; max-width:min(1120px, calc(100vw - 24px)); height:88vh; max-height:96vh; min-width:680px; min-height:440px; display:flex; flex-direction:column; resize:both; overflow:hidden; position:relative;">
-            <div class="modal-header" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06); padding:10px 16px; user-select:none;">
+        <div class="modal modal-lg" id="modal-parapheur-dialog" style="width:1120px; max-width:min(1120px, calc(100vw - 24px)); height:88vh; max-height:96vh; min-width:680px; min-height:440px; display:flex; flex-direction:column; overflow:hidden; position:relative;">
+            <!-- Bords & Coins de Redimensionnement Interactif (Style Fenêtre OS : Haut, Bas, Gauche, Droite, 4 Coins) -->
+            <div class="modal-resize-edge edge-n" data-direction="n" title="Étirer vers le haut"></div>
+            <div class="modal-resize-edge edge-s" data-direction="s" title="Étirer vers le bas"></div>
+            <div class="modal-resize-edge edge-w" data-direction="w" title="Étirer vers la gauche"></div>
+            <div class="modal-resize-edge edge-e" data-direction="e" title="Étirer vers la droite"></div>
+            <div class="modal-resize-edge edge-nw" data-direction="nw" title="Étirer l'angle haut-gauche"></div>
+            <div class="modal-resize-edge edge-ne" data-direction="ne" title="Étirer l'angle haut-droit"></div>
+            <div class="modal-resize-edge edge-sw" data-direction="sw" title="Étirer l'angle bas-gauche"></div>
+            <div class="modal-resize-edge edge-se" data-direction="se" title="Étirer l'angle bas-droit"></div>
+
+            <div class="modal-header" id="modal-parapheur-header" ondblclick="if(!event.target.closest('button, a, input, select')) toggleMaximizeParapheurModal()" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06); padding:10px 16px; user-select:none; cursor:grab;" title="Glisser pour déplacer la fenêtre • Double-clic pour plein écran">
                 <div class="modal-title" style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:24px;">⚖️</span>
                     <div>
@@ -3623,7 +3633,7 @@
     <script src="/js/ged.js?v=2026.11.17.11"></script>
     <script src="/js/dossiers.js?v=2026.11.18.12"></script>
     <script src="/js/workflow.js?v=2026.11.18.11"></script>
-    <script src="/js/parapheur.js?v=2026.11.19.1"></script>
+    <script src="/js/parapheur.js?v=2026.11.19.2"></script>
     <script src="/js/deficiencies.js?v=2026.11.17.5"></script>
     <script src="/js/fees.js?v=2026.11.17.5"></script>
     <script src="/js/submissions.js?v=2026.11.17.5"></script>

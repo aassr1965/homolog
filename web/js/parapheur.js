@@ -23,6 +23,9 @@
             }
         }, 1200);
 
+        // Initialiser le redimensionnement par tous les bords et le déplacement par le titre
+        initModalWindowResizer('modal-parapheur-dialog', 'modal-parapheur-header', { minWidth: 680, minHeight: 440 });
+
         // Raccourci clavier Échap pour fermer
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -48,14 +51,21 @@
         if (!dialog) return;
 
         if (!isParapheurMaximized) {
-            // Sauvegarder les dimensions actuelles (y compris si l'utilisateur l'a redimensionnée manuellement)
+            // Sauvegarder les dimensions et positions actuelles
             parapheurPrevStyles = {
+                left: dialog.style.left,
+                top: dialog.style.top,
                 width: dialog.style.width,
                 height: dialog.style.height,
                 maxWidth: dialog.style.maxWidth,
-                maxHeight: dialog.style.maxHeight
+                maxHeight: dialog.style.maxHeight,
+                position: dialog.style.position
             };
 
+            dialog.classList.add('is-maximized');
+            dialog.style.position = 'absolute';
+            dialog.style.left = '10px';
+            dialog.style.top = '10px';
             dialog.style.width = 'calc(100vw - 20px)';
             dialog.style.height = 'calc(100vh - 20px)';
             dialog.style.maxWidth = 'calc(100vw - 20px)';
@@ -68,7 +78,10 @@
             }
             isParapheurMaximized = true;
         } else {
-            // Restaurer les dimensions précédentes
+            dialog.classList.remove('is-maximized');
+            dialog.style.position = (parapheurPrevStyles && parapheurPrevStyles.position) || '';
+            dialog.style.left = (parapheurPrevStyles && parapheurPrevStyles.left) || '';
+            dialog.style.top = (parapheurPrevStyles && parapheurPrevStyles.top) || '';
             dialog.style.width = (parapheurPrevStyles && parapheurPrevStyles.width) || '1120px';
             dialog.style.height = (parapheurPrevStyles && parapheurPrevStyles.height) || '88vh';
             dialog.style.maxWidth = (parapheurPrevStyles && parapheurPrevStyles.maxWidth) || 'min(1120px, calc(100vw - 24px))';
@@ -82,6 +95,161 @@
             isParapheurMaximized = false;
         }
     };
+
+    /**
+     * Initialise le redimensionnement interactif sur tous les bords (N, S, E, W, NE, NW, SE, SW)
+     * et le déplacement par la barre de titre façon fenêtre système de bureau
+     */
+    function initModalWindowResizer(dialogId, headerId, options) {
+        const dialog = document.getElementById(dialogId);
+        if (!dialog) return;
+        const header = headerId ? document.getElementById(headerId) : dialog.querySelector('.modal-header');
+
+        const minWidth = (options && options.minWidth) || 680;
+        const minHeight = (options && options.minHeight) || 440;
+
+        // 1. Écouteurs sur les 8 poignées de bordure et de coins
+        const edges = dialog.querySelectorAll('.modal-resize-edge');
+        edges.forEach(edge => {
+            edge.addEventListener('pointerdown', (e) => {
+                if (dialog.classList.contains('is-maximized') || e.button !== 0) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const dir = edge.dataset.direction;
+                const startRect = dialog.getBoundingClientRect();
+                const startX = e.clientX;
+                const startY = e.clientY;
+
+                // Fixer les coordonnées absolues pour un comportement fenêtre de bureau fluide
+                dialog.style.position = 'absolute';
+                dialog.style.left = startRect.left + 'px';
+                dialog.style.top = startRect.top + 'px';
+                dialog.style.width = startRect.width + 'px';
+                dialog.style.height = startRect.height + 'px';
+                dialog.style.margin = '0';
+                dialog.style.maxWidth = 'none';
+                dialog.style.maxHeight = 'none';
+
+                edge.setPointerCapture(e.pointerId);
+
+                function onPointerMove(ev) {
+                    const dx = ev.clientX - startX;
+                    const dy = ev.clientY - startY;
+
+                    let newW = startRect.width;
+                    let newH = startRect.height;
+                    let newL = startRect.left;
+                    let newT = startRect.top;
+
+                    // Bord Est (Droite)
+                    if (dir.includes('e')) {
+                        newW = Math.max(minWidth, startRect.width + dx);
+                        if (newL + newW > window.innerWidth - 6) {
+                            newW = window.innerWidth - 6 - newL;
+                        }
+                    }
+                    // Bord Ouest (Gauche)
+                    if (dir.includes('w')) {
+                        const maxL = startRect.right - minWidth;
+                        let candL = startRect.left + dx;
+                        if (candL > maxL) candL = maxL;
+                        if (candL < 6) candL = 6;
+                        newL = candL;
+                        newW = startRect.right - newL;
+                    }
+                    // Bord Sud (Bas)
+                    if (dir.includes('s')) {
+                        newH = Math.max(minHeight, startRect.height + dy);
+                        if (newT + newH > window.innerHeight - 6) {
+                            newH = window.innerHeight - 6 - newT;
+                        }
+                    }
+                    // Bord Nord (Haut)
+                    if (dir.includes('n')) {
+                        const maxT = startRect.bottom - minHeight;
+                        let candT = startRect.top + dy;
+                        if (candT > maxT) candT = maxT;
+                        if (candT < 6) candT = 6;
+                        newT = candT;
+                        newH = startRect.bottom - newT;
+                    }
+
+                    dialog.style.left = newL + 'px';
+                    dialog.style.top = newT + 'px';
+                    dialog.style.width = newW + 'px';
+                    dialog.style.height = newH + 'px';
+                }
+
+                function onPointerUp(ev) {
+                    edge.removeEventListener('pointermove', onPointerMove);
+                    edge.removeEventListener('pointerup', onPointerUp);
+                    edge.removeEventListener('pointercancel', onPointerUp);
+                    try {
+                        edge.releasePointerCapture(ev.pointerId);
+                    } catch (_) {}
+                }
+
+                edge.addEventListener('pointermove', onPointerMove);
+                edge.addEventListener('pointerup', onPointerUp);
+                edge.addEventListener('pointercancel', onPointerUp);
+            });
+        });
+
+        // 2. Déplacement de la fenêtre par glisser-déposer de la barre de titre
+        if (header) {
+            header.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('button, a, input, select, textarea') || dialog.classList.contains('is-maximized') || e.button !== 0) {
+                    return;
+                }
+                e.preventDefault();
+                const startRect = dialog.getBoundingClientRect();
+                const startX = e.clientX;
+                const startY = e.clientY;
+
+                dialog.style.position = 'absolute';
+                dialog.style.left = startRect.left + 'px';
+                dialog.style.top = startRect.top + 'px';
+                dialog.style.width = startRect.width + 'px';
+                dialog.style.height = startRect.height + 'px';
+                dialog.style.margin = '0';
+                dialog.style.maxWidth = 'none';
+                dialog.style.maxHeight = 'none';
+
+                header.style.cursor = 'grabbing';
+                header.setPointerCapture(e.pointerId);
+
+                function onHeaderMove(ev) {
+                    const dx = ev.clientX - startX;
+                    const dy = ev.clientY - startY;
+                    let newL = startRect.left + dx;
+                    let newT = startRect.top + dy;
+
+                    if (newL < 0) newL = 0;
+                    if (newT < 0) newT = 0;
+                    if (newL + 80 > window.innerWidth) newL = window.innerWidth - 80;
+                    if (newT + 40 > window.innerHeight) newT = window.innerHeight - 40;
+
+                    dialog.style.left = newL + 'px';
+                    dialog.style.top = newT + 'px';
+                }
+
+                function onHeaderUp(ev) {
+                    header.removeEventListener('pointermove', onHeaderMove);
+                    header.removeEventListener('pointerup', onHeaderUp);
+                    header.removeEventListener('pointercancel', onHeaderUp);
+                    header.style.cursor = 'grab';
+                    try {
+                        header.releasePointerCapture(ev.pointerId);
+                    } catch (_) {}
+                }
+
+                header.addEventListener('pointermove', onHeaderMove);
+                header.addEventListener('pointerup', onHeaderUp);
+                header.addEventListener('pointercancel', onHeaderUp);
+            });
+        }
+    }
 
     /**
      * Ouvre la modale principale du Cockpit & Parapheur DT
