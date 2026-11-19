@@ -457,6 +457,66 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 		dossiers = append(dossiers, d)
 	}
 
+	// Enrichissement Smart Planning Summary pour chaque dossier
+	if len(dossiers) > 0 {
+		dossierIDs := make([]uuid.UUID, len(dossiers))
+		for i := range dossiers {
+			dossierIDs[i] = dossiers[i].ID
+		}
+
+		itemQuery := `
+			SELECT id, dossier_id, module_number, COALESCE(sub_module, ''), item_code,
+			       title_fr, COALESCE(title_ar, ''), COALESCE(description_fr, ''),
+			       requirement_level, is_mandatory, ged_document_id, status,
+			       COALESCE(workflow_status, 'draft_pending'), COALESCE(current_revision, 'v0.1')
+			FROM dossier_checklist_items
+			WHERE dossier_id = ANY($1)
+		`
+		itemRows, err := r.pool.Query(ctx, itemQuery, dossierIDs)
+		if err == nil {
+			defer itemRows.Close()
+			itemsByDossier := make(map[uuid.UUID][]domain.ChecklistItem)
+			for itemRows.Next() {
+				var it domain.ChecklistItem
+				var reqStr, stStr, wfStr string
+				if err := itemRows.Scan(
+					&it.ID, &it.DossierID, &it.ModuleNumber, &it.SubModule, &it.ItemCode,
+					&it.TitleFR, &it.TitleAR, &it.DescriptionFR,
+					&reqStr, &it.IsMandatory, &it.GEDDocumentID, &stStr,
+					&wfStr, &it.CurrentRevision,
+				); err == nil {
+					it.RequirementLevel = domain.RequirementLevel(reqStr)
+					it.Status = domain.ChecklistItemStatus(stStr)
+					it.WorkflowStatus = domain.WorkflowStatus(wfStr)
+					itemsByDossier[it.DossierID] = append(itemsByDossier[it.DossierID], it)
+				}
+			}
+
+			now := time.Now().UTC()
+			for i := range dossiers {
+				d := &dossiers[i]
+				items := itemsByDossier[d.ID]
+				analysis := domain.EvaluateSmartPlanning(d, items, now)
+				if analysis != nil {
+					var activeMilestoneCode, activeMilestoneName string
+					if analysis.ActiveCriticalMilestone != nil {
+						activeMilestoneCode = string(analysis.ActiveCriticalMilestone.Code)
+						activeMilestoneName = analysis.ActiveCriticalMilestone.NameFR
+					}
+					d.SmartPlanningSummary = &domain.SmartPlanningSummary{
+						OverallHealth:               analysis.OverallHealth,
+						OverallHealthLabel:          analysis.OverallHealthLabel,
+						DaysToTargetDeposit:         analysis.DaysToTargetDeposit,
+						IsTargetDateSufficient:      analysis.IsTargetDateSufficient,
+						ActiveCriticalMilestoneCode: activeMilestoneCode,
+						ActiveCriticalMilestoneName: activeMilestoneName,
+						CriticalWarningsCount:       len(analysis.CriticalWarnings),
+					}
+				}
+			}
+		}
+	}
+
 	return dossiers, nil
 }
 
