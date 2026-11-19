@@ -36,7 +36,8 @@ gantt
     section Phase 2 : Complétude & Variations
     Atelier Élaboration, Smart Planning & Workflow BPF (2.1):done, p2_1, after p1_8, 4d
     Moteur Gating DAG & Dépendances CTD (2.1b)       :done, p2_1b, after p2_1, 2d
-    Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1b, 4d
+    Smart Planning ANPP & Rétroplanning Inversé (2.1c):done, p2_1c, after p2_1b, 2d
+    Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1c, 4d
     Redevances, Devises & Settings du Tenant (2.3)   :active, p2_3, after p2_2, 3d
     Moteur Variations ANPP & Impact Tree (2.4)       :p2_4, after p2_3, 4d
     Espace Consultants & Extranet Fournisseur API (2.5):p2_5, after p2_4, 2d
@@ -273,12 +274,22 @@ gantt
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
   - Interface utilisateur intégrée : bandeau de progression DAG 5 phases, badges dynamiques `🔒 Verrou GxP` dans la table de checklist, cartouche d'alerte dans l'Atelier BPF et modale explicative complète avec références juridiques ANPP.
   - Qualification complète : 100% de tests unitaires et d'intégration validés (`gating_test.go`, `workflow_gating_test.go`) et validation visuelle par robot navigateur (`docs/recette_gating_jalon_2_1b.md`).
-- [x] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
-  - Calcul automatique du chemin critique à rebours à partir d'une date butoir ou de l'échéance légale de renouvellement quinquennal à **J-180** : planification dynamique des stabilités M6 (J-240), de la rédaction, de la revue qualité Checker (J-150), de la réservation du créneau RDV E-TASJIL (J-60), du visa légal DT et de la liquidation des bordereaux BV1/BV2 (J-15).
-  - Alertes graduées (Jaune / Orange / Rouge) dans le cockpit DT en cas de dérive calendaire sur un jalon critique amont.
-  - Synchronisation automatisée en 1 clic des dates d'échéances calculées vers les tâches de la checklist CTD (`due_date` dans `dossier_checklist_items`).
-  - Modale interactive du chronogramme inversé avec textes de loi algériens (Guide CTD ANPP, Décret 20-325, Décret 21-82) et modale de configuration des dates cibles.
-  - Qualification complète : 100% tests unitaires (`smart_planning_test.go`), test d'intégration API (`smart_planning_api_test.go`) et recette navigateur robotisée (`recette_smart_planning_jalon_2_1c.md`).
+- [x] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) — [Jalon 2.1c Validé] :**
+  - **Chemin critique inversé à 6 jalons incompressibles :** Calcul dynamique à rebours depuis la date butoir de dépôt ou l'échéance légale de renouvellement quinquennal à **J-180** (Décret exécutif 20-325 Art. 12) : Stabilités M6 Zone IVb (J-240), Revue Checker AQ & QOS 2.3 (J-150), Réservation créneau RDV E-TASJIL (J-60), Notice bilingue FR/AR & bordereaux BV1/BV2 (J-30), Visa légal 2FA du Pharmacien DT & scellement E-TASJIL (J-15), Dépôt légal officiel ANPP (J-0).
+  - **Calcul fin en Jours Ouvrables Réels (Semaine Administrative et Industrielle Algérienne) :**
+    - Moteur algorithmique `AddWorkingDays` adapté au droit du travail et aux spécificités administratives algériennes (Décret exécutif n° 09-244).
+    - Base hebdomadaire configurable par dossier : **5 jours ouvrables par semaine** (Dimanche à Jeudi, exclusion du week-end Vendredi-Samedi conforme à l'administration ANPP/MIPH) ou **6 jours ouvrables par semaine** (Samedi à Jeudi avec astreinte qualité).
+    - **Héritage automatique au niveau Établissement :** Paramètre par défaut défini au niveau de l'organisation (`organizations.working_days_per_week`, migration SQL `016`), hérité automatiquement par tout nouveau dossier avec console de mise à jour dédiée (`/api/v1/admin/organization/settings`).
+  - **Intégration du Calendrier Officiel des Jours Fériés Algériens (Loi n° 63-278 modifiée) :**
+    - Table et index dédiés `algerian_holidays` (migration SQL `017`) recensant les fêtes nationales fixes (*1er Janvier, Yennayer 12 Janvier, 1er Mai, 5 Juillet fête de l'Indépendance, 1er Novembre fête de la Révolution*) et les fêtes religieuses chômées payées (*Aïd El-Fitr, Aïd El-Adha, 1er Moharram, Achoura, El Mawlid Ennabawi*).
+    - Déduction automatique des jours fériés dans l'estimation des délais incompressibles avec transparence du nombre de jours exclus.
+  - **Recommandation Réglementaire Prescriptive & Alignement en 1 Clic :**
+    - Formulation contextualisée de la recommandation officielle indiquant en clair la **date butoir minimale recommandée**, le volume de jours ouvrés requis (ex: 172 jours ouvrés pour stabilités Zone IVb) et les jours fériés déduits.
+    - Bouton d'action directe **`🎯 Aligner sur la Date Recommandée (JJ/MM/AAAA)`** dans le ruban de synthèse et dans le chronogramme pour recaler instantanément le calendrier critique.
+  - **Intégration dans l'Assistant de Pré-Dépôt et le Reporting Officiel (Audit-Ready) :**
+    - Contrôle normatif `PLAN_CRITICAL_PATH` (catégorie `CHEMIN_CRITIQUE`) dans l'Assistant de Validation Pré-Dépôt (`PreSubmissionValidationReport` / `submissions.js`).
+    - Insertion du bloc de suivi du chemin critique et de la base ouvrable dans la Fiche Navette Hebdomadaire BPF (`EI-AVT-01`).
+  - **Qualification & Recette Complète :** 100% de tests unitaires réussis (`smart_planning_test.go` incluant le test `TestAddWorkingDays_AlgerianHolidays`), tests d'intégration API (`smart_planning_api_test.go`), tests reporting (`templates_ei_test.go`) et recette navigateur robotisée documentée (`docs/recette_smart_planning_jalon_2_1c.md`).
 - [x] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
   - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
   - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).
