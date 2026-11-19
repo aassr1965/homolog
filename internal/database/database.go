@@ -75,6 +75,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/016_smart_planning_working_days.sql",
 		"migrations/017_algerian_holidays.sql",
 		"migrations/018_algerian_holidays_aid_3_days.sql",
+		"migrations/019_anpp_ich_master_templates.sql",
 	}
 
 	for _, file := range migrationFiles {
