@@ -449,6 +449,7 @@ func TestPharmacienAssistantAndDTDelegations(t *testing.T) {
 	router.Get("/api/v1/parapheur/delegation/active", handler.GetActiveDTDelegation)
 	router.Post("/api/v1/parapheur/delegations", handler.CreateDTDelegation)
 	router.Post("/api/v1/parapheur/delegations/{id}/revoke", handler.RevokeDTDelegation)
+	router.Get("/api/v1/parapheur/assistants", handler.GetAvailableAssistants)
 
 	// TEST 1 : Pharmacien Assistant SANS délégation active -> Rejet 403
 	t.Run("Assistant_Sans_Delegation_Refus", func(t *testing.T) {
@@ -496,6 +497,107 @@ func TestPharmacienAssistantAndDTDelegations(t *testing.T) {
 
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("Attendu 400 Bad Request pour mandat > 3 mois, reçu: %d", rr.Code)
+		}
+	})
+
+	// TEST 2b : Tentative d'auto-désignation du DT titulaire -> Rejet 400
+	t.Run("Creation_Delegation_Auto_Designation_Refus", func(t *testing.T) {
+		currentUser = &auth.SessionUser{
+			UserID:         pdtID,
+			OrganizationID: testOrgID,
+			Email:          "pdt.interim@test.dz",
+			Role:           "directeur_technique",
+		}
+
+		start := time.Now()
+		end := start.Add(30 * 24 * time.Hour)
+
+		body, _ := json.Marshal(domain.CreateDTDelegationRequest{
+			DelegateID:          pdtID, // Auto-désignation
+			MIPHNotificationRef: "NOTIF-MIPH-INT-2026/001",
+			Reason:              "Auto-délégation impossible",
+			StartDate:           start,
+			EndDate:             end,
+		})
+
+		req := httptest.NewRequest("POST", "/api/v1/parapheur/delegations", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("Attendu 400 Bad Request pour auto-désignation, reçu: %d", rr.Code)
+		}
+	})
+
+	// TEST 2c : Tentative de désignation d'un rôle NON Pharmacien Assistant -> Rejet 400
+	t.Run("Creation_Delegation_Non_Assistant_Refus", func(t *testing.T) {
+		currentUser = &auth.SessionUser{
+			UserID:         pdtID,
+			OrganizationID: testOrgID,
+			Email:          "pdt.interim@test.dz",
+			Role:           "directeur_technique",
+		}
+
+		start := time.Now()
+		end := start.Add(30 * 24 * time.Hour)
+
+		// Tentative avec le contributeur qualité BPF (checkerID)
+		body, _ := json.Marshal(domain.CreateDTDelegationRequest{
+			DelegateID:          checkerID,
+			MIPHNotificationRef: "NOTIF-MIPH-INT-2026/002",
+			Reason:              "Délégation invalide",
+			StartDate:           start,
+			EndDate:             end,
+		})
+
+		req := httptest.NewRequest("POST", "/api/v1/parapheur/delegations", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("Attendu 400 Bad Request pour délégataire non-assistant, reçu: %d", rr.Code)
+		}
+	})
+
+	// TEST 2d : Endpoint Assistants éligibles -> Filtrage strict rôle Pharmacien Assistant & exclusion du DT
+	t.Run("GetAvailableAssistants_Uniquement_Pharmacien_Assistant", func(t *testing.T) {
+		currentUser = &auth.SessionUser{
+			UserID:         pdtID,
+			OrganizationID: testOrgID,
+			Email:          "pdt.interim@test.dz",
+			Role:           "directeur_technique",
+		}
+
+		req := httptest.NewRequest("GET", "/api/v1/parapheur/assistants", nil)
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("Attendu 200 OK pour liste assistants, reçu: %d", rr.Code)
+		}
+
+		type AssistantItem struct {
+			ID        uuid.UUID `json:"id"`
+			Email     string    `json:"email"`
+			FirstName string    `json:"first_name"`
+			LastName  string    `json:"last_name"`
+			Role      string    `json:"role"`
+		}
+		var list []AssistantItem
+		if err := json.NewDecoder(rr.Body).Decode(&list); err != nil {
+			t.Fatalf("Erreur décodage assistants: %v", err)
+		}
+
+		if len(list) != 1 {
+			t.Fatalf("Attendu exactement 1 assistant (Lynda Amrani), reçu: %d", len(list))
+		}
+		if list[0].ID != assistantID {
+			t.Errorf("Attendu assistantID %s, reçu: %s", assistantID, list[0].ID)
+		}
+		if list[0].Role != "pharmacien_assistant" {
+			t.Errorf("Attendu rôle pharmacien_assistant, reçu: %s", list[0].Role)
 		}
 	})
 

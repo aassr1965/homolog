@@ -1250,13 +1250,18 @@ func (r *WorkflowRepository) CreateDTDelegation(ctx context.Context, orgID, dele
 		return nil, fmt.Errorf("la date de fin doit être postérieure à la date de début")
 	}
 
+	// Garde-fou réglementaire : Le DT titulaire ne peut pas se désigner lui-même comme délégataire intérimaire
+	if delegatorID == delegateID {
+		return nil, fmt.Errorf("le Directeur Technique titulaire ne peut pas se désigner lui-même comme délégataire intérimaire")
+	}
+
 	// Garde-fou réglementaire Décret 21-82 Art. 24 : Durée maximale d'un intérim = 3 mois (92 jours)
 	maxDuration := 92 * 24 * time.Hour
 	if endDate.Sub(startDate) > maxDuration {
 		return nil, fmt.Errorf("dépassement de la durée légale (Décret 21-82 Art. 24) : Un mandat d'intérim DT ne peut excéder trois (3) mois")
 	}
 
-	// Vérifier que le délégataire appartient bien à la même organisation
+	// Vérifier que le délégataire appartient bien à la même organisation et possède obligatoirement le rôle de Pharmacien Assistant
 	var delegateRole string
 	err := r.pool.QueryRow(ctx, "SELECT role FROM users WHERE id = $1 AND organization_id = $2", delegateID, orgID).Scan(&delegateRole)
 	if err != nil {
@@ -1264,6 +1269,9 @@ func (r *WorkflowRepository) CreateDTDelegation(ctx context.Context, orgID, dele
 			return nil, fmt.Errorf("le pharmacien assistant désigné n'appartient pas à votre établissement")
 		}
 		return nil, fmt.Errorf("erreur vérification délégataire : %w", err)
+	}
+	if delegateRole != string(domain.RolePharmacienAssistant) {
+		return nil, fmt.Errorf("seul un Pharmacien Assistant DT qualifié (Décret 21-82 Art. 24) peut faire l'objet d'un mandat de suppléance")
 	}
 
 	query := `
