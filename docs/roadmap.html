@@ -952,6 +952,7 @@
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Matrice d'Attribution Multi-Départements (Section 7.4.1 CDC) :</strong> Affaires Réglementaires (1.A/1.H), R&amp;D / CQ (3.2.S/P), Production Industrielle (3.2.P.3), Assurance Qualité (Relecture Checker), Partenaires Tiers (ASMF/DMF, CROs).</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Moteur de Workflow Rédactionnel à 5 États (Maker-Checker-Approver BPF) :</strong> `À Rédiger` ➔ `En Cours` ➔ `En Revue Qualité/Checker` ➔ `Prêt pour Visa DT` ➔ `Approuvé &amp; Scellé`, avec verrouillage Check-out / Check-in (baux 30 min, `SELECT ... FOR UPDATE`) et gestion des versions mineures/majeures (`v0.1` à `v1.0`).</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Gating Chronologique, Chemin Critique &amp; DAG 5 Phases (Jalon 2.1b) :</strong> Modélisation du graphe DAG des dépendances en 5 phases successives avec verrous bloquants GxP (HTTP 422 `GATING_BLOCKED`) prévenant les erreurs de rédaction prématurée (Stabilités Zone IVb 3.2.P.8 ➔ Notice 1.P.2 &amp; RCP 1.P.1 ; Module 3 Qualité ➔ QOS 2.3 ; Validation Procédé ➔ Stabilités).</li>
+            <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP &amp; Chemin Critique — Jalon 2.1c) :</strong> Calcul automatique à rebours des 6 jalons incompressibles depuis la date butoir ou l'échéance légale de renouvellement à J-180 (Décret 20-325). Calcul fin en jours ouvrables réels (base 5j Dimanche–Jeudi ANPP ou 6j Samedi–Jeudi, Décret 09-244) avec héritage global de l'établissement. Exclusion automatique du calendrier des jours fériés légaux et chômés algériens (Loi 63-278 modifiée par la Loi 23-07 portant à 3 jours chômés payés l'Aïd El-Fitr et l'Aïd El-Adha). Recommandation prescriptive contextualisée avec bouton <code>🎯 Aligner sur la Date Recommandée</code> en 1 clic, synchronisation des échéances CTD, contrôle <code>PLAN_CRITICAL_PATH</code> dans l'Assistant de Pré-Dépôt et cartouche dans la Fiche Navette Hebdomadaire BPF (<code>EI-AVT-01</code>).</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Verrou de Parité Linguistique Synchrone FR ↔ AR (Règle bloquante GxP) :</strong> Blocage technique interdisant la soumission et le visa DT de la notice patient arabe (1.P.2.2) si la version française (1.P.2.1) n'est pas préalablement validée et scellée (Décret exécutif n° 20-325 Art. 12).</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP &amp; ICH :</strong> Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications produit fini (3.2.P.5), Rapports de stabilité Zone IVb (3.2.P.8), QOS Module 2.3, Dossier technique DM.</li>
             <li class="milestone-item"><span class="check-icon checked">✓</span> <strong>Générateur Automatisé de Formulaires &amp; Lettres d'Engagement en 1 Clic :</strong> Production instantanée en PDF/A de la lettre 1.P.8 (validation 3 premiers lots), 1.P.9 (suivi stabilité Zone IVb), 1.H.10 (attestation DT) et attestation de non-modification des autres sections.</li>
@@ -1180,6 +1181,19 @@
             <li class="milestone-item"><span class="check-icon unchecked">○</span> Connecteur d'interopérabilité API (`internal/anpp`) dès publication des spécifications de télétransmission par l'ANPP.</li>
             <li class="milestone-item"><span class="check-icon unchecked">○</span> Télétransmission automatisée sécurisée des paquets de soumission CTD scellés avec accusé de réception cryptographique.</li>
             <li class="milestone-item"><span class="check-icon unchecked">○</span> Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Homolog.</li>
+        </ul>
+    </div>
+
+    <div class="milestone-card planned">
+        <div class="milestone-header">
+            <span class="milestone-title">Jalon 3.5 : Packaging Déploiement On-Premise « Clé en Main » (Installeur Windows Server / Setup .exe Style Office)</span>
+            <span class="badge badge-planned">On-Premise</span>
+        </div>
+        <ul class="milestone-items">
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Installeur graphique monolithique autonome (`Setup_SanadPharma_Server.exe`) sous Inno Setup / NSIS avec assistant pas-à-pas (Wizard).</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Déploiement et enregistrement automatique en tant que Service Windows natif (24h/24, 7j/7) avec reprise sur panne.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Configuration automatique du Pare-feu Windows Server (ports 8090 / 443) et certificats TLS locaux d'entreprise.</li>
+            <li class="milestone-item"><span class="check-icon unchecked">○</span> Assistant de raccordement PostgreSQL et support du mode silencieux (`/SILENT`) pour télédistribution DSI.</li>
         </ul>
     </div>
 

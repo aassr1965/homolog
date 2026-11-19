@@ -21,7 +21,7 @@ import (
 func getTestDB(t *testing.T) *database.DB {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://homolog:homolog_secret_2026@localhost:5434/homolog?sslmode=disable"
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)

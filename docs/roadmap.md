@@ -36,7 +36,8 @@ gantt
     section Phase 2 : Complétude & Variations
     Atelier Élaboration, Smart Planning & Workflow BPF (2.1):done, p2_1, after p1_8, 4d
     Moteur Gating DAG & Dépendances CTD (2.1b)       :done, p2_1b, after p2_1, 2d
-    Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1b, 4d
+    Smart Planning ANPP & Rétroplanning Inversé (2.1c):done, p2_1c, after p2_1b, 2d
+    Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1c, 4d
     Redevances, Devises & Settings du Tenant (2.3)   :active, p2_3, after p2_2, 3d
     Moteur Variations ANPP & Impact Tree (2.4)       :p2_4, after p2_3, 4d
     Espace Consultants & Extranet Fournisseur API (2.5):p2_5, after p2_4, 2d
@@ -273,9 +274,22 @@ gantt
   - Mécanisme de propagation descendante des métadonnées critiques : injection automatique de la formule validée, de la durée de conservation et des conditions de stockage dans les modèles maîtres de Notice bilingue, RCP, étuis et formulaire 1.A.3.
   - Interface utilisateur intégrée : bandeau de progression DAG 5 phases, badges dynamiques `🔒 Verrou GxP` dans la table de checklist, cartouche d'alerte dans l'Atelier BPF et modale explicative complète avec références juridiques ANPP.
   - Qualification complète : 100% de tests unitaires et d'intégration validés (`gating_test.go`, `workflow_gating_test.go`) et validation visuelle par robot navigateur (`docs/recette_gating_jalon_2_1b.md`).
-- [x] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
-  - Calcul automatique du chemin critique à rebours à partir d'une date butoir ou de l'échéance légale de renouvellement quinquennal à **J-180** : planification dynamique des stabilités M6 (J-240), de la rédaction, de la revue qualité Checker (J-150), de la réservation du créneau RDV E-TASJIL (J-60), du visa légal DT et de la liquidation des bordereaux BV1/BV2 (J-15).
-  - Alertes graduées (Jaune / Orange / Rouge) dans le cockpit DT en cas de dérive calendaire sur un jalon critique amont.
+- [x] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) — [Jalon 2.1c Validé] :**
+  - **Chemin critique inversé à 6 jalons incompressibles :** Calcul dynamique à rebours depuis la date butoir de dépôt ou l'échéance légale de renouvellement quinquennal à **J-180** (Décret exécutif 20-325 Art. 12) : Stabilités M6 Zone IVb (J-240), Revue Checker AQ & QOS 2.3 (J-150), Réservation créneau RDV E-TASJIL (J-60), Notice bilingue FR/AR & bordereaux BV1/BV2 (J-30), Visa légal 2FA du Pharmacien DT & scellement E-TASJIL (J-15), Dépôt légal officiel ANPP (J-0).
+  - **Calcul fin en Jours Ouvrables Réels (Semaine Administrative et Industrielle Algérienne) :**
+    - Moteur algorithmique `AddWorkingDays` adapté au droit du travail et aux spécificités administratives algériennes (Décret exécutif n° 09-244).
+    - Base hebdomadaire configurable par dossier : **5 jours ouvrables par semaine** (Dimanche à Jeudi, exclusion du week-end Vendredi-Samedi conforme à l'administration ANPP/MIPH) ou **6 jours ouvrables par semaine** (Samedi à Jeudi avec astreinte qualité).
+    - **Héritage automatique au niveau Établissement :** Paramètre par défaut défini au niveau de l'organisation (`organizations.working_days_per_week`, migration SQL `016`), hérité automatiquement par tout nouveau dossier avec console de mise à jour dédiée (`/api/v1/admin/organization/settings`).
+  - **Intégration du Calendrier Officiel des Jours Fériés Algériens (Loi n° 63-278 modifiée par la Loi n° 23-07 du 3 mai 2023) :**
+    - Tables et migrations SQL dédiées `algerian_holidays` (migrations `017` et `018`) recensant les fêtes nationales fixes (*1er Janvier, Yennayer 12 Janvier, 1er Mai, 5 Juillet fête de l'Indépendance, 1er Novembre fête de la Révolution*) et les fêtes religieuses chômées payées, incluant strictement l'extension à **trois (03) jours chômés payés pour l'Aïd El-Fitr et l'Aïd El-Adha** (Loi n° 23-07), ainsi que le 1er Moharram, Achoura et El Mawlid Ennabawi.
+    - Déduction automatique des jours fériés dans l'estimation des délais incompressibles avec transparence du nombre de jours exclus et modale interactive de consultation par millésime (2026, 2027, 2028).
+  - **Recommandation Réglementaire Prescriptive & Alignement en 1 Clic :**
+    - Formulation contextualisée de la recommandation officielle indiquant en clair la **date butoir minimale recommandée**, le volume de jours ouvrés requis (ex: 172 jours ouvrés pour stabilités Zone IVb) et les jours fériés déduits.
+    - Bouton d'action directe **`🎯 Aligner sur la Date Recommandée (JJ/MM/AAAA)`** dans le ruban de synthèse et dans le chronogramme pour recaler instantanément le calendrier critique.
+  - **Intégration dans l'Assistant de Pré-Dépôt et le Reporting Officiel (Audit-Ready) :**
+    - Contrôle normatif `PLAN_CRITICAL_PATH` (catégorie `CHEMIN_CRITIQUE`) dans l'Assistant de Validation Pré-Dépôt (`PreSubmissionValidationReport` / `submissions.js`).
+    - Insertion du bloc de suivi du chemin critique et de la base ouvrable dans la Fiche Navette Hebdomadaire BPF (`EI-AVT-01`).
+  - **Qualification & Recette Complète :** 100% de tests unitaires réussis (`smart_planning_test.go` incluant le test `TestAddWorkingDays_AlgerianHolidays`), tests d'intégration API (`smart_planning_api_test.go`), tests reporting (`templates_ei_test.go`) et recette navigateur robotisée documentée (`docs/recette_smart_planning_jalon_2_1c.md`).
 - [x] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
   - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
   - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).
@@ -532,6 +546,20 @@ gantt
 - [ ] Connecteur d'interopérabilité API (`internal/anpp`) dès publication des spécifications techniques de télé-procédure ou webhook par l'ANPP.
 - [ ] Télétransmission automatisée sécurisée des paquets de soumission CTD scellés (Submission Packages) avec accusé de réception cryptographique.
 - [ ] Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Sanad Pharma.
+
+### Jalon 3.5 : Packaging Déploiement On-Premise « Clé en Main » (Installeur Windows Server / Setup .exe Style Office)
+- [ ] **Installeur Graphique Monolithique Autonome (`Setup_SanadPharma_Server.exe`) :**
+  - Package tout-en-un (Inno Setup / NSIS) compressant le binaire Go, l'interface Web statique, les polices arabes/françaises et les scripts d'amorçage.
+  - Assistant d'installation graphique pas-à-pas (Wizard) ergonomique inspiré de la suite Microsoft Office (acceptation des licences GAMP 5 / BPF, choix du répertoire cible `C:\Program Files\Sanad Pharma`).
+- [ ] **Déploiement Automatisé en tant que Service Windows (24h/24, 7j/7) :**
+  - Enregistrement automatique comme Service Windows natif d'arrière-plan (`sc.exe` / API SCM) avec redémarrage automatique en cas de panne ou de reboot du serveur hôte.
+  - Exécution permanente en arrière-plan sans session utilisateur ouverte requise (sous compte de service dédié ou `NT AUTHORITY\SYSTEM`).
+- [ ] **Configuration Réseau, Pare-feu & Certificats SSL Locaux :**
+  - Déclaration automatique des règles de flux dans le Pare-feu Windows Server (`netsh advfirewall` / PowerShell) pour ouvrir les ports 8090 / 443 sur le réseau local d'entreprise.
+  - Assistant de génération ou d'importation de certificats TLS d'entreprise pour accès HTTPS sécurisé sur le réseau local / VPN du laboratoire (`https://sanad.monlabo.dz`).
+- [ ] **Raccordement Base de Données & Mode Déploiement Silencieux DSI :**
+  - Assistant de raccordement guidé à l'instance PostgreSQL d'entreprise (ou initialisation locale automatisée).
+  - Support des paramètres d'installation silencieuse sans interface (`/SILENT`, `/VERYSILENT`) pour télédistribution par la DSI (GPO / SCCM / Intune).
 
 ---
 

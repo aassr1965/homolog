@@ -952,3 +952,98 @@ func (h *AdminHandler) UpdateUserPermissions(w http.ResponseWriter, r *http.Requ
 func (h *AdminHandler) DisallowDeleteUser(w http.ResponseWriter, r *http.Request) {
 	writeJSONError(w, http.StatusMethodNotAllowed, "Suppression physique interdite par la réglementation 21 CFR Part 11 et les BPF algériennes. Veuillez utiliser la désactivation / suspension de compte.")
 }
+
+// OrganizationSettingsResponse représente les paramètres globaux de l'organisation
+type OrganizationSettingsResponse struct {
+	ID                 uuid.UUID `json:"id"`
+	Slug               string    `json:"slug"`
+	LegalName          string    `json:"legal_name"`
+	MIPHLicenseNumber  string    `json:"miph_license_number"`
+	WorkingDaysPerWeek int       `json:"working_days_per_week"`
+}
+
+// UpdateOrganizationSettingsRequest payload de mise à jour des paramètres de l'organisation
+type UpdateOrganizationSettingsRequest struct {
+	WorkingDaysPerWeek int `json:"working_days_per_week"`
+}
+
+// GetOrganizationSettings retourne les paramètres généraux et réglementaires de l'organisation
+func (h *AdminHandler) GetOrganizationSettings(w http.ResponseWriter, r *http.Request) {
+	admin := GetSessionUser(r.Context())
+	if admin == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	query := `
+		SELECT id, slug, legal_name, miph_license_number, COALESCE(working_days_per_week, 5)
+		FROM organizations
+		WHERE id = $1
+	`
+	var resp OrganizationSettingsResponse
+	err := h.pool.QueryRow(r.Context(), query, admin.OrganizationID).Scan(
+		&resp.ID, &resp.Slug, &resp.LegalName, &resp.MIPHLicenseNumber, &resp.WorkingDaysPerWeek,
+	)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Échec chargement des paramètres de l'organisation")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// UpdateOrganizationSettings met à jour les paramètres de l'organisation (ex: base de calcul des jours ouvrables)
+func (h *AdminHandler) UpdateOrganizationSettings(w http.ResponseWriter, r *http.Request) {
+	admin := GetSessionUser(r.Context())
+	if admin == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	var req UpdateOrganizationSettingsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Payload JSON invalide")
+		return
+	}
+
+	if req.WorkingDaysPerWeek != 5 && req.WorkingDaysPerWeek != 6 {
+		req.WorkingDaysPerWeek = 5
+	}
+
+	query := `
+		UPDATE organizations
+		SET working_days_per_week = $2, updated_at = NOW()
+		WHERE id = $1
+	`
+	_, err := h.pool.Exec(r.Context(), query, admin.OrganizationID, req.WorkingDaysPerWeek)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Échec enregistrement des paramètres de l'organisation")
+		return
+	}
+
+	if h.auditService != nil {
+		_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: admin.OrganizationID,
+			UserID:         &admin.UserID,
+			UserEmail:      admin.Email,
+			UserRole:       admin.Role,
+			Action:         "ORGANIZATION_SETTINGS_UPDATED",
+			EntityType:     "ORGANIZATION",
+			EntityID:       admin.OrganizationID.String(),
+			IPAddress:      getClientIP(r),
+			UserAgent:      r.UserAgent(),
+			Details: map[string]any{
+				"working_days_per_week": req.WorkingDaysPerWeek,
+				"updated_by":            admin.Email,
+			},
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"status":                "ok",
+		"message":               "Paramètres de l'organisation mis à jour avec succès",
+		"working_days_per_week": req.WorkingDaysPerWeek,
+	})
+}

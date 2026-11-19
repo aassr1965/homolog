@@ -530,9 +530,13 @@ func (h *GEDHandler) DownloadVersion(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "Identifiant de version invalide")
 			return
 		}
-		v, err = h.repo.GetVersionByID(r.Context(), vID)
+		v, err = h.repo.GetVersionByID(r.Context(), user.OrganizationID, vID)
 		if err != nil {
 			writeJSONError(w, http.StatusNotFound, "Version non trouvée")
+			return
+		}
+		if v.DocumentID != docID {
+			writeJSONError(w, http.StatusNotFound, "Cette version n'appartient pas au document spécifié")
 			return
 		}
 	} else {
@@ -795,9 +799,13 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 		versionID = doc.LatestVersion.ID
 	}
 
-	v, err := h.repo.GetVersionByID(r.Context(), versionID)
+	v, err := h.repo.GetVersionByID(r.Context(), user.OrganizationID, versionID)
 	if err != nil {
 		writeJSONError(w, http.StatusNotFound, "Version introuvable")
+		return
+	}
+	if v.DocumentID != docID {
+		writeJSONError(w, http.StatusNotFound, "Cette version n'appartient pas au document spécifié")
 		return
 	}
 

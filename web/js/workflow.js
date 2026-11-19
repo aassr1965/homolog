@@ -643,68 +643,151 @@ async function openItemReviewsModal(dossierId, itemId, itemCode) {
 // ----------------------------------------------------------------------------
 // Templates Maîtres ANPP (Catalogue & Consultation)
 // ----------------------------------------------------------------------------
+// Master Document Templates BPF & ICH (Section 7.4.4 du CDC)
+// ----------------------------------------------------------------------------
 let cachedMasterTemplates = [];
+let currentTplCategory = 'ALL';
+
+function filterMasterTemplates(cat) {
+    currentTplCategory = cat;
+    document.querySelectorAll('.btn-tpl-cat').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(`btn-tpl-cat-${cat}`);
+    if (btn) btn.classList.add('active');
+    renderMasterTemplatesCards();
+}
+
+function renderMasterTemplatesCards() {
+    const listContainer = document.getElementById('master-templates-cards') || document.getElementById('master-templates-list');
+    if (!listContainer) return;
+
+    let filtered = cachedMasterTemplates;
+    if (currentTplCategory && currentTplCategory !== 'ALL') {
+        filtered = cachedMasterTemplates.filter(t => t.category === currentTplCategory);
+    }
+
+    if (filtered.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px;">Aucun modèle maître dans cette catégorie.</div>`;
+        return;
+    }
+
+    listContainer.innerHTML = filtered.map((t) => {
+        const sectionCode = t.sub_module || t.section_code || '';
+        const title = t.title_fr || t.template_name || '';
+        const refCode = t.code || t.template_code || '';
+        let dept = t.target_department;
+        if (!dept) {
+            if (t.category === 'qualite_cmc' || sectionCode === '1.P.9' || sectionCode === '3.2.P.8' || sectionCode === '3.2.P.5') dept = 'QC';
+            else if (t.category === 'production' || sectionCode === '1.P.8' || sectionCode === '3.2.P.3.5') dept = 'PROD';
+            else if (sectionCode === '1.H.10' || sectionCode === '1.P.1' || sectionCode === '1.P.2') dept = 'RA';
+            else dept = 'QA';
+        }
+
+        return `
+        <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                <div>
+                    <span class="badge" style="background:var(--accent-blue); color:white; font-family:monospace; margin-right:6px;">${escapeHTML(sectionCode)}</span>
+                    <strong style="color:var(--text-main); font-size:13px;">${escapeHTML(title)}</strong>
+                    <span style="font-size:10px; color:var(--text-dim); margin-left:6px;">(Réf: ${escapeHTML(refCode)} | Guide CTD 2025)</span>
+                    ${t.title_ar ? `<div style="font-size:11.5px; color:var(--text-muted); direction:rtl; margin-top:3px; font-weight:600;">${escapeHTML(t.title_ar)}</div>` : ''}
+                </div>
+                <div>
+                    ${formatDepartmentBadge(dept)}
+                </div>
+            </div>
+            <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:8px;">
+                Trame institutionnelle BPF conforme aux exigences du Guide CTD ANPP Édition 2025 et référentiels internationaux ICH.
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:10.5px; color:var(--text-dim);">Standard opposable ANPP / ICH • Catégorie : <code>${escapeHTML(t.category)}</code></span>
+                <button class="btn-pill" style="font-size:11px; padding:3px 10px; background:var(--accent-emerald); color:white; border:none;" onclick="previewMasterTemplate('${t.id}')">
+                    👁️ Consulter la Trame BPF
+                </button>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
 
 async function openMasterTemplatesModal() {
     const modal = document.getElementById('modal-master-templates');
     if (!modal) return;
 
-    const listContainer = document.getElementById('master-templates-list');
-    listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-dim);">Chargement du catalogue des templates maîtres...</div>`;
+    currentTplCategory = 'ALL';
     openModal('modal-master-templates');
+
+    const cardsContainer = document.getElementById('master-templates-cards') || document.getElementById('master-templates-list');
+    if (cardsContainer) {
+        cardsContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-dim);">Chargement du catalogue des templates maîtres...</div>`;
+    }
 
     try {
         const resp = await fetch('/api/v1/master-templates');
         const data = await resp.json();
         if (!resp.ok) {
-            listContainer.innerHTML = `<div style="color:var(--accent-red); padding:10px;">${data.message || 'Erreur'}</div>`;
+            if (cardsContainer) cardsContainer.innerHTML = `<div style="color:var(--accent-red); padding:10px;">${data.message || 'Erreur'}</div>`;
             return;
         }
 
         cachedMasterTemplates = Array.isArray(data) ? data : (data.templates || []);
-        if (cachedMasterTemplates.length === 0) {
-            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Aucun template maître actif.</div>`;
-            return;
-        }
-
-        listContainer.innerHTML = cachedMasterTemplates.map((t, idx) => {
-            const sectionCode = t.sub_module || t.section_code || '';
-            const title = t.title_fr || t.template_name || '';
-            const refCode = t.code || t.template_code || '';
-            let dept = t.target_department;
-            if (!dept) {
-                if (t.category === 'qualite_cmc' || sectionCode === '1.P.9') dept = 'QC';
-                else if (t.category === 'production' || sectionCode === '1.P.8') dept = 'PROD';
-                else if (sectionCode === '1.H.10') dept = 'RA';
-                else dept = 'QA';
-            }
-
-            return `
-            <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:12px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
-                    <div>
-                        <span class="badge" style="background:var(--accent-blue); color:white; font-family:monospace; margin-right:6px;">${escapeHTML(sectionCode)}</span>
-                        <strong style="color:var(--text-main); font-size:13px;">${escapeHTML(title)}</strong>
-                        <span style="font-size:10px; color:var(--text-dim); margin-left:6px;">(Réf: ${escapeHTML(refCode)} | Guide CTD 2025)</span>
-                    </div>
-                    <div>
-                        ${formatDepartmentBadge(dept)}
-                    </div>
-                </div>
-                <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:8px;">
-                    Trame institutionnelle BPF conforme aux exigences du Guide CTD ANPP Édition 2025.
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:10.5px; color:var(--text-dim);">Standard opposable ANPP / ICH</span>
-                    <button class="btn-pill" style="font-size:11px; padding:3px 10px; background:var(--accent-emerald); color:white; border:none;" onclick="previewMasterTemplate('${t.id}')">
-                        👁️ Consulter la Trame BPF
-                    </button>
-                </div>
-            </div>
-            `;
-        }).join('');
+        renderMasterTemplatesCards();
     } catch (err) {
-        listContainer.innerHTML = `<div style="color:var(--accent-red); padding:10px;">${err.message || 'Erreur réseau'}</div>`;
+        if (cardsContainer) cardsContainer.innerHTML = `<div style="color:var(--accent-red); padding:10px;">${err.message || 'Erreur réseau'}</div>`;
+    }
+}
+
+let currentActiveTemplateRaw = '';
+
+function substituteDossierVariables(text) {
+    if (!text) return '';
+    let res = text;
+    const d = (typeof currentDossierDetail !== 'undefined') ? currentDossierDetail : null;
+    if (d) {
+        const med = d.medicine || {};
+        const dm = d.medical_device || {};
+        const prodName = med.brand_name_fr || dm.commercial_name_fr || 'Produit de Référence';
+        const inn = med.dci_fr || dm.generic_name_fr || 'Substance Active';
+        const dosage = med.dosage_fr || '';
+        const form = med.pharmaceutical_form_fr || 'Forme galénique standard';
+        const dCode = d.dossier_code || 'DOS-2026-CTD';
+        const today = new Date().toLocaleDateString('fr-FR');
+
+        res = res
+            .replace(/\{\{PRODUCT_NAME\}\}/g, prodName)
+            .replace(/\{\{INN\}\}/g, inn)
+            .replace(/\{\{DOSAGE\}\}/g, dosage)
+            .replace(/\{\{FORM\}\}/g, form)
+            .replace(/\{\{DOSSIER_CODE\}\}/g, dCode)
+            .replace(/\{\{ESTABLISHMENT_NAME\}\}/g, 'Laboratoire SANAD PHARMA Algérie')
+            .replace(/\{\{AGREEMENT_NUM\}\}/g, 'MIPH-DZ-2024-0089')
+            .replace(/\{\{SITE_NAME\}\}/g, 'Site Industriel SANAD Oued Smar')
+            .replace(/\{\{SITE_ADDRESS\}\}/g, 'Zone Industrielle Oued Smar, Alger')
+            .replace(/\{\{PDT_NAME\}\}/g, 'Dr. Yacine Benkhalid')
+            .replace(/\{\{REVISION_DATE\}\}/g, today)
+            .replace(/\{\{EVALUATION_DATE\}\}/g, today)
+            .replace(/\{\{ROUTE_OF_ADMINISTRATION\}\}/g, 'orale')
+            .replace(/\{\{SHELF_LIFE_MONTHS\}\}/g, '36')
+            .replace(/\{\{SHELF_LIFE_PROPOSED\}\}/g, '36')
+            .replace(/\{\{SHELF_LIFE_YEARS\}\}/g, '3')
+            .replace(/\{\{BATCH_1\}\}/g, 'LOT-2026-001')
+            .replace(/\{\{BATCH_2\}\}/g, 'LOT-2026-002')
+            .replace(/\{\{BATCH_3\}\}/g, 'LOT-2026-003')
+            .replace(/\{\{BATCH_SIZE\}\}/g, '100 000')
+            .replace(/\{\{INDICATIONS\}\}/g, 'Infections sensibles aux principes actifs selon l\'AMM')
+            .replace(/\{\{PHARMACO_CLASS\}\}/g, 'Médicament conforme aux normes ANPP')
+            .replace(/\{\{BLISTER_TYPE\}\}/g, 'Alu/PVDC haute barrière');
+    }
+    return res;
+}
+
+function toggleTemplateSubstitution() {
+    const chk = document.getElementById('chk-auto-substitute');
+    const textarea = document.getElementById('tpl-detail-content');
+    if (!textarea) return;
+    if (chk && chk.checked) {
+        textarea.value = substituteDossierVariables(currentActiveTemplateRaw);
+    } else {
+        textarea.value = currentActiveTemplateRaw;
     }
 }
 
@@ -718,9 +801,17 @@ function previewMasterTemplate(tplId) {
     const sectionCode = t.sub_module || t.section_code || '';
     const title = t.title_fr || t.template_name || '';
 
+    currentActiveTemplateRaw = t.content_template || '';
+
     document.getElementById('tpl-detail-code').textContent = sectionCode;
     document.getElementById('tpl-detail-name').textContent = title;
-    document.getElementById('tpl-detail-content').value = t.content_template || '';
+
+    const chk = document.getElementById('chk-auto-substitute');
+    if (chk && chk.checked) {
+        document.getElementById('tpl-detail-content').value = substituteDossierVariables(currentActiveTemplateRaw);
+    } else {
+        document.getElementById('tpl-detail-content').value = currentActiveTemplateRaw;
+    }
 
     openModal('modal-master-template-detail');
 }
