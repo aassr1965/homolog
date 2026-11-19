@@ -1192,3 +1192,46 @@ func (h *WorkflowHandler) RevokeDTDelegation(w http.ResponseWriter, r *http.Requ
 		"message": "Mandat d'intérim révoqué avec succès",
 	})
 }
+
+// GetAvailableAssistants liste les utilisateurs éligibles à un mandat d'intérim technique
+func (h *WorkflowHandler) GetAvailableAssistants(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	query := `
+		SELECT id, first_name, last_name, email, role
+		FROM users
+		WHERE organization_id = $1 
+		  AND is_active = TRUE
+		  AND (role = 'pharmacien_assistant' OR role = 'directeur_technique' OR email LIKE '%assistant%')
+		ORDER BY first_name, last_name
+	`
+	rows, err := h.pool.Query(r.Context(), query, user.OrganizationID)
+	if err != nil {
+		log.Printf("[ERROR] GetAvailableAssistants: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Erreur chargement assistants")
+		return
+	}
+	defer rows.Close()
+
+	type AssistantItem struct {
+		ID        uuid.UUID `json:"id"`
+		FirstName string    `json:"first_name"`
+		LastName  string    `json:"last_name"`
+		Email     string    `json:"email"`
+		Role      string    `json:"role"`
+	}
+
+	assistants := make([]AssistantItem, 0)
+	for rows.Next() {
+		var a AssistantItem
+		if err := rows.Scan(&a.ID, &a.FirstName, &a.LastName, &a.Email, &a.Role); err == nil {
+			assistants = append(assistants, a)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, assistants)
+}
