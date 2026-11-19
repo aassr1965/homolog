@@ -1193,7 +1193,7 @@ func (h *WorkflowHandler) RevokeDTDelegation(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-// GetAvailableAssistants liste les utilisateurs éligibles à un mandat d'intérim technique
+// GetAvailableAssistants liste STRICTEMENT les pharmaciens assistants éligibles pour un mandat de suppléance DT
 func (h *WorkflowHandler) GetAvailableAssistants(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
 	if user == nil {
@@ -1206,10 +1206,11 @@ func (h *WorkflowHandler) GetAvailableAssistants(w http.ResponseWriter, r *http.
 		FROM users
 		WHERE organization_id = $1 
 		  AND is_active = TRUE
-		  AND (role = 'pharmacien_assistant' OR role = 'directeur_technique' OR email LIKE '%assistant%')
+		  AND role = 'pharmacien_assistant'
+		  AND id != $2
 		ORDER BY first_name, last_name
 	`
-	rows, err := h.pool.Query(r.Context(), query, user.OrganizationID)
+	rows, err := h.pool.Query(r.Context(), query, user.OrganizationID, user.UserID)
 	if err != nil {
 		log.Printf("[ERROR] GetAvailableAssistants: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Erreur chargement assistants")
