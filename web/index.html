@@ -3127,6 +3127,76 @@
         </div>
     </div>
 
+    <!-- Modal Chronogramme Inversé Smart Planning ANPP (CDC 7.4.3.6) -->
+    <div class="modal-overlay" id="modal-smart-planning-timeline" onclick="if(event.target === this) closeModal('modal-smart-planning-timeline')">
+        <div class="modal modal-xl" style="width:780px; max-width:min(780px, calc(100vw - 24px)); max-height:88vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-blue); background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(126,34,206,0.08));">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:22px;">⏱️</span>
+                    <div>
+                        <span style="color:var(--text-main); font-weight:800; font-size:14px;">Smart Planning ANPP — Chronogramme Inversé &amp; Chemin Critique</span>
+                        <div style="font-size:11px; color:var(--text-dim);" id="sp-timeline-sub">Calcul automatique à rebours des 6 jalons incompressibles</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-smart-planning-timeline')">✕</button>
+            </div>
+            <div class="modal-body" id="sp-timeline-content" style="padding:16px; overflow-y:auto; flex:1;">
+                <!-- Rempli dynamiquement -->
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" class="btn-pill" style="background:rgba(37,99,235,0.12); color:var(--accent-blue); border-color:rgba(37,99,235,0.4);" onclick="syncSmartPlanningDueDates()">
+                    ⚡ Synchroniser Échéances CTD
+                </button>
+                <button type="button" class="btn-pill" onclick="closeModal('modal-smart-planning-timeline')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Configuration des Dates Cibles Smart Planning -->
+    <div class="modal-overlay" id="modal-smart-planning-config" onclick="if(event.target === this) closeModal('modal-smart-planning-config')">
+        <div class="modal modal-md" style="width:480px; max-width:min(480px, calc(100vw - 24px)); display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-emerald); background: rgba(16,185,129,0.06);">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">⚙️</span>
+                    <div>
+                        <span style="color:var(--text-main); font-weight:800; font-size:13.5px;">Dates Cibles &amp; Rétroplanning ANPP</span>
+                        <div style="font-size:11px; color:var(--text-dim);">Définir la date butoir de dépôt ou l'échéance de renouvellement</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-smart-planning-config')">✕</button>
+            </div>
+            <form onsubmit="saveSmartPlanningConfig(event)">
+                <div class="modal-body" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+                    <div>
+                        <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+                            🎯 Date Butoir de Dépôt Cible (Target Deposit Date) :
+                        </label>
+                        <input type="date" id="sp-input-target-date" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-main); font-size:12px;">
+                        <span style="font-size:10px; color:var(--text-dim); display:block; margin-top:3px;">
+                            Pour une procédure initiale (NI, NF, DM) : date souhaitée du dépôt légal.
+                        </span>
+                    </div>
+
+                    <div style="border-top:1px dashed var(--border-color); padding-top:10px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+                            ⚖️ Date d'Expiration de la Décision d'Enregistrement / AMM :
+                        </label>
+                        <input type="date" id="sp-input-validity-date" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-main); font-size:12px;">
+                        <div style="font-size:10px; color:var(--accent-blue); margin-top:3px; line-height:1.35;">
+                            <strong>Règle Décret 20-325 Art. 12 :</strong> Pour les renouvellements (RI/RF), la date de dépôt légal est automatiquement calculée à <strong>J-180</strong> avant expiration.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-smart-planning-config')">Annuler</button>
+                    <button type="submit" class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-weight:700;">
+                        💾 Enregistrer &amp; Recalculer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Catalogue des Templates Maîtres ANPP -->
     <div class="modal-overlay" id="modal-master-templates" onclick="if(event.target === this) closeModal('modal-master-templates')">
         <div class="modal modal-xl" style="width:840px; max-width:min(840px, calc(100vw - 24px)); max-height:85vh; display:flex; flex-direction:column;">

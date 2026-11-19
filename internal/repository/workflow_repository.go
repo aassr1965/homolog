@@ -746,3 +746,90 @@ func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, dossie
 
 	return summary, nil
 }
+
+// GetDossierSmartPlanning calcule le rétroplanning dynamique inversé et l'analyse de santé du chemin critique
+func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossierID uuid.UUID) (*domain.SmartPlanningAnalysis, error) {
+	dossierQuery := `
+		SELECT id, organization_id, dossier_code, procedure_code, internal_reference,
+		       anpp_deposit_date, anpp_validity_end_date, target_deposit_date,
+		       tracking_number, deposit_receipt_ref, status, is_locked_for_deposit,
+		       pdt_signed_at, created_at
+		FROM dossiers
+		WHERE id = $1
+	`
+	var d domain.Dossier
+	var procCodeStr, statusStr string
+
+	err := r.pool.QueryRow(ctx, dossierQuery, dossierID).Scan(
+		&d.ID, &d.OrganizationID, &d.DossierCode, &procCodeStr, &d.InternalReference,
+		&d.ANPPDepositDate, &d.ANPPValidityEndDate, &d.TargetDepositDate,
+		&d.TrackingNumber, &d.DepositReceiptRef, &statusStr, &d.IsLockedForDeposit,
+		&d.PDTSignedAt, &d.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("échec lecture dossier pour smart planning : %w", err)
+	}
+	d.ProcedureCode = domain.ProcedureCode(procCodeStr)
+	d.Status = domain.DossierStatus(statusStr)
+
+	items, err := r.GetDossierItems(ctx, dossierID)
+	if err != nil {
+		return nil, fmt.Errorf("échec lecture items pour smart planning : %w", err)
+	}
+
+	analysis := domain.EvaluateSmartPlanning(&d, items, time.Now())
+	return analysis, nil
+}
+
+// UpdateDossierTargetDates permet de fixer ou ajuster la date cible de dépôt ou l'échéance de validité AMM
+func (r *WorkflowRepository) UpdateDossierTargetDates(ctx context.Context, dossierID uuid.UUID, targetDate, validityEndDate *time.Time) error {
+	query := `
+		UPDATE dossiers
+		SET target_deposit_date = $2,
+		    anpp_validity_end_date = COALESCE($3, anpp_validity_end_date),
+		    updated_at = NOW()
+		WHERE id = $1
+	`
+	tag, err := r.pool.Exec(ctx, query, dossierID, targetDate, validityEndDate)
+	if err != nil {
+		return fmt.Errorf("échec mise à jour dates cibles dossier : %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// SyncSmartPlanningDueDates propage les dates du chemin critique inversé dans les due_date des items du dossier
+func (r *WorkflowRepository) SyncSmartPlanningDueDates(ctx context.Context, dossierID uuid.UUID, dueDates map[string]time.Time) (int, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("échec début transaction sync dates : %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	updatedCount := 0
+	for itemCode, dueDate := range dueDates {
+		dStr := dueDate.Format("2006-01-02")
+		query := `
+			UPDATE dossier_checklist_items
+			SET due_date = $2,
+			    updated_at = NOW()
+			WHERE dossier_id = $1 AND (item_code = $3 OR item_code LIKE $4)
+		`
+		tag, err := tx.Exec(ctx, query, dossierID, dStr, itemCode, itemCode+".%")
+		if err != nil {
+			return 0, fmt.Errorf("échec sync due_date item %s : %w", itemCode, err)
+		}
+		updatedCount += int(tag.RowsAffected())
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("échec commit sync dates : %w", err)
+	}
+
+	return updatedCount, nil
+}
