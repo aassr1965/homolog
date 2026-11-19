@@ -363,8 +363,6 @@
                 banner.style.display = 'none';
             }
         } catch (_) {}
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-dim);"><div style="font-size:18px; margin-bottom:6px;">⏳</div>Chargement des pièces en attente de visa réglementaire...</td></tr>`;
-        }
 
         selectedItemIds.clear();
         updateBatchBar();
