@@ -66,8 +66,12 @@ func (h *WorkflowHandler) CheckoutSection(w http.ResponseWriter, r *http.Request
 		req.Reason = "Édition technique de la section"
 	}
 
-	item, err := h.workflowRepo.CheckoutItem(r.Context(), itemID, user.UserID, user.Role, req.Reason)
+	item, err := h.workflowRepo.CheckoutItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Reason)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		if errors.Is(err, repository.ErrSectionLocked) {
 			writeJSONError(w, http.StatusConflict, "Cette section est déjà verrouillée en édition par un autre collaborateur")
 			return
@@ -133,8 +137,12 @@ func (h *WorkflowHandler) CheckinSection(w http.ResponseWriter, r *http.Request)
 		req.Comment = "Mise à jour de la documentation"
 	}
 
-	item, err := h.workflowRepo.CheckinItem(r.Context(), itemID, user.UserID, user.Role, req.Content, req.GEDDocumentID, req.Comment)
+	item, err := h.workflowRepo.CheckinItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Content, req.GEDDocumentID, req.Comment)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		if errors.Is(err, repository.ErrSectionNotLocked) {
 			writeJSONError(w, http.StatusBadRequest, "La section n'est pas verrouillée")
 			return
@@ -209,8 +217,12 @@ func (h *WorkflowHandler) AssignSection(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	item, err := h.workflowRepo.AssignItem(r.Context(), itemID, req.AssignedUserID, req.AssignedDepartment, dueTime)
+	item, err := h.workflowRepo.AssignItem(r.Context(), user.OrganizationID, itemID, req.AssignedUserID, req.AssignedDepartment, dueTime)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		log.Printf("[ERROR] AssignItem %s: %v", itemID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible d'assigner la section")
 		return
@@ -263,8 +275,12 @@ func (h *WorkflowHandler) SubmitReview(w http.ResponseWriter, r *http.Request) {
 		req.Notes = "Soumis pour relecture et contrôle qualité"
 	}
 
-	item, err := h.workflowRepo.SubmitForReview(r.Context(), itemID, user.UserID, user.Role, req.Notes)
+	item, err := h.workflowRepo.SubmitForReview(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Notes)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		var gatingErr *repository.GatingBlockedError
 		if errors.As(err, &gatingErr) {
 			w.Header().Set("Content-Type", "application/json")
@@ -345,8 +361,12 @@ func (h *WorkflowHandler) ReviewDecision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	item, err := h.workflowRepo.ReviewItem(r.Context(), itemID, user.UserID, user.Role, req.Decision, notesFinal)
+	item, err := h.workflowRepo.ReviewItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Decision, notesFinal)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		if errors.Is(err, repository.ErrSelfReviewNotAllowed) {
 			writeJSONError(w, http.StatusForbidden, "Ségrégation des fonctions BPF : Le rédacteur ne peut pas valider ou rejeter son propre document")
 			return
@@ -429,8 +449,12 @@ func (h *WorkflowHandler) ApproveSection(w http.ResponseWriter, r *http.Request)
 	sealHashBytes := sha256.Sum256([]byte(sealInput))
 	sealHash := hex.EncodeToString(sealHashBytes[:])
 
-	item, err := h.workflowRepo.ApproveItem(r.Context(), itemID, user.UserID, user.Role, sealHash)
+	item, err := h.workflowRepo.ApproveItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, sealHash)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		var gatingErr *repository.GatingBlockedError
 		if errors.As(err, &gatingErr) {
 			w.Header().Set("Content-Type", "application/json")
@@ -493,8 +517,12 @@ func (h *WorkflowHandler) GetItemReviews(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	reviews, err := h.workflowRepo.GetItemReviews(r.Context(), itemID)
+	reviews, err := h.workflowRepo.GetItemReviews(r.Context(), user.OrganizationID, itemID)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		log.Printf("[ERROR] GetItemReviews %s: %v", itemID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les revues")
 		return
@@ -541,6 +569,12 @@ func (h *WorkflowHandler) GetMasterTemplateByCode(w http.ResponseWriter, r *http
 
 // GetItemGating retourne l'évaluation complète des verrous réglementaires et prérequis d'une section
 func (h *WorkflowHandler) GetItemGating(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
 	itemIDStr := chi.URLParam(r, "itemId")
 	itemID, err := uuid.Parse(itemIDStr)
 	if err != nil {
@@ -548,7 +582,7 @@ func (h *WorkflowHandler) GetItemGating(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	eval, err := h.workflowRepo.EvaluateItemGating(r.Context(), itemID)
+	eval, err := h.workflowRepo.EvaluateItemGating(r.Context(), user.OrganizationID, itemID)
 	if err != nil {
 		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
 			writeJSONError(w, http.StatusNotFound, "Section introuvable")
