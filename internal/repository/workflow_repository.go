@@ -122,8 +122,8 @@ func (r *WorkflowRepository) ReleaseExpiredLocks(ctx context.Context, bailMinute
 	return expired, nil
 }
 
-// GetChecklistItemByID charge un item de checklist avec son contexte de workflow
-func (r *WorkflowRepository) GetChecklistItemByID(ctx context.Context, itemID uuid.UUID) (*domain.ChecklistItem, error) {
+// GetChecklistItemByID charge un item de checklist avec son contexte de workflow en vérifiant l'isolation multi-tenant
+func (r *WorkflowRepository) GetChecklistItemByID(ctx context.Context, orgID, itemID uuid.UUID) (*domain.ChecklistItem, error) {
 	query := `
 		SELECT 
 			i.id, i.dossier_id, i.module_number, i.sub_module, i.item_code,
@@ -142,19 +142,20 @@ func (r *WorkflowRepository) GetChecklistItemByID(ctx context.Context, itemID uu
 			COALESCE(u_chk.first_name || ' ' || u_chk.last_name, ''),
 			COALESCE(u_app.first_name || ' ' || u_app.last_name, '')
 		FROM dossier_checklist_items i
+		JOIN dossiers d ON d.id = i.dossier_id
 		LEFT JOIN users u_asg ON i.assigned_user_id = u_asg.id
 		LEFT JOIN users u_lck ON i.locked_by = u_lck.id
 		LEFT JOIN users u_mkr ON i.maker_user_id = u_mkr.id
 		LEFT JOIN users u_chk ON i.checker_user_id = u_chk.id
 		LEFT JOIN users u_app ON i.approver_user_id = u_app.id
-		WHERE i.id = $1
+		WHERE i.id = $1 AND d.organization_id = $2
 	`
 	var it domain.ChecklistItem
 	var reqStr, stStr, secClassStr, wfStr string
 	var titleAR, descFR string
 	var asgName, lckName, mkrName, chkName, appName string
 
-	err := r.pool.QueryRow(ctx, query, itemID).Scan(
+	err := r.pool.QueryRow(ctx, query, itemID, orgID).Scan(
 		&it.ID, &it.DossierID, &it.ModuleNumber, &it.SubModule, &it.ItemCode,
 		&it.TitleFR, &titleAR, &descFR,
 		&reqStr, &it.IsMandatory, &it.GEDDocumentID, &stStr,
@@ -229,8 +230,8 @@ func (r *WorkflowRepository) GetDossierItems(ctx context.Context, dossierID uuid
 }
 
 // CheckoutItem verrouille une section CTD pour rédaction exclusive
-func (r *WorkflowRepository) CheckoutItem(ctx context.Context, itemID, userID uuid.UUID, userRole, reason string) (*domain.ChecklistItem, error) {
-	item, err := r.GetChecklistItemByID(ctx, itemID)
+func (r *WorkflowRepository) CheckoutItem(ctx context.Context, orgID, itemID, userID uuid.UUID, userRole, reason string) (*domain.ChecklistItem, error) {
+	item, err := r.GetChecklistItemByID(ctx, orgID, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -259,12 +260,12 @@ func (r *WorkflowRepository) CheckoutItem(ctx context.Context, itemID, userID uu
 	// Ajouter l'entrée dans l'audit trail de revue
 	_ = r.AddReviewEntry(ctx, itemID, userID, userRole, domain.ReviewTypeAnnotation, "Verrouillé pour édition (Check-out) : "+reason, item.CurrentRevision)
 
-	return r.GetChecklistItemByID(ctx, itemID)
+	return r.GetChecklistItemByID(ctx, orgID, itemID)
 }
 
 // CheckinItem restitue la section avec sauvegarde de la révision incrémentale v0.x
-func (r *WorkflowRepository) CheckinItem(ctx context.Context, itemID, userID uuid.UUID, userRole string, content *string, gedDocID *uuid.UUID, comment string) (*domain.ChecklistItem, error) {
-	item, err := r.GetChecklistItemByID(ctx, itemID)
+func (r *WorkflowRepository) CheckinItem(ctx context.Context, orgID, itemID, userID uuid.UUID, userRole string, content *string, gedDocID *uuid.UUID, comment string) (*domain.ChecklistItem, error) {
+	item, err := r.GetChecklistItemByID(ctx, orgID, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -300,11 +301,27 @@ func (r *WorkflowRepository) CheckinItem(ctx context.Context, itemID, userID uui
 	summary := fmt.Sprintf("Révision %s enregistrée (Check-in) : %s", nextRev, comment)
 	_ = r.AddReviewEntry(ctx, itemID, userID, userRole, domain.ReviewTypeAnnotation, summary, nextRev)
 
-	return r.GetChecklistItemByID(ctx, itemID)
+	return r.GetChecklistItemByID(ctx, orgID, itemID)
 }
 
 // AssignItem attribue la responsabilité de la section à un collaborateur ou pôle métier
-func (r *WorkflowRepository) AssignItem(ctx context.Context, itemID uuid.UUID, assignedUserID *uuid.UUID, dept string, dueDate *time.Time) (*domain.ChecklistItem, error) {
+func (r *WorkflowRepository) AssignItem(ctx context.Context, orgID, itemID uuid.UUID, assignedUserID *uuid.UUID, dept string, dueDate *time.Time) (*domain.ChecklistItem, error) {
+	_, err := r.GetChecklistItemByID(ctx, orgID, itemID)
+	if err != nil {
+		return nil, err
+	}
+
+	if assignedUserID != nil {
+		var userExists bool
+		err = r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND organization_id = $2)`, assignedUserID, orgID).Scan(&userExists)
+		if err != nil {
+			return nil, fmt.Errorf("erreur vérification utilisateur : %w", err)
+		}
+		if !userExists {
+			return nil, fmt.Errorf("utilisateur introuvable dans votre organisation")
+		}
+	}
+
 	now := time.Now().UTC()
 	query := `
 		UPDATE dossier_checklist_items
@@ -314,16 +331,16 @@ func (r *WorkflowRepository) AssignItem(ctx context.Context, itemID uuid.UUID, a
 		    updated_at = $4
 		WHERE id = $5
 	`
-	_, err := r.pool.Exec(ctx, query, assignedUserID, dept, dueDate, now, itemID)
+	_, err = r.pool.Exec(ctx, query, assignedUserID, dept, dueDate, now, itemID)
 	if err != nil {
 		return nil, fmt.Errorf("échec assignation de la section : %w", err)
 	}
-	return r.GetChecklistItemByID(ctx, itemID)
+	return r.GetChecklistItemByID(ctx, orgID, itemID)
 }
 
 // SubmitForReview soumet la section complétée au relecteur qualité (Checker / AQ)
-func (r *WorkflowRepository) SubmitForReview(ctx context.Context, itemID, makerID uuid.UUID, makerRole, notes string) (*domain.ChecklistItem, error) {
-	item, err := r.GetChecklistItemByID(ctx, itemID)
+func (r *WorkflowRepository) SubmitForReview(ctx context.Context, orgID, itemID, makerID uuid.UUID, makerRole, notes string) (*domain.ChecklistItem, error) {
+	item, err := r.GetChecklistItemByID(ctx, orgID, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -359,12 +376,12 @@ func (r *WorkflowRepository) SubmitForReview(ctx context.Context, itemID, makerI
 
 	_ = r.AddReviewEntry(ctx, itemID, makerID, makerRole, domain.ReviewTypeAnnotation, "Projet soumis pour relecture qualité (Checker/AQ) : "+notes, item.CurrentRevision)
 
-	return r.GetChecklistItemByID(ctx, itemID)
+	return r.GetChecklistItemByID(ctx, orgID, itemID)
 }
 
 // ReviewItem valide ou rejette le document lors de l'étape de contrôle qualité (Checker)
-func (r *WorkflowRepository) ReviewItem(ctx context.Context, itemID, checkerID uuid.UUID, checkerRole, decision, notes string) (*domain.ChecklistItem, error) {
-	item, err := r.GetChecklistItemByID(ctx, itemID)
+func (r *WorkflowRepository) ReviewItem(ctx context.Context, orgID, itemID, checkerID uuid.UUID, checkerRole, decision, notes string) (*domain.ChecklistItem, error) {
+	item, err := r.GetChecklistItemByID(ctx, orgID, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -403,12 +420,12 @@ func (r *WorkflowRepository) ReviewItem(ctx context.Context, itemID, checkerID u
 
 	_ = r.AddReviewEntry(ctx, itemID, checkerID, checkerRole, revType, notes, item.CurrentRevision)
 
-	return r.GetChecklistItemByID(ctx, itemID)
+	return r.GetChecklistItemByID(ctx, orgID, itemID)
 }
 
 // ApproveItem appose le visa légal officiel 21 CFR Part 11 du Pharmacien DT (Approver) et scelle le document en v1.0
-func (r *WorkflowRepository) ApproveItem(ctx context.Context, itemID, approverID uuid.UUID, approverRole, seal string) (*domain.ChecklistItem, error) {
-	item, err := r.GetChecklistItemByID(ctx, itemID)
+func (r *WorkflowRepository) ApproveItem(ctx context.Context, orgID, itemID, approverID uuid.UUID, approverRole, seal string) (*domain.ChecklistItem, error) {
+	item, err := r.GetChecklistItemByID(ctx, orgID, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +465,7 @@ func (r *WorkflowRepository) ApproveItem(ctx context.Context, itemID, approverID
 
 	_ = r.AddReviewEntry(ctx, itemID, approverID, approverRole, domain.ReviewTypeQualityPassed, "Visa légal apposé sous 21 CFR Part 11 par le Pharmacien DT. Document officiellement scellé v1.0.", "v1.0")
 
-	return r.GetChecklistItemByID(ctx, itemID)
+	return r.GetChecklistItemByID(ctx, orgID, itemID)
 }
 
 // AddReviewEntry ajoute une ligne immuable dans l'audit trail des annotations
@@ -461,8 +478,13 @@ func (r *WorkflowRepository) AddReviewEntry(ctx context.Context, itemID, authorI
 	return err
 }
 
-// GetItemReviews liste toutes les annotations et revues d'un item
-func (r *WorkflowRepository) GetItemReviews(ctx context.Context, itemID uuid.UUID) ([]domain.DossierItemReview, error) {
+// GetItemReviews liste toutes les annotations et revues d'un item après vérification multi-tenant
+func (r *WorkflowRepository) GetItemReviews(ctx context.Context, orgID, itemID uuid.UUID) ([]domain.DossierItemReview, error) {
+	_, err := r.GetChecklistItemByID(ctx, orgID, itemID)
+	if err != nil {
+		return nil, err
+	}
+
 	query := `
 		SELECT r.id, r.dossier_item_id, r.author_id, r.author_role, r.review_type, r.comment, r.revision_version, r.created_at,
 		       COALESCE(u.first_name || ' ' || u.last_name, '')
@@ -639,9 +661,9 @@ func (r *WorkflowRepository) GetReportBySHA256(ctx context.Context, sha256 strin
 	return &rep, nil
 }
 
-// EvaluateItemGating évalue l'état des verrous pour une section donnée (utilisé pour l'inspection UI)
-func (r *WorkflowRepository) EvaluateItemGating(ctx context.Context, itemID uuid.UUID) (*domain.GatingEvaluationResult, error) {
-	item, err := r.GetChecklistItemByID(ctx, itemID)
+// EvaluateItemGating évalue l'état des verrous pour une section donnée (utilisé pour l'inspection UI) en vérifiant l'isolation multi-tenant
+func (r *WorkflowRepository) EvaluateItemGating(ctx context.Context, orgID, itemID uuid.UUID) (*domain.GatingEvaluationResult, error) {
+	item, err := r.GetChecklistItemByID(ctx, orgID, itemID)
 	if err != nil {
 		return nil, err
 	}

@@ -866,8 +866,17 @@ func (r *DossierRepository) GetDossierAssignment(ctx context.Context, dossierID,
 	return &a, nil
 }
 
-// ListDossierMembers liste tous les membres affectés à un dossier avec leurs détails d'identité
-func (r *DossierRepository) ListDossierMembers(ctx context.Context, dossierID uuid.UUID) ([]domain.DossierAssignment, error) {
+// ListDossierMembers liste tous les membres affectés à un dossier avec leurs détails d'identité en vérifiant l'isolation multi-tenant
+func (r *DossierRepository) ListDossierMembers(ctx context.Context, orgID, dossierID uuid.UUID) ([]domain.DossierAssignment, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, dossierID, orgID).Scan(&exists)
+	if err != nil {
+		return nil, fmt.Errorf("erreur vérification dossier: %w", err)
+	}
+	if !exists {
+		return nil, ErrNotFound
+	}
+
 	query := `
 		SELECT 
 			a.id, a.dossier_id, a.user_id, a.role_in_dossier, 
@@ -907,8 +916,26 @@ func (r *DossierRepository) ListDossierMembers(ctx context.Context, dossierID uu
 	return members, nil
 }
 
-// AssignDossierMember ajoute ou met à jour une affectation nominative à un dossier
-func (r *DossierRepository) AssignDossierMember(ctx context.Context, a *domain.DossierAssignment) error {
+// AssignDossierMember ajoute ou met à jour une affectation nominative à un dossier en vérifiant l'isolation multi-tenant
+func (r *DossierRepository) AssignDossierMember(ctx context.Context, orgID uuid.UUID, a *domain.DossierAssignment) error {
+	var dossierExists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, a.DossierID, orgID).Scan(&dossierExists)
+	if err != nil {
+		return fmt.Errorf("erreur vérification dossier: %w", err)
+	}
+	if !dossierExists {
+		return ErrNotFound
+	}
+
+	var userExists bool
+	err = r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND organization_id = $2)`, a.UserID, orgID).Scan(&userExists)
+	if err != nil {
+		return fmt.Errorf("erreur vérification utilisateur: %w", err)
+	}
+	if !userExists {
+		return fmt.Errorf("collaborateur introuvable au sein de votre organisation")
+	}
+
 	query := `
 		INSERT INTO dossier_assignments (
 			dossier_id, user_id, role_in_dossier, can_view_financials, can_view_industrial_secret, expires_at, notes
@@ -920,7 +947,7 @@ func (r *DossierRepository) AssignDossierMember(ctx context.Context, a *domain.D
 			expires_at = EXCLUDED.expires_at,
 			notes = EXCLUDED.notes;
 	`
-	_, err := r.pool.Exec(ctx, query,
+	_, err = r.pool.Exec(ctx, query,
 		a.DossierID, a.UserID, a.RoleInDossier,
 		a.CanViewFinancials, a.CanViewIndustrialSecret,
 		a.ExpiresAt, a.Notes,
@@ -931,10 +958,19 @@ func (r *DossierRepository) AssignDossierMember(ctx context.Context, a *domain.D
 	return nil
 }
 
-// RemoveDossierMember révoque l'affectation d'un membre à un dossier
-func (r *DossierRepository) RemoveDossierMember(ctx context.Context, dossierID, userID uuid.UUID) error {
+// RemoveDossierMember révoque l'affectation d'un membre à un dossier en vérifiant l'isolation multi-tenant
+func (r *DossierRepository) RemoveDossierMember(ctx context.Context, orgID, dossierID, userID uuid.UUID) error {
+	var dossierExists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, dossierID, orgID).Scan(&dossierExists)
+	if err != nil {
+		return fmt.Errorf("erreur vérification dossier: %w", err)
+	}
+	if !dossierExists {
+		return ErrNotFound
+	}
+
 	query := `DELETE FROM dossier_assignments WHERE dossier_id = $1 AND user_id = $2`
-	_, err := r.pool.Exec(ctx, query, dossierID, userID)
+	_, err = r.pool.Exec(ctx, query, dossierID, userID)
 	if err != nil {
 		return fmt.Errorf("erreur révocation membre dossier: %w", err)
 	}
