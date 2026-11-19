@@ -58,6 +58,10 @@ type SmartPlanningAnalysis struct {
 	IsEstimatedTargetDate   bool                     `json:"is_estimated_target_date"`
 	TargetDateOrigin        string                   `json:"target_date_origin"` // "dossier_target_date", "anpp_validity_j180", "default_estimated"
 	DaysToTargetDeposit     int                      `json:"days_to_target_deposit"`
+	WorkingDaysPerWeek      int                      `json:"working_days_per_week"`
+	RequiredWorkingDays     int                      `json:"required_working_days"`
+	RecommendedDepositDate  *time.Time               `json:"recommended_deposit_date,omitempty"`
+	IsTargetDateSufficient  bool                     `json:"is_target_date_sufficient"`
 	OverallHealth           SmartPlanningHealth      `json:"overall_health"`
 	OverallHealthLabel      string                   `json:"overall_health_label"`
 	ActiveCriticalMilestone *SmartPlanningMilestone  `json:"active_critical_milestone,omitempty"`
@@ -276,7 +280,31 @@ func EvaluateSmartPlanning(d *Dossier, items []ChecklistItem, now time.Time) *Sm
 
 	analysis.ActiveCriticalMilestone = firstPendingMilestone
 
-	// Labels synthétiques
+	// Prise en compte du paramètre configurable de jours ouvrables par semaine
+	workingDaysPerWeek := d.WorkingDaysPerWeek
+	if workingDaysPerWeek != 6 {
+		workingDaysPerWeek = 5 // Standard Algérie ANPP / MIPH par défaut
+	}
+	analysis.WorkingDaysPerWeek = workingDaysPerWeek
+
+	requiredWorkDays := CalculateRequiredWorkingDays(analysis.Milestones)
+	analysis.RequiredWorkingDays = requiredWorkDays
+
+	if requiredWorkDays > 0 {
+		recDate := AddWorkingDays(nowMidnight, requiredWorkDays, workingDaysPerWeek)
+		analysis.RecommendedDepositDate = &recDate
+		analysis.IsTargetDateSufficient = !targetMidnight.Before(recDate)
+	} else {
+		analysis.RecommendedDepositDate = &targetMidnight
+		analysis.IsTargetDateSufficient = true
+	}
+
+	recDateFormatted := ""
+	if analysis.RecommendedDepositDate != nil {
+		recDateFormatted = analysis.RecommendedDepositDate.Format("02/01/2006")
+	}
+
+	// Labels synthétiques et recommandation réglementaire avec date recommandée basée sur les jours ouvrables
 	switch analysis.OverallHealth {
 	case HealthCompleted:
 		analysis.OverallHealthLabel = "Toutes les étapes critiques sont validées"
@@ -284,24 +312,79 @@ func EvaluateSmartPlanning(d *Dossier, items []ChecklistItem, now time.Time) *Sm
 	case HealthOnTrack:
 		analysis.OverallHealthLabel = "Chemin critique dans les temps (Conforme)"
 		if firstPendingMilestone != nil {
-			analysis.RecommendedActionFR = fmt.Sprintf("Poursuivre la préparation de l'étape : %s (Échéance dans %d jours).", firstPendingMilestone.NameFR, firstPendingMilestone.DaysRemaining)
+			analysis.RecommendedActionFR = fmt.Sprintf("Poursuivre la préparation : %s (Échéance dans %d jours). Date butoir recommandée : %s (basée sur %d jours ouvrables/semaine, %d jours ouvrés restants).", firstPendingMilestone.NameFR, firstPendingMilestone.DaysRemaining, recDateFormatted, workingDaysPerWeek, requiredWorkDays)
 		}
 	case HealthWarningTight:
 		analysis.OverallHealthLabel = "Attention : Marge résiduelle faible sur les jalons critiques"
 		if firstPendingMilestone != nil {
-			analysis.RecommendedActionFR = fmt.Sprintf("Accélérer la finalisation de l'étape '%s' sous l'autorité du pôle %s.", firstPendingMilestone.NameFR, firstPendingMilestone.DepartmentOwner)
+			analysis.RecommendedActionFR = fmt.Sprintf("Accélérer la finalisation de l'étape '%s' (Pôle %s). Date butoir recommandée : %s (calculée sur une base de %d jours ouvrables/semaine).", firstPendingMilestone.NameFR, firstPendingMilestone.DepartmentOwner, recDateFormatted, workingDaysPerWeek)
 		}
 	case HealthCriticalDelay:
 		analysis.OverallHealthLabel = "Alerte : Dérive active sur le chemin critique du dossier"
 		if firstPendingMilestone != nil {
-			analysis.RecommendedActionFR = fmt.Sprintf("Arbitrage requis par le Pharmacien DT sur l'étape '%s' pour stopper la dérive calendaire.", firstPendingMilestone.NameFR)
+			analysis.RecommendedActionFR = fmt.Sprintf("Arbitrage requis par le Pharmacien DT sur l'étape '%s'. Date minimale recommandée : %s (basée sur %d jours ouvrables/semaine, soit %d jours ouvrés incompressibles).", firstPendingMilestone.NameFR, recDateFormatted, workingDaysPerWeek, requiredWorkDays)
 		}
 	case HealthFatalBlock:
 		analysis.OverallHealthLabel = "Rupture réglementaire : Délais incompressibles dépassés"
-		analysis.RecommendedActionFR = "Reprogrammer formellement la date butoir de dépôt ou prolonger les essais de stabilité."
+		if firstPendingMilestone != nil {
+			analysis.RecommendedActionFR = fmt.Sprintf("Pour rattraper la dérive calendaire sur '%s', la date butoir minimale recommandée est le %s (basée sur %d jours ouvrables par semaine, soit %d jours ouvrés incompressibles).", firstPendingMilestone.NameFR, recDateFormatted, workingDaysPerWeek, requiredWorkDays)
+		} else {
+			analysis.RecommendedActionFR = fmt.Sprintf("Date butoir minimale recommandée : %s (basée sur %d jours ouvrables par semaine).", recDateFormatted, workingDaysPerWeek)
+		}
 	}
 
 	return analysis
+}
+
+// AddWorkingDays ajoute un nombre de jours ouvrables à une date selon la base hebdomadaire configurée (5 ou 6 jours)
+func AddWorkingDays(start time.Time, workingDays int, daysPerWeek int) time.Time {
+	if workingDays <= 0 {
+		return start
+	}
+	if daysPerWeek != 6 {
+		daysPerWeek = 5 // Standard Algérie ANPP / MIPH (Dimanche à Jeudi)
+	}
+
+	curr := start
+	added := 0
+	for added < workingDays {
+		curr = curr.AddDate(0, 0, 1)
+		weekday := curr.Weekday() // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+		if daysPerWeek == 5 {
+			// Week-end algérien : Vendredi (5) et Samedi (6)
+			if weekday != time.Friday && weekday != time.Saturday {
+				added++
+			}
+		} else if daysPerWeek == 6 {
+			// Week-end 6j : uniquement Vendredi (5) chômé
+			if weekday != time.Friday {
+				added++
+			}
+		}
+	}
+	return curr
+}
+
+// CalculateRequiredWorkingDays estime le volume minimal de jours ouvrés nécessaires pour franchir les étapes en attente
+func CalculateRequiredWorkingDays(milestones []SmartPlanningMilestone) int {
+	maxWorkDays := 0
+	workDaysByCode := map[SmartPlanningMilestoneCode]int{
+		MilestoneJ240StabilitiesZoneIVb: 172, // ~240j calendaires * 5/7 (6 mois incubation continue + 60j analyse)
+		MilestoneJ150QOSCheckerReview:   108, // ~150j calendaires * 5/7
+		MilestoneJ60ETasjilAppointment:  43,  // ~60j calendaires * 5/7
+		MilestoneJ30LeafletAndFees:      22,  // ~30j calendaires * 5/7
+		MilestoneJ15PDTVisaPackageSeal:  11,  // ~15j calendaires * 5/7
+		MilestoneJ0ANPPDepositDeadline:  0,
+	}
+
+	for _, m := range milestones {
+		if !m.IsCompleted {
+			if wd, ok := workDaysByCode[m.Code]; ok && wd > maxWorkDays {
+				maxWorkDays = wd
+			}
+		}
+	}
+	return maxWorkDays
 }
 
 // checkMilestoneCompletion évalue si un jalon du rétroplanning a été concrètement franchi

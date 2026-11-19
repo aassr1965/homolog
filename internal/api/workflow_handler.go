@@ -616,6 +616,7 @@ func (h *WorkflowHandler) GetDossierSmartPlanning(w http.ResponseWriter, r *http
 type SetDossierTargetDatesRequest struct {
 	TargetDepositDate   *string `json:"target_deposit_date"`    // "YYYY-MM-DD"
 	ANPPValidityEndDate *string `json:"anpp_validity_end_date"` // "YYYY-MM-DD"
+	WorkingDaysPerWeek  *int    `json:"working_days_per_week"`  // 5 ou 6 jours ouvrables par semaine
 }
 
 // SetDossierTargetDates configure ou met à jour la date cible de dépôt ou l'échéance légale de renouvellement
@@ -659,7 +660,18 @@ func (h *WorkflowHandler) SetDossierTargetDates(w http.ResponseWriter, r *http.R
 		validityEnd = &t
 	}
 
-	err = h.workflowRepo.UpdateDossierTargetDates(r.Context(), dossierID, targetDate, validityEnd)
+	var workingDays *int
+	if req.WorkingDaysPerWeek != nil {
+		wd := *req.WorkingDaysPerWeek
+		if wd == 5 || wd == 6 {
+			workingDays = &wd
+		} else {
+			defWd := 5
+			workingDays = &defWd
+		}
+	}
+
+	err = h.workflowRepo.UpdateDossierTargetDates(r.Context(), dossierID, targetDate, validityEnd, workingDays)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
@@ -675,6 +687,7 @@ func (h *WorkflowHandler) SetDossierTargetDates(w http.ResponseWriter, r *http.R
 		"SET_TARGET_DATES", "dossier", dossierID.String(), map[string]any{
 			"target_deposit_date":    req.TargetDepositDate,
 			"anpp_validity_end_date": req.ANPPValidityEndDate,
+			"working_days_per_week":  req.WorkingDaysPerWeek,
 		})
 
 	// Recalcul immédiat du planning après modification

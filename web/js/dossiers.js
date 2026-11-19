@@ -2347,6 +2347,9 @@
             const targetFormatted = sp.target_deposit_date ? new Date(sp.target_deposit_date).toLocaleDateString('fr-FR') : 'Non définie';
             const originLabel = sp.target_date_origin === 'anpp_validity_j180' ? '⚖️ Décret 20-325 Renouvellement J-180' : 
                                 (sp.target_date_origin === 'dossier_target_date' ? '🎯 Date Cible Fixée' : '⏳ Date Estimée (+9 mois)');
+            const recDateISO = sp.recommended_deposit_date ? sp.recommended_deposit_date.substring(0, 10) : '';
+            const recDateFormatted = sp.recommended_deposit_date ? new Date(sp.recommended_deposit_date).toLocaleDateString('fr-FR') : '';
+            const workingDays = sp.working_days_per_week || 5;
 
             return `
             <div style="margin-top:8px; background:${hc.bg}; border:1px solid ${hc.border}; border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
@@ -2360,10 +2363,18 @@
                         <span style="font-size:11px; font-weight:700; color:${sp.days_to_target_deposit >= 0 ? 'var(--text-main)' : '#dc2626'};">
                             (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassé de ${Math.abs(sp.days_to_target_deposit)}j`})
                         </span>
+                        <span style="font-size:10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:2px 6px; border-radius:3px; font-weight:700;" title="Base de calcul configurable">
+                            📅 ${workingDays}j ouvrés/sem.
+                        </span>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                        <button class="btn-pill" style="font-size:10px; padding:3px 8px; cursor:pointer;" onclick="showSmartPlanningConfigModal()" title="Modifier la date cible de dépôt ou date de validité AMM">
-                            ⚙️ Date Cible
+                        ${recDateISO && !sp.is_target_date_sufficient ? `
+                            <button class="btn-pill" style="font-size:10px; padding:3px 9px; background:var(--accent-emerald); color:white; border:none; font-weight:700; cursor:pointer;" onclick="applyRecommendedDate('${recDateISO}')" title="Recaler la date cible de dépôt sur la recommandation réglementaire (${recDateFormatted})">
+                                🎯 Aligner sur ${recDateFormatted}
+                            </button>
+                        ` : ''}
+                        <button class="btn-pill" style="font-size:10px; padding:3px 8px; cursor:pointer;" onclick="showSmartPlanningConfigModal()" title="Modifier la date cible de dépôt, date de validité AMM ou base de jours ouvrables">
+                            ⚙️ Date &amp; Settings
                         </button>
                         <button class="btn-pill" style="font-size:10px; padding:3px 8px; background:rgba(37,99,235,0.12); color:var(--accent-blue); border-color:rgba(37,99,235,0.4); cursor:pointer;" onclick="syncSmartPlanningDueDates()" title="Propager les dates critiques aux échéances de chaque section CTD">
                             ⚡ Synchroniser Échéances
@@ -2396,6 +2407,13 @@
                         `;
                     }).join('')}
                 </div>
+                ${sp.recommended_action_fr ? `
+                    <div style="font-size:11px; background:var(--bg-surface); padding:7px 10px; border-radius:4px; border-left:3px solid ${hc.badgeBg}; color:var(--text-main); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                        <div>
+                            <strong>💡 Recommandation Réglementaire :</strong> ${escapeHTML(sp.recommended_action_fr)}
+                        </div>
+                    </div>
+                ` : ''}
                 ${sp.critical_warnings && sp.critical_warnings.length > 0 ? `
                     <div style="font-size:10.5px; color:#b91c1c; font-weight:600; display:flex; align-items:center; gap:4px; padding-top:2px;">
                         <span>⚠️</span> <span>${escapeHTML(sp.critical_warnings[0])}</span>
@@ -2423,6 +2441,9 @@
 
                 const hc = getSmartPlanningHealthStyles(sp.overall_health);
                 const targetFormatted = sp.target_deposit_date ? new Date(sp.target_deposit_date).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : 'Non fixée';
+                const recDateISO = sp.recommended_deposit_date ? sp.recommended_deposit_date.substring(0, 10) : '';
+                const recDateFormatted = sp.recommended_deposit_date ? new Date(sp.recommended_deposit_date).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : '';
+                const workingDays = sp.working_days_per_week || 5;
 
                 contentEl.innerHTML = `
                     <!-- En-tête Statut Global -->
@@ -2434,17 +2455,31 @@
                                     <span>Diagnostic du Chemin Critique :</span>
                                     <span style="color:${hc.text};">${escapeHTML(sp.overall_health_label)}</span>
                                 </div>
-                                <div style="font-size:11px; color:var(--text-dim); margin-top:3px;">
-                                    🎯 Date Butoir de Dépôt Visée : <strong>${targetFormatted}</strong> (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassée de ${Math.abs(sp.days_to_target_deposit)} jours`})
+                                <div style="font-size:11px; color:var(--text-dim); margin-top:3px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <span>🎯 Date Butoir de Dépôt Visée : <strong>${targetFormatted}</strong> (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassée de ${Math.abs(sp.days_to_target_deposit)} jours`})</span>
+                                    <span style="background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:1px 6px; border-radius:3px; font-weight:700;">📅 Base : ${workingDays} jours ouvrables/sem.</span>
                                 </div>
                             </div>
-                            <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="closeModal('modal-smart-planning-timeline'); showSmartPlanningConfigModal();">
-                                ⚙️ Modifier Date Cible
-                            </button>
+                            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                                ${recDateISO && !sp.is_target_date_sufficient ? `
+                                    <button class="btn-pill" style="font-size:11px; padding:4px 10px; background:var(--accent-emerald); color:white; border:none; font-weight:700;" onclick="closeModal('modal-smart-planning-timeline'); applyRecommendedDate('${recDateISO}');">
+                                        🎯 Aligner sur la Date Recommandée
+                                    </button>
+                                ` : ''}
+                                <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="closeModal('modal-smart-planning-timeline'); showSmartPlanningConfigModal();">
+                                    ⚙️ Modifier Date / Settings
+                                </button>
+                            </div>
                         </div>
                         ${sp.recommended_action_fr ? `
                             <div style="margin-top:8px; font-size:11.5px; background:var(--bg-surface); padding:8px 10px; border-radius:4px; border-left:3px solid ${hc.badgeBg}; color:var(--text-main);">
                                 <strong>💡 Recommandation Réglementaire :</strong> ${escapeHTML(sp.recommended_action_fr)}
+                            </div>
+                        ` : ''}
+                        ${sp.recommended_deposit_date ? `
+                            <div style="margin-top:6px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                                <span>📌</span>
+                                <span>Date calculée sur les délais incompressibles réels : <strong>${recDateFormatted}</strong> (${sp.required_working_days || 0} jours ouvrés requis, hors week-ends).</span>
                             </div>
                         ` : ''}
                     </div>
@@ -2515,12 +2550,19 @@
 
             const inputTarget = document.getElementById('sp-input-target-date');
             const inputVal = document.getElementById('sp-input-validity-date');
+            const inputWorkingDays = document.getElementById('sp-input-working-days');
 
             if (inputTarget) {
                 inputTarget.value = currentDossierDetail.target_deposit_date ? currentDossierDetail.target_deposit_date.substring(0, 10) : '';
             }
             if (inputVal) {
                 inputVal.value = currentDossierDetail.anpp_validity_end_date ? currentDossierDetail.anpp_validity_end_date.substring(0, 10) : '';
+            }
+            if (inputWorkingDays) {
+                const days = (currentDossierSmartPlanning && currentDossierSmartPlanning.working_days_per_week)
+                    || (currentDossierDetail && currentDossierDetail.working_days_per_week)
+                    || 5;
+                inputWorkingDays.value = String(days);
             }
 
             openModal('modal-smart-planning-config');
@@ -2532,10 +2574,12 @@
 
             const inputTarget = document.getElementById('sp-input-target-date');
             const inputVal = document.getElementById('sp-input-validity-date');
+            const inputWorkingDays = document.getElementById('sp-input-working-days');
 
             const payload = {
                 target_deposit_date: inputTarget && inputTarget.value ? inputTarget.value : null,
-                anpp_validity_end_date: inputVal && inputVal.value ? inputVal.value : null
+                anpp_validity_end_date: inputVal && inputVal.value ? inputVal.value : null,
+                working_days_per_week: inputWorkingDays ? (parseInt(inputWorkingDays.value, 10) || 5) : 5
             };
 
             try {
@@ -2551,10 +2595,32 @@
                 }
 
                 closeModal('modal-smart-planning-config');
-                showNotifyModal("Rétroplanning Mis à Jour", "La date cible a été enregistrée et le chemin critique a été recalculé.", "✅");
+                showNotifyModal("Rétroplanning Mis à Jour", "La date cible et la base de jours ouvrables ont été enregistrées avec succès.", "✅");
                 await selectDossier(selectedDossierId);
             } catch(e) {
                 showNotifyModal("Erreur Configuration", e.message, "⚠️");
+            }
+        }
+
+        async function applyRecommendedDate(dateStr) {
+            if (!selectedDossierId || !dateStr) return;
+            try {
+                const res = await fetch(`/api/v1/dossiers/${selectedDossierId}/smart-planning/set-target`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target_deposit_date: dateStr })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Échec de l'application de la date recommandée");
+                }
+
+                const formatted = new Date(dateStr).toLocaleDateString('fr-FR');
+                showNotifyModal("Date Cible Recalée", `La date butoir de dépôt a été recalée avec succès au ${formatted} sur la base des jours ouvrables incompressibles.`, "🎯");
+                await selectDossier(selectedDossierId);
+            } catch(e) {
+                showNotifyModal("Erreur", e.message, "⚠️");
             }
         }
 

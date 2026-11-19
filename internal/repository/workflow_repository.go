@@ -752,6 +752,7 @@ func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossie
 	dossierQuery := `
 		SELECT id, organization_id, dossier_code, procedure_code, internal_reference,
 		       anpp_deposit_date, anpp_validity_end_date, target_deposit_date,
+		       COALESCE(working_days_per_week, 5),
 		       tracking_number, deposit_receipt_ref, status, is_locked_for_deposit,
 		       pdt_signed_at, created_at
 		FROM dossiers
@@ -763,6 +764,7 @@ func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossie
 	err := r.pool.QueryRow(ctx, dossierQuery, dossierID).Scan(
 		&d.ID, &d.OrganizationID, &d.DossierCode, &procCodeStr, &d.InternalReference,
 		&d.ANPPDepositDate, &d.ANPPValidityEndDate, &d.TargetDepositDate,
+		&d.WorkingDaysPerWeek,
 		&d.TrackingNumber, &d.DepositReceiptRef, &statusStr, &d.IsLockedForDeposit,
 		&d.PDTSignedAt, &d.CreatedAt,
 	)
@@ -784,16 +786,17 @@ func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossie
 	return analysis, nil
 }
 
-// UpdateDossierTargetDates permet de fixer ou ajuster la date cible de dépôt ou l'échéance de validité AMM
-func (r *WorkflowRepository) UpdateDossierTargetDates(ctx context.Context, dossierID uuid.UUID, targetDate, validityEndDate *time.Time) error {
+// UpdateDossierTargetDates permet de fixer ou ajuster la date cible de dépôt, l'échéance de validité AMM et la base de jours ouvrables
+func (r *WorkflowRepository) UpdateDossierTargetDates(ctx context.Context, dossierID uuid.UUID, targetDate, validityEndDate *time.Time, workingDaysPerWeek *int) error {
 	query := `
 		UPDATE dossiers
 		SET target_deposit_date = $2,
 		    anpp_validity_end_date = COALESCE($3, anpp_validity_end_date),
+		    working_days_per_week = COALESCE($4, working_days_per_week),
 		    updated_at = NOW()
 		WHERE id = $1
 	`
-	tag, err := r.pool.Exec(ctx, query, dossierID, targetDate, validityEndDate)
+	tag, err := r.pool.Exec(ctx, query, dossierID, targetDate, validityEndDate, workingDaysPerWeek)
 	if err != nil {
 		return fmt.Errorf("échec mise à jour dates cibles dossier : %w", err)
 	}

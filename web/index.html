@@ -3186,6 +3186,19 @@
                             <strong>Règle Décret 20-325 Art. 12 :</strong> Pour les renouvellements (RI/RF), la date de dépôt légal est automatiquement calculée à <strong>J-180</strong> avant expiration.
                         </div>
                     </div>
+
+                    <div style="border-top:1px dashed var(--border-color); padding-top:10px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+                            📅 Base de Calcul des Jours Ouvrables / Semaine (Paramètre Setting) :
+                        </label>
+                        <select id="sp-input-working-days" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-main); font-size:12px; font-weight:600;">
+                            <option value="5">5 jours ouvrables par semaine (Dimanche – Jeudi standard Algérie ANPP/MIPH)</option>
+                            <option value="6">6 jours ouvrables par semaine (Samedi – Jeudi avec astreinte qualité)</option>
+                        </select>
+                        <span style="font-size:10px; color:var(--text-dim); display:block; margin-top:3px;">
+                            La recommandation réglementaire et le calcul des délais incompressibles excluent automatiquement les jours de week-end chômés.
+                        </span>
+                    </div>
                 </div>
                 <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:8px;">
                     <button type="button" class="btn-pill" onclick="closeModal('modal-smart-planning-config')">Annuler</button>
