@@ -567,6 +567,12 @@ func (h *WorkflowHandler) GetItemGating(w http.ResponseWriter, r *http.Request) 
 
 // GetDossierGatingSummary retourne la phase active du DAG et la liste des sections bloquées
 func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
 	dossierIDStr := chi.URLParam(r, "id")
 	dossierID, err := uuid.Parse(dossierIDStr)
 	if err != nil {
@@ -574,8 +580,12 @@ func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http
 		return
 	}
 
-	summary, err := h.workflowRepo.GetDossierGatingSummary(r.Context(), dossierID)
+	summary, err := h.workflowRepo.GetDossierGatingSummary(r.Context(), user.OrganizationID, dossierID)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
 		log.Printf("[ERROR] GetDossierGatingSummary %s: %v", dossierID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de calculer la synthèse du chemin critique")
 		return
@@ -589,6 +599,12 @@ func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http
 
 // GetDossierSmartPlanning calcule et retourne le rétroplanning dynamique inversé et l'analyse de chemin critique
 func (h *WorkflowHandler) GetDossierSmartPlanning(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
 	dossierIDStr := chi.URLParam(r, "id")
 	dossierID, err := uuid.Parse(dossierIDStr)
 	if err != nil {
@@ -596,7 +612,7 @@ func (h *WorkflowHandler) GetDossierSmartPlanning(w http.ResponseWriter, r *http
 		return
 	}
 
-	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), dossierID)
+	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), user.OrganizationID, dossierID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
@@ -671,7 +687,7 @@ func (h *WorkflowHandler) SetDossierTargetDates(w http.ResponseWriter, r *http.R
 		}
 	}
 
-	err = h.workflowRepo.UpdateDossierTargetDates(r.Context(), dossierID, targetDate, validityEnd, workingDays)
+	err = h.workflowRepo.UpdateDossierTargetDates(r.Context(), user.OrganizationID, dossierID, targetDate, validityEnd, workingDays)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
@@ -691,7 +707,7 @@ func (h *WorkflowHandler) SetDossierTargetDates(w http.ResponseWriter, r *http.R
 		})
 
 	// Recalcul immédiat du planning après modification
-	analysis, _ := h.workflowRepo.GetDossierSmartPlanning(r.Context(), dossierID)
+	analysis, _ := h.workflowRepo.GetDossierSmartPlanning(r.Context(), user.OrganizationID, dossierID)
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"success":  true,
@@ -715,8 +731,12 @@ func (h *WorkflowHandler) SyncSmartPlanningDueDates(w http.ResponseWriter, r *ht
 		return
 	}
 
-	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), dossierID)
+	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), user.OrganizationID, dossierID)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
 		writeJSONError(w, http.StatusInternalServerError, "Impossible d'analyser le rétroplanning")
 		return
 	}
@@ -728,7 +748,7 @@ func (h *WorkflowHandler) SyncSmartPlanningDueDates(w http.ResponseWriter, r *ht
 	}
 
 	dueDates := domain.CalculateSmartDueDates(analysis, items)
-	updatedCount, err := h.workflowRepo.SyncSmartPlanningDueDates(r.Context(), dossierID, dueDates)
+	updatedCount, err := h.workflowRepo.SyncSmartPlanningDueDates(r.Context(), user.OrganizationID, dossierID, dueDates)
 	if err != nil {
 		log.Printf("[ERROR] SyncSmartPlanningDueDates %s: %v", dossierID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Échec de la propagation des dates cibles aux tâches")

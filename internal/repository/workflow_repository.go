@@ -675,7 +675,16 @@ type DossierGatingSummary struct {
 }
 
 // GetDossierGatingSummary calcule la phase DAG active et recense toutes les sections bloquées
-func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, dossierID uuid.UUID) (*DossierGatingSummary, error) {
+func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, orgID, dossierID uuid.UUID) (*DossierGatingSummary, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, dossierID, orgID).Scan(&exists)
+	if err != nil {
+		return nil, fmt.Errorf("erreur vérification appartenance dossier : %w", err)
+	}
+	if !exists {
+		return nil, ErrNotFound
+	}
+
 	allItems, err := r.GetDossierItems(ctx, dossierID)
 	if err != nil {
 		return nil, err
@@ -748,7 +757,7 @@ func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, dossie
 }
 
 // GetDossierSmartPlanning calcule le rétroplanning dynamique inversé et l'analyse de santé du chemin critique
-func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossierID uuid.UUID) (*domain.SmartPlanningAnalysis, error) {
+func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, orgID, dossierID uuid.UUID) (*domain.SmartPlanningAnalysis, error) {
 	dossierQuery := `
 		SELECT d.id, d.organization_id, d.dossier_code, d.procedure_code, d.internal_reference,
 		       d.anpp_deposit_date, d.anpp_validity_end_date, d.target_deposit_date,
@@ -757,12 +766,12 @@ func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossie
 		       d.pdt_signed_at, d.created_at
 		FROM dossiers d
 		LEFT JOIN organizations o ON o.id = d.organization_id
-		WHERE d.id = $1
+		WHERE d.id = $1 AND d.organization_id = $2
 	`
 	var d domain.Dossier
 	var procCodeStr, statusStr string
 
-	err := r.pool.QueryRow(ctx, dossierQuery, dossierID).Scan(
+	err := r.pool.QueryRow(ctx, dossierQuery, dossierID, orgID).Scan(
 		&d.ID, &d.OrganizationID, &d.DossierCode, &procCodeStr, &d.InternalReference,
 		&d.ANPPDepositDate, &d.ANPPValidityEndDate, &d.TargetDepositDate,
 		&d.WorkingDaysPerWeek,
@@ -788,16 +797,16 @@ func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossie
 }
 
 // UpdateDossierTargetDates permet de fixer ou ajuster la date cible de dépôt, l'échéance de validité AMM et la base de jours ouvrables
-func (r *WorkflowRepository) UpdateDossierTargetDates(ctx context.Context, dossierID uuid.UUID, targetDate, validityEndDate *time.Time, workingDaysPerWeek *int) error {
+func (r *WorkflowRepository) UpdateDossierTargetDates(ctx context.Context, orgID, dossierID uuid.UUID, targetDate, validityEndDate *time.Time, workingDaysPerWeek *int) error {
 	query := `
 		UPDATE dossiers
-		SET target_deposit_date = $2,
-		    anpp_validity_end_date = COALESCE($3, anpp_validity_end_date),
-		    working_days_per_week = COALESCE($4, working_days_per_week),
+		SET target_deposit_date = $3,
+		    anpp_validity_end_date = COALESCE($4, anpp_validity_end_date),
+		    working_days_per_week = COALESCE($5, working_days_per_week),
 		    updated_at = NOW()
-		WHERE id = $1
+		WHERE id = $1 AND organization_id = $2
 	`
-	tag, err := r.pool.Exec(ctx, query, dossierID, targetDate, validityEndDate, workingDaysPerWeek)
+	tag, err := r.pool.Exec(ctx, query, dossierID, orgID, targetDate, validityEndDate, workingDaysPerWeek)
 	if err != nil {
 		return fmt.Errorf("échec mise à jour dates cibles dossier : %w", err)
 	}
@@ -808,7 +817,17 @@ func (r *WorkflowRepository) UpdateDossierTargetDates(ctx context.Context, dossi
 }
 
 // SyncSmartPlanningDueDates propage les dates du chemin critique inversé dans les due_date des items du dossier
-func (r *WorkflowRepository) SyncSmartPlanningDueDates(ctx context.Context, dossierID uuid.UUID, dueDates map[string]time.Time) (int, error) {
+func (r *WorkflowRepository) SyncSmartPlanningDueDates(ctx context.Context, orgID, dossierID uuid.UUID, dueDates map[string]time.Time) (int, error) {
+	// Vérification stricte de l'isolation tenant sur le dossier
+	var exists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, dossierID, orgID).Scan(&exists)
+	if err != nil {
+		return 0, fmt.Errorf("erreur vérification appartenance dossier : %w", err)
+	}
+	if !exists {
+		return 0, ErrNotFound
+	}
+
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("échec début transaction sync dates : %w", err)

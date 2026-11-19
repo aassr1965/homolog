@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -220,5 +221,58 @@ func TestSmartPlanningAPIIntegration(t *testing.T) {
 	}
 	if dueDateCheck == nil {
 		t.Fatalf("due_date pour 3.2.P.8 n'a pas été mise à jour en base")
+	}
+
+	// =========================================================================
+	// TEST 4 : Isolation Multi-Tenant (Sécurité d'accès cross-tenant)
+	// =========================================================================
+	otherOrgID := uuid.New()
+	otherOrgUser := &auth.SessionUser{
+		UserID:         uuid.New(),
+		OrganizationID: otherOrgID,
+		Role:           "directeur_technique",
+		Email:          "unauthorized@competitor.dz",
+	}
+
+	routerCrossTenant := chi.NewRouter()
+	routerCrossTenant.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), UserContextKey, otherOrgUser))
+			next.ServeHTTP(w, r)
+		})
+	})
+	routerCrossTenant.Get("/api/v1/dossiers/{id}/smart-planning", wfHandler.GetDossierSmartPlanning)
+	routerCrossTenant.Post("/api/v1/dossiers/{id}/smart-planning/set-target", wfHandler.SetDossierTargetDates)
+	routerCrossTenant.Post("/api/v1/dossiers/{id}/smart-planning/sync-due-dates", wfHandler.SyncSmartPlanningDueDates)
+
+	// 4.1 Tentative de lecture cross-tenant du Smart Planning -> Doit être 404
+	reqCrossGet := httptest.NewRequest("GET", "/api/v1/dossiers/"+dossierID.String()+"/smart-planning", nil)
+	wCrossGet := httptest.NewRecorder()
+	routerCrossTenant.ServeHTTP(wCrossGet, reqCrossGet)
+	if wCrossGet.Code != http.StatusNotFound {
+		t.Fatalf("Attendu HTTP 404 (isolation multi-tenant) pour GET smart-planning, obtenu %d: %s", wCrossGet.Code, wCrossGet.Body.String())
+	}
+
+	// 4.2 Tentative d'écriture cross-tenant des dates cibles -> Doit être 404
+	reqCrossSet := httptest.NewRequest("POST", "/api/v1/dossiers/"+dossierID.String()+"/smart-planning/set-target", bytes.NewReader(bodySet))
+	reqCrossSet.Header.Set("Content-Type", "application/json")
+	wCrossSet := httptest.NewRecorder()
+	routerCrossTenant.ServeHTTP(wCrossSet, reqCrossSet)
+	if wCrossSet.Code != http.StatusNotFound {
+		t.Fatalf("Attendu HTTP 404 (isolation multi-tenant) pour set-target, obtenu %d: %s", wCrossSet.Code, wCrossSet.Body.String())
+	}
+
+	// 4.3 Tentative de propagation cross-tenant des dates -> Doit être 404
+	reqCrossSync := httptest.NewRequest("POST", "/api/v1/dossiers/"+dossierID.String()+"/smart-planning/sync-due-dates", nil)
+	wCrossSync := httptest.NewRecorder()
+	routerCrossTenant.ServeHTTP(wCrossSync, reqCrossSync)
+	if wCrossSync.Code != http.StatusNotFound {
+		t.Fatalf("Attendu HTTP 404 (isolation multi-tenant) pour sync-due-dates, obtenu %d: %s", wCrossSync.Code, wCrossSync.Body.String())
+	}
+
+	// 4.4 Vérification au niveau Repository direct
+	_, errRepoCross := wfRepo.GetDossierSmartPlanning(ctx, otherOrgID, dossierID)
+	if !errors.Is(errRepoCross, repository.ErrNotFound) {
+		t.Fatalf("Attendu ErrNotFound au niveau repository pour autre org, obtenu: %v", errRepoCross)
 	}
 }
