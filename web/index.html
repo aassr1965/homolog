@@ -3278,8 +3278,19 @@
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-master-templates')">✕</button>
             </div>
-            <div class="modal-body" id="master-templates-list" style="overflow-y:auto; flex:1;">
-                <!-- Chargé dynamiquement -->
+            <div class="modal-body" id="master-templates-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; gap:6px; flex-wrap:wrap; padding-bottom:8px; border-bottom:1px solid var(--border-color);">
+                    <button class="btn-pill btn-tpl-cat active" id="btn-tpl-cat-ALL" onclick="filterMasterTemplates('ALL')">Tous (10)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-information_produit" onclick="filterMasterTemplates('information_produit')">Notice &amp; RCP (1.P)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-qualite_cmc" onclick="filterMasterTemplates('qualite_cmc')">Qualité CMC &amp; Stabilités (M3)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-synthese_qualite" onclick="filterMasterTemplates('synthese_qualite')">QOS Qualité (M2.3)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-production" onclick="filterMasterTemplates('production')">Validation Procédé (M3)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-lettre_engagement" onclick="filterMasterTemplates('lettre_engagement')">Lettres d'Engagement</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-dispositif_medical" onclick="filterMasterTemplates('dispositif_medical')">Dispositifs Médicaux (DM)</button>
+                </div>
+                <div id="master-templates-cards" style="overflow-y:auto; flex:1;">
+                    <!-- Chargé dynamiquement -->
+                </div>
             </div>
             <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
                 <button type="button" class="btn-pill" onclick="closeModal('modal-master-templates')">Fermer</button>
