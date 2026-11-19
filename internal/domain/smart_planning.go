@@ -487,6 +487,9 @@ func CalculateRequiredWorkingDays(milestones []SmartPlanningMilestone) int {
 func checkMilestoneCompletion(code SmartPlanningMilestoneCode, d *Dossier, itemsByCode map[string]ChecklistItem) (bool, string) {
 	switch code {
 	case MilestoneJ240StabilitiesZoneIVb:
+		if d.ProductType == ProductTypeMedicalDevice || d.ProcedureCode == ProcedureDM {
+			return true, "Non applicable aux Dispositifs Médicaux"
+		}
 		// Stabilités 3.2.P.8 au moins en revue ou scellées
 		it, exists := itemsByCode["3.2.P.8"]
 		if exists && isWorkflowStatusAtLeast(it.WorkflowStatus, WorkflowStatusUnderReview) {
@@ -495,6 +498,9 @@ func checkMilestoneCompletion(code SmartPlanningMilestoneCode, d *Dossier, items
 		return false, ""
 
 	case MilestoneJ150QOSCheckerReview:
+		if d.ProductType == ProductTypeMedicalDevice || d.ProcedureCode == ProcedureDM {
+			return true, "Non applicable aux Dispositifs Médicaux"
+		}
 		// QOS 2.3 au moins en revue Checker
 		it, exists := itemsByCode["2.3"]
 		if exists && isWorkflowStatusAtLeast(it.WorkflowStatus, WorkflowStatusUnderReview) {
