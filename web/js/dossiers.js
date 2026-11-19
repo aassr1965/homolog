@@ -146,11 +146,12 @@
         function getDossierCriticalityScore(d) {
             const sp = d.smart_planning_summary;
             if (!sp) return 0;
-            if (sp.overall_health === 'FATAL_BLOCK') return 4;
-            if (sp.overall_health === 'CRITICAL_DELAY') return 3;
-            if (sp.overall_health === 'WARNING_TIGHT') return 2;
-            if (!sp.is_target_date_sufficient) return 2;
-            return 1;
+            const isOverdue = sp.days_to_target_deposit !== undefined && sp.days_to_target_deposit < 0;
+            const isFatal = sp.overall_health === 'FATAL_BLOCK';
+            const isCriticalDelay = sp.overall_health === 'CRITICAL_DELAY';
+            if (isOverdue || isFatal) return 3;
+            if (isCriticalDelay) return 2;
+            return 0; // Dossier sans date critique ou dépassée (contour simple)
         }
 
         async function loadDossiers(procFilter = '') {
@@ -180,7 +181,11 @@
                 if (procFilter === 'CRITICAL') {
                     fetchedDossiers = (allDossiersCache.length > 0 ? allDossiersCache : fetchedDossiers).filter(d => {
                         const sp = d.smart_planning_summary;
-                        return sp && (sp.overall_health === 'FATAL_BLOCK' || sp.overall_health === 'CRITICAL_DELAY' || sp.overall_health === 'WARNING_TIGHT' || !sp.is_target_date_sufficient);
+                        if (!sp) return false;
+                        const isOverdue = sp.days_to_target_deposit !== undefined && sp.days_to_target_deposit < 0;
+                        const isFatal = sp.overall_health === 'FATAL_BLOCK';
+                        const isCriticalDelay = sp.overall_health === 'CRITICAL_DELAY';
+                        return isOverdue || isFatal || isCriticalDelay;
                     });
                 }
 
@@ -234,7 +239,11 @@
             const dossiersPool = (allDossiersCache && allDossiersCache.length > 0) ? allDossiersCache : currentDossiers;
             const criticalCount = dossiersPool.filter(d => {
                 const sp = d.smart_planning_summary;
-                return sp && (sp.overall_health === 'FATAL_BLOCK' || sp.overall_health === 'CRITICAL_DELAY' || sp.overall_health === 'WARNING_TIGHT' || !sp.is_target_date_sufficient);
+                if (!sp) return false;
+                const isOverdue = sp.days_to_target_deposit !== undefined && sp.days_to_target_deposit < 0;
+                const isFatal = sp.overall_health === 'FATAL_BLOCK';
+                const isCriticalDelay = sp.overall_health === 'CRITICAL_DELAY';
+                return isOverdue || isFatal || isCriticalDelay;
             }).length;
 
             let html = `
@@ -285,39 +294,41 @@
                     let statusLabel = formatDossierStatusBadge(d.status);
 
                     const sp = d.smart_planning_summary;
+                    const isOverdue = sp && (sp.days_to_target_deposit !== undefined && sp.days_to_target_deposit < 0);
                     const isFatal = sp && sp.overall_health === 'FATAL_BLOCK';
-                    const isCritical = sp && (sp.overall_health === 'CRITICAL_DELAY' || !sp.is_target_date_sufficient);
-                    const isWarning = sp && sp.overall_health === 'WARNING_TIGHT';
+                    const isCriticalDelay = sp && sp.overall_health === 'CRITICAL_DELAY';
+                    const hasCriticalOrOverdueDate = isOverdue || isFatal || isCriticalDelay;
 
-                    let cardBorderClass = '';
-                    let cardCustomStyle = '';
+                    let cardBorderClass = 'tree-dossier-simple';
+                    let cardCustomStyle = 'border: 1px solid var(--border-color) !important; border-left: 1px solid var(--border-color) !important; background: var(--bg-surface) !important;';
                     let healthBadgeHTML = '';
                     let jalonAlertHTML = '';
 
-                    if (isFatal) {
-                        cardBorderClass = 'critical-fatal';
-                        cardCustomStyle = 'border-left: 4.5px solid #dc2626 !important; background: rgba(239,68,68,0.03);';
-                        healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Rupture calendaire sur jalon incompressible ANPP">🚨 Rupture</span>`;
-                    } else if (isCritical) {
-                        cardBorderClass = 'critical-delay';
-                        cardCustomStyle = 'border-left: 4.5px solid #ea580c !important; background: rgba(234,88,12,0.03);';
-                        healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Retard critique sur le chemin critique">⚠️ Retard</span>`;
-                    } else if (isWarning) {
-                        cardBorderClass = 'critical-warning';
-                        cardCustomStyle = 'border-left: 4.5px solid #f59e0b !important; background: rgba(245,158,11,0.02);';
-                        healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fffbeb; color:#b45309; border:1px solid #fde68a; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Marge restreinte sur les délais">⏱️ Tendu</span>`;
-                    }
+                    if (hasCriticalOrOverdueDate) {
+                        if (isFatal || isOverdue) {
+                            cardBorderClass = 'critical-fatal';
+                            cardCustomStyle = 'border-left: 4.5px solid #dc2626 !important; background: rgba(239,68,68,0.03);';
+                            healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Rupture calendaire sur jalon incompressible ANPP">🚨 ${isOverdue ? 'Dépassé' : 'Rupture'}</span>`;
+                        } else if (isCriticalDelay) {
+                            cardBorderClass = 'critical-delay';
+                            cardCustomStyle = 'border-left: 4.5px solid #ea580c !important; background: rgba(234,88,12,0.03);';
+                            healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Retard critique sur le chemin critique">⚠️ Retard</span>`;
+                        }
 
-                    if (sp && sp.active_critical_milestone_name && (isFatal || isCritical || isWarning)) {
-                        const jColor = (isFatal || isCritical) ? '#b91c1c' : '#b45309';
-                        const jBg = (isFatal || isCritical) ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)';
-                        const jBorder = (isFatal || isCritical) ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)';
-                        jalonAlertHTML = `
-                            <div style="font-size:9.5px; color:${jColor}; background:${jBg}; border:1px solid ${jBorder}; padding:2px 6px; border-radius:3px; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Jalon critique bloquant : ${escapeHTML(sp.active_critical_milestone_name)}">
-                                <span style="flex-shrink:0;">⏳</span>
-                                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Jalon : <strong>${escapeHTML(sp.active_critical_milestone_name)}</strong></span>
-                            </div>
-                        `;
+                        if (sp && sp.active_critical_milestone_name) {
+                            jalonAlertHTML = `
+                                <div style="font-size:9.5px; color:#b91c1c; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:2px 6px; border-radius:3px; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Jalon critique bloquant : ${escapeHTML(sp.active_critical_milestone_name)}">
+                                    <span style="flex-shrink:0;">⏳</span>
+                                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Jalon : <strong>${escapeHTML(sp.active_critical_milestone_name)}</strong></span>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Pour les dossiers sans date critique ou dépassée : contour simple, sobre et épuré
+                        cardBorderClass = 'tree-dossier-simple';
+                        cardCustomStyle = 'border: 1px solid var(--border-color) !important; border-left: 1px solid var(--border-color) !important; background: var(--bg-surface) !important;';
+                        healthBadgeHTML = '';
+                        jalonAlertHTML = '';
                     }
 
                     html += `
@@ -332,7 +343,7 @@
                                     </div>
                                     <div style="display:flex; align-items:center; gap:5px;">
                                         ${sp && sp.days_to_target_deposit !== undefined ? `
-                                            <span style="font-size:9.5px; font-weight:700; color:${sp.days_to_target_deposit < 0 || isFatal ? '#dc2626' : 'var(--text-dim)'};" title="Délai par rapport à la date butoir">
+                                            <span style="font-size:9.5px; font-weight:700; color:${hasCriticalOrOverdueDate ? '#dc2626' : 'var(--text-dim)'};" title="Délai par rapport à la date butoir">
                                                 ${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit}` : `+${Math.abs(sp.days_to_target_deposit)}j`}
                                             </span>
                                         ` : ''}
