@@ -196,3 +196,91 @@ func TestCalculateSmartDueDates(t *testing.T) {
 		t.Fatalf("Échéance erronée pour 1.A.7 : attendu %v, obtenu %v", targetDeposit.AddDate(0, 0, -15), dueDates["1.A.7"])
 	}
 }
+
+func TestAddWorkingDays(t *testing.T) {
+	// Jeudi 19 Novembre 2026
+	startThursday := time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)
+
+	// Cas 1 : 5 jours ouvrables par semaine (Week-end algérien : Vendredi 20 et Samedi 21 chômés)
+	// +1 jour ouvré depuis jeudi 19 -> Dimanche 22 Novembre
+	d1 := AddWorkingDays(startThursday, 1, 5)
+	expectedD1 := time.Date(2026, 11, 22, 0, 0, 0, 0, time.UTC)
+	if !d1.Equal(expectedD1) {
+		t.Fatalf("AddWorkingDays 5j (+1j) : attendu %v (Dimanche), obtenu %v (weekday=%v)", expectedD1, d1, d1.Weekday())
+	}
+
+	// +5 jours ouvrés depuis jeudi 19 :
+	// 1: Dim 22, 2: Lun 23, 3: Mar 24, 4: Mer 25, 5: Jeu 26 Novembre
+	d5 := AddWorkingDays(startThursday, 5, 5)
+	expectedD5 := time.Date(2026, 11, 26, 0, 0, 0, 0, time.UTC)
+	if !d5.Equal(expectedD5) {
+		t.Fatalf("AddWorkingDays 5j (+5j) : attendu %v (Jeudi), obtenu %v (weekday=%v)", expectedD5, d5, d5.Weekday())
+	}
+
+	// Cas 2 : 6 jours ouvrables par semaine (Seul Vendredi 20 est chômé, Samedi 21 travaillé)
+	// +1 jour ouvré depuis jeudi 19 -> Samedi 21 Novembre
+	d6_1 := AddWorkingDays(startThursday, 1, 6)
+	expectedD6_1 := time.Date(2026, 11, 21, 0, 0, 0, 0, time.UTC)
+	if !d6_1.Equal(expectedD6_1) {
+		t.Fatalf("AddWorkingDays 6j (+1j) : attendu %v (Samedi), obtenu %v (weekday=%v)", expectedD6_1, d6_1, d6_1.Weekday())
+	}
+}
+
+func TestRecommendedDepositDate_WorkingDays(t *testing.T) {
+	now := time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)
+	// Date de dépôt visée trop courte (dans 30 jours) alors que les stabilités M6 sont à faire
+	shortTarget := now.AddDate(0, 0, 30)
+
+	d := &Dossier{
+		ID:                 uuid.New(),
+		DossierCode:        "DOS-2026-WORKDAYS-NI",
+		ProcedureCode:      ProcedureNI,
+		TargetDepositDate:  &shortTarget,
+		WorkingDaysPerWeek: 5,
+	}
+
+	items := []ChecklistItem{
+		{ItemCode: "3.2.P.8", TitleFR: "Stabilités", WorkflowStatus: WorkflowStatusDraftPending},
+		{ItemCode: "2.3", TitleFR: "QOS", WorkflowStatus: WorkflowStatusDraftPending},
+	}
+
+	analysis := EvaluateSmartPlanning(d, items, now)
+
+	if analysis.WorkingDaysPerWeek != 5 {
+		t.Fatalf("Attendu 5 jours ouvrables par semaine, obtenu %d", analysis.WorkingDaysPerWeek)
+	}
+	if analysis.RequiredWorkingDays != 172 {
+		t.Fatalf("Attendu 172 jours ouvrés requis pour les stabilités M6, obtenu %d", analysis.RequiredWorkingDays)
+	}
+	if analysis.RecommendedDepositDate == nil {
+		t.Fatalf("Attendu une date recommandée non nil")
+	}
+
+	// Vérifier que la date recommandée est bien AddWorkingDays(now, 172, 5)
+	expectedRec := AddWorkingDays(now, 172, 5)
+	if !analysis.RecommendedDepositDate.Equal(expectedRec) {
+		t.Fatalf("Date recommandée erronée : attendu %v, obtenu %v", expectedRec, *analysis.RecommendedDepositDate)
+	}
+
+	// Vérifier que la recommandation textuelle contient bien la date et la mention des jours ouvrables
+	recStr := expectedRec.Format("02/01/2006")
+	if !containsStr(analysis.RecommendedActionFR, recStr) {
+		t.Fatalf("La recommandation réglementaire devrait mentionner la date %s : %s", recStr, analysis.RecommendedActionFR)
+	}
+	if !containsStr(analysis.RecommendedActionFR, "5 jours ouvrables") {
+		t.Fatalf("La recommandation réglementaire devrait mentionner '5 jours ouvrables' : %s", analysis.RecommendedActionFR)
+	}
+}
+
+func containsStr(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || (len(s) > 0 && containsSub(s, substr)))
+}
+
+func containsSub(s, sub string) bool {
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			return true
+		}
+	}
+	return false
+}

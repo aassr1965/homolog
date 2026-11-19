@@ -73,6 +73,7 @@ type Dossier struct {
 	ANPPDecisionDate      *time.Time      `json:"anpp_decision_date,omitempty"`
 	ANPPValidityEndDate   *time.Time      `json:"anpp_validity_end_date,omitempty"`
 	TargetDepositDate     *time.Time      `json:"target_deposit_date,omitempty"`
+	WorkingDaysPerWeek    int             `json:"working_days_per_week"`
 	TrackingNumber        *string         `json:"tracking_number,omitempty"`
 	DepositReceiptRef     *string         `json:"deposit_receipt_ref,omitempty"`
 	DepositReceiptDate    *time.Time      `json:"deposit_receipt_date,omitempty"`
