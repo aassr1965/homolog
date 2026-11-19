@@ -141,6 +141,18 @@
             return { key: 'AUTRE', title: 'Autres exigences réglementaires', order: 999 };
         }
 
+        let allDossiersCache = [];
+
+        function getDossierCriticalityScore(d) {
+            const sp = d.smart_planning_summary;
+            if (!sp) return 0;
+            if (sp.overall_health === 'FATAL_BLOCK') return 4;
+            if (sp.overall_health === 'CRITICAL_DELAY') return 3;
+            if (sp.overall_health === 'WARNING_TIGHT') return 2;
+            if (!sp.is_target_date_sufficient) return 2;
+            return 1;
+        }
+
         async function loadDossiers(procFilter = '') {
             currentDossierFilterProc = procFilter;
             const treeRoot = document.getElementById("tree-root");
@@ -149,7 +161,7 @@
             }
 
             let url = '/api/v1/dossiers';
-            if (procFilter) url += `?procedure_code=${encodeURIComponent(procFilter)}`;
+            if (procFilter && procFilter !== 'CRITICAL') url += `?procedure_code=${encodeURIComponent(procFilter)}`;
 
             try {
                 const res = await fetch(url);
@@ -159,7 +171,28 @@
                 }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
-                currentDossiers = data.dossiers || [];
+                let fetchedDossiers = data.dossiers || [];
+
+                if (procFilter === '' || allDossiersCache.length === 0) {
+                    if (procFilter === '') allDossiersCache = fetchedDossiers;
+                }
+
+                if (procFilter === 'CRITICAL') {
+                    fetchedDossiers = (allDossiersCache.length > 0 ? allDossiersCache : fetchedDossiers).filter(d => {
+                        const sp = d.smart_planning_summary;
+                        return sp && (sp.overall_health === 'FATAL_BLOCK' || sp.overall_health === 'CRITICAL_DELAY' || sp.overall_health === 'WARNING_TIGHT' || !sp.is_target_date_sufficient);
+                    });
+                }
+
+                // Ordonnancement automatique : placer les dossiers en alerte/rupture calendaire en tête de liste
+                fetchedDossiers.sort((a, b) => {
+                    const scoreA = getDossierCriticalityScore(a);
+                    const scoreB = getDossierCriticalityScore(b);
+                    if (scoreA !== scoreB) return scoreB - scoreA;
+                    return (b.created_at || '').localeCompare(a.created_at || '');
+                });
+
+                currentDossiers = fetchedDossiers;
 
                 if (currentDossiers.length > 0) {
                     const exists = currentDossiers.some(d => d.id === selectedDossierId);
@@ -198,6 +231,12 @@
 
             const isConsultant = typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe');
 
+            const dossiersPool = (allDossiersCache && allDossiersCache.length > 0) ? allDossiersCache : currentDossiers;
+            const criticalCount = dossiersPool.filter(d => {
+                const sp = d.smart_planning_summary;
+                return sp && (sp.overall_health === 'FATAL_BLOCK' || sp.overall_health === 'CRITICAL_DELAY' || sp.overall_health === 'WARNING_TIGHT' || !sp.is_target_date_sufficient);
+            }).length;
+
             let html = `
                 <div style="padding:10px; border-bottom:1px solid var(--border-color); display:flex; flex-direction:column; gap:8px;">
                     ${isConsultant ? `
@@ -211,7 +250,8 @@
                         </button>
                     `}
                     <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch;">
-                        <button class="btn-pill ${currentDossierFilterProc === '' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('')">Tous (${currentDossiers.length})</button>
+                        <button class="btn-pill ${currentDossierFilterProc === '' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('')">Tous (${dossiersPool.length})</button>
+                        <button class="btn-pill ${currentDossierFilterProc === 'CRITICAL' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0; ${criticalCount > 0 ? (currentDossierFilterProc === 'CRITICAL' ? 'background:#dc2626; color:white;' : 'background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.3);') : ''}" onclick="loadDossiers('CRITICAL')" title="Filtrer les dossiers en rupture calendaire ou jalon critique">🚨 Alertes (${criticalCount})</button>
                         <button class="btn-pill ${currentDossierFilterProc === 'NI' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('NI')">NI</button>
                         <button class="btn-pill ${currentDossierFilterProc === 'NF' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('NF')">NF</button>
                         <button class="btn-pill ${currentDossierFilterProc === 'RI' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('RI')">RI/RF</button>
@@ -244,20 +284,65 @@
 
                     let statusLabel = formatDossierStatusBadge(d.status);
 
+                    const sp = d.smart_planning_summary;
+                    const isFatal = sp && sp.overall_health === 'FATAL_BLOCK';
+                    const isCritical = sp && (sp.overall_health === 'CRITICAL_DELAY' || !sp.is_target_date_sufficient);
+                    const isWarning = sp && sp.overall_health === 'WARNING_TIGHT';
+
+                    let cardBorderClass = '';
+                    let cardCustomStyle = '';
+                    let healthBadgeHTML = '';
+                    let jalonAlertHTML = '';
+
+                    if (isFatal) {
+                        cardBorderClass = 'critical-fatal';
+                        cardCustomStyle = 'border-left: 4.5px solid #dc2626 !important; background: rgba(239,68,68,0.03);';
+                        healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Rupture calendaire sur jalon incompressible ANPP">🚨 Rupture</span>`;
+                    } else if (isCritical) {
+                        cardBorderClass = 'critical-delay';
+                        cardCustomStyle = 'border-left: 4.5px solid #ea580c !important; background: rgba(234,88,12,0.03);';
+                        healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Retard critique sur le chemin critique">⚠️ Retard</span>`;
+                    } else if (isWarning) {
+                        cardBorderClass = 'critical-warning';
+                        cardCustomStyle = 'border-left: 4.5px solid #f59e0b !important; background: rgba(245,158,11,0.02);';
+                        healthBadgeHTML = `<span style="font-size:9px; font-weight:800; background:#fffbeb; color:#b45309; border:1px solid #fde68a; padding:1px 5px; border-radius:3px; display:inline-flex; align-items:center; gap:3px;" title="Marge restreinte sur les délais">⏱️ Tendu</span>`;
+                    }
+
+                    if (sp && sp.active_critical_milestone_name && (isFatal || isCritical || isWarning)) {
+                        const jColor = (isFatal || isCritical) ? '#b91c1c' : '#b45309';
+                        const jBg = (isFatal || isCritical) ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)';
+                        const jBorder = (isFatal || isCritical) ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)';
+                        jalonAlertHTML = `
+                            <div style="font-size:9.5px; color:${jColor}; background:${jBg}; border:1px solid ${jBorder}; padding:2px 6px; border-radius:3px; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Jalon critique bloquant : ${escapeHTML(sp.active_critical_milestone_name)}">
+                                <span style="flex-shrink:0;">⏳</span>
+                                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Jalon : <strong>${escapeHTML(sp.active_critical_milestone_name)}</strong></span>
+                            </div>
+                        `;
+                    }
+
                     html += `
-                        <div class="tree-dossier-root ${isSel ? 'selected' : ''} ${isExp ? 'expanded' : ''}" id="tree-dossier-${d.id}">
+                        <div class="tree-dossier-root ${isSel ? 'selected' : ''} ${isExp ? 'expanded' : ''} ${cardBorderClass}" id="tree-dossier-${d.id}" style="${cardCustomStyle}">
                             <div class="tree-dossier-header" onclick="selectDossier('${d.id}')">
                                 <div class="tree-dossier-toprow">
-                                    <div class="tree-dossier-code">
+                                    <div class="tree-dossier-code" style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
                                         <span onclick="toggleDossierTreeItem(event, '${d.id}')" style="cursor:pointer; display:inline-block; width:14px; text-align:center; color:var(--text-dim);" title="${isExp ? 'Replier l\'arbre' : 'Déplier l\'arbre'}">${isExp ? '▼' : '▶'}</span>
                                         <span class="${pBadgeClass}">${escapeHTML(d.procedure_code)}</span>
                                         <span>${escapeHTML(d.dossier_code)}</span>
+                                        ${healthBadgeHTML}
                                     </div>
-                                    ${statusLabel}
+                                    <div style="display:flex; align-items:center; gap:5px;">
+                                        ${sp && sp.days_to_target_deposit !== undefined ? `
+                                            <span style="font-size:9.5px; font-weight:700; color:${sp.days_to_target_deposit < 0 || isFatal ? '#dc2626' : 'var(--text-dim)'};" title="Délai par rapport à la date butoir">
+                                                ${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit}` : `+${Math.abs(sp.days_to_target_deposit)}j`}
+                                            </span>
+                                        ` : ''}
+                                        ${statusLabel}
+                                    </div>
                                 </div>
                                 <div class="tree-dossier-product" title="${prodName}">
                                     ${prodName}
                                 </div>
+                                ${jalonAlertHTML}
                                 <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-dim); margin-top:2px;">
                                     <span>Complétude</span>
                                     <strong style="color:var(--text-main);">${pct}%</strong>
