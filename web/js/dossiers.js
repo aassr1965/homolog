@@ -2363,7 +2363,7 @@
                         <span style="font-size:11px; font-weight:700; color:${sp.days_to_target_deposit >= 0 ? 'var(--text-main)' : '#dc2626'};">
                             (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassé de ${Math.abs(sp.days_to_target_deposit)}j`})
                         </span>
-                        <span style="font-size:10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:2px 6px; border-radius:3px; font-weight:700; cursor:pointer;" onclick="showAlgerianHolidaysModal()" title="Cliquer pour afficher le calendrier complet des jours fériés légaux en Algérie (Loi 63-278)">
+                        <span style="font-size:10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:2px 6px; border-radius:3px; font-weight:700; cursor:pointer;" onclick="showAlgerianHolidaysModal()" title="Cliquer pour afficher le calendrier officiel des jours fériés légaux en Algérie (Loi 63-278 modifiée par la Loi 23-07)">
                             📅 ${workingDays}j ouvrés/sem. ${sp.holidays_excluded_count > 0 ? `• ${sp.holidays_excluded_count} fériés déduits ↗` : ''}
                         </span>
                     </div>

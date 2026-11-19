@@ -295,6 +295,19 @@ func TestAddWorkingDays_AlgerianHolidays(t *testing.T) {
 		t.Fatalf("Le 1er Novembre aurait dû être exclu : attendu %v (Lundi), obtenu %v (%s)",
 			expectedNov2, resultNov, resultNov.Weekday())
 	}
+
+	// Cas 3 : Aïd El-Fitr 2026 (Loi n° 23-07 portant à 3 jours chômés payés)
+	// En 2026 : Vendredi 20/03 (J1), Samedi 21/03 (J2), Dimanche 22/03 (J3).
+	// Le dimanche est normalement ouvré en Algérie, mais le 3ème jour de l'Aïd (22/03/2026) est légalement chômé et payé !
+	// Jeudi 19/03/2026 -> +1 jour ouvré doit sauter Vendredi, Samedi et Dimanche (J3 de l'Aïd) et atterrir le Lundi 23/03/2026 !
+	thursdayBeforeEid := time.Date(2026, 3, 19, 0, 0, 0, 0, time.UTC)
+	resultEid := AddWorkingDays(thursdayBeforeEid, 1, 5)
+	expectedMondayPostEid := time.Date(2026, 3, 23, 0, 0, 0, 0, time.UTC)
+
+	if !resultEid.Equal(expectedMondayPostEid) {
+		t.Fatalf("Le 3ème jour de l'Aïd El-Fitr (Loi 23-07, Dimanche 22/03/2026) aurait dû être exclu : attendu %v (Lundi), obtenu %v (%s)",
+			expectedMondayPostEid, resultEid, resultEid.Weekday())
+	}
 }
 
 func containsStr(s, substr string) bool {

@@ -20,11 +20,13 @@ INSERT INTO algerian_holidays (holiday_date, name_fr, holiday_type) VALUES
     ('2026-05-01', 'Fête du Travail', 'NATIONAL'),
     ('2026-07-05', 'Fête de l''Indépendance et de la Jeunesse', 'NATIONAL'),
     ('2026-11-01', 'Fête de la Révolution (1er Novembre)', 'NATIONAL'),
-    -- 2026 : Fêtes religieuses chômées payées
+    -- 2026 : Fêtes religieuses chômées payées (Loi 23-07 : 3 jours pour les 2 Aïds)
     ('2026-03-20', 'Aïd El-Fitr (Jour 1)', 'RELIGIEUX'),
     ('2026-03-21', 'Aïd El-Fitr (Jour 2)', 'RELIGIEUX'),
+    ('2026-03-22', 'Aïd El-Fitr (Jour 3)', 'RELIGIEUX'),
     ('2026-05-27', 'Aïd El-Adha (Jour 1)', 'RELIGIEUX'),
     ('2026-05-28', 'Aïd El-Adha (Jour 2)', 'RELIGIEUX'),
+    ('2026-05-29', 'Aïd El-Adha (Jour 3)', 'RELIGIEUX'),
     ('2026-06-16', '1er Moharram (Nouvel An de l''Hégire)', 'RELIGIEUX'),
     ('2026-06-25', 'Achoura (10 Moharram)', 'RELIGIEUX'),
     ('2026-08-25', 'El Mawlid Ennabawi Echarif', 'RELIGIEUX'),
@@ -35,11 +37,13 @@ INSERT INTO algerian_holidays (holiday_date, name_fr, holiday_type) VALUES
     ('2027-05-01', 'Fête du Travail', 'NATIONAL'),
     ('2027-07-05', 'Fête de l''Indépendance et de la Jeunesse', 'NATIONAL'),
     ('2027-11-01', 'Fête de la Révolution (1er Novembre)', 'NATIONAL'),
-    -- 2027 : Fêtes religieuses chômées payées
+    -- 2027 : Fêtes religieuses chômées payées (Loi 23-07 : 3 jours pour les 2 Aïds)
     ('2027-03-10', 'Aïd El-Fitr (Jour 1)', 'RELIGIEUX'),
     ('2027-03-11', 'Aïd El-Fitr (Jour 2)', 'RELIGIEUX'),
+    ('2027-03-12', 'Aïd El-Fitr (Jour 3)', 'RELIGIEUX'),
     ('2027-05-17', 'Aïd El-Adha (Jour 1)', 'RELIGIEUX'),
     ('2027-05-18', 'Aïd El-Adha (Jour 2)', 'RELIGIEUX'),
+    ('2027-05-19', 'Aïd El-Adha (Jour 3)', 'RELIGIEUX'),
     ('2027-06-06', '1er Moharram (Nouvel An de l''Hégire)', 'RELIGIEUX'),
     ('2027-06-15', 'Achoura (10 Moharram)', 'RELIGIEUX'),
     ('2027-08-15', 'El Mawlid Ennabawi Echarif', 'RELIGIEUX'),
@@ -50,11 +54,13 @@ INSERT INTO algerian_holidays (holiday_date, name_fr, holiday_type) VALUES
     ('2028-05-01', 'Fête du Travail', 'NATIONAL'),
     ('2028-07-05', 'Fête de l''Indépendance et de la Jeunesse', 'NATIONAL'),
     ('2028-11-01', 'Fête de la Révolution (1er Novembre)', 'NATIONAL'),
-    -- 2028 : Fêtes religieuses chômées payées
+    -- 2028 : Fêtes religieuses chômées payées (Loi 23-07 : 3 jours pour les 2 Aïds)
     ('2028-02-27', 'Aïd El-Fitr (Jour 1)', 'RELIGIEUX'),
     ('2028-02-28', 'Aïd El-Fitr (Jour 2)', 'RELIGIEUX'),
+    ('2028-02-29', 'Aïd El-Fitr (Jour 3)', 'RELIGIEUX'),
     ('2028-05-05', 'Aïd El-Adha (Jour 1)', 'RELIGIEUX'),
     ('2028-05-06', 'Aïd El-Adha (Jour 2)', 'RELIGIEUX'),
+    ('2028-05-07', 'Aïd El-Adha (Jour 3)', 'RELIGIEUX'),
     ('2028-05-25', '1er Moharram (Nouvel An de l''Hégire)', 'RELIGIEUX'),
     ('2028-06-03', 'Achoura (10 Moharram)', 'RELIGIEUX'),
     ('2028-08-03', 'El Mawlid Ennabawi Echarif', 'RELIGIEUX')
