@@ -344,7 +344,7 @@ func EvaluateSmartPlanning(d *Dossier, items []ChecklistItem, now time.Time) *Sm
 	return analysis
 }
 
-// DefaultAlgerianHolidays répertorie les jours fériés légaux et chômés en Algérie (Loi n° 63-278 modifiée)
+// DefaultAlgerianHolidays répertorie les jours fériés légaux et chômés en Algérie (Loi n° 63-278 modifiée par la Loi n° 23-07 du 3 mai 2023 - 3 jours pour l'Aïd)
 var DefaultAlgerianHolidays = map[string]string{
 	// Fêtes nationales fixes (format MM-DD)
 	"01-01": "Jour de l'An",
@@ -353,29 +353,35 @@ var DefaultAlgerianHolidays = map[string]string{
 	"07-05": "Fête de l'Indépendance et de la Jeunesse",
 	"11-01": "Fête de la Révolution (1er Novembre)",
 
-	// Fêtes religieuses chômées payées 2026 (format YYYY-MM-DD)
+	// Fêtes religieuses chômées payées 2026 (format YYYY-MM-DD - Loi 23-07 : 3 jours chômés pour Aïd El-Fitr et Aïd El-Adha)
 	"2026-03-20": "Aïd El-Fitr (Jour 1)",
 	"2026-03-21": "Aïd El-Fitr (Jour 2)",
+	"2026-03-22": "Aïd El-Fitr (Jour 3)",
 	"2026-05-27": "Aïd El-Adha (Jour 1)",
 	"2026-05-28": "Aïd El-Adha (Jour 2)",
+	"2026-05-29": "Aïd El-Adha (Jour 3)",
 	"2026-06-16": "1er Moharram (Nouvel An de l'Hégire)",
 	"2026-06-25": "Achoura (10 Moharram)",
 	"2026-08-25": "El Mawlid Ennabawi Echarif",
 
-	// Fêtes religieuses chômées payées 2027 (format YYYY-MM-DD)
+	// Fêtes religieuses chômées payées 2027 (format YYYY-MM-DD - Loi 23-07 : 3 jours chômés pour Aïd El-Fitr et Aïd El-Adha)
 	"2027-03-10": "Aïd El-Fitr (Jour 1)",
 	"2027-03-11": "Aïd El-Fitr (Jour 2)",
+	"2027-03-12": "Aïd El-Fitr (Jour 3)",
 	"2027-05-17": "Aïd El-Adha (Jour 1)",
 	"2027-05-18": "Aïd El-Adha (Jour 2)",
+	"2027-05-19": "Aïd El-Adha (Jour 3)",
 	"2027-06-06": "1er Moharram (Nouvel An de l'Hégire)",
 	"2027-06-15": "Achoura (10 Moharram)",
 	"2027-08-15": "El Mawlid Ennabawi Echarif",
 
-	// Fêtes religieuses chômées payées 2028 (format YYYY-MM-DD)
+	// Fêtes religieuses chômées payées 2028 (format YYYY-MM-DD - Loi 23-07 : 3 jours chômés pour Aïd El-Fitr et Aïd El-Adha)
 	"2028-02-27": "Aïd El-Fitr (Jour 1)",
 	"2028-02-28": "Aïd El-Fitr (Jour 2)",
+	"2028-02-29": "Aïd El-Fitr (Jour 3)",
 	"2028-05-05": "Aïd El-Adha (Jour 1)",
 	"2028-05-06": "Aïd El-Adha (Jour 2)",
+	"2028-05-07": "Aïd El-Adha (Jour 3)",
 	"2028-05-25": "1er Moharram (Nouvel An de l'Hégire)",
 	"2028-06-03": "Achoura (10 Moharram)",
 	"2028-08-03": "El Mawlid Ennabawi Echarif",

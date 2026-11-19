@@ -791,7 +791,7 @@ func (h *WorkflowHandler) GetAlgerianHolidays(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"holidays":        holidays,
 		"count":           len(holidays),
-		"legal_reference": "Loi n° 63-278 du 26 juillet 1963 modifiée et complétée relative aux fêtes légales",
+		"legal_reference": "Loi n° 63-278 du 26 juillet 1963 modifiée et complétée par la Loi n° 23-07 du 3 mai 2023 (extension à 3 jours chômés payés pour l'Aïd El-Fitr et l'Aïd El-Adha)",
 	})
 }
 
