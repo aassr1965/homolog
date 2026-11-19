@@ -11,6 +11,8 @@
     let currentDeptFilter = 'ALL';
     let currentGatingFilter = 'ALL';
     let currentSearchTerm = '';
+    let isParapheurMaximized = false;
+    let parapheurPrevStyles = null;
 
     // Initialisation au chargement de la page
     window.addEventListener('DOMContentLoaded', () => {
@@ -20,7 +22,66 @@
                 refreshParapheurBadge();
             }
         }, 1200);
+
+        // Raccourci clavier Échap pour fermer
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const m = document.getElementById('modal-parapheur-dt');
+                if (m && (m.classList.contains('active') || m.style.display === 'flex' || m.style.display === 'block')) {
+                    const confirmModal = document.getElementById('modal-parapheur-batch-confirm');
+                    if (confirmModal && (confirmModal.classList.contains('active') || confirmModal.style.display === 'flex')) {
+                        closeBatchConfirmModal();
+                    } else {
+                        closeParapheurModal();
+                    }
+                }
+            }
+        });
     });
+
+    /**
+     * Bascule l'affichage plein écran / taille normale de la modale
+     */
+    window.toggleMaximizeParapheurModal = function () {
+        const dialog = document.getElementById('modal-parapheur-dialog');
+        const btn = document.getElementById('btn-parapheur-maximize');
+        if (!dialog) return;
+
+        if (!isParapheurMaximized) {
+            // Sauvegarder les dimensions actuelles (y compris si l'utilisateur l'a redimensionnée manuellement)
+            parapheurPrevStyles = {
+                width: dialog.style.width,
+                height: dialog.style.height,
+                maxWidth: dialog.style.maxWidth,
+                maxHeight: dialog.style.maxHeight
+            };
+
+            dialog.style.width = 'calc(100vw - 20px)';
+            dialog.style.height = 'calc(100vh - 20px)';
+            dialog.style.maxWidth = 'calc(100vw - 20px)';
+            dialog.style.maxHeight = 'calc(100vh - 20px)';
+            dialog.style.borderRadius = '6px';
+
+            if (btn) {
+                btn.innerHTML = '🗗';
+                btn.title = "Restaurer la taille normale";
+            }
+            isParapheurMaximized = true;
+        } else {
+            // Restaurer les dimensions précédentes
+            dialog.style.width = (parapheurPrevStyles && parapheurPrevStyles.width) || '1120px';
+            dialog.style.height = (parapheurPrevStyles && parapheurPrevStyles.height) || '88vh';
+            dialog.style.maxWidth = (parapheurPrevStyles && parapheurPrevStyles.maxWidth) || 'min(1120px, calc(100vw - 24px))';
+            dialog.style.maxHeight = (parapheurPrevStyles && parapheurPrevStyles.maxHeight) || '96vh';
+            dialog.style.borderRadius = '';
+
+            if (btn) {
+                btn.innerHTML = '⛶';
+                btn.title = "Agrandir en plein écran";
+            }
+            isParapheurMaximized = false;
+        }
+    };
 
     /**
      * Ouvre la modale principale du Cockpit & Parapheur DT

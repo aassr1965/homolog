@@ -3380,8 +3380,8 @@
 
     <!-- Modal Parapheur Électronique & Cockpit DT (CDC Section 7.4.6) -->
     <div class="modal-overlay" id="modal-parapheur-dt" onclick="if(event.target === this) closeParapheurModal()">
-        <div class="modal modal-lg" style="width:1120px; max-width:min(1120px, calc(100vw - 24px)); max-height:92vh; display:flex; flex-direction:column;">
-            <div class="modal-header" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06); padding:12px 16px;">
+        <div class="modal modal-lg" id="modal-parapheur-dialog" style="width:1120px; max-width:min(1120px, calc(100vw - 24px)); height:88vh; max-height:96vh; min-width:680px; min-height:440px; display:flex; flex-direction:column; resize:both; overflow:hidden; position:relative;">
+            <div class="modal-header" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06); padding:10px 16px; user-select:none;">
                 <div class="modal-title" style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:24px;">⚖️</span>
                     <div>
@@ -3394,7 +3394,12 @@
                         </div>
                     </div>
                 </div>
-                <button class="close-btn" onclick="closeParapheurModal()">✕</button>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button type="button" class="btn-pill" id="btn-parapheur-maximize" onclick="toggleMaximizeParapheurModal()" title="Agrandir en plein écran" style="font-size:12px; padding:2px 8px; height:26px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                        ⛶
+                    </button>
+                    <button class="close-btn" onclick="closeParapheurModal()" title="Fermer la fenêtre (Échap)">✕</button>
+                </div>
             </div>
 
             <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
@@ -3491,7 +3496,7 @@
                         </div>
                     </div>
 
-                    <div style="overflow-y:auto; max-height:460px; flex:1;">
+                    <div style="overflow-y:auto; flex:1; min-height:220px;">
                         <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
                             <thead>
                                 <tr style="background:var(--bg-sub); border-bottom:1.5px solid var(--border-color); position:sticky; top:0; z-index:2;">
@@ -3539,7 +3544,10 @@
                     <span>🛡️</span>
                     <span>ALCOA+ : Chaque visa apposé génère une trace nominative immuable avec scellement SHA-256 dans l'Audit Trail.</span>
                 </div>
-                <button type="button" class="btn-pill" onclick="closeParapheurModal()">Fermer</button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="btn-pill" onclick="closeParapheurModal()">Fermer</button>
+                    <div style="position:absolute; bottom:1px; right:3px; font-size:10px; color:var(--text-dim); pointer-events:none; opacity:0.4; user-select:none;" title="Coin de redimensionnement libre">◢</div>
+                </div>
             </div>
         </div>
     </div>
