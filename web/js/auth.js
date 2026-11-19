@@ -869,6 +869,31 @@ const mockAuditTrail = [
                 });
             }
 
+            // 1b. Alertes Chemin Critique Smart Planning ANPP
+            if (typeof currentDossierSmartPlanning === 'object' && currentDossierSmartPlanning && currentDossierSmartPlanning.critical_warnings && currentDossierSmartPlanning.critical_warnings.length > 0) {
+                const sp = currentDossierSmartPlanning;
+                html += `
+                    <div class="alert-card ${sp.overall_health === 'FATAL_BLOCK' || sp.overall_health === 'CRITICAL_DELAY' ? '' : 'warning'}">
+                        <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:14px;">⏱️</span>
+                                <strong style="font-size:13px; color:var(--text-main);">Smart Planning ANPP — Dérive Chemin Critique (${escapeHTML(sp.dossier_code || 'Dossier')})</strong>
+                                <span style="background:${sp.overall_health === 'FATAL_BLOCK' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}; color:${sp.overall_health === 'FATAL_BLOCK' ? '#ef4444' : '#d97706'}; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px;">${escapeHTML(sp.overall_health_label)}</span>
+                            </div>
+                            <div style="color:var(--text-muted); font-size:11px;">
+                                Date Butoir Cible : <strong>${sp.target_deposit_date ? new Date(sp.target_deposit_date).toLocaleDateString('fr-FR') : ''}</strong> • ${escapeHTML(sp.critical_warnings[0])}
+                            </div>
+                            <div style="color:var(--text-dim); font-size:11px;">
+                                Recommandation : ${escapeHTML(sp.recommended_action_fr || '')}
+                            </div>
+                        </div>
+                        <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 12px; white-space:nowrap; cursor:pointer;" onclick="closeModal('modal-alerts'); if(typeof showSmartPlanningTimelineModal === 'function') showSmartPlanningTimelineModal();">
+                            Voir Chronogramme ➔
+                        </button>
+                    </div>
+                `;
+            }
+
             // 2. Alertes statutaires réglementaires (AMM & DM)
             html += `
                 <div class="alert-card">

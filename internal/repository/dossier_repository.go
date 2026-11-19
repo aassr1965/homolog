@@ -52,7 +52,7 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 	}
 	defer tx.Rollback(ctx)
 
-	// Insertion du dossier maître
+	// Insertion du dossier maître avec héritage automatique du paramètre jours ouvrables de l'organisation
 	insertDossierQuery := `
 		INSERT INTO dossiers (
 			id, organization_id, medicine_id, medical_device_id, product_type,
@@ -60,6 +60,7 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 			anpp_official_reference, target_deposit_date, tracking_number,
 			deposit_receipt_ref, deposit_receipt_date, submission_notes,
 			status, responsible_id, completeness_percent, is_locked_for_deposit,
+			working_days_per_week,
 			created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5,
@@ -67,18 +68,21 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 			$10, $11, $12,
 			$13, $14, $15,
 			$16, $17, $18, $19,
-			$20, $21
+			COALESCE(NULLIF($20, 0), (SELECT working_days_per_week FROM organizations WHERE id = $2), 5),
+			$21, $22
 		)
+		RETURNING working_days_per_week
 	`
 	procTypeStr := string(d.ProcedureCode)
-	_, err = tx.Exec(ctx, insertDossierQuery,
+	err = tx.QueryRow(ctx, insertDossierQuery,
 		d.ID, d.OrganizationID, d.MedicineID, d.MedicalDeviceID, string(d.ProductType),
 		d.DossierCode, string(d.ProcedureCode), procTypeStr, d.InternalReference,
 		d.ANPPOfficialReference, d.TargetDepositDate, d.TrackingNumber,
 		d.DepositReceiptRef, d.DepositReceiptDate, d.SubmissionNotes,
 		string(d.Status), d.ResponsibleID, d.CompletenessPercent, d.IsLockedForDeposit,
+		d.WorkingDaysPerWeek,
 		d.CreatedAt, d.UpdatedAt,
-	)
+	).Scan(&d.WorkingDaysPerWeek)
 	if err != nil {
 		return nil, fmt.Errorf("échec insertion dossier : %w", err)
 	}
@@ -154,7 +158,7 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 			d.id, d.organization_id, d.medicine_id, d.medical_device_id, d.product_type,
 			d.dossier_code, d.procedure_code, d.internal_reference, d.anpp_official_reference,
 			d.anpp_deposit_date, d.anpp_decision_date, d.anpp_validity_end_date,
-			d.target_deposit_date, d.tracking_number, d.deposit_receipt_ref, d.deposit_receipt_date,
+			d.target_deposit_date, COALESCE(d.working_days_per_week, 5), d.tracking_number, d.deposit_receipt_ref, d.deposit_receipt_date,
 			d.submission_notes, d.status, d.responsible_id, d.completeness_percent,
 			d.is_locked_for_deposit, d.locked_by_dt_id, d.locked_at,
 			d.pdt_signed_at, d.pdt_signed_by, d.pdt_signature_seal, d.pdt_signature_role,
@@ -170,7 +174,7 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 		&d.ID, &d.OrganizationID, &d.MedicineID, &d.MedicalDeviceID, &pTypeStr,
 		&d.DossierCode, &pCodeStr, &d.InternalReference, &d.ANPPOfficialReference,
 		&d.ANPPDepositDate, &d.ANPPDecisionDate, &d.ANPPValidityEndDate,
-		&d.TargetDepositDate, &d.TrackingNumber, &d.DepositReceiptRef, &d.DepositReceiptDate,
+		&d.TargetDepositDate, &d.WorkingDaysPerWeek, &d.TrackingNumber, &d.DepositReceiptRef, &d.DepositReceiptDate,
 		&d.SubmissionNotes, &statusStr, &d.ResponsibleID, &d.CompletenessPercent,
 		&d.IsLockedForDeposit, &d.LockedByDTID, &d.LockedAt,
 		&d.PDTSignedAt, &d.PDTSignedBy, &d.PDTSignatureSeal, &d.PDTSignatureRole,
@@ -358,7 +362,7 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 			d.id, d.organization_id, d.medicine_id, d.medical_device_id, d.product_type,
 			d.dossier_code, d.procedure_code, d.internal_reference, d.anpp_official_reference,
 			d.anpp_deposit_date, d.anpp_decision_date, d.anpp_validity_end_date,
-			d.target_deposit_date, d.tracking_number, d.deposit_receipt_ref, d.deposit_receipt_date,
+			d.target_deposit_date, COALESCE(d.working_days_per_week, 5), d.tracking_number, d.deposit_receipt_ref, d.deposit_receipt_date,
 			d.submission_notes, d.status, d.responsible_id, d.completeness_percent,
 			d.is_locked_for_deposit, d.locked_by_dt_id, d.locked_at,
 			d.pdt_signed_at, d.pdt_signed_by, d.pdt_signature_seal, d.pdt_signature_role,
@@ -414,7 +418,7 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 			&d.ID, &d.OrganizationID, &d.MedicineID, &d.MedicalDeviceID, &pTypeStr,
 			&d.DossierCode, &pCodeStr, &d.InternalReference, &d.ANPPOfficialReference,
 			&d.ANPPDepositDate, &d.ANPPDecisionDate, &d.ANPPValidityEndDate,
-			&d.TargetDepositDate, &d.TrackingNumber, &d.DepositReceiptRef, &d.DepositReceiptDate,
+			&d.TargetDepositDate, &d.WorkingDaysPerWeek, &d.TrackingNumber, &d.DepositReceiptRef, &d.DepositReceiptDate,
 			&d.SubmissionNotes, &statusStr, &d.ResponsibleID, &d.CompletenessPercent,
 			&d.IsLockedForDeposit, &d.LockedByDTID, &d.LockedAt,
 			&d.PDTSignedAt, &d.PDTSignedBy, &d.PDTSignatureSeal, &d.PDTSignatureRole,
@@ -451,6 +455,66 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 		}
 
 		dossiers = append(dossiers, d)
+	}
+
+	// Enrichissement Smart Planning Summary pour chaque dossier
+	if len(dossiers) > 0 {
+		dossierIDs := make([]uuid.UUID, len(dossiers))
+		for i := range dossiers {
+			dossierIDs[i] = dossiers[i].ID
+		}
+
+		itemQuery := `
+			SELECT id, dossier_id, module_number, COALESCE(sub_module, ''), item_code,
+			       title_fr, COALESCE(title_ar, ''), COALESCE(description_fr, ''),
+			       requirement_level, is_mandatory, ged_document_id, status,
+			       COALESCE(workflow_status, 'draft_pending'), COALESCE(current_revision, 'v0.1')
+			FROM dossier_checklist_items
+			WHERE dossier_id = ANY($1)
+		`
+		itemRows, err := r.pool.Query(ctx, itemQuery, dossierIDs)
+		if err == nil {
+			defer itemRows.Close()
+			itemsByDossier := make(map[uuid.UUID][]domain.ChecklistItem)
+			for itemRows.Next() {
+				var it domain.ChecklistItem
+				var reqStr, stStr, wfStr string
+				if err := itemRows.Scan(
+					&it.ID, &it.DossierID, &it.ModuleNumber, &it.SubModule, &it.ItemCode,
+					&it.TitleFR, &it.TitleAR, &it.DescriptionFR,
+					&reqStr, &it.IsMandatory, &it.GEDDocumentID, &stStr,
+					&wfStr, &it.CurrentRevision,
+				); err == nil {
+					it.RequirementLevel = domain.RequirementLevel(reqStr)
+					it.Status = domain.ChecklistItemStatus(stStr)
+					it.WorkflowStatus = domain.WorkflowStatus(wfStr)
+					itemsByDossier[it.DossierID] = append(itemsByDossier[it.DossierID], it)
+				}
+			}
+
+			now := time.Now().UTC()
+			for i := range dossiers {
+				d := &dossiers[i]
+				items := itemsByDossier[d.ID]
+				analysis := domain.EvaluateSmartPlanning(d, items, now)
+				if analysis != nil {
+					var activeMilestoneCode, activeMilestoneName string
+					if analysis.ActiveCriticalMilestone != nil {
+						activeMilestoneCode = string(analysis.ActiveCriticalMilestone.Code)
+						activeMilestoneName = analysis.ActiveCriticalMilestone.NameFR
+					}
+					d.SmartPlanningSummary = &domain.SmartPlanningSummary{
+						OverallHealth:               analysis.OverallHealth,
+						OverallHealthLabel:          analysis.OverallHealthLabel,
+						DaysToTargetDeposit:         analysis.DaysToTargetDeposit,
+						IsTargetDateSufficient:      analysis.IsTargetDateSufficient,
+						ActiveCriticalMilestoneCode: activeMilestoneCode,
+						ActiveCriticalMilestoneName: activeMilestoneName,
+						CriticalWarningsCount:       len(analysis.CriticalWarnings),
+					}
+				}
+			}
+		}
 	}
 
 	return dossiers, nil
@@ -802,8 +866,17 @@ func (r *DossierRepository) GetDossierAssignment(ctx context.Context, dossierID,
 	return &a, nil
 }
 
-// ListDossierMembers liste tous les membres affectés à un dossier avec leurs détails d'identité
-func (r *DossierRepository) ListDossierMembers(ctx context.Context, dossierID uuid.UUID) ([]domain.DossierAssignment, error) {
+// ListDossierMembers liste tous les membres affectés à un dossier avec leurs détails d'identité en vérifiant l'isolation multi-tenant
+func (r *DossierRepository) ListDossierMembers(ctx context.Context, orgID, dossierID uuid.UUID) ([]domain.DossierAssignment, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, dossierID, orgID).Scan(&exists)
+	if err != nil {
+		return nil, fmt.Errorf("erreur vérification dossier: %w", err)
+	}
+	if !exists {
+		return nil, ErrNotFound
+	}
+
 	query := `
 		SELECT 
 			a.id, a.dossier_id, a.user_id, a.role_in_dossier, 
@@ -843,8 +916,26 @@ func (r *DossierRepository) ListDossierMembers(ctx context.Context, dossierID uu
 	return members, nil
 }
 
-// AssignDossierMember ajoute ou met à jour une affectation nominative à un dossier
-func (r *DossierRepository) AssignDossierMember(ctx context.Context, a *domain.DossierAssignment) error {
+// AssignDossierMember ajoute ou met à jour une affectation nominative à un dossier en vérifiant l'isolation multi-tenant
+func (r *DossierRepository) AssignDossierMember(ctx context.Context, orgID uuid.UUID, a *domain.DossierAssignment) error {
+	var dossierExists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, a.DossierID, orgID).Scan(&dossierExists)
+	if err != nil {
+		return fmt.Errorf("erreur vérification dossier: %w", err)
+	}
+	if !dossierExists {
+		return ErrNotFound
+	}
+
+	var userExists bool
+	err = r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND organization_id = $2)`, a.UserID, orgID).Scan(&userExists)
+	if err != nil {
+		return fmt.Errorf("erreur vérification utilisateur: %w", err)
+	}
+	if !userExists {
+		return fmt.Errorf("collaborateur introuvable au sein de votre organisation")
+	}
+
 	query := `
 		INSERT INTO dossier_assignments (
 			dossier_id, user_id, role_in_dossier, can_view_financials, can_view_industrial_secret, expires_at, notes
@@ -856,7 +947,7 @@ func (r *DossierRepository) AssignDossierMember(ctx context.Context, a *domain.D
 			expires_at = EXCLUDED.expires_at,
 			notes = EXCLUDED.notes;
 	`
-	_, err := r.pool.Exec(ctx, query,
+	_, err = r.pool.Exec(ctx, query,
 		a.DossierID, a.UserID, a.RoleInDossier,
 		a.CanViewFinancials, a.CanViewIndustrialSecret,
 		a.ExpiresAt, a.Notes,
@@ -867,10 +958,19 @@ func (r *DossierRepository) AssignDossierMember(ctx context.Context, a *domain.D
 	return nil
 }
 
-// RemoveDossierMember révoque l'affectation d'un membre à un dossier
-func (r *DossierRepository) RemoveDossierMember(ctx context.Context, dossierID, userID uuid.UUID) error {
+// RemoveDossierMember révoque l'affectation d'un membre à un dossier en vérifiant l'isolation multi-tenant
+func (r *DossierRepository) RemoveDossierMember(ctx context.Context, orgID, dossierID, userID uuid.UUID) error {
+	var dossierExists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM dossiers WHERE id = $1 AND organization_id = $2)`, dossierID, orgID).Scan(&dossierExists)
+	if err != nil {
+		return fmt.Errorf("erreur vérification dossier: %w", err)
+	}
+	if !dossierExists {
+		return ErrNotFound
+	}
+
 	query := `DELETE FROM dossier_assignments WHERE dossier_id = $1 AND user_id = $2`
-	_, err := r.pool.Exec(ctx, query, dossierID, userID)
+	_, err = r.pool.Exec(ctx, query, dossierID, userID)
 	if err != nil {
 		return fmt.Errorf("erreur révocation membre dossier: %w", err)
 	}

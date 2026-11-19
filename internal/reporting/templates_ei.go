@@ -62,6 +62,16 @@ func RenderEIAVT01HTML(
 		modStats[it.ModuleNumber] = st
 	}
 
+	sp := domain.EvaluateSmartPlanning(d, d.Items, time.Now().UTC())
+	targetFormatted := "Non fixée"
+	if d.TargetDepositDate != nil {
+		targetFormatted = d.TargetDepositDate.Format("02/01/2006")
+	}
+	recFormatted := targetFormatted
+	if sp.RecommendedDepositDate != nil {
+		recFormatted = sp.RecommendedDepositDate.Format("02/01/2006")
+	}
+
 	headerHTML := RenderInstitutionalHeader(estName, estAgreement, "Siège Social", pdtName, "", "EI-AVT-01 • Fiche Navette Hebdomadaire")
 	footerHTML := renderEIFooter("EI-AVT-01", sha256Hash, generatedAt)
 
@@ -139,8 +149,17 @@ func RenderEIAVT01HTML(
             </tbody>
         </table>
 
+        <div class="info-card" style="margin-top:10px; border-left:3px solid #0284c7;">
+            <div class="info-card-header" style="color:#0369a1;">⏱️ Smart Planning ANPP &amp; Chemin Critique Inversé (CDC 7.4.3.6)</div>
+            <div style="font-size:7.5pt; color:#334155; line-height:1.45;">
+                • <strong>Date Butoir Visée :</strong> %s (%d jours restants) • <strong>Date Recommandée :</strong> <span style="font-weight:700; color:#0f766e;">%s</span> (base %d jours ouvrés/semaine, %d jours fériés ANPP déduits).<br/>
+                • <strong>Diagnostic Global :</strong> <span style="font-weight:700;">%s</span> — %s<br/>
+                • <strong>Recommandation Réglementaire :</strong> %s
+            </div>
+        </div>
+
         <div class="info-card" style="margin-top:10px;">
-            <div class="info-card-header">Observations & Décisions du Comité de Pilotage</div>
+            <div class="info-card-header">Observations &amp; Décisions du Comité de Pilotage</div>
             <div style="font-size:7.5pt; color:#475569; line-height:1.45;">
                 • Priorité absolue donnée à la validation des stabilités M6 Zone IVb requises pour le Module 3.<br/>
                 • Rappel aux rédacteurs : libérer les sections éditées sous 30 minutes conformément aux règles d'intégrité ALCOA+.<br/>
@@ -150,7 +169,10 @@ func RenderEIAVT01HTML(
 
         %s
     </div>
-	`, wmHTML, headerHTML, html.EscapeString(d.DossierCode), html.EscapeString(prodName), html.EscapeString(dci), html.EscapeString(dosage), html.EscapeString(form), html.EscapeString(string(d.ProcedureCode)), d.CompletenessPercent, attachedCount, totalItems, lockedCount, modRows.String(), footerHTML)
+	`, wmHTML, headerHTML, html.EscapeString(d.DossierCode), html.EscapeString(prodName), html.EscapeString(dci), html.EscapeString(dosage), html.EscapeString(form), html.EscapeString(string(d.ProcedureCode)), d.CompletenessPercent, attachedCount, totalItems, lockedCount, modRows.String(),
+		html.EscapeString(targetFormatted), sp.DaysToTargetDeposit, html.EscapeString(recFormatted), sp.WorkingDaysPerWeek, sp.HolidaysExcludedCount,
+		html.EscapeString(string(sp.OverallHealth)), html.EscapeString(sp.OverallHealthLabel), html.EscapeString(sp.RecommendedActionFR),
+		footerHTML)
 
 	return RenderDocumentWrap("EI-AVT-01 — Fiche Navette d'Avancement", content)
 }

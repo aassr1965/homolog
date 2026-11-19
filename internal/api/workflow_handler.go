@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"homolog/internal/audit"
+	"homolog/internal/domain"
 	"homolog/internal/repository"
 )
 
@@ -65,8 +66,12 @@ func (h *WorkflowHandler) CheckoutSection(w http.ResponseWriter, r *http.Request
 		req.Reason = "Édition technique de la section"
 	}
 
-	item, err := h.workflowRepo.CheckoutItem(r.Context(), itemID, user.UserID, user.Role, req.Reason)
+	item, err := h.workflowRepo.CheckoutItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Reason)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		if errors.Is(err, repository.ErrSectionLocked) {
 			writeJSONError(w, http.StatusConflict, "Cette section est déjà verrouillée en édition par un autre collaborateur")
 			return
@@ -132,8 +137,12 @@ func (h *WorkflowHandler) CheckinSection(w http.ResponseWriter, r *http.Request)
 		req.Comment = "Mise à jour de la documentation"
 	}
 
-	item, err := h.workflowRepo.CheckinItem(r.Context(), itemID, user.UserID, user.Role, req.Content, req.GEDDocumentID, req.Comment)
+	item, err := h.workflowRepo.CheckinItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Content, req.GEDDocumentID, req.Comment)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		if errors.Is(err, repository.ErrSectionNotLocked) {
 			writeJSONError(w, http.StatusBadRequest, "La section n'est pas verrouillée")
 			return
@@ -208,8 +217,12 @@ func (h *WorkflowHandler) AssignSection(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	item, err := h.workflowRepo.AssignItem(r.Context(), itemID, req.AssignedUserID, req.AssignedDepartment, dueTime)
+	item, err := h.workflowRepo.AssignItem(r.Context(), user.OrganizationID, itemID, req.AssignedUserID, req.AssignedDepartment, dueTime)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		log.Printf("[ERROR] AssignItem %s: %v", itemID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible d'assigner la section")
 		return
@@ -262,8 +275,12 @@ func (h *WorkflowHandler) SubmitReview(w http.ResponseWriter, r *http.Request) {
 		req.Notes = "Soumis pour relecture et contrôle qualité"
 	}
 
-	item, err := h.workflowRepo.SubmitForReview(r.Context(), itemID, user.UserID, user.Role, req.Notes)
+	item, err := h.workflowRepo.SubmitForReview(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Notes)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		var gatingErr *repository.GatingBlockedError
 		if errors.As(err, &gatingErr) {
 			w.Header().Set("Content-Type", "application/json")
@@ -344,8 +361,12 @@ func (h *WorkflowHandler) ReviewDecision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	item, err := h.workflowRepo.ReviewItem(r.Context(), itemID, user.UserID, user.Role, req.Decision, notesFinal)
+	item, err := h.workflowRepo.ReviewItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, req.Decision, notesFinal)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		if errors.Is(err, repository.ErrSelfReviewNotAllowed) {
 			writeJSONError(w, http.StatusForbidden, "Ségrégation des fonctions BPF : Le rédacteur ne peut pas valider ou rejeter son propre document")
 			return
@@ -428,8 +449,12 @@ func (h *WorkflowHandler) ApproveSection(w http.ResponseWriter, r *http.Request)
 	sealHashBytes := sha256.Sum256([]byte(sealInput))
 	sealHash := hex.EncodeToString(sealHashBytes[:])
 
-	item, err := h.workflowRepo.ApproveItem(r.Context(), itemID, user.UserID, user.Role, sealHash)
+	item, err := h.workflowRepo.ApproveItem(r.Context(), user.OrganizationID, itemID, user.UserID, user.Role, sealHash)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		var gatingErr *repository.GatingBlockedError
 		if errors.As(err, &gatingErr) {
 			w.Header().Set("Content-Type", "application/json")
@@ -492,8 +517,12 @@ func (h *WorkflowHandler) GetItemReviews(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	reviews, err := h.workflowRepo.GetItemReviews(r.Context(), itemID)
+	reviews, err := h.workflowRepo.GetItemReviews(r.Context(), user.OrganizationID, itemID)
 	if err != nil {
+		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Section introuvable")
+			return
+		}
 		log.Printf("[ERROR] GetItemReviews %s: %v", itemID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les revues")
 		return
@@ -540,6 +569,12 @@ func (h *WorkflowHandler) GetMasterTemplateByCode(w http.ResponseWriter, r *http
 
 // GetItemGating retourne l'évaluation complète des verrous réglementaires et prérequis d'une section
 func (h *WorkflowHandler) GetItemGating(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
 	itemIDStr := chi.URLParam(r, "itemId")
 	itemID, err := uuid.Parse(itemIDStr)
 	if err != nil {
@@ -547,7 +582,7 @@ func (h *WorkflowHandler) GetItemGating(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	eval, err := h.workflowRepo.EvaluateItemGating(r.Context(), itemID)
+	eval, err := h.workflowRepo.EvaluateItemGating(r.Context(), user.OrganizationID, itemID)
 	if err != nil {
 		if errors.Is(err, repository.ErrWorkflowItemNotFound) {
 			writeJSONError(w, http.StatusNotFound, "Section introuvable")
@@ -566,6 +601,12 @@ func (h *WorkflowHandler) GetItemGating(w http.ResponseWriter, r *http.Request) 
 
 // GetDossierGatingSummary retourne la phase active du DAG et la liste des sections bloquées
 func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
 	dossierIDStr := chi.URLParam(r, "id")
 	dossierID, err := uuid.Parse(dossierIDStr)
 	if err != nil {
@@ -573,8 +614,12 @@ func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http
 		return
 	}
 
-	summary, err := h.workflowRepo.GetDossierGatingSummary(r.Context(), dossierID)
+	summary, err := h.workflowRepo.GetDossierGatingSummary(r.Context(), user.OrganizationID, dossierID)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
 		log.Printf("[ERROR] GetDossierGatingSummary %s: %v", dossierID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de calculer la synthèse du chemin critique")
 		return
@@ -584,6 +629,232 @@ func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http
 		"success": true,
 		"summary": summary,
 	})
+}
+
+// GetDossierSmartPlanning calcule et retourne le rétroplanning dynamique inversé et l'analyse de chemin critique
+func (h *WorkflowHandler) GetDossierSmartPlanning(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), user.OrganizationID, dossierID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
+		log.Printf("[ERROR] GetDossierSmartPlanning %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de calculer le rétroplanning inversé")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":  true,
+		"planning": analysis,
+	})
+}
+
+type SetDossierTargetDatesRequest struct {
+	TargetDepositDate   *string `json:"target_deposit_date"`    // "YYYY-MM-DD"
+	ANPPValidityEndDate *string `json:"anpp_validity_end_date"` // "YYYY-MM-DD"
+	WorkingDaysPerWeek  *int    `json:"working_days_per_week"`  // 5 ou 6 jours ouvrables par semaine
+}
+
+// SetDossierTargetDates configure ou met à jour la date cible de dépôt ou l'échéance légale de renouvellement
+func (h *WorkflowHandler) SetDossierTargetDates(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	var req SetDossierTargetDatesRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	var targetDate *time.Time
+	if req.TargetDepositDate != nil && strings.TrimSpace(*req.TargetDepositDate) != "" {
+		t, err := time.Parse("2006-01-02", strings.TrimSpace(*req.TargetDepositDate))
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "Format de date cible invalide (attendu YYYY-MM-DD)")
+			return
+		}
+		targetDate = &t
+	}
+
+	var validityEnd *time.Time
+	if req.ANPPValidityEndDate != nil && strings.TrimSpace(*req.ANPPValidityEndDate) != "" {
+		t, err := time.Parse("2006-01-02", strings.TrimSpace(*req.ANPPValidityEndDate))
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "Format de date de validité invalide (attendu YYYY-MM-DD)")
+			return
+		}
+		validityEnd = &t
+	}
+
+	var workingDays *int
+	if req.WorkingDaysPerWeek != nil {
+		wd := *req.WorkingDaysPerWeek
+		if wd == 5 || wd == 6 {
+			workingDays = &wd
+		} else {
+			defWd := 5
+			workingDays = &defWd
+		}
+	}
+
+	err = h.workflowRepo.UpdateDossierTargetDates(r.Context(), user.OrganizationID, dossierID, targetDate, validityEnd, workingDays)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
+		log.Printf("[ERROR] SetDossierTargetDates %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de mettre à jour les dates du dossier")
+		return
+	}
+
+	// Traçabilité ALCOA+ Audit Trail
+	h.logAudit(r.Context(), user.OrganizationID, user.UserID, user.Email, user.Role,
+		"SET_TARGET_DATES", "dossier", dossierID.String(), map[string]any{
+			"target_deposit_date":    req.TargetDepositDate,
+			"anpp_validity_end_date": req.ANPPValidityEndDate,
+			"working_days_per_week":  req.WorkingDaysPerWeek,
+		})
+
+	// Recalcul immédiat du planning après modification
+	analysis, _ := h.workflowRepo.GetDossierSmartPlanning(r.Context(), user.OrganizationID, dossierID)
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":  true,
+		"message":  "Dates cibles et rétroplanning mis à jour avec succès",
+		"planning": analysis,
+	})
+}
+
+// SyncSmartPlanningDueDates propage les dates du chemin critique inversé aux sections CTD du dossier
+func (h *WorkflowHandler) SyncSmartPlanningDueDates(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), user.OrganizationID, dossierID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
+		writeJSONError(w, http.StatusInternalServerError, "Impossible d'analyser le rétroplanning")
+		return
+	}
+
+	items, err := h.workflowRepo.GetDossierItems(r.Context(), dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de lire les items du dossier")
+		return
+	}
+
+	dueDates := domain.CalculateSmartDueDates(analysis, items)
+	updatedCount, err := h.workflowRepo.SyncSmartPlanningDueDates(r.Context(), user.OrganizationID, dossierID, dueDates)
+	if err != nil {
+		log.Printf("[ERROR] SyncSmartPlanningDueDates %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Échec de la propagation des dates cibles aux tâches")
+		return
+	}
+
+	// Traçabilité ALCOA+ Audit Trail
+	h.logAudit(r.Context(), user.OrganizationID, user.UserID, user.Email, user.Role,
+		"SYNC_SMART_PLANNING_DUE_DATES", "dossier", dossierID.String(), map[string]any{
+			"updated_items_count": updatedCount,
+			"target_deposit_date": analysis.TargetDepositDate.Format("2006-01-02"),
+			"overall_health":      analysis.OverallHealth,
+		})
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":             true,
+		"message":             fmt.Sprintf("Échéances synchronisées avec succès pour %d sections CTD", updatedCount),
+		"updated_items_count": updatedCount,
+		"planning":            analysis,
+	})
+}
+
+// AlgerianHolidayItem représente un jour férié officiel algérien
+type AlgerianHolidayItem struct {
+	HolidayDate string `json:"holiday_date"` // YYYY-MM-DD
+	NameFR      string `json:"name_fr"`
+	HolidayType string `json:"holiday_type"` // NATIONAL, RELIGIEUX
+	IsObserved  bool   `json:"is_observed"`
+	Year        int    `json:"year"`
+	DayOfWeek   string `json:"day_of_week"`
+}
+
+// GetAlgerianHolidays retourne le calendrier complet des jours fériés légaux et chômés en Algérie
+func (h *WorkflowHandler) GetAlgerianHolidays(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.pool.Query(r.Context(), `
+		SELECT holiday_date, name_fr, holiday_type, is_observed
+		FROM algerian_holidays
+		ORDER BY holiday_date ASC
+	`)
+	if err != nil {
+		log.Printf("[ERROR] GetAlgerianHolidays: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger le calendrier des jours fériés")
+		return
+	}
+	defer rows.Close()
+
+	holidays := make([]AlgerianHolidayItem, 0)
+	for rows.Next() {
+		var t time.Time
+		var it AlgerianHolidayItem
+		if err := rows.Scan(&t, &it.NameFR, &it.HolidayType, &it.IsObserved); err != nil {
+			continue
+		}
+		it.HolidayDate = t.Format("2006-01-02")
+		it.Year = t.Year()
+		it.DayOfWeek = getDayOfWeekFR(t.Weekday())
+		holidays = append(holidays, it)
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"holidays":        holidays,
+		"count":           len(holidays),
+		"legal_reference": "Loi n° 63-278 du 26 juillet 1963 modifiée et complétée par la Loi n° 23-07 du 3 mai 2023 (extension à 3 jours chômés payés pour l'Aïd El-Fitr et l'Aïd El-Adha)",
+	})
+}
+
+func getDayOfWeekFR(w time.Weekday) string {
+	days := []string{"Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"}
+	if int(w) >= 0 && int(w) < len(days) {
+		return days[w]
+	}
+	return ""
 }
 
 func (h *WorkflowHandler) logAudit(ctx context.Context, orgID, userID uuid.UUID, email, role, action, entityType, entityID string, details map[string]any) {

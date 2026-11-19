@@ -319,6 +319,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Delete("/api/v1/admin/users/{id}", adminHandler.DisallowDeleteUser)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/roles", adminHandler.ListRoles)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/permissions", adminHandler.ListPermissions)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/organization", adminHandler.GetOrganizationSettings)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/organization/settings", adminHandler.UpdateOrganizationSettings)
 			}
 
 			// Console Dédiée Administrateur Système & Maintenance IT (SYS_MAINT / PSSI)
@@ -471,6 +473,12 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/items/{itemId}/reviews", workflowHandler.GetItemReviews)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/items/{itemId}/gating", workflowHandler.GetItemGating)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/gating-summary", workflowHandler.GetDossierGatingSummary)
+
+				// Smart Planning & Rétroplanning Inversé ANPP (CDC Section 7.4.3.6)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/smart-planning", workflowHandler.GetDossierSmartPlanning)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/smart-planning/set-target", workflowHandler.SetDossierTargetDates)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/smart-planning/sync-due-dates", workflowHandler.SyncSmartPlanningDueDates)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/system/holidays", workflowHandler.GetAlgerianHolidays)
 
 				// Modèles Maîtres ANPP / ICH
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates", workflowHandler.GetMasterTemplates)

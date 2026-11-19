@@ -60,39 +60,52 @@ const (
 
 // Dossier represents an official ANPP regulatory dossier instance
 type Dossier struct {
-	ID                    uuid.UUID       `json:"id"`
-	OrganizationID        uuid.UUID       `json:"organization_id"`
-	MedicineID            *uuid.UUID      `json:"medicine_id,omitempty"`
-	MedicalDeviceID       *uuid.UUID      `json:"medical_device_id,omitempty"`
-	ProductType           ProductType     `json:"product_type"`
-	DossierCode           string          `json:"dossier_code"`
-	ProcedureCode         ProcedureCode   `json:"procedure_code"`
-	InternalReference     string          `json:"internal_reference"`
-	ANPPOfficialReference *string         `json:"anpp_official_reference,omitempty"`
-	ANPPDepositDate       *time.Time      `json:"anpp_deposit_date,omitempty"`
-	ANPPDecisionDate      *time.Time      `json:"anpp_decision_date,omitempty"`
-	ANPPValidityEndDate   *time.Time      `json:"anpp_validity_end_date,omitempty"`
-	TargetDepositDate     *time.Time      `json:"target_deposit_date,omitempty"`
-	TrackingNumber        *string         `json:"tracking_number,omitempty"`
-	DepositReceiptRef     *string         `json:"deposit_receipt_ref,omitempty"`
-	DepositReceiptDate    *time.Time      `json:"deposit_receipt_date,omitempty"`
-	SubmissionNotes       *string         `json:"submission_notes,omitempty"`
-	Status                DossierStatus   `json:"status"`
-	ResponsibleID         *uuid.UUID      `json:"responsible_id,omitempty"`
-	CompletenessPercent   int             `json:"completeness_percent"`
-	IsLockedForDeposit    bool            `json:"is_locked_for_deposit"`
-	LockedByDTID          *uuid.UUID      `json:"locked_by_dt_id,omitempty"`
-	LockedAt              *time.Time      `json:"locked_at,omitempty"`
-	PDTSignedAt           *time.Time      `json:"pdt_signed_at,omitempty"`
-	PDTSignedBy           *uuid.UUID      `json:"pdt_signed_by,omitempty"`
-	PDTSignatureSeal      *string         `json:"pdt_signature_seal,omitempty"`
-	PDTSignatureRole      *string         `json:"pdt_signature_role,omitempty"`
-	ChecklistData         []ChecklistItem `json:"checklist_data,omitempty"`
-	Items                 []ChecklistItem `json:"items,omitempty"`
-	Medicine              *Medicine       `json:"medicine,omitempty"`
-	MedicalDevice         *MedicalDevice  `json:"medical_device,omitempty"`
-	CreatedAt             time.Time       `json:"created_at"`
-	UpdatedAt             time.Time       `json:"updated_at"`
+	ID                    uuid.UUID             `json:"id"`
+	OrganizationID        uuid.UUID             `json:"organization_id"`
+	MedicineID            *uuid.UUID            `json:"medicine_id,omitempty"`
+	MedicalDeviceID       *uuid.UUID            `json:"medical_device_id,omitempty"`
+	ProductType           ProductType           `json:"product_type"`
+	DossierCode           string                `json:"dossier_code"`
+	ProcedureCode         ProcedureCode         `json:"procedure_code"`
+	InternalReference     string                `json:"internal_reference"`
+	ANPPOfficialReference *string               `json:"anpp_official_reference,omitempty"`
+	ANPPDepositDate       *time.Time            `json:"anpp_deposit_date,omitempty"`
+	ANPPDecisionDate      *time.Time            `json:"anpp_decision_date,omitempty"`
+	ANPPValidityEndDate   *time.Time            `json:"anpp_validity_end_date,omitempty"`
+	TargetDepositDate     *time.Time            `json:"target_deposit_date,omitempty"`
+	WorkingDaysPerWeek    int                   `json:"working_days_per_week"`
+	TrackingNumber        *string               `json:"tracking_number,omitempty"`
+	DepositReceiptRef     *string               `json:"deposit_receipt_ref,omitempty"`
+	DepositReceiptDate    *time.Time            `json:"deposit_receipt_date,omitempty"`
+	SubmissionNotes       *string               `json:"submission_notes,omitempty"`
+	Status                DossierStatus         `json:"status"`
+	ResponsibleID         *uuid.UUID            `json:"responsible_id,omitempty"`
+	CompletenessPercent   int                   `json:"completeness_percent"`
+	IsLockedForDeposit    bool                  `json:"is_locked_for_deposit"`
+	LockedByDTID          *uuid.UUID            `json:"locked_by_dt_id,omitempty"`
+	LockedAt              *time.Time            `json:"locked_at,omitempty"`
+	PDTSignedAt           *time.Time            `json:"pdt_signed_at,omitempty"`
+	PDTSignedBy           *uuid.UUID            `json:"pdt_signed_by,omitempty"`
+	PDTSignatureSeal      *string               `json:"pdt_signature_seal,omitempty"`
+	PDTSignatureRole      *string               `json:"pdt_signature_role,omitempty"`
+	ChecklistData         []ChecklistItem       `json:"checklist_data,omitempty"`
+	Items                 []ChecklistItem       `json:"items,omitempty"`
+	Medicine              *Medicine             `json:"medicine,omitempty"`
+	MedicalDevice         *MedicalDevice        `json:"medical_device,omitempty"`
+	SmartPlanningSummary  *SmartPlanningSummary `json:"smart_planning_summary,omitempty"`
+	CreatedAt             time.Time             `json:"created_at"`
+	UpdatedAt             time.Time             `json:"updated_at"`
+}
+
+// SmartPlanningSummary fournit une synthèse compacte de l'état du rétroplanning dynamique pour la liste des dossiers
+type SmartPlanningSummary struct {
+	OverallHealth               SmartPlanningHealth `json:"overall_health"`
+	OverallHealthLabel          string              `json:"overall_health_label"`
+	DaysToTargetDeposit         int                 `json:"days_to_target_deposit"`
+	IsTargetDateSufficient      bool                `json:"is_target_date_sufficient"`
+	ActiveCriticalMilestoneCode string              `json:"active_critical_milestone_code,omitempty"`
+	ActiveCriticalMilestoneName string              `json:"active_critical_milestone_name,omitempty"`
+	CriticalWarningsCount       int                 `json:"critical_warnings_count"`
 }
 
 // SecurityClassification représente le niveau de secret industriel ou commercial d'une exigence

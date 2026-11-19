@@ -701,8 +701,12 @@ func (h *DossierHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	members, err := h.repo.ListDossierMembers(r.Context(), dossierID)
+	members, err := h.repo.ListDossierMembers(r.Context(), user.OrganizationID, dossierID)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
 		log.Printf("[ERROR] ListMembers %s: %v", dossierID, err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger l'équipe du dossier")
 		return
@@ -785,9 +789,13 @@ func (h *DossierHandler) AssignMember(w http.ResponseWriter, r *http.Request) {
 		Notes:                   req.Notes,
 	}
 
-	if err := h.repo.AssignDossierMember(r.Context(), assignment); err != nil {
+	if err := h.repo.AssignDossierMember(r.Context(), user.OrganizationID, assignment); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
 		log.Printf("[ERROR] AssignDossierMember: %v", err)
-		writeJSONError(w, http.StatusInternalServerError, "Impossible d'affecter le membre")
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -847,7 +855,11 @@ func (h *DossierHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.RemoveDossierMember(r.Context(), dossierID, targetUserID); err != nil {
+	if err := h.repo.RemoveDossierMember(r.Context(), user.OrganizationID, dossierID, targetUserID); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
 		log.Printf("[ERROR] RemoveDossierMember: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de révoquer l'affectation")
 		return

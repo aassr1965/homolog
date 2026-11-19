@@ -77,6 +77,7 @@ type Organization struct {
 	Email                 string    `json:"email"`
 	StorageQuotaBytes     int64     `json:"storage_quota_bytes"`
 	StorageUsedBytes      int64     `json:"storage_used_bytes"`
+	WorkingDaysPerWeek    int       `json:"working_days_per_week"`
 	IsActive              bool      `json:"is_active"`
 	CreatedAt             time.Time `json:"created_at"`
 	UpdatedAt             time.Time `json:"updated_at"`

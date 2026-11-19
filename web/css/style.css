@@ -980,6 +980,29 @@
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 1.5px var(--accent-blue);
         }
+        .tree-dossier-root.critical-fatal {
+            border-left: 4.5px solid #dc2626 !important;
+            box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
+        }
+        .tree-dossier-root.critical-fatal.selected {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 1.5px #dc2626;
+        }
+        .tree-dossier-root.critical-delay {
+            border-left: 4.5px solid #ea580c !important;
+            box-shadow: 0 1px 3px rgba(234, 88, 12, 0.08);
+        }
+        .tree-dossier-root.tree-dossier-simple {
+            border: 1px solid var(--border-color) !important;
+            border-left: 1px solid var(--border-color) !important;
+            background: var(--bg-surface) !important;
+            box-shadow: none !important;
+        }
+        .tree-dossier-root.tree-dossier-simple.selected {
+            border-color: var(--accent-blue) !important;
+            border-left: 1px solid var(--accent-blue) !important;
+            box-shadow: 0 0 0 1.5px var(--accent-blue) !important;
+        }
         .tree-dossier-header {
             padding: 8px 10px;
             cursor: pointer;

@@ -3127,6 +3127,148 @@
         </div>
     </div>
 
+    <!-- Modal Chronogramme Inversé Smart Planning ANPP (CDC 7.4.3.6) -->
+    <div class="modal-overlay" id="modal-smart-planning-timeline" onclick="if(event.target === this) closeModal('modal-smart-planning-timeline')">
+        <div class="modal modal-xl" style="width:780px; max-width:min(780px, calc(100vw - 24px)); max-height:88vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-blue); background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(126,34,206,0.08));">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:22px;">⏱️</span>
+                    <div>
+                        <span style="color:var(--text-main); font-weight:800; font-size:14px;">Smart Planning ANPP — Chronogramme Inversé &amp; Chemin Critique</span>
+                        <div style="font-size:11px; color:var(--text-dim);" id="sp-timeline-sub">Calcul automatique à rebours des 6 jalons incompressibles</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-smart-planning-timeline')">✕</button>
+            </div>
+            <div class="modal-body" id="sp-timeline-content" style="padding:16px; overflow-y:auto; flex:1;">
+                <!-- Rempli dynamiquement -->
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" class="btn-pill" style="background:rgba(37,99,235,0.12); color:var(--accent-blue); border-color:rgba(37,99,235,0.4);" onclick="syncSmartPlanningDueDates()">
+                    ⚡ Synchroniser Échéances CTD
+                </button>
+                <button type="button" class="btn-pill" onclick="closeModal('modal-smart-planning-timeline')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Configuration des Dates Cibles Smart Planning -->
+    <div class="modal-overlay" id="modal-smart-planning-config" onclick="if(event.target === this) closeModal('modal-smart-planning-config')">
+        <div class="modal modal-md" style="width:480px; max-width:min(480px, calc(100vw - 24px)); display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-emerald); background: rgba(16,185,129,0.06);">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:20px;">⚙️</span>
+                    <div>
+                        <span style="color:var(--text-main); font-weight:800; font-size:13.5px;">Dates Cibles &amp; Rétroplanning ANPP</span>
+                        <div style="font-size:11px; color:var(--text-dim);">Définir la date butoir de dépôt ou l'échéance de renouvellement</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-smart-planning-config')">✕</button>
+            </div>
+            <form onsubmit="saveSmartPlanningConfig(event)">
+                <div class="modal-body" style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+                    <div>
+                        <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+                            🎯 Date Butoir de Dépôt Cible (Target Deposit Date) :
+                        </label>
+                        <input type="date" id="sp-input-target-date" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-main); font-size:12px;">
+                        <span style="font-size:10px; color:var(--text-dim); display:block; margin-top:3px;">
+                            Pour une procédure initiale (NI, NF, DM) : date souhaitée du dépôt légal.
+                        </span>
+                    </div>
+
+                    <div style="border-top:1px dashed var(--border-color); padding-top:10px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+                            ⚖️ Date d'Expiration de la Décision d'Enregistrement / AMM :
+                        </label>
+                        <input type="date" id="sp-input-validity-date" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-main); font-size:12px;">
+                        <div style="font-size:10px; color:var(--accent-blue); margin-top:3px; line-height:1.35;">
+                            <strong>Règle Décret 20-325 Art. 12 :</strong> Pour les renouvellements (RI/RF), la date de dépôt légal est automatiquement calculée à <strong>J-180</strong> avant expiration.
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px dashed var(--border-color); padding-top:10px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+                            📅 Base de Calcul des Jours Ouvrables / Semaine (Paramètre Setting) :
+                        </label>
+                        <select id="sp-input-working-days" style="width:100%; padding:7px 10px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-main); font-size:12px; font-weight:600;">
+                            <option value="5">5 jours ouvrables par semaine (Dimanche – Jeudi standard Algérie ANPP/MIPH)</option>
+                            <option value="6">6 jours ouvrables par semaine (Samedi – Jeudi avec astreinte qualité)</option>
+                        </select>
+                        <span style="font-size:10px; color:var(--text-dim); display:block; margin-top:3px;">
+                            La recommandation réglementaire exclut automatiquement les jours de week-end chômés ainsi que les jours fériés légaux et chômés en Algérie (Loi 63-278).
+                        </span>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); border-color:rgba(37,99,235,0.3);" onclick="showAlgerianHolidaysModal()">
+                        📅 Calendrier des Jours Fériés
+                    </button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-smart-planning-config')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-weight:700;">
+                            💾 Enregistrer &amp; Recalculer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Calendrier Officiel des Jours Fériés Algériens (Loi 63-278) -->
+    <div class="modal-overlay" id="modal-algerian-holidays" onclick="if(event.target === this) closeModal('modal-algerian-holidays')">
+        <div class="modal modal-lg" style="width:720px; max-width:min(720px, calc(100vw - 24px)); max-height:85vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-blue); background: rgba(37,99,235,0.06);">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:22px;">📅</span>
+                    <div>
+                        <span style="color:var(--text-main); font-weight:800; font-size:14px;">Calendrier Officiel des Jours Fériés &amp; Chômés en Algérie</span>
+                        <div style="font-size:11px; color:var(--text-dim);">Loi n° 63-278 modifiée par la Loi n° 23-07 (3 jours chômés pour les 2 Aïds) • Référentiel calendaire pour le Smart Planning ANPP</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-algerian-holidays')">✕</button>
+            </div>
+            <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-main);">Filtrer par année :</span>
+                        <button class="btn-pill active" id="btn-holiday-year-all" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear('ALL')">Toutes</button>
+                        <button class="btn-pill" id="btn-holiday-year-2026" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear(2026)">2026</button>
+                        <button class="btn-pill" id="btn-holiday-year-2027" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear(2027)">2027</button>
+                        <button class="btn-pill" id="btn-holiday-year-2028" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear(2028)">2028</button>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-dim);">
+                        <span id="holidays-count-badge" style="background:var(--badge-bg); padding:2px 8px; border-radius:10px; font-weight:800; color:var(--accent-blue);">Chargement...</span>
+                    </div>
+                </div>
+
+                <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                        <thead>
+                            <tr style="background:var(--bg-surface); border-bottom:1px solid var(--border-color); text-align:left;">
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Date</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Jour</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Désignation Officielle</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Nature</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase; text-align:center;">Statut Légal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holidays-table-tbody">
+                            <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-dim);">Chargement du calendrier...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="font-size:10.5px; color:var(--text-muted); background:var(--bg-surface); padding:8px 10px; border-radius:4px; line-height:1.45; border-left:3px solid var(--accent-blue);">
+                    ⚖️ <strong>Règle de gestion Smart Planning :</strong> Tous ces jours sont légalement chômés et payés en Algérie selon la <strong>Loi n° 63-278 modifiée par la Loi n° 23-07 du 3 mai 2023</strong> (qui porte à <strong>3 jours chômés payés</strong> l'Aïd El-Fitr et l'Aïd El-Adha). Ils sont automatiquement déduits du calcul des délais incompressibles de dépôt ANPP (stabilités 6 mois, QOS, réservation RDV E-TASJIL, liquidation taxes BV1/BV2).
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-pill" onclick="closeModal('modal-algerian-holidays')">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Catalogue des Templates Maîtres ANPP -->
     <div class="modal-overlay" id="modal-master-templates" onclick="if(event.target === this) closeModal('modal-master-templates')">
         <div class="modal modal-xl" style="width:840px; max-width:min(840px, calc(100vw - 24px)); max-height:85vh; display:flex; flex-direction:column;">
@@ -3136,8 +3278,19 @@
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-master-templates')">✕</button>
             </div>
-            <div class="modal-body" id="master-templates-list" style="overflow-y:auto; flex:1;">
-                <!-- Chargé dynamiquement -->
+            <div class="modal-body" id="master-templates-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; gap:6px; flex-wrap:wrap; padding-bottom:8px; border-bottom:1px solid var(--border-color);">
+                    <button class="btn-pill btn-tpl-cat active" id="btn-tpl-cat-ALL" onclick="filterMasterTemplates('ALL')">Tous (10)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-information_produit" onclick="filterMasterTemplates('information_produit')">Notice &amp; RCP (1.P)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-qualite_cmc" onclick="filterMasterTemplates('qualite_cmc')">Qualité CMC &amp; Stabilités (M3)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-synthese_qualite" onclick="filterMasterTemplates('synthese_qualite')">QOS Qualité (M2.3)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-production" onclick="filterMasterTemplates('production')">Validation Procédé (M3)</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-lettre_engagement" onclick="filterMasterTemplates('lettre_engagement')">Lettres d'Engagement</button>
+                    <button class="btn-pill btn-tpl-cat" id="btn-tpl-cat-dispositif_medical" onclick="filterMasterTemplates('dispositif_medical')">Dispositifs Médicaux (DM)</button>
+                </div>
+                <div id="master-templates-cards" style="overflow-y:auto; flex:1;">
+                    <!-- Chargé dynamiquement -->
+                </div>
             </div>
             <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
                 <button type="button" class="btn-pill" onclick="closeModal('modal-master-templates')">Fermer</button>
@@ -3155,8 +3308,14 @@
                 <button class="close-btn" onclick="closeModal('modal-master-template-detail')">✕</button>
             </div>
             <div class="modal-body" style="overflow-y:auto; flex:1; display:flex; flex-direction:column;">
-                <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
-                    Cette trame type pré-remplie respecte scrupuleusement la structure imposée par l'Agence Nationale des Produits Pharmaceutiques. Vous pouvez la copier pour la renseigner dans vos outils de rédaction.
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <div style="font-size:11px; color:var(--text-muted);">
+                        Cette trame type pré-remplie respecte scrupuleusement la structure imposée par l'Agence Nationale des Produits Pharmaceutiques.
+                    </div>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--accent-blue); font-weight:700; cursor:pointer; background:rgba(37,99,235,0.08); padding:3px 8px; border-radius:4px;">
+                        <input type="checkbox" id="chk-auto-substitute" onchange="toggleTemplateSubstitution()" checked>
+                        <span>🎯 Pré-remplir avec les variables du dossier en cours</span>
+                    </label>
                 </div>
                 <textarea id="tpl-detail-content" class="login-input" style="flex:1; min-height:360px; font-family:monospace; font-size:11px; line-height:1.5; resize:none;" readonly></textarea>
             </div>

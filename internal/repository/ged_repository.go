@@ -436,8 +436,8 @@ func (r *GEDRepository) GetDocumentVersions(ctx context.Context, docID uuid.UUID
 	return versions, nil
 }
 
-// GetVersionByID récupère une version spécifique pour téléchargement
-func (r *GEDRepository) GetVersionByID(ctx context.Context, versionID uuid.UUID) (*domain.GEDVersionDetail, error) {
+// GetVersionByID récupère une version spécifique pour téléchargement en vérifiant l'isolation multi-tenant
+func (r *GEDRepository) GetVersionByID(ctx context.Context, orgID, versionID uuid.UUID) (*domain.GEDVersionDetail, error) {
 	query := `
 		SELECT 
 			v.id, v.document_id, v.version_label, v.is_major_version, v.revision_summary,
@@ -452,12 +452,13 @@ func (r *GEDRepository) GetVersionByID(ctx context.Context, versionID uuid.UUID)
 			COALESCE(ua.first_name || ' ' || ua.last_name, ua.email, ''),
 			v.created_at
 		FROM ged_versions v
+		JOIN ged_documents d ON d.id = v.document_id
 		LEFT JOIN users us ON v.signed_by_dt_id = us.id
 		LEFT JOIN users ua ON v.author_id = ua.id
-		WHERE v.id = $1
+		WHERE v.id = $1 AND d.organization_id = $2
 	`
 	var v domain.GEDVersionDetail
-	err := r.pool.QueryRow(ctx, query, versionID).Scan(
+	err := r.pool.QueryRow(ctx, query, versionID, orgID).Scan(
 		&v.ID, &v.DocumentID, &v.VersionLabel, &v.IsMajorVersion, &v.RevisionSummary,
 		&v.FileSHA256, &v.FileSizeBytes, &v.MimeType, &v.OriginalFilename,
 		&v.StoragePath, &v.IsSignedDT, &v.SignedByDTID, &v.SignedByDTName,
@@ -466,7 +467,7 @@ func (r *GEDRepository) GetVersionByID(ctx context.Context, versionID uuid.UUID)
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("version de document non trouvée")
+			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("erreur de sélection version : %w", err)
 	}
