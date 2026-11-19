@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -877,4 +879,290 @@ func (r *WorkflowRepository) SyncSmartPlanningDueDates(ctx context.Context, orgI
 	}
 
 	return updatedCount, nil
+}
+
+// GetParapheurPendingItems récupère toutes les pièces au statut 'pending_approval'
+// au sein de l'organisation pour le parapheur unifié du Pharmacien Directeur Technique
+func (r *WorkflowRepository) GetParapheurPendingItems(ctx context.Context, orgID uuid.UUID) ([]*domain.ParapheurPendingItem, error) {
+	query := `
+		SELECT 
+			i.id,
+			i.dossier_id,
+			d.dossier_code,
+			d.procedure_code,
+			d.internal_reference,
+			d.target_deposit_date,
+			COALESCE(
+				NULLIF(TRIM(m.brand_name_fr || ' (' || COALESCE(m.dci_fr, '') || ')'), '()'),
+				NULLIF(TRIM(md.commercial_name_fr || ' (' || COALESCE(md.manufacturer_reference, '') || ')'), '()'),
+				NULLIF(TRIM(p.brand_name_fr || ' (' || COALESCE(p.dci, '') || ')'), '()'),
+				d.internal_reference,
+				d.dossier_code
+			) as product_name,
+			i.module_number,
+			COALESCE(i.sub_module, ''),
+			i.item_code,
+			i.title_fr,
+			COALESCE(i.title_ar, ''),
+			i.requirement_level,
+			i.workflow_status,
+			COALESCE(i.current_revision, 'v0.1'),
+			COALESCE(i.assigned_department, 'RA'),
+			i.due_date,
+			i.maker_user_id,
+			COALESCE(um.first_name || ' ' || um.last_name, ''),
+			i.maker_submitted_at,
+			i.checker_user_id,
+			COALESCE(uc.first_name || ' ' || uc.last_name, ''),
+			i.checker_reviewed_at,
+			i.checker_decision,
+			i.checker_notes,
+			i.ged_document_id,
+			gd.title_fr,
+			i.created_at,
+			i.updated_at
+		FROM dossier_checklist_items i
+		JOIN dossiers d ON d.id = i.dossier_id
+		LEFT JOIN medicines m ON m.id = d.medicine_id
+		LEFT JOIN medical_devices md ON md.id = d.medical_device_id
+		LEFT JOIN products p ON p.id = d.product_id
+		LEFT JOIN users um ON um.id = i.maker_user_id
+		LEFT JOIN users uc ON uc.id = i.checker_user_id
+		LEFT JOIN ged_documents gd ON gd.id = i.ged_document_id
+		WHERE d.organization_id = $1
+		  AND i.workflow_status = 'pending_approval'
+		  AND d.status != 'archive'
+		ORDER BY 
+			CASE WHEN d.target_deposit_date IS NOT NULL THEN d.target_deposit_date ELSE '9999-12-31' END ASC,
+			i.module_number ASC,
+			i.sort_order ASC,
+			i.item_code ASC
+	`
+	rows, err := r.pool.Query(ctx, query, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("requête parapheur échouée : %w", err)
+	}
+	defer rows.Close()
+
+	var items []*domain.ParapheurPendingItem
+	dossierIDsMap := make(map[uuid.UUID]bool)
+
+	for rows.Next() {
+		var it domain.ParapheurPendingItem
+		var procCodeStr, reqStr, wfStr string
+		var gedTitle *string
+
+		err := rows.Scan(
+			&it.ItemID,
+			&it.DossierID,
+			&it.DossierCode,
+			&procCodeStr,
+			&it.InternalReference,
+			&it.TargetDepositDate,
+			&it.ProductName,
+			&it.ModuleNumber,
+			&it.SubModule,
+			&it.ItemCode,
+			&it.TitleFR,
+			&it.TitleAR,
+			&reqStr,
+			&wfStr,
+			&it.CurrentRevision,
+			&it.AssignedDepartment,
+			&it.DueDate,
+			&it.MakerUserID,
+			&it.MakerUserName,
+			&it.MakerSubmittedAt,
+			&it.CheckerUserID,
+			&it.CheckerUserName,
+			&it.CheckerReviewedAt,
+			&it.CheckerDecision,
+			&it.CheckerNotes,
+			&it.GEDDocumentID,
+			&gedTitle,
+			&it.CreatedAt,
+			&it.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan parapheur item échoué : %w", err)
+		}
+
+		it.ProcedureCode = procCodeStr
+		it.RequirementLevel = reqStr
+		it.WorkflowStatus = wfStr
+		it.GEDDocumentTitle = gedTitle
+
+		if it.TargetDepositDate != nil {
+			days := int(time.Until(*it.TargetDepositDate).Hours() / 24)
+			it.DaysToTargetDeposit = &days
+		}
+
+		items = append(items, &it)
+		dossierIDsMap[it.DossierID] = true
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("itération lignes parapheur : %w", err)
+	}
+
+	// Évaluation du gating CTD pour chaque item du parapheur
+	dossierItemsCache := make(map[uuid.UUID][]domain.ChecklistItem)
+	for dID := range dossierIDsMap {
+		dItems, err := r.GetDossierItems(ctx, dID)
+		if err == nil {
+			dossierItemsCache[dID] = dItems
+		}
+	}
+
+	for _, it := range items {
+		dItems, ok := dossierItemsCache[it.DossierID]
+		if ok {
+			dummyItem := domain.ChecklistItem{
+				ID:           it.ItemID,
+				DossierID:    it.DossierID,
+				ItemCode:     it.ItemCode,
+				ModuleNumber: it.ModuleNumber,
+				SubModule:    it.SubModule,
+			}
+			gatingRes := domain.EvaluateItemGating(dItems, &dummyItem, domain.GatingActionApprovePDT)
+			if gatingRes.IsBlocked {
+				it.IsGatingBlocked = true
+				it.GatingBlockReason = gatingRes.SummaryMessage
+			}
+		}
+	}
+
+	return items, nil
+}
+
+// BatchApproveSections applique le visa officiel 21 CFR Part 11 du Pharmacien DT sur un lot de pièces documentaires
+func (r *WorkflowRepository) BatchApproveSections(
+	ctx context.Context,
+	orgID, approverID uuid.UUID,
+	approverRole, approverEmail, approverName string,
+	itemIDs []uuid.UUID,
+) (*domain.BatchApproveResponse, error) {
+	now := time.Now().UTC()
+	response := &domain.BatchApproveResponse{
+		Success:        true,
+		TotalRequested: len(itemIDs),
+		TotalApproved:  0,
+		TotalFailed:    0,
+		ExecutedAt:     now,
+		ApproverID:     approverID,
+		ApproverName:   approverName,
+		Items:          make([]domain.BatchApproveItemResult, 0, len(itemIDs)),
+	}
+
+	dossierCache := make(map[uuid.UUID][]domain.ChecklistItem)
+
+	for _, itemID := range itemIDs {
+		itemRes := domain.BatchApproveItemResult{
+			ItemID: itemID,
+		}
+
+		item, err := r.GetChecklistItemByID(ctx, orgID, itemID)
+		if err != nil {
+			itemRes.Success = false
+			itemRes.ErrorMessage = "Section introuvable ou n'appartenant pas à votre établissement"
+			response.TotalFailed++
+			response.Items = append(response.Items, itemRes)
+			continue
+		}
+
+		itemRes.ItemCode = item.ItemCode
+
+		// Récupérer le code dossier
+		var dCode string
+		_ = r.pool.QueryRow(ctx, `SELECT dossier_code FROM dossiers WHERE id = $1`, item.DossierID).Scan(&dCode)
+		itemRes.DossierCode = dCode
+
+		if item.WorkflowStatus != domain.WorkflowStatusPendingApproval {
+			itemRes.Success = false
+			itemRes.ErrorMessage = fmt.Sprintf("Statut invalide : attendu 'pending_approval', actuel '%s'", item.WorkflowStatus)
+			response.TotalFailed++
+			response.Items = append(response.Items, itemRes)
+			continue
+		}
+
+		// Garde-fou SoD : Maker != Approver
+		if item.MakerUserID != nil && *item.MakerUserID == approverID {
+			itemRes.Success = false
+			itemRes.ErrorMessage = "Ségrégation des fonctions BPF : Le rédacteur ne peut pas s'auto-approuver"
+			response.TotalFailed++
+			response.Items = append(response.Items, itemRes)
+			continue
+		}
+
+		// Contrôle de Gating
+		dItems, ok := dossierCache[item.DossierID]
+		if !ok {
+			dItems, err = r.GetDossierItems(ctx, item.DossierID)
+			if err != nil {
+				itemRes.Success = false
+				itemRes.ErrorMessage = fmt.Sprintf("Erreur lecture dépendances dossier : %v", err)
+				response.TotalFailed++
+				response.Items = append(response.Items, itemRes)
+				continue
+			}
+			dossierCache[item.DossierID] = dItems
+		}
+
+		gatingRes := domain.EvaluateItemGating(dItems, item, domain.GatingActionApprovePDT)
+		if gatingRes.IsBlocked {
+			itemRes.Success = false
+			itemRes.ErrorMessage = fmt.Sprintf("Verrou Gating CTD actif : %s", gatingRes.SummaryMessage)
+			response.TotalFailed++
+			response.Items = append(response.Items, itemRes)
+			continue
+		}
+
+		// Génération du sceau cryptographique SHA-256 individuel 21 CFR Part 11
+		sealInput := fmt.Sprintf("HOMOLOG-PDT-BATCH-SEAL:%s:%s:%s:%d", itemID, approverID, approverEmail, now.UnixNano())
+		sealBytes := sha256.Sum256([]byte(sealInput))
+		sealHash := hex.EncodeToString(sealBytes[:])
+
+		updateQuery := `
+			UPDATE dossier_checklist_items
+			SET workflow_status = 'approved_sealed',
+			    current_revision = 'v1.0',
+			    status = 'approuve_dt',
+			    approver_user_id = $1,
+			    approver_signed_at = $2,
+			    approver_signature_seal = $3,
+			    is_locked = false,
+			    updated_at = $2
+			WHERE id = $4
+		`
+		_, err = r.pool.Exec(ctx, updateQuery, approverID, now, sealHash, itemID)
+		if err != nil {
+			itemRes.Success = false
+			itemRes.ErrorMessage = fmt.Sprintf("Erreur mise à jour base de données : %v", err)
+			response.TotalFailed++
+			response.Items = append(response.Items, itemRes)
+			continue
+		}
+
+		// Entrée d'audit trail dans dossier_item_reviews
+		_ = r.AddReviewEntry(ctx, itemID, approverID, approverRole, domain.ReviewTypeQualityPassed, "Visa officiel Pharmacien DT en signature par lot (Batch 21 CFR Part 11). Document scellé v1.0.", "v1.0")
+
+		// Mettre à jour le cache local pour les éventuels déblocages de gating sur les pièces suivantes du même dossier
+		for idx := range dItems {
+			if dItems[idx].ID == itemID {
+				dItems[idx].WorkflowStatus = domain.WorkflowStatusApprovedSealed
+				dItems[idx].CurrentRevision = "v1.0"
+			}
+		}
+
+		itemRes.Success = true
+		itemRes.SealHash = sealHash
+		response.TotalApproved++
+		response.Items = append(response.Items, itemRes)
+	}
+
+	if response.TotalFailed > 0 && response.TotalApproved == 0 {
+		response.Success = false
+	}
+
+	return response, nil
 }

@@ -593,6 +593,9 @@ const mockAuditTrail = [
             if (typeof refreshAlertsModalContent === 'function') {
                 refreshAlertsModalContent();
             }
+            if (typeof refreshParapheurBadge === 'function') {
+                refreshParapheurBadge();
+            }
         }
 
         function toggleUserDropdown(e) {

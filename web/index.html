@@ -539,6 +539,11 @@
                 <span class="act-icon">🖥️</span>
                 <span class="act-label" id="lbl-act-sys">Cockpit IT</span>
             </button>
+            <button class="act-btn" id="act-parapheur" data-perm="DOC_APPROVE_PDT" onclick="openParapheurModal()" title="Cockpit de Supervision & Parapheur Électronique Pharmacien DT (21 CFR Part 11)" style="display:none;">
+                <span class="act-icon">⚖️</span>
+                <span class="act-label" id="lbl-act-parapheur">Parapheur DT</span>
+                <span class="act-badge" id="badge-parapheur-count" style="display:none; background:#7e22ce;">0</span>
+            </button>
 
             <div class="act-spacer"></div>
 
@@ -560,6 +565,7 @@
                 <button class="mob-dom-btn" id="mob-act-ged" onclick="switchDomainModule('ged')" title="GED BPF">📁 GED</button>
                 <button class="mob-dom-btn" id="mob-act-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration Labo">⚙️ Admin</button>
                 <button class="mob-dom-btn" id="mob-act-sys" data-perm="SYS_MAINT" onclick="switchDomainModule('sys')" title="Cockpit IT" style="display:none;">🖥️ IT</button>
+                <button class="mob-dom-btn" id="mob-act-parapheur" data-perm="DOC_APPROVE_PDT" onclick="openParapheurModal()" title="Parapheur DT" style="display:none;">⚖️ DT</button>
             </div>
 
             <div class="tree-header">
@@ -3372,6 +3378,233 @@
         </div>
     </div>
 
+    <!-- Modal Parapheur Électronique & Cockpit DT (CDC Section 7.4.6) -->
+    <div class="modal-overlay" id="modal-parapheur-dt" onclick="if(event.target === this) closeParapheurModal()">
+        <div class="modal modal-lg" style="width:1120px; max-width:min(1120px, calc(100vw - 24px)); max-height:92vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06); padding:12px 16px;">
+                <div class="modal-title" style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:24px;">⚖️</span>
+                    <div>
+                        <div style="color:var(--text-main); font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px;">
+                            <span>Cockpit de Supervision &amp; Parapheur Électronique</span>
+                            <span style="background:#7e22ce; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;">Pharmacien Directeur Technique</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">
+                            Mandat Légal 1.A.7 &amp; Décret 21-82 • Visa Officiel 21 CFR Part 11 • Ségrégation des Fonctions (SoD) • Signature par Lot &amp; Scellement v1.0
+                        </div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeParapheurModal()">✕</button>
+            </div>
+
+            <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
+                <!-- 1. Bandeau KPIs de Synthèse Cockpit -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #7e22ce; border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Pièces Prêtes pour Visa DT</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-total" style="font-size:22px; font-weight:900; color:#7e22ce;">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Sections validées AQ</span>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid var(--accent-blue); border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Dossiers ANPP Concernés</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-dossiers" style="font-size:22px; font-weight:900; color:var(--accent-blue);">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Procédures actives</span>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #f59e0b; border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Verrous Gating Actifs</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-gating" style="font-size:22px; font-weight:900; color:#d97706;">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Prérequis en attente</span>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #ef4444; border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Échéances Imminentes (&le; 30j)</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-urgent" style="font-size:22px; font-weight:900; color:#dc2626;">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Chemin critique Smart Planning</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Barre d'outils et Filtres Matriciels -->
+                <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                        <div>
+                            <select id="parapheur-filter-dossier" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color); max-width:260px;">
+                                <option value="ALL">Tous les Dossiers</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="parapheur-filter-module" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);">
+                                <option value="ALL">Tous les Modules CTD</option>
+                                <option value="1">Module 1 (Admin &amp; Réglementaire)</option>
+                                <option value="2">Module 2 (Résumés Qualité)</option>
+                                <option value="3">Module 3 (Qualité CMC)</option>
+                                <option value="4">Module 4 (Non-Clinique)</option>
+                                <option value="5">Module 5 (Clinique &amp; BE)</option>
+                                <option value="DM">Dispositifs Médicaux (DM)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="parapheur-filter-dept" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);">
+                                <option value="ALL">Tous les Pôles</option>
+                                <option value="RA">Affaires Réglementaires (RA)</option>
+                                <option value="QA">Assurance Qualité (QA)</option>
+                                <option value="QC">Contrôle Qualité (QC)</option>
+                                <option value="RD">R&amp;D / Production (RD)</option>
+                                <option value="DT">Direction Technique (DT)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="parapheur-filter-gating" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);">
+                                <option value="ALL">Tous les statuts de Gating</option>
+                                <option value="UNBLOCKED">Prêts pour Signature (Sans Verrou)</option>
+                                <option value="BLOCKED">Avec Verrou GxP Actif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="parapheur-search-input" placeholder="Rechercher code, DCI, titre..." oninput="applyParapheurFilters()" style="padding:5px 10px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color); width:210px;">
+                        <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="loadParapheurItems()" title="Rafraîchir les pièces du parapheur">
+                            🔄 Actualiser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Table Consolidée du Parapheur Haute Densité -->
+                <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; overflow:hidden; flex:1; display:flex; flex-direction:column;">
+                    <div style="padding:8px 12px; background:var(--bg-panel); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:11.5px; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                            <span>Liasse Documentaire Soumise au Visa PDT</span>
+                            <span id="parapheur-filtered-count" style="font-size:10px; background:#7e22ce; color:white; padding:1px 6px; border-radius:10px; font-weight:800;">0 pièce(s)</span>
+                        </div>
+                        <div style="font-size:10.5px; color:var(--text-dim);">
+                            ℹ️ Seules les sections validées par le Checker sont éligibles au scellement officiel.
+                        </div>
+                    </div>
+
+                    <div style="overflow-y:auto; max-height:460px; flex:1;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
+                            <thead>
+                                <tr style="background:var(--bg-sub); border-bottom:1.5px solid var(--border-color); position:sticky; top:0; z-index:2;">
+                                    <th style="padding:8px 10px; width:36px; text-align:center;">
+                                        <input type="checkbox" id="parapheur-select-all" onchange="toggleSelectAllParapheur(this.checked)" title="Tout sélectionner / désélectionner" style="transform:scale(1.15); cursor:pointer;">
+                                    </th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Dossier &amp; Produit</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Exigence CTD</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Titre de la Pièce</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Rédacteur (Maker)</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Revue Qualité (Checker)</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Cible Dépôt</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Gating GxP</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase; text-align:center; width:90px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parapheur-table-tbody">
+                                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-dim);">Chargement du parapheur...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Barre d'action Flottante de Signature par Lot (Batch Signing) -->
+            <div id="parapheur-batch-bar" style="display:none; padding:10px 16px; background:linear-gradient(135deg, rgba(126,34,206,0.12), rgba(126,34,206,0.04)); border-top:2px solid #7e22ce; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px;">✍️</span>
+                    <div>
+                        <span style="font-weight:800; color:#7e22ce; font-size:13px;">Signature par Lot Sélectionnée :</span>
+                        <span id="parapheur-selected-count" style="font-weight:900; color:var(--text-main); font-size:14px; margin-left:4px;">0</span>
+                        <span style="font-size:12px; color:var(--text-muted);">pièce(s) cochée(s)</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="button" class="btn-pill" onclick="toggleSelectAllParapheur(false)">Désélectionner tout</button>
+                    <button type="button" id="btn-parapheur-batch-submit" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:800; font-size:12px; padding:6px 14px; box-shadow:0 2px 6px rgba(126,34,206,0.3);" onclick="openBatchConfirmModal()">
+                        ✍️ Signer &amp; Sceller la Liasse en 1 Clic (21 CFR Part 11) ➔
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:11px; color:var(--text-dim); display:flex; align-items:center; gap:6px;">
+                    <span>🛡️</span>
+                    <span>ALCOA+ : Chaque visa apposé génère une trace nominative immuable avec scellement SHA-256 dans l'Audit Trail.</span>
+                </div>
+                <button type="button" class="btn-pill" onclick="closeParapheurModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Signature par Lot (21 CFR Part 11) -->
+    <div class="modal-overlay" id="modal-parapheur-batch-confirm" onclick="if(event.target === this) closeBatchConfirmModal()">
+        <div class="modal modal-lg" style="width:680px; max-width:min(680px, calc(100vw - 24px)); max-height:88vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06);">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span>✍️</span>
+                    <div>
+                        <span style="font-size:14px; font-weight:800; color:var(--text-main);">Validation &amp; Scellement par Lot (Batch Signing)</span>
+                        <div style="font-size:11px; color:var(--text-dim);">Conforme 21 CFR Part 11 Subpart B &bull; Visa officiel Pharmacien DT (1.A.7)</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeBatchConfirmModal()">✕</button>
+            </div>
+
+            <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
+                <div style="font-size:12px; color:var(--text-main);">
+                    Vous vous apprêtez à apposer votre visa légal et sceller en <strong>v1.0</strong> une liasse de <strong id="parapheur-batch-confirm-count" style="color:#7e22ce; font-size:13px;">0</strong> document(s) :
+                </div>
+
+                <div id="parapheur-batch-confirm-list" style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; max-height:180px; overflow-y:auto; padding:4px;">
+                    <!-- Liste des pièces sélectionnées injectée dynamiquement -->
+                </div>
+
+                <div style="background:rgba(126,34,206,0.06); border:1px solid rgba(126,34,206,0.25); border-radius:6px; padding:10px 12px; font-size:11px; color:var(--text-main); line-height:1.45;">
+                    🛡️ <strong>Effets Juridiques du Visa Pharmacien DT :</strong>
+                    <ul style="margin:4px 0 0 16px; padding:0;">
+                        <li>Chaque document bascule au statut légal <strong>Scellé v1.0</strong> (prêt pour transmission ANPP).</li>
+                        <li>Un hash cryptographique SHA-256 unique est généré et horodaté pour chaque pièce.</li>
+                        <li>Toute modification ultérieure exigera la réouverture formelle d'une version mineure (v1.1) avec motif tracé.</li>
+                    </ul>
+                </div>
+
+                <div id="parapheur-batch-err" class="login-error-banner" style="display:none; margin-bottom:4px;"></div>
+
+                <form onsubmit="submitBatchApproval(event)">
+                    <div style="margin-bottom:12px;">
+                        <label style="display:flex; align-items:flex-start; gap:8px; font-size:11.5px; cursor:pointer;">
+                            <input type="checkbox" id="parapheur-batch-solemn-check" required style="margin-top:2px;">
+                            <span>Je soussigné(e), Pharmacien Directeur Technique légalement désigné, certifie sur l'honneur l'exactitude, la sincérité et la conformité stricte aux exigences ANPP et BPF des documents composant cette liasse.</span>
+                        </label>
+                    </div>
+
+                    <div class="login-field" style="margin-bottom:14px;">
+                        <label for="parapheur-batch-totp" style="font-weight:700; font-size:11.5px;">Code 2FA Authenticator (6 chiffres) ou mot de passe de re-authentification :</label>
+                        <input type="password" id="parapheur-batch-totp" class="login-input" placeholder="Code TOTP ou mot de passe..." style="font-family:monospace; font-size:13px; font-weight:700;">
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:3px;">
+                            Exigence 21 CFR Part 11 : La ré-authentification empêche toute signature accidentelle.
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--border-color);">
+                        <button type="button" class="btn-pill" onclick="closeBatchConfirmModal()">Annuler</button>
+                        <button type="submit" id="parapheur-batch-confirm-btn" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:800; font-size:12px; padding:6px 14px;">
+                            ✍️ Signer &amp; Sceller la Liasse (21 CFR Part 11)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.18.2"></script>
     <script src="/js/auth.js?v=2026.11.18.2"></script>
@@ -3382,6 +3615,7 @@
     <script src="/js/ged.js?v=2026.11.17.11"></script>
     <script src="/js/dossiers.js?v=2026.11.18.12"></script>
     <script src="/js/workflow.js?v=2026.11.18.11"></script>
+    <script src="/js/parapheur.js?v=2026.11.19.1"></script>
     <script src="/js/deficiencies.js?v=2026.11.17.5"></script>
     <script src="/js/fees.js?v=2026.11.17.5"></script>
     <script src="/js/submissions.js?v=2026.11.17.5"></script>

@@ -662,3 +662,70 @@ func GeneratePDTSignatureSeal(dossierID, userID uuid.UUID, userRole string, sign
 	hash := sha256.Sum256([]byte(payload))
 	return hex.EncodeToString(hash[:])
 }
+
+// ParapheurPendingItem représente une exigence documentaire au statut 'pending_approval'
+// soumise au visa réglementaire 21 CFR Part 11 du Pharmacien Directeur Technique
+type ParapheurPendingItem struct {
+	ItemID              uuid.UUID  `json:"item_id"`
+	DossierID           uuid.UUID  `json:"dossier_id"`
+	DossierCode         string     `json:"dossier_code"`
+	ProcedureCode       string     `json:"procedure_code"`
+	InternalReference   string     `json:"internal_reference"`
+	TargetDepositDate   *time.Time `json:"target_deposit_date,omitempty"`
+	DaysToTargetDeposit *int       `json:"days_to_target_deposit,omitempty"`
+	ProductName         string     `json:"product_name"`
+	ModuleNumber        int        `json:"module_number"`
+	SubModule           string     `json:"sub_module"`
+	ItemCode            string     `json:"item_code"`
+	TitleFR             string     `json:"title_fr"`
+	TitleAR             string     `json:"title_ar,omitempty"`
+	RequirementLevel    string     `json:"requirement_level"`
+	WorkflowStatus      string     `json:"workflow_status"`
+	CurrentRevision     string     `json:"current_revision"`
+	AssignedDepartment  string     `json:"assigned_department"`
+	DueDate             *time.Time `json:"due_date,omitempty"`
+	MakerUserID         *uuid.UUID `json:"maker_user_id,omitempty"`
+	MakerUserName       string     `json:"maker_user_name,omitempty"`
+	MakerSubmittedAt    *time.Time `json:"maker_submitted_at,omitempty"`
+	CheckerUserID       *uuid.UUID `json:"checker_user_id,omitempty"`
+	CheckerUserName     string     `json:"checker_user_name,omitempty"`
+	CheckerReviewedAt   *time.Time `json:"checker_reviewed_at,omitempty"`
+	CheckerDecision     *string    `json:"checker_decision,omitempty"`
+	CheckerNotes        *string    `json:"checker_notes,omitempty"`
+	GEDDocumentID       *uuid.UUID `json:"ged_document_id,omitempty"`
+	GEDDocumentTitle    *string    `json:"ged_document_title,omitempty"`
+	IsGatingBlocked     bool       `json:"is_gating_blocked"`
+	GatingBlockReason   string     `json:"gating_block_reason,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+}
+
+// BatchApproveRequest payload pour la signature par lot 21 CFR Part 11
+type BatchApproveRequest struct {
+	ItemIDs                   []uuid.UUID `json:"item_ids"`
+	TOTPCode                  string      `json:"totp_code,omitempty"`
+	Password                  string      `json:"password,omitempty"`
+	SolemnDeclarationAccepted bool        `json:"solemn_declaration_accepted"`
+}
+
+// BatchApproveItemResult détail du scellement d'une pièce dans le lot
+type BatchApproveItemResult struct {
+	ItemID       uuid.UUID `json:"item_id"`
+	ItemCode     string    `json:"item_code"`
+	DossierCode  string    `json:"dossier_code"`
+	Success      bool      `json:"success"`
+	SealHash     string    `json:"seal_hash,omitempty"`
+	ErrorMessage string    `json:"error_message,omitempty"`
+}
+
+// BatchApproveResponse bilan consolidé de la signature par lot
+type BatchApproveResponse struct {
+	Success        bool                     `json:"success"`
+	TotalRequested int                      `json:"total_requested"`
+	TotalApproved  int                      `json:"total_approved"`
+	TotalFailed    int                      `json:"total_failed"`
+	ExecutedAt     time.Time                `json:"executed_at"`
+	ApproverID     uuid.UUID                `json:"approver_id"`
+	ApproverName   string                   `json:"approver_name"`
+	Items          []BatchApproveItemResult `json:"items"`
+}
