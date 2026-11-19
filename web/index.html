@@ -3200,13 +3200,72 @@
                         </span>
                     </div>
                 </div>
-                <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:8px;">
-                    <button type="button" class="btn-pill" onclick="closeModal('modal-smart-planning-config')">Annuler</button>
-                    <button type="submit" class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-weight:700;">
-                        💾 Enregistrer &amp; Recalculer
+                <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn-pill" style="font-size:11px; padding:4px 10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); border-color:rgba(37,99,235,0.3);" onclick="showAlgerianHolidaysModal()">
+                        📅 Calendrier des Jours Fériés
                     </button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-smart-planning-config')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-weight:700;">
+                            💾 Enregistrer &amp; Recalculer
+                        </button>
+                    </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Calendrier Officiel des Jours Fériés Algériens (Loi 63-278) -->
+    <div class="modal-overlay" id="modal-algerian-holidays" onclick="if(event.target === this) closeModal('modal-algerian-holidays')">
+        <div class="modal modal-lg" style="width:720px; max-width:min(720px, calc(100vw - 24px)); max-height:85vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-blue); background: rgba(37,99,235,0.06);">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:22px;">📅</span>
+                    <div>
+                        <span style="color:var(--text-main); font-weight:800; font-size:14px;">Calendrier Officiel des Jours Fériés &amp; Chômés en Algérie</span>
+                        <div style="font-size:11px; color:var(--text-dim);">Loi n° 63-278 modifiée • Référentiel calendaire pour le Smart Planning ANPP</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-algerian-holidays')">✕</button>
+            </div>
+            <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-main);">Filtrer par année :</span>
+                        <button class="btn-pill active" id="btn-holiday-year-all" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear('ALL')">Toutes</button>
+                        <button class="btn-pill" id="btn-holiday-year-2026" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear(2026)">2026</button>
+                        <button class="btn-pill" id="btn-holiday-year-2027" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear(2027)">2027</button>
+                        <button class="btn-pill" id="btn-holiday-year-2028" style="font-size:10.5px; padding:3px 10px;" onclick="filterHolidaysByYear(2028)">2028</button>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-dim);">
+                        <span id="holidays-count-badge" style="background:var(--badge-bg); padding:2px 8px; border-radius:10px; font-weight:800; color:var(--accent-blue);">Chargement...</span>
+                    </div>
+                </div>
+
+                <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                        <thead>
+                            <tr style="background:var(--bg-surface); border-bottom:1px solid var(--border-color); text-align:left;">
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Date</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Jour</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Désignation Officielle</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase;">Nature</th>
+                                <th style="padding:8px 10px; font-size:11px; color:var(--text-dim); text-transform:uppercase; text-align:center;">Statut Légal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holidays-table-tbody">
+                            <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-dim);">Chargement du calendrier...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="font-size:10.5px; color:var(--text-muted); background:var(--bg-surface); padding:8px 10px; border-radius:4px; line-height:1.45; border-left:3px solid var(--accent-blue);">
+                    ⚖️ <strong>Règle de gestion Smart Planning :</strong> Tous ces jours sont légalement chômés et payés en Algérie. Ils sont automatiquement déduits du calcul des délais incompressibles de dépôt ANPP (stabilités 6 mois, QOS, réservation RDV E-TASJIL, liquidation taxes BV1/BV2).
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-pill" onclick="closeModal('modal-algerian-holidays')">Fermer</button>
+            </div>
         </div>
     </div>
 

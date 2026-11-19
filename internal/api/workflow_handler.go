@@ -751,6 +751,58 @@ func (h *WorkflowHandler) SyncSmartPlanningDueDates(w http.ResponseWriter, r *ht
 	})
 }
 
+// AlgerianHolidayItem représente un jour férié officiel algérien
+type AlgerianHolidayItem struct {
+	HolidayDate string `json:"holiday_date"` // YYYY-MM-DD
+	NameFR      string `json:"name_fr"`
+	HolidayType string `json:"holiday_type"` // NATIONAL, RELIGIEUX
+	IsObserved  bool   `json:"is_observed"`
+	Year        int    `json:"year"`
+	DayOfWeek   string `json:"day_of_week"`
+}
+
+// GetAlgerianHolidays retourne le calendrier complet des jours fériés légaux et chômés en Algérie
+func (h *WorkflowHandler) GetAlgerianHolidays(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.pool.Query(r.Context(), `
+		SELECT holiday_date, name_fr, holiday_type, is_observed
+		FROM algerian_holidays
+		ORDER BY holiday_date ASC
+	`)
+	if err != nil {
+		log.Printf("[ERROR] GetAlgerianHolidays: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger le calendrier des jours fériés")
+		return
+	}
+	defer rows.Close()
+
+	holidays := make([]AlgerianHolidayItem, 0)
+	for rows.Next() {
+		var t time.Time
+		var it AlgerianHolidayItem
+		if err := rows.Scan(&t, &it.NameFR, &it.HolidayType, &it.IsObserved); err != nil {
+			continue
+		}
+		it.HolidayDate = t.Format("2006-01-02")
+		it.Year = t.Year()
+		it.DayOfWeek = getDayOfWeekFR(t.Weekday())
+		holidays = append(holidays, it)
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"holidays":        holidays,
+		"count":           len(holidays),
+		"legal_reference": "Loi n° 63-278 du 26 juillet 1963 modifiée et complétée relative aux fêtes légales",
+	})
+}
+
+func getDayOfWeekFR(w time.Weekday) string {
+	days := []string{"Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"}
+	if int(w) >= 0 && int(w) < len(days) {
+		return days[w]
+	}
+	return ""
+}
+
 func (h *WorkflowHandler) logAudit(ctx context.Context, orgID, userID uuid.UUID, email, role, action, entityType, entityID string, details map[string]any) {
 	if h.auditService == nil {
 		return

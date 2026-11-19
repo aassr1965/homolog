@@ -478,6 +478,7 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/smart-planning", workflowHandler.GetDossierSmartPlanning)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/smart-planning/set-target", workflowHandler.SetDossierTargetDates)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/smart-planning/sync-due-dates", workflowHandler.SyncSmartPlanningDueDates)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/system/holidays", workflowHandler.GetAlgerianHolidays)
 
 				// Modèles Maîtres ANPP / ICH
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates", workflowHandler.GetMasterTemplates)

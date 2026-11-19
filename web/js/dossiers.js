@@ -2363,8 +2363,8 @@
                         <span style="font-size:11px; font-weight:700; color:${sp.days_to_target_deposit >= 0 ? 'var(--text-main)' : '#dc2626'};">
                             (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassé de ${Math.abs(sp.days_to_target_deposit)}j`})
                         </span>
-                        <span style="font-size:10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:2px 6px; border-radius:3px; font-weight:700;" title="Base de calcul configurable • Jours fériés officiels algériens déduits">
-                            📅 ${workingDays}j ouvrés/sem. ${sp.holidays_excluded_count > 0 ? `• ${sp.holidays_excluded_count} fériés déduits` : ''}
+                        <span style="font-size:10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:2px 6px; border-radius:3px; font-weight:700; cursor:pointer;" onclick="showAlgerianHolidaysModal()" title="Cliquer pour afficher le calendrier complet des jours fériés légaux en Algérie (Loi 63-278)">
+                            📅 ${workingDays}j ouvrés/sem. ${sp.holidays_excluded_count > 0 ? `• ${sp.holidays_excluded_count} fériés déduits ↗` : ''}
                         </span>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -2479,7 +2479,7 @@
                         ${sp.recommended_deposit_date ? `
                             <div style="margin-top:6px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
                                 <span>📌</span>
-                                <span>Date calculée sur les délais incompressibles réels : <strong>${recDateFormatted}</strong> (${sp.required_working_days || 0} jours ouvrés requis, hors week-ends et ${sp.holidays_excluded_count || 0} jours fériés officiels déduits).</span>
+                                <span>Date calculée sur les délais incompressibles réels : <strong>${recDateFormatted}</strong> (${sp.required_working_days || 0} jours ouvrés requis, hors week-ends et <a href="javascript:void(0)" onclick="closeModal('modal-smart-planning-timeline'); showAlgerianHolidaysModal();" style="color:var(--accent-blue); text-decoration:underline; font-weight:700;" title="Consulter la liste officielle des jours fériés algériens">${sp.holidays_excluded_count || 0} jours fériés officiels déduits ↗</a>).</span>
                             </div>
                         ` : ''}
                     </div>
@@ -2647,6 +2647,93 @@
             } catch(e) {
                 showNotifyModal("Erreur Synchronisation", e.message, "⚠️");
             }
+        }
+
+        // =========================================================================
+        // CALENDRIER OFFICIEL DES JOURS FÉRIÉS ALGÉRIENS (Loi n° 63-278 modifiée)
+        // =========================================================================
+
+        let allAlgerianHolidays = [];
+        let currentHolidayYearFilter = 'ALL';
+
+        async function showAlgerianHolidaysModal() {
+            openModal('modal-algerian-holidays');
+            const tbody = document.getElementById('holidays-table-tbody');
+            const badge = document.getElementById('holidays-count-badge');
+            if (!tbody) return;
+
+            if (allAlgerianHolidays.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-dim);">Chargement du calendrier officiel...</td></tr>`;
+                try {
+                    const resp = await fetch('/api/v1/system/holidays');
+                    if (!resp.ok) throw new Error("HTTP " + resp.status);
+                    const data = await resp.json();
+                    allAlgerianHolidays = data.holidays || [];
+                } catch(e) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:#ef4444;">Erreur de chargement : ${escapeHTML(e.message)}</td></tr>`;
+                    return;
+                }
+            }
+
+            renderHolidaysTable();
+        }
+
+        function filterHolidaysByYear(year) {
+            currentHolidayYearFilter = year;
+            ['all', '2026', '2027', '2028'].forEach(y => {
+                const btn = document.getElementById(`btn-holiday-year-${y}`);
+                if (btn) {
+                    if ((y === 'all' && year === 'ALL') || (String(y) === String(year))) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+            renderHolidaysTable();
+        }
+
+        function renderHolidaysTable() {
+            const tbody = document.getElementById('holidays-table-tbody');
+            const badge = document.getElementById('holidays-count-badge');
+            if (!tbody) return;
+
+            let filtered = allAlgerianHolidays;
+            if (currentHolidayYearFilter !== 'ALL') {
+                filtered = allAlgerianHolidays.filter(h => h.year === parseInt(currentHolidayYearFilter, 10));
+            }
+
+            if (badge) {
+                badge.innerText = `${filtered.length} jour(s) férié(s)`;
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-dim);">Aucun jour férié trouvé pour cette année.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(h => {
+                const dateParts = (h.holiday_date || '').split('-');
+                let dateFormatted = h.holiday_date;
+                if (dateParts.length === 3) {
+                    dateFormatted = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                }
+                const typeBadge = h.holiday_type === 'NATIONAL' ? 
+                    `<span style="background:rgba(37,99,235,0.12); color:#2563eb; padding:2px 8px; border-radius:10px; font-weight:700; font-size:10px;">🇩🇿 Fête Nationale</span>` :
+                    `<span style="background:rgba(16,185,129,0.12); color:#059669; padding:2px 8px; border-radius:10px; font-weight:700; font-size:10px;">🌙 Fête Religieuse</span>`;
+
+                return `
+                    <tr style="border-bottom:1px solid var(--border-color);">
+                        <td style="padding:7px 10px; font-weight:700; font-family:monospace; color:var(--text-main);">${escapeHTML(dateFormatted)}</td>
+                        <td style="padding:7px 10px; color:var(--text-dim);">${escapeHTML(h.day_of_week)}</td>
+                        <td style="padding:7px 10px; font-weight:600; color:var(--text-main);">${escapeHTML(h.name_fr)}</td>
+                        <td style="padding:7px 10px;">${typeBadge}</td>
+                        <td style="padding:7px 10px; text-align:center;">
+                            <span style="font-size:10px; font-weight:700; color:#10b981; background:rgba(16,185,129,0.08); padding:2px 6px; border-radius:4px;">✓ Chômé &amp; Payé</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         // Alias de compatibilité
