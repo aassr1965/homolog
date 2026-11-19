@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"homolog/internal/audit"
+	"homolog/internal/domain"
 	"homolog/internal/repository"
 )
 
@@ -583,6 +584,157 @@ func (h *WorkflowHandler) GetDossierGatingSummary(w http.ResponseWriter, r *http
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
 		"summary": summary,
+	})
+}
+
+// GetDossierSmartPlanning calcule et retourne le rétroplanning dynamique inversé et l'analyse de chemin critique
+func (h *WorkflowHandler) GetDossierSmartPlanning(w http.ResponseWriter, r *http.Request) {
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), dossierID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
+		log.Printf("[ERROR] GetDossierSmartPlanning %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de calculer le rétroplanning inversé")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":  true,
+		"planning": analysis,
+	})
+}
+
+type SetDossierTargetDatesRequest struct {
+	TargetDepositDate   *string `json:"target_deposit_date"`   // "YYYY-MM-DD"
+	ANPPValidityEndDate *string `json:"anpp_validity_end_date"` // "YYYY-MM-DD"
+}
+
+// SetDossierTargetDates configure ou met à jour la date cible de dépôt ou l'échéance légale de renouvellement
+func (h *WorkflowHandler) SetDossierTargetDates(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	var req SetDossierTargetDatesRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	var targetDate *time.Time
+	if req.TargetDepositDate != nil && strings.TrimSpace(*req.TargetDepositDate) != "" {
+		t, err := time.Parse("2006-01-02", strings.TrimSpace(*req.TargetDepositDate))
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "Format de date cible invalide (attendu YYYY-MM-DD)")
+			return
+		}
+		targetDate = &t
+	}
+
+	var validityEnd *time.Time
+	if req.ANPPValidityEndDate != nil && strings.TrimSpace(*req.ANPPValidityEndDate) != "" {
+		t, err := time.Parse("2006-01-02", strings.TrimSpace(*req.ANPPValidityEndDate))
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "Format de date de validité invalide (attendu YYYY-MM-DD)")
+			return
+		}
+		validityEnd = &t
+	}
+
+	err = h.workflowRepo.UpdateDossierTargetDates(r.Context(), dossierID, targetDate, validityEnd)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
+		log.Printf("[ERROR] SetDossierTargetDates %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de mettre à jour les dates du dossier")
+		return
+	}
+
+	// Traçabilité ALCOA+ Audit Trail
+	h.logAudit(r.Context(), user.OrganizationID, user.UserID, user.Email, user.Role,
+		"SET_TARGET_DATES", "dossier", dossierID.String(), map[string]any{
+			"target_deposit_date":    req.TargetDepositDate,
+			"anpp_validity_end_date": req.ANPPValidityEndDate,
+		})
+
+	// Recalcul immédiat du planning après modification
+	analysis, _ := h.workflowRepo.GetDossierSmartPlanning(r.Context(), dossierID)
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":  true,
+		"message":  "Dates cibles et rétroplanning mis à jour avec succès",
+		"planning": analysis,
+	})
+}
+
+// SyncSmartPlanningDueDates propage les dates du chemin critique inversé aux sections CTD du dossier
+func (h *WorkflowHandler) SyncSmartPlanningDueDates(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierIDStr := chi.URLParam(r, "id")
+	dossierID, err := uuid.Parse(dossierIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	analysis, err := h.workflowRepo.GetDossierSmartPlanning(r.Context(), dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Impossible d'analyser le rétroplanning")
+		return
+	}
+
+	items, err := h.workflowRepo.GetDossierItems(r.Context(), dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de lire les items du dossier")
+		return
+	}
+
+	dueDates := domain.CalculateSmartDueDates(analysis, items)
+	updatedCount, err := h.workflowRepo.SyncSmartPlanningDueDates(r.Context(), dossierID, dueDates)
+	if err != nil {
+		log.Printf("[ERROR] SyncSmartPlanningDueDates %s: %v", dossierID, err)
+		writeJSONError(w, http.StatusInternalServerError, "Échec de la propagation des dates cibles aux tâches")
+		return
+	}
+
+	// Traçabilité ALCOA+ Audit Trail
+	h.logAudit(r.Context(), user.OrganizationID, user.UserID, user.Email, user.Role,
+		"SYNC_SMART_PLANNING_DUE_DATES", "dossier", dossierID.String(), map[string]any{
+			"updated_items_count": updatedCount,
+			"target_deposit_date": analysis.TargetDepositDate.Format("2006-01-02"),
+			"overall_health":      analysis.OverallHealth,
+		})
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success":             true,
+		"message":             fmt.Sprintf("Échéances synchronisées avec succès pour %d sections CTD", updatedCount),
+		"updated_items_count": updatedCount,
+		"planning":            analysis,
 	})
 }
 

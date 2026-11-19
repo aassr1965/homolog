@@ -276,6 +276,9 @@ gantt
 - [x] **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
   - Calcul automatique du chemin critique à rebours à partir d'une date butoir ou de l'échéance légale de renouvellement quinquennal à **J-180** : planification dynamique des stabilités M6 (J-240), de la rédaction, de la revue qualité Checker (J-150), de la réservation du créneau RDV E-TASJIL (J-60), du visa légal DT et de la liquidation des bordereaux BV1/BV2 (J-15).
   - Alertes graduées (Jaune / Orange / Rouge) dans le cockpit DT en cas de dérive calendaire sur un jalon critique amont.
+  - Synchronisation automatisée en 1 clic des dates d'échéances calculées vers les tâches de la checklist CTD (`due_date` dans `dossier_checklist_items`).
+  - Modale interactive du chronogramme inversé avec textes de loi algériens (Guide CTD ANPP, Décret 20-325, Décret 21-82) et modale de configuration des dates cibles.
+  - Qualification complète : 100% tests unitaires (`smart_planning_test.go`), test d'intégration API (`smart_planning_api_test.go`) et recette navigateur robotisée (`recette_smart_planning_jalon_2_1c.md`).
 - [x] **Bibliothèque de Modèles Maîtres (*Master Templates*) conformes ANPP & ICH :**
   - Bibliothèque native de canevas paramétrables : Notice patient bilingue FR/AR (1.P.2), RCP (1.P.1), Spécifications et méthodes de contrôle produit fini (ICH Q6A / 3.2.P.5), Protocoles et rapports de stabilité Zone IVb (ICH Q1A(R2) / 3.2.P.8), Résumé global de la qualité (QOS Module 2.3), Rapport de validation de procédé (3.2.P.3.5), Dossier technique DM (Arrêté du 10 mai 2021).
   - Pré-remplissage dynamique des variables documentaires depuis la base de données (nom commercial, DCI, forme galénique, dosage, titulaire, fabricant, etc.).
@@ -532,6 +535,20 @@ gantt
 - [ ] Connecteur d'interopérabilité API (`internal/anpp`) dès publication des spécifications techniques de télé-procédure ou webhook par l'ANPP.
 - [ ] Télétransmission automatisée sécurisée des paquets de soumission CTD scellés (Submission Packages) avec accusé de réception cryptographique.
 - [ ] Synchronisation bidirectionnelle du statut d'instruction en temps réel entre E-TASJIL et Sanad Pharma.
+
+### Jalon 3.5 : Packaging Déploiement On-Premise « Clé en Main » (Installeur Windows Server / Setup .exe Style Office)
+- [ ] **Installeur Graphique Monolithique Autonome (`Setup_SanadPharma_Server.exe`) :**
+  - Package tout-en-un (Inno Setup / NSIS) compressant le binaire Go, l'interface Web statique, les polices arabes/françaises et les scripts d'amorçage.
+  - Assistant d'installation graphique pas-à-pas (Wizard) ergonomique inspiré de la suite Microsoft Office (acceptation des licences GAMP 5 / BPF, choix du répertoire cible `C:\Program Files\Sanad Pharma`).
+- [ ] **Déploiement Automatisé en tant que Service Windows (24h/24, 7j/7) :**
+  - Enregistrement automatique comme Service Windows natif d'arrière-plan (`sc.exe` / API SCM) avec redémarrage automatique en cas de panne ou de reboot du serveur hôte.
+  - Exécution permanente en arrière-plan sans session utilisateur ouverte requise (sous compte de service dédié ou `NT AUTHORITY\SYSTEM`).
+- [ ] **Configuration Réseau, Pare-feu & Certificats SSL Locaux :**
+  - Déclaration automatique des règles de flux dans le Pare-feu Windows Server (`netsh advfirewall` / PowerShell) pour ouvrir les ports 8090 / 443 sur le réseau local d'entreprise.
+  - Assistant de génération ou d'importation de certificats TLS d'entreprise pour accès HTTPS sécurisé sur le réseau local / VPN du laboratoire (`https://sanad.monlabo.dz`).
+- [ ] **Raccordement Base de Données & Mode Déploiement Silencieux DSI :**
+  - Assistant de raccordement guidé à l'instance PostgreSQL d'entreprise (ou initialisation locale automatisée).
+  - Support des paramètres d'installation silencieuse sans interface (`/SILENT`, `/VERYSILENT`) pour télédistribution par la DSI (GPO / SCCM / Intune).
 
 ---
 

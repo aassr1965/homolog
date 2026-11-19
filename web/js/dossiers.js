@@ -20,6 +20,7 @@
         let selectedDossierId = null;
         let currentDossierDetail = null;
         let currentDossierGatingSummary = null;
+        let currentDossierSmartPlanning = null;
         let currentDossierFilterProc = '';
         let currentDossierModuleFilter = 'all'; // 'all', 1, 2, 3, 4, 5, 0
         let currentDossierSubModuleFilter = 'all'; // 'all', '1.A', '1.H', '1.M', '1.P', 'DM.A', 'DM.Q', 'DM.T', 'DM.S', 'DM.I'
@@ -527,6 +528,20 @@
                     currentDossierGatingSummary = null;
                 }
 
+                // Chargement du Smart Planning & Rétroplanning Inversé (CDC Section 7.4.3.6)
+                try {
+                    const spRes = await fetch(`/api/v1/dossiers/${id}/smart-planning`);
+                    if (spRes.ok) {
+                        const spData = await spRes.json();
+                        currentDossierSmartPlanning = spData.planning || null;
+                    } else {
+                        currentDossierSmartPlanning = null;
+                    }
+                } catch(e) {
+                    console.warn("Échec chargement smart planning:", e);
+                    currentDossierSmartPlanning = null;
+                }
+
                 // KPI toolbar
                 const kpiEl = document.getElementById("kpi-dossier-completeness");
                 if (kpiEl) {
@@ -800,6 +815,9 @@
                             </div>
                         </div>
                     ` : ''}
+
+                    <!-- Rétroplanning Dynamique Inversé & Smart Planning ANPP (CDC Section 7.4.3.6) -->
+                    ${currentDossierSmartPlanning ? renderSmartPlanningBanner(currentDossierSmartPlanning) : ''}
 
                     ${dossier.pdt_signed_at ? `
                         <div style="margin-top:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center; font-size:11px;">
@@ -2304,5 +2322,263 @@
                 await loadDossierMembers();
             } catch(e) {
                 showNotifyModal("Erreur Révocation", e.message, "⚠️");
+            }
+        }
+
+        // =========================================================================
+        // MOTEUR DE RÉTROPLANNING DYNAMIQUE INVERSÉ (SMART PLANNING ANPP - CDC 7.4.3.6)
+        // =========================================================================
+
+        function getSmartPlanningHealthStyles(health) {
+            const healthMap = {
+                'COMPLETED': { bg: 'rgba(16,185,129,0.12)', border: '#10b981', text: '#059669', badgeBg: '#10b981', icon: '✅' },
+                'ON_TRACK': { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.35)', text: '#059669', badgeBg: '#10b981', icon: '🟢' },
+                'WARNING_TIGHT': { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.45)', text: '#d97706', badgeBg: '#f59e0b', icon: '🟡' },
+                'CRITICAL_DELAY': { bg: 'rgba(249,115,22,0.10)', border: '#f97316', text: '#ea580c', badgeBg: '#f97316', icon: '🟠' },
+                'FATAL_BLOCK': { bg: 'rgba(239,68,68,0.12)', border: '#ef4444', text: '#dc2626', badgeBg: '#ef4444', icon: '🔴' }
+            };
+            return healthMap[health] || healthMap['ON_TRACK'];
+        }
+
+        function renderSmartPlanningBanner(sp) {
+            if (!sp) return '';
+
+            const hc = getSmartPlanningHealthStyles(sp.overall_health);
+            const targetFormatted = sp.target_deposit_date ? new Date(sp.target_deposit_date).toLocaleDateString('fr-FR') : 'Non définie';
+            const originLabel = sp.target_date_origin === 'anpp_validity_j180' ? '⚖️ Décret 20-325 Renouvellement J-180' : 
+                                (sp.target_date_origin === 'dossier_target_date' ? '🎯 Date Cible Fixée' : '⏳ Date Estimée (+9 mois)');
+
+            return `
+            <div style="margin-top:8px; background:${hc.bg}; border:1px solid ${hc.border}; border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-size:15px;">⏱️</span>
+                        <span style="font-size:11px; font-weight:800; color:var(--text-main); text-transform:uppercase; letter-spacing:0.5px;">Smart Planning ANPP :</span>
+                        <span style="background:${hc.badgeBg}; color:white; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:12px;">${hc.icon} ${escapeHTML(sp.overall_health_label)}</span>
+                        <span style="font-size:11.5px; font-weight:700; color:var(--text-main);">Cible : <strong>${targetFormatted}</strong></span>
+                        <span style="font-size:10px; background:rgba(0,0,0,0.06); padding:2px 6px; border-radius:3px; color:var(--text-muted);">${originLabel}</span>
+                        <span style="font-size:11px; font-weight:700; color:${sp.days_to_target_deposit >= 0 ? 'var(--text-main)' : '#dc2626'};">
+                            (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassé de ${Math.abs(sp.days_to_target_deposit)}j`})
+                        </span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <button class="btn-pill" style="font-size:10px; padding:3px 8px; cursor:pointer;" onclick="showSmartPlanningConfigModal()" title="Modifier la date cible de dépôt ou date de validité AMM">
+                            ⚙️ Date Cible
+                        </button>
+                        <button class="btn-pill" style="font-size:10px; padding:3px 8px; background:rgba(37,99,235,0.12); color:var(--accent-blue); border-color:rgba(37,99,235,0.4); cursor:pointer;" onclick="syncSmartPlanningDueDates()" title="Propager les dates critiques aux échéances de chaque section CTD">
+                            ⚡ Synchroniser Échéances
+                        </button>
+                        <button class="btn-pill" style="font-size:10px; padding:3px 8px; background:rgba(126,34,206,0.12); color:#9333ea; border-color:rgba(126,34,206,0.4); cursor:pointer;" onclick="showSmartPlanningTimelineModal()" title="Ouvrir le chronogramme détaillé inversé avec textes de loi">
+                            📊 Chronogramme Inversé
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 6 Jalons incompressibles en ruban interactif -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:6px; margin-top:2px;">
+                    ${(sp.milestones || []).map(m => {
+                        const mColors = getSmartPlanningHealthStyles(m.health);
+                        const mDate = m.target_date ? new Date(m.target_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' }) : '';
+                        return `
+                            <div style="background:var(--bg-surface); border:1px solid ${m.health === 'FATAL_BLOCK' || m.health === 'CRITICAL_DELAY' ? mColors.border : 'var(--border-color)'}; border-radius:4px; padding:5px 7px; font-size:10px; display:flex; flex-direction:column; gap:2px; cursor:pointer;" onclick="showSmartPlanningTimelineModal()" title="${escapeHTML(m.name_fr)} : ${escapeHTML(m.explanation_fr)}">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-weight:800; color:${mColors.text};">${m.day_offset === 0 ? 'J-0 Dépôt' : `J${m.day_offset}`}</span>
+                                    <span style="font-size:9px; font-weight:700; color:${mColors.text};">${m.is_completed ? '✅ Fait' : (m.days_remaining >= 0 ? `${m.days_remaining}j` : `+${Math.abs(m.days_remaining)}j`)}</span>
+                                </div>
+                                <div style="font-weight:600; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHTML(m.name_fr)}">
+                                    ${escapeHTML(m.name_fr)}
+                                </div>
+                                <div style="font-size:9px; color:var(--text-dim); display:flex; justify-content:space-between;">
+                                    <span>📅 ${mDate}</span>
+                                    <span style="font-weight:700;">${escapeHTML(m.department_owner)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                ${sp.critical_warnings && sp.critical_warnings.length > 0 ? `
+                    <div style="font-size:10.5px; color:#b91c1c; font-weight:600; display:flex; align-items:center; gap:4px; padding-top:2px;">
+                        <span>⚠️</span> <span>${escapeHTML(sp.critical_warnings[0])}</span>
+                    </div>
+                ` : ''}
+            </div>
+            `;
+        }
+
+        async function showSmartPlanningTimelineModal() {
+            if (!selectedDossierId) return;
+
+            const contentEl = document.getElementById('sp-timeline-content');
+            if (!contentEl) return;
+
+            contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-dim);">Calcul du chronogramme inversé...</div>`;
+            openModal('modal-smart-planning-timeline');
+
+            try {
+                const resp = await fetch(`/api/v1/dossiers/${selectedDossierId}/smart-planning`);
+                if (!resp.ok) throw new Error("HTTP " + resp.status);
+                const data = await resp.json();
+                const sp = data.planning;
+                currentDossierSmartPlanning = sp;
+
+                const hc = getSmartPlanningHealthStyles(sp.overall_health);
+                const targetFormatted = sp.target_deposit_date ? new Date(sp.target_deposit_date).toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : 'Non fixée';
+
+                contentEl.innerHTML = `
+                    <!-- En-tête Statut Global -->
+                    <div style="background:${hc.bg}; border:1px solid ${hc.border}; border-radius:6px; padding:12px; margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <div>
+                                <div style="font-size:13px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                                    <span>${hc.icon}</span>
+                                    <span>Diagnostic du Chemin Critique :</span>
+                                    <span style="color:${hc.text};">${escapeHTML(sp.overall_health_label)}</span>
+                                </div>
+                                <div style="font-size:11px; color:var(--text-dim); margin-top:3px;">
+                                    🎯 Date Butoir de Dépôt Visée : <strong>${targetFormatted}</strong> (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassée de ${Math.abs(sp.days_to_target_deposit)} jours`})
+                                </div>
+                            </div>
+                            <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="closeModal('modal-smart-planning-timeline'); showSmartPlanningConfigModal();">
+                                ⚙️ Modifier Date Cible
+                            </button>
+                        </div>
+                        ${sp.recommended_action_fr ? `
+                            <div style="margin-top:8px; font-size:11.5px; background:var(--bg-surface); padding:8px 10px; border-radius:4px; border-left:3px solid ${hc.badgeBg}; color:var(--text-main);">
+                                <strong>💡 Recommandation Réglementaire :</strong> ${escapeHTML(sp.recommended_action_fr)}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Frise Chronologique Inversée Détaillée -->
+                    <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px;">
+                        Les 6 Jalons Incompressibles du Chemin Critique ANPP (CDC 7.4.3.6) :
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        ${(sp.milestones || []).map(m => {
+                            const mColors = getSmartPlanningHealthStyles(m.health);
+                            const mDateFormatted = m.target_date ? new Date(m.target_date).toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' }) : '';
+                            return `
+                                <div style="border:1px solid ${m.health === 'FATAL_BLOCK' || m.health === 'CRITICAL_DELAY' ? mColors.border : 'var(--border-color)'}; background:var(--bg-app); border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="font-size:12px; font-weight:800; background:${mColors.badgeBg}; color:white; padding:2px 8px; border-radius:10px;">
+                                                ${m.day_offset === 0 ? 'J-0 (Dépôt)' : `J${m.day_offset}`}
+                                            </span>
+                                            <span style="font-size:13px; font-weight:700; color:var(--text-main);">${escapeHTML(m.name_fr)}</span>
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:6px;">
+                                            <span style="font-size:10px; background:var(--badge-bg); padding:2px 6px; border-radius:3px; font-weight:700; color:var(--text-main);">
+                                                Pôle : ${escapeHTML(m.department_owner)}
+                                            </span>
+                                            <span style="font-size:11px; font-weight:800; color:${mColors.text};">
+                                                ${m.is_completed ? '✅ Validé' : (m.days_remaining >= 0 ? `${m.days_remaining} jours restants` : `Dépassé de ${Math.abs(m.days_remaining)}j`)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">
+                                        ${escapeHTML(m.explanation_fr)}
+                                    </div>
+
+                                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; font-size:10px; padding-top:4px; border-top:1px dashed var(--border-color);">
+                                        <span style="color:var(--text-dim);">
+                                            📅 Date limite : <strong>${mDateFormatted}</strong> • Pièces CTD : <code>${(m.associated_item_codes || []).join(', ')}</code>
+                                        </span>
+                                        <span style="color:var(--accent-blue); font-style:italic;">
+                                            ⚖️ ${escapeHTML(m.legal_reference)}
+                                        </span>
+                                    </div>
+
+                                    ${m.alert_message ? `
+                                        <div style="font-size:10.5px; color:#b91c1c; font-weight:700; background:rgba(239,68,68,0.08); padding:5px 8px; border-radius:4px;">
+                                            ⚠️ ${escapeHTML(m.alert_message)}
+                                        </div>
+                                    ` : ''}
+
+                                    ${m.completion_note ? `
+                                        <div style="font-size:10.5px; color:#059669; font-weight:600; background:rgba(16,185,129,0.08); padding:4px 8px; border-radius:4px;">
+                                            ✓ ${escapeHTML(m.completion_note)}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            } catch(e) {
+                contentEl.innerHTML = `<div style="color:#ef4444; padding:15px; text-align:center;">Erreur chargement chronogramme : ${escapeHTML(e.message)}</div>`;
+            }
+        }
+
+        function showSmartPlanningConfigModal() {
+            if (!currentDossierDetail) return;
+
+            const inputTarget = document.getElementById('sp-input-target-date');
+            const inputVal = document.getElementById('sp-input-validity-date');
+
+            if (inputTarget) {
+                inputTarget.value = currentDossierDetail.target_deposit_date ? currentDossierDetail.target_deposit_date.substring(0, 10) : '';
+            }
+            if (inputVal) {
+                inputVal.value = currentDossierDetail.anpp_validity_end_date ? currentDossierDetail.anpp_validity_end_date.substring(0, 10) : '';
+            }
+
+            openModal('modal-smart-planning-config');
+        }
+
+        async function saveSmartPlanningConfig(event) {
+            if (event) event.preventDefault();
+            if (!selectedDossierId) return;
+
+            const inputTarget = document.getElementById('sp-input-target-date');
+            const inputVal = document.getElementById('sp-input-validity-date');
+
+            const payload = {
+                target_deposit_date: inputTarget && inputTarget.value ? inputTarget.value : null,
+                anpp_validity_end_date: inputVal && inputVal.value ? inputVal.value : null
+            };
+
+            try {
+                const res = await fetch(`/api/v1/dossiers/${selectedDossierId}/smart-planning/set-target`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Échec de l'enregistrement");
+                }
+
+                closeModal('modal-smart-planning-config');
+                showNotifyModal("Rétroplanning Mis à Jour", "La date cible a été enregistrée et le chemin critique a été recalculé.", "✅");
+                await loadDossierDetails(selectedDossierId);
+            } catch(e) {
+                showNotifyModal("Erreur Configuration", e.message, "⚠️");
+            }
+        }
+
+        async function syncSmartPlanningDueDates() {
+            if (!selectedDossierId) return;
+
+            if (!confirm("Voulez-vous synchroniser automatiquement les dates d'échéances de toutes les sections CTD du dossier en fonction du rétroplanning inversé ?")) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/v1/dossiers/${selectedDossierId}/smart-planning/sync-due-dates`, {
+                    method: 'POST'
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Échec de la synchronisation");
+                }
+
+                const data = await res.json();
+                showNotifyModal("Échéances Synchronisées", data.message || "Toutes les sections ont été alignées sur le chemin critique.", "⚡");
+                await loadDossierDetails(selectedDossierId);
+            } catch(e) {
+                showNotifyModal("Erreur Synchronisation", e.message, "⚠️");
             }
         }

@@ -472,6 +472,11 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/items/{itemId}/gating", workflowHandler.GetItemGating)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/gating-summary", workflowHandler.GetDossierGatingSummary)
 
+				// Smart Planning & Rétroplanning Inversé ANPP (CDC Section 7.4.3.6)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/smart-planning", workflowHandler.GetDossierSmartPlanning)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/smart-planning/set-target", workflowHandler.SetDossierTargetDates)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierCreate, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/smart-planning/sync-due-dates", workflowHandler.SyncSmartPlanningDueDates)
+
 				// Modèles Maîtres ANPP / ICH
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates", workflowHandler.GetMasterTemplates)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates/{code}", workflowHandler.GetMasterTemplateByCode)
