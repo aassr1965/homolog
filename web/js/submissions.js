@@ -98,6 +98,31 @@ function renderPreSubmissionReport(report) {
         if (lockBtn) lockBtn.disabled = true;
     }
 
+    // Bloc récapitulatif Smart Planning & Chemin Critique Inversé
+    if (report.smart_planning) {
+        const sp = report.smart_planning;
+        const targetFormatted = sp.target_deposit_date ? new Date(sp.target_deposit_date).toLocaleDateString('fr-FR') : 'Non fixée';
+        const recFormatted = sp.recommended_deposit_date ? new Date(sp.recommended_deposit_date).toLocaleDateString('fr-FR') : 'Non fixée';
+        const isSufficient = sp.is_target_date_sufficient;
+
+        const spCard = `
+            <div style="margin-top:10px; background:${isSufficient ? 'rgba(16,185,129,0.08)' : 'rgba(245,158,11,0.08)'}; border:1px solid ${isSufficient ? '#86efac' : '#fcd34d'}; border-radius:6px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div style="font-size:12px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                        <span>⏱️</span>
+                        <span>Smart Planning ANPP :</span>
+                        <span style="color:${isSufficient ? '#15803d' : '#b45309'};">${escapeHTML(sp.overall_health_label)}</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-dim); margin-top:3px;">
+                        Date Cible : <strong>${targetFormatted}</strong> • Date Recommandée : <strong>${recFormatted}</strong> (Base : ${sp.working_days_per_week}j ouvrables/semaine, ${sp.holidays_excluded_count || 0} jours fériés déduits)
+                    </div>
+                    ${sp.recommended_action_fr ? `<div style="font-size:10.5px; color:var(--text-main); margin-top:2px;">💡 ${escapeHTML(sp.recommended_action_fr)}</div>` : ''}
+                </div>
+            </div>
+        `;
+        banner.innerHTML += spCard;
+    }
+
     // 2. Rendu de la table détaillée des contrôles
     let html = '';
     report.checks.forEach(c => {
@@ -118,6 +143,7 @@ function renderPreSubmissionReport(report) {
         else if (c.category === 'FINANCIER_BV1') catIcon = '💰';
         else if (c.category === 'TECHNIQUE_CTD') catIcon = '📚';
         else if (c.category === 'VISA_PDT') catIcon = '✍️';
+        else if (c.category === 'CHEMIN_CRITIQUE') catIcon = '⏱️';
 
         html += `
             <tr style="border-bottom:1px solid var(--border-color); ${rowBg}">

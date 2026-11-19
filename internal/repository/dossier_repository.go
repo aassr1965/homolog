@@ -52,7 +52,7 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 	}
 	defer tx.Rollback(ctx)
 
-	// Insertion du dossier maître
+	// Insertion du dossier maître avec héritage automatique du paramètre jours ouvrables de l'organisation
 	insertDossierQuery := `
 		INSERT INTO dossiers (
 			id, organization_id, medicine_id, medical_device_id, product_type,
@@ -60,6 +60,7 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 			anpp_official_reference, target_deposit_date, tracking_number,
 			deposit_receipt_ref, deposit_receipt_date, submission_notes,
 			status, responsible_id, completeness_percent, is_locked_for_deposit,
+			working_days_per_week,
 			created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5,
@@ -67,18 +68,21 @@ func (r *DossierRepository) CreateDossier(ctx context.Context, d *domain.Dossier
 			$10, $11, $12,
 			$13, $14, $15,
 			$16, $17, $18, $19,
-			$20, $21
+			COALESCE(NULLIF($20, 0), (SELECT working_days_per_week FROM organizations WHERE id = $2), 5),
+			$21, $22
 		)
+		RETURNING working_days_per_week
 	`
 	procTypeStr := string(d.ProcedureCode)
-	_, err = tx.Exec(ctx, insertDossierQuery,
+	err = tx.QueryRow(ctx, insertDossierQuery,
 		d.ID, d.OrganizationID, d.MedicineID, d.MedicalDeviceID, string(d.ProductType),
 		d.DossierCode, string(d.ProcedureCode), procTypeStr, d.InternalReference,
 		d.ANPPOfficialReference, d.TargetDepositDate, d.TrackingNumber,
 		d.DepositReceiptRef, d.DepositReceiptDate, d.SubmissionNotes,
 		string(d.Status), d.ResponsibleID, d.CompletenessPercent, d.IsLockedForDeposit,
+		d.WorkingDaysPerWeek,
 		d.CreatedAt, d.UpdatedAt,
-	)
+	).Scan(&d.WorkingDaysPerWeek)
 	if err != nil {
 		return nil, fmt.Errorf("échec insertion dossier : %w", err)
 	}

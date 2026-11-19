@@ -750,13 +750,14 @@ func (r *WorkflowRepository) GetDossierGatingSummary(ctx context.Context, dossie
 // GetDossierSmartPlanning calcule le rétroplanning dynamique inversé et l'analyse de santé du chemin critique
 func (r *WorkflowRepository) GetDossierSmartPlanning(ctx context.Context, dossierID uuid.UUID) (*domain.SmartPlanningAnalysis, error) {
 	dossierQuery := `
-		SELECT id, organization_id, dossier_code, procedure_code, internal_reference,
-		       anpp_deposit_date, anpp_validity_end_date, target_deposit_date,
-		       COALESCE(working_days_per_week, 5),
-		       tracking_number, deposit_receipt_ref, status, is_locked_for_deposit,
-		       pdt_signed_at, created_at
-		FROM dossiers
-		WHERE id = $1
+		SELECT d.id, d.organization_id, d.dossier_code, d.procedure_code, d.internal_reference,
+		       d.anpp_deposit_date, d.anpp_validity_end_date, d.target_deposit_date,
+		       COALESCE(d.working_days_per_week, o.working_days_per_week, 5),
+		       d.tracking_number, d.deposit_receipt_ref, d.status, d.is_locked_for_deposit,
+		       d.pdt_signed_at, d.created_at
+		FROM dossiers d
+		LEFT JOIN organizations o ON o.id = d.organization_id
+		WHERE d.id = $1
 	`
 	var d domain.Dossier
 	var procCodeStr, statusStr string
