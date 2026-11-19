@@ -233,10 +233,11 @@ func SeedWorkflowPendingApprovals(ctx context.Context, pool *pgxpool.Pool, orgSl
 		return
 	}
 
-	// Récupérer le Maker (RA Lead) et le Checker (QA Manager)
-	var makerID, checkerID uuid.UUID
+	// Récupérer le Maker (RA Lead), le Checker (QA Manager) et le DT
+	var makerID, checkerID, dtUserID uuid.UUID
 	_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND email = 'ra.lead@pharma.dz'", orgID).Scan(&makerID)
 	_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND email = 'qa.lead@pharma.dz'", orgID).Scan(&checkerID)
+	_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND role = 'directeur_technique' LIMIT 1", orgID).Scan(&dtUserID)
 
 	if makerID == uuid.Nil {
 		_ = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND role = 'responsable_affaires_reg' LIMIT 1", orgID).Scan(&makerID)
@@ -324,6 +325,31 @@ func SeedWorkflowPendingApprovals(ctx context.Context, pool *pgxpool.Pool, orgSl
 				VALUES ($1, $2, 'contributeur_qualite_bpf', 'quality_passed', $3, $4)
 			`
 			_, _ = pool.Exec(ctx, reviewQuery, itemID, checkerID, s.checkerNotes, s.currentRev)
+		}
+	}
+
+	// Initialiser une délégation active pour le Pharmacien Assistant (Décret 21-82 Art. 24)
+	var assistantID uuid.UUID
+	err = pool.QueryRow(ctx, "SELECT id FROM users WHERE organization_id = $1 AND role = 'pharmacien_assistant' LIMIT 1", orgID).Scan(&assistantID)
+	if err == nil && dtUserID != uuid.Nil && assistantID != uuid.Nil {
+		var hasActiveDelegation bool
+		_ = pool.QueryRow(ctx, `
+			SELECT EXISTS(
+				SELECT 1 FROM dt_delegations 
+				WHERE organization_id = $1 AND delegate_id = $2 AND is_active = TRUE
+			)
+		`, orgID, assistantID).Scan(&hasActiveDelegation)
+
+		if !hasActiveDelegation {
+			now := time.Now()
+			startDate := now.Add(-3 * 24 * time.Hour)
+			endDate := now.Add(45 * 24 * time.Hour)
+			delegQuery := `
+				INSERT INTO dt_delegations (organization_id, delegator_id, delegate_id, miph_notification_ref, reason, start_date, end_date, is_active)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+			`
+			_, _ = pool.Exec(ctx, delegQuery, orgID, dtUserID, assistantID, "NOTIF-MIPH-INT-2026/088", "Intérim légal et suppléance technique pendant mission d'audit BPF (Décret 21-82 Art. 24)", startDate, endDate)
+			log.Println("[Seed Parapheur] Mandat d'intérim DT actif (Décret 21-82 Art. 24) initialisé pour le Pharmacien Assistant Dr. Lynda Amrani.")
 		}
 	}
 

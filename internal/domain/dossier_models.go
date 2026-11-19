@@ -729,3 +729,38 @@ type BatchApproveResponse struct {
 	ApproverName   string                   `json:"approver_name"`
 	Items          []BatchApproveItemResult `json:"items"`
 }
+
+// DTDelegation représente un mandat officiel d'intérim / suppléance légale (Décret 21-82 Art. 24)
+type DTDelegation struct {
+	ID                  uuid.UUID  `json:"id"`
+	OrganizationID      uuid.UUID  `json:"organization_id"`
+	DelegatorID         uuid.UUID  `json:"delegator_id"`
+	DelegatorName       string     `json:"delegator_name"`
+	DelegateID          uuid.UUID  `json:"delegate_id"`
+	DelegateName        string     `json:"delegate_name"`
+	DelegateEmail       string     `json:"delegate_email"`
+	MIPHNotificationRef string     `json:"miph_notification_ref"`
+	Reason              string     `json:"reason"`
+	StartDate           time.Time  `json:"start_date"`
+	EndDate             time.Time  `json:"end_date"`
+	IsActive            bool       `json:"is_active"`
+	RevokedAt           *time.Time `json:"revoked_at,omitempty"`
+	RevokedBy           *uuid.UUID `json:"revoked_by,omitempty"`
+	RevokeReason        *string    `json:"revoke_reason,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+}
+
+// CreateDTDelegationRequest payload pour créer un mandat d'intérim DT
+type CreateDTDelegationRequest struct {
+	DelegateID          uuid.UUID `json:"delegate_id"`
+	MIPHNotificationRef string    `json:"miph_notification_ref"`
+	Reason              string    `json:"reason"`
+	StartDate           time.Time `json:"start_date"`
+	EndDate             time.Time `json:"end_date"`
+}
+
+// RevokeDTDelegationRequest payload pour révoquer un mandat d'intérim DT
+type RevokeDTDelegationRequest struct {
+	Reason string `json:"reason"`
+}

@@ -1144,7 +1144,14 @@ func (r *WorkflowRepository) BatchApproveSections(
 		}
 
 		// Entrée d'audit trail dans dossier_item_reviews
-		_ = r.AddReviewEntry(ctx, itemID, approverID, approverRole, domain.ReviewTypeQualityPassed, "Visa officiel Pharmacien DT en signature par lot (Batch 21 CFR Part 11). Document scellé v1.0.", "v1.0")
+		reviewComment := "Visa officiel Pharmacien DT en signature par lot (Batch 21 CFR Part 11). Document scellé v1.0."
+		if approverRole == "pharmacien_assistant" {
+			delegation, _ := r.GetActiveDTDelegation(ctx, orgID, approverID)
+			if delegation != nil {
+				reviewComment = fmt.Sprintf("Visa officiel Pharmacien DT par intérim (Pharmacien Assistant - Mandat Décret 21-82 Art. 24, Réf MIPH: %s). Document scellé v1.0.", delegation.MIPHNotificationRef)
+			}
+		}
+		_ = r.AddReviewEntry(ctx, itemID, approverID, approverRole, domain.ReviewTypeQualityPassed, reviewComment, "v1.0")
 
 		// Mettre à jour le cache local pour les éventuels déblocages de gating sur les pièces suivantes du même dossier
 		for idx := range dItems {
@@ -1165,4 +1172,144 @@ func (r *WorkflowRepository) BatchApproveSections(
 	}
 
 	return response, nil
+}
+
+// GetActiveDTDelegation retourne le mandat d'intérim actif d'un pharmacien assistant s'il existe (Décret 21-82 Art. 24)
+func (r *WorkflowRepository) GetActiveDTDelegation(ctx context.Context, orgID, delegateID uuid.UUID) (*domain.DTDelegation, error) {
+	query := `
+		SELECT d.id, d.organization_id, d.delegator_id, u1.first_name || ' ' || u1.last_name AS delegator_name,
+		       d.delegate_id, u2.first_name || ' ' || u2.last_name AS delegate_name, u2.email AS delegate_email,
+		       d.miph_notification_ref, d.reason, d.start_date, d.end_date, d.is_active,
+		       d.revoked_at, d.revoked_by, d.revoke_reason, d.created_at, d.updated_at
+		FROM dt_delegations d
+		JOIN users u1 ON u1.id = d.delegator_id
+		JOIN users u2 ON u2.id = d.delegate_id
+		WHERE d.organization_id = $1
+		  AND d.delegate_id = $2
+		  AND d.is_active = TRUE
+		  AND d.revoked_at IS NULL
+		  AND NOW() >= d.start_date
+		  AND NOW() <= d.end_date
+		ORDER BY d.created_at DESC
+		LIMIT 1
+	`
+	var d domain.DTDelegation
+	err := r.pool.QueryRow(ctx, query, orgID, delegateID).Scan(
+		&d.ID, &d.OrganizationID, &d.DelegatorID, &d.DelegatorName,
+		&d.DelegateID, &d.DelegateName, &d.DelegateEmail,
+		&d.MIPHNotificationRef, &d.Reason, &d.StartDate, &d.EndDate, &d.IsActive,
+		&d.RevokedAt, &d.RevokedBy, &d.RevokeReason, &d.CreatedAt, &d.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("erreur recherche délégation DT : %w", err)
+	}
+	return &d, nil
+}
+
+// ListDTDelegations liste tous les mandats d'intérim / délégations de l'établissement
+func (r *WorkflowRepository) ListDTDelegations(ctx context.Context, orgID uuid.UUID) ([]domain.DTDelegation, error) {
+	query := `
+		SELECT d.id, d.organization_id, d.delegator_id, u1.first_name || ' ' || u1.last_name AS delegator_name,
+		       d.delegate_id, u2.first_name || ' ' || u2.last_name AS delegate_name, u2.email AS delegate_email,
+		       d.miph_notification_ref, d.reason, d.start_date, d.end_date, d.is_active,
+		       d.revoked_at, d.revoked_by, d.revoke_reason, d.created_at, d.updated_at
+		FROM dt_delegations d
+		JOIN users u1 ON u1.id = d.delegator_id
+		JOIN users u2 ON u2.id = d.delegate_id
+		WHERE d.organization_id = $1
+		ORDER BY d.created_at DESC
+	`
+	rows, err := r.pool.Query(ctx, query, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("erreur liste délégations DT : %w", err)
+	}
+	defer rows.Close()
+
+	delegations := make([]domain.DTDelegation, 0)
+	for rows.Next() {
+		var d domain.DTDelegation
+		if err := rows.Scan(
+			&d.ID, &d.OrganizationID, &d.DelegatorID, &d.DelegatorName,
+			&d.DelegateID, &d.DelegateName, &d.DelegateEmail,
+			&d.MIPHNotificationRef, &d.Reason, &d.StartDate, &d.EndDate, &d.IsActive,
+			&d.RevokedAt, &d.RevokedBy, &d.RevokeReason, &d.CreatedAt, &d.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("erreur scan délégation DT : %w", err)
+		}
+		delegations = append(delegations, d)
+	}
+	return delegations, nil
+}
+
+// CreateDTDelegation crée un mandat d'intérim officiel conforme Décret 21-82 Art. 24 (durée max 3 mois)
+func (r *WorkflowRepository) CreateDTDelegation(ctx context.Context, orgID, delegatorID, delegateID uuid.UUID, miphRef, reason string, startDate, endDate time.Time) (*domain.DTDelegation, error) {
+	if !endDate.After(startDate) {
+		return nil, fmt.Errorf("la date de fin doit être postérieure à la date de début")
+	}
+
+	// Garde-fou réglementaire Décret 21-82 Art. 24 : Durée maximale d'un intérim = 3 mois (92 jours)
+	maxDuration := 92 * 24 * time.Hour
+	if endDate.Sub(startDate) > maxDuration {
+		return nil, fmt.Errorf("dépassement de la durée légale (Décret 21-82 Art. 24) : Un mandat d'intérim DT ne peut excéder trois (3) mois")
+	}
+
+	// Vérifier que le délégataire appartient bien à la même organisation
+	var delegateRole string
+	err := r.pool.QueryRow(ctx, "SELECT role FROM users WHERE id = $1 AND organization_id = $2", delegateID, orgID).Scan(&delegateRole)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("le pharmacien assistant désigné n'appartient pas à votre établissement")
+		}
+		return nil, fmt.Errorf("erreur vérification délégataire : %w", err)
+	}
+
+	query := `
+		INSERT INTO dt_delegations (organization_id, delegator_id, delegate_id, miph_notification_ref, reason, start_date, end_date, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+		RETURNING id, created_at, updated_at
+	`
+	var d domain.DTDelegation
+	d.OrganizationID = orgID
+	d.DelegatorID = delegatorID
+	d.DelegateID = delegateID
+	d.MIPHNotificationRef = miphRef
+	d.Reason = reason
+	d.StartDate = startDate
+	d.EndDate = endDate
+	d.IsActive = true
+
+	err = r.pool.QueryRow(ctx, query, orgID, delegatorID, delegateID, miphRef, reason, startDate, endDate).Scan(&d.ID, &d.CreatedAt, &d.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("erreur insertion délégation DT : %w", err)
+	}
+
+	// Renseigner les noms
+	_ = r.pool.QueryRow(ctx, "SELECT first_name || ' ' || last_name FROM users WHERE id = $1", delegatorID).Scan(&d.DelegatorName)
+	_ = r.pool.QueryRow(ctx, "SELECT first_name || ' ' || last_name, email FROM users WHERE id = $1", delegateID).Scan(&d.DelegateName, &d.DelegateEmail)
+
+	return &d, nil
+}
+
+// RevokeDTDelegation révoque un mandat d'intérim
+func (r *WorkflowRepository) RevokeDTDelegation(ctx context.Context, orgID, delegationID, revokedByID uuid.UUID, reason string) error {
+	query := `
+		UPDATE dt_delegations
+		SET is_active = FALSE,
+		    revoked_at = NOW(),
+		    revoked_by = $1,
+		    revoke_reason = $2,
+		    updated_at = NOW()
+		WHERE id = $3 AND organization_id = $4 AND is_active = TRUE
+	`
+	tag, err := r.pool.Exec(ctx, query, revokedByID, reason, delegationID, orgID)
+	if err != nil {
+		return fmt.Errorf("erreur révocation délégation : %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("mandat d'intérim introuvable ou déjà révoqué")
+	}
+	return nil
 }

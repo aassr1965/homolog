@@ -285,10 +285,23 @@
         const mobBtn = document.getElementById('mob-act-parapheur');
         if (!badge) return;
 
-        // Contrôle de visibilité : Pharmacien DT ou Admin labo
-        const isEligible = typeof hasPermission === 'function' 
+        // Contrôle de visibilité : Pharmacien DT ou Admin labo ou Pharmacien Assistant
+        let isEligible = typeof hasPermission === 'function' 
             ? (hasPermission('DOC_APPROVE_PDT') || (typeof hasRole === 'function' && (hasRole('directeur_technique', 'admin_laboratoire'))))
             : true;
+
+        if (!isEligible && typeof hasRole === 'function' && hasRole('pharmacien_assistant')) {
+            // Vérifier s'il y a un mandat d'intérim actif (Décret 21-82 Art. 24)
+            try {
+                const delRes = await fetch('/api/v1/parapheur/delegation/active');
+                if (delRes.ok) {
+                    const delData = await delRes.json();
+                    if (delData.has_active_delegation) {
+                        isEligible = true;
+                    }
+                }
+            } catch (_) {}
+        }
 
         if (btn) btn.style.display = isEligible ? '' : 'none';
         if (mobBtn) mobBtn.style.display = isEligible ? '' : 'none';
@@ -318,6 +331,38 @@
     window.loadParapheurItems = async function () {
         const tbody = document.getElementById('parapheur-table-tbody');
         if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">
+                <div style="display:inline-block; animation:spin 1s linear infinite; font-size:20px; margin-bottom:8px;">⏳</div>
+                <div>Chargement des pièces prêtes pour visa réglementaire...</div>
+            </td></tr>`;
+        }
+
+        // Vérifier s'il y a un mandat d'intérim actif à afficher
+        try {
+            const delRes = await fetch('/api/v1/parapheur/delegation/active');
+            const banner = document.getElementById('parapheur-delegation-banner');
+            if (delRes.ok) {
+                const delData = await delRes.json();
+                if (delData.has_active_delegation && delData.delegation) {
+                    const d = delData.delegation;
+                    if (banner) {
+                        banner.style.display = 'flex';
+                        const badgeRef = document.getElementById('badge-delegation-miph-ref');
+                        if (badgeRef) badgeRef.textContent = 'Réf MIPH: ' + d.miph_notification_ref;
+                        const period = document.getElementById('parapheur-delegation-period');
+                        if (period) {
+                            const dStart = new Date(d.start_date).toLocaleDateString('fr-FR');
+                            const dEnd = new Date(d.end_date).toLocaleDateString('fr-FR');
+                            period.textContent = `Validité : ${dStart} au ${dEnd}`;
+                        }
+                    }
+                } else if (banner) {
+                    banner.style.display = 'none';
+                }
+            } else if (banner) {
+                banner.style.display = 'none';
+            }
+        } catch (_) {}
             tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-dim);"><div style="font-size:18px; margin-bottom:6px;">⏳</div>Chargement des pièces en attente de visa réglementaire...</td></tr>`;
         }
 
@@ -836,6 +881,232 @@
             openPdtSealModal(dossierId, itemId, itemCode);
             // Fermer le parapheur pour donner le focus à la modale de visa
             closeParapheurModal();
+        }
+    };
+
+    /**
+     * Ouvre la modale du Registre des Mandats d'Intérim & Suppléance DT (Décret 21-82 Art. 24)
+     */
+    window.openDTDelegationsModal = function () {
+        if (typeof openModal === 'function') {
+            openModal('modal-dt-delegations');
+        } else {
+            const m = document.getElementById('modal-dt-delegations');
+            if (m) m.classList.add('active');
+        }
+        loadDTDelegations();
+        loadAssistantSelect();
+    };
+
+    /**
+     * Ferme la modale du Registre des Mandats d'Intérim
+     */
+    window.closeDTDelegationsModal = function () {
+        if (typeof closeModal === 'function') {
+            closeModal('modal-dt-delegations');
+        } else {
+            const m = document.getElementById('modal-dt-delegations');
+            if (m) m.classList.remove('active');
+        }
+    };
+
+    /**
+     * Charge la liste des délégations pour l'établissement
+     */
+    window.loadDTDelegations = async function () {
+        const tbody = document.getElementById('dt-delegations-tbody');
+        const countSpan = document.getElementById('dt-delegations-count');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch('/api/v1/parapheur/delegations');
+            if (!res.ok) {
+                tbody.innerHTML = `<tr><td colspan="6" style="padding:14px; text-align:center; color:var(--accent-red);">Impossible de charger les mandats.</td></tr>`;
+                return;
+            }
+            const data = await res.json();
+            const delegations = data.delegations || [];
+            if (countSpan) countSpan.textContent = `${delegations.length} mandat(s)`;
+
+            if (delegations.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="padding:16px; text-align:center; color:var(--text-muted);">
+                    Aucun mandat d'intérim enregistré. Le Pharmacien DT titulaire exerce directement sans suppléance active.
+                </td></tr>`;
+                return;
+            }
+
+            const now = new Date();
+            tbody.innerHTML = delegations.map(d => {
+                const start = new Date(d.start_date);
+                const end = new Date(d.end_date);
+                const isCurrent = d.is_active && !d.revoked_at && now >= start && now <= end;
+                const isExpired = d.is_active && !d.revoked_at && now > end;
+                const isRevoked = !d.is_active || d.revoked_at;
+
+                let statusBadge = '';
+                if (isCurrent) {
+                    statusBadge = `<span style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid #10b981; padding:2px 8px; border-radius:12px; font-weight:700; font-size:10.5px;">✅ Actif (En cours)</span>`;
+                } else if (isExpired) {
+                    statusBadge = `<span style="background:rgba(100,116,139,0.15); color:var(--text-muted); border:1px solid var(--border-color); padding:2px 8px; border-radius:12px; font-weight:600; font-size:10.5px;">⚠️ Expiré</span>`;
+                } else {
+                    statusBadge = `<span style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid #ef4444; padding:2px 8px; border-radius:12px; font-weight:600; font-size:10.5px;">🚫 Révoqué</span>`;
+                }
+
+                const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
+                const canRevoke = isCurrent && (typeof hasRole === 'function' && hasRole('directeur_technique', 'admin_laboratoire'));
+
+                return `
+                    <tr style="border-bottom:1px solid var(--border-color);">
+                        <td style="padding:8px 10px;">
+                            <div style="font-weight:700; color:var(--text-main);">${escapeHtml(d.delegate_name)}</div>
+                            <div style="font-size:10.5px; color:var(--text-dim); font-family:monospace;">${escapeHtml(d.delegate_email)}</div>
+                        </td>
+                        <td style="padding:8px 10px;">
+                            <span style="font-weight:700; font-family:monospace; color:#d97706; background:rgba(217,119,6,0.08); padding:2px 6px; border-radius:4px; font-size:11px;">
+                                ${escapeHtml(d.miph_notification_ref)}
+                            </span>
+                        </td>
+                        <td style="padding:8px 10px;">
+                            <div>${start.toLocaleDateString('fr-FR')} ➔ ${end.toLocaleDateString('fr-FR')}</div>
+                            <div style="font-size:10.5px; color:var(--text-muted);">${days} jours (${days <= 92 ? '≤ 3 mois' : '⚠️ > 3 mois'})</div>
+                        </td>
+                        <td style="padding:8px 10px; color:var(--text-main); max-width:200px;">
+                            ${escapeHtml(d.reason)}
+                        </td>
+                        <td style="padding:8px 10px;">
+                            ${statusBadge}
+                        </td>
+                        <td style="padding:8px 10px; text-align:right;">
+                            ${canRevoke ? `
+                                <button type="button" class="btn-pill" style="color:#ef4444; border-color:#ef4444; font-size:10.5px; padding:2px 8px;" onclick="revokeDTDelegation('${d.id}')">
+                                    Révoquer
+                                </button>
+                            ` : '-'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+        } catch (e) {
+            console.error('Erreur chargement délégations:', e);
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:14px; text-align:center; color:var(--accent-red);">Erreur technique chargement.</td></tr>`;
+        }
+    };
+
+    /**
+     * Charge la liste des assistants pour le sélecteur
+     */
+    window.loadAssistantSelect = async function () {
+        const select = document.getElementById('deleg-delegate-select');
+        if (!select) return;
+
+        try {
+            const res = await fetch('/api/v1/users');
+            if (!res.ok) return;
+            const users = await res.json();
+            const assistants = users.filter(u => u.role === 'pharmacien_assistant' || u.role === 'directeur_technique');
+
+            if (assistants.length === 0) {
+                select.innerHTML = '<option value="">Aucun Pharmacien Assistant trouvé dans l\'établissement</option>';
+                return;
+            }
+
+            select.innerHTML = '<option value="">Sélectionnez un Pharmacien Assistant...</option>' + 
+                assistants.map(a => `<option value="${a.id}">${escapeHtml(a.first_name + ' ' + a.last_name)} (${a.email})</option>`).join('');
+        } catch (e) {
+            console.error('Erreur chargement assistants:', e);
+        }
+    };
+
+    /**
+     * Soumission du formulaire de création de mandat d'intérim
+     */
+    window.handleCreateDelegationSubmit = async function (e) {
+        e.preventDefault();
+        const delegateId = document.getElementById('deleg-delegate-select')?.value;
+        const miphRef = document.getElementById('deleg-miph-ref')?.value?.trim();
+        const startDateStr = document.getElementById('deleg-start-date')?.value;
+        const endDateStr = document.getElementById('deleg-end-date')?.value;
+        const reason = document.getElementById('deleg-reason')?.value?.trim();
+
+        if (!delegateId || !miphRef || !startDateStr || !endDateStr || !reason) {
+            alert("Veuillez renseigner tous les champs obligatoires du mandat.");
+            return;
+        }
+
+        const start = new Date(startDateStr);
+        const end = new Date(endDateStr);
+
+        if (end <= start) {
+            alert("La date de fin doit être postérieure à la date de début.");
+            return;
+        }
+
+        const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+        if (diffDays > 92) {
+            alert("⚠️ Infraction Décret exécutif n° 21-82 (Art. 24) :\nLa durée d'un mandat d'intérim technique ne peut excéder trois (3) mois (92 jours). Au-delà, un nouveau Pharmacien DT titulaire doit être nommé auprès du MIPH.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/v1/parapheur/delegations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    delegate_id: delegateId,
+                    miph_notification_ref: miphRef,
+                    start_date: start.toISOString(),
+                    end_date: end.toISOString(),
+                    reason: reason
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                alert("Erreur enregistrement mandat : " + (errData.error || errData.message || res.statusText));
+                return;
+            }
+
+            alert("✅ Mandat d'intérim enregistré avec succès au Registre BPF (Décret 21-82 Art. 24).");
+            document.getElementById('form-create-delegation')?.reset();
+            loadDTDelegations();
+            refreshParapheurBadge();
+        } catch (err) {
+            console.error('Erreur création délégation:', err);
+            alert("Erreur réseau lors de l'enregistrement du mandat.");
+        }
+    };
+
+    /**
+     * Révocation d'un mandat d'intérim
+     */
+    window.revokeDTDelegation = async function (id) {
+        if (!confirm("Êtes-vous certain de vouloir révoquer ce mandat d'intérim technique ?\nLe Pharmacien Assistant ne pourra plus apposer de visas au Parapheur.")) {
+            return;
+        }
+
+        const reason = prompt("Motif de la révocation (ex: Reprise de fonction du Pharmacien DT titulaire) :", "Reprise de fonctions du Pharmacien Directeur Technique titulaire");
+        if (reason === null) return;
+
+        try {
+            const res = await fetch(`/api/v1/parapheur/delegations/${id}/revoke`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: reason })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                alert("Erreur révocation : " + (errData.error || errData.message || res.statusText));
+                return;
+            }
+
+            alert("Mandat d'intérim révoqué. La piste d'audit ALCOA+ a été mise à jour.");
+            loadDTDelegations();
+            refreshParapheurBadge();
+        } catch (err) {
+            console.error('Erreur révocation:', err);
+            alert("Erreur réseau lors de la révocation du mandat.");
         }
     };
 
