@@ -26,46 +26,46 @@ const (
 type PrerequisiteCondition string
 
 const (
-	ConditionApprovedSealed        PrerequisiteCondition = "approved_sealed"         // Doit être scellé v1.0 par PDT
-	ConditionAtLeastUnderReview    PrerequisiteCondition = "at_least_under_review"   // Au moins en cours de revue Checker
-	ConditionAtLeastPendingApprove PrerequisiteCondition = "at_least_pending_approve"// Au moins validé par Checker (prêt PDT)
-	ConditionRevisionMatch         PrerequisiteCondition = "revision_match"          // Versions synchronisées (parité)
-	ConditionAllModule3Approved    PrerequisiteCondition = "all_module3_approved"    // 100% des [E] du Module 3 scellés
+	ConditionApprovedSealed        PrerequisiteCondition = "approved_sealed"          // Doit être scellé v1.0 par PDT
+	ConditionAtLeastUnderReview    PrerequisiteCondition = "at_least_under_review"    // Au moins en cours de revue Checker
+	ConditionAtLeastPendingApprove PrerequisiteCondition = "at_least_pending_approve" // Au moins validé par Checker (prêt PDT)
+	ConditionRevisionMatch         PrerequisiteCondition = "revision_match"           // Versions synchronisées (parité)
+	ConditionAllModule3Approved    PrerequisiteCondition = "all_module3_approved"     // 100% des [E] du Module 3 scellés
 )
 
 // GatingRule modélise une règle du DAG de dépendances CTD / DM
 type GatingRule struct {
-	RuleID              string                `json:"rule_id"`
-	TargetPrefix        string                `json:"target_prefix"` // Préfixe de l'item cible (ex: "1.P.1", "1.P.2", "2.3")
-	TargetAction        GatingAction          `json:"target_action"` // Action contrôlée
-	RequiredItemPrefix  string                `json:"required_item_prefix"` // Préfixe de la pièce prérequise
-	RequiredCondition   PrerequisiteCondition `json:"required_condition"`
-	TargetPhase         int                   `json:"target_phase"` // Phase DAG (1 à 5)
-	DescriptionFR       string                `json:"description_fr"`
-	LegalRef            string                `json:"legal_ref"`
-	Severity            GatingSeverity        `json:"severity"`
+	RuleID             string                `json:"rule_id"`
+	TargetPrefix       string                `json:"target_prefix"`        // Préfixe de l'item cible (ex: "1.P.1", "1.P.2", "2.3")
+	TargetAction       GatingAction          `json:"target_action"`        // Action contrôlée
+	RequiredItemPrefix string                `json:"required_item_prefix"` // Préfixe de la pièce prérequise
+	RequiredCondition  PrerequisiteCondition `json:"required_condition"`
+	TargetPhase        int                   `json:"target_phase"` // Phase DAG (1 à 5)
+	DescriptionFR      string                `json:"description_fr"`
+	LegalRef           string                `json:"legal_ref"`
+	Severity           GatingSeverity        `json:"severity"`
 }
 
 // UnmetPrerequisite détaille un point de blocage actif
 type UnmetPrerequisite struct {
-	RuleID              string                `json:"rule_id"`
-	RequiredItemCode    string                `json:"required_item_code"`
-	RequiredTitle       string                `json:"required_title"`
-	CurrentStatus       string                `json:"current_status"`
-	ExpectedCondition   PrerequisiteCondition `json:"expected_condition"`
-	BlockingReason      string                `json:"blocking_reason"`
-	LegalRef            string                `json:"legal_ref"`
+	RuleID            string                `json:"rule_id"`
+	RequiredItemCode  string                `json:"required_item_code"`
+	RequiredTitle     string                `json:"required_title"`
+	CurrentStatus     string                `json:"current_status"`
+	ExpectedCondition PrerequisiteCondition `json:"expected_condition"`
+	BlockingReason    string                `json:"blocking_reason"`
+	LegalRef          string                `json:"legal_ref"`
 }
 
 // GatingEvaluationResult contient le diagnostic complet des verrous pour un item
 type GatingEvaluationResult struct {
-	TargetItemCode      string              `json:"target_item_code"`
-	TargetItemTitle     string              `json:"target_item_title"`
-	IsBlocked           bool                `json:"is_blocked"`
-	ActivePhase         int                 `json:"active_phase"`
-	UnmetPrerequisites  []UnmetPrerequisite `json:"unmet_prerequisites"`
-	Warnings            []string            `json:"warnings"`
-	SummaryMessage      string              `json:"summary_message"`
+	TargetItemCode     string              `json:"target_item_code"`
+	TargetItemTitle    string              `json:"target_item_title"`
+	IsBlocked          bool                `json:"is_blocked"`
+	ActivePhase        int                 `json:"active_phase"`
+	UnmetPrerequisites []UnmetPrerequisite `json:"unmet_prerequisites"`
+	Warnings           []string            `json:"warnings"`
+	SummaryMessage     string              `json:"summary_message"`
 }
 
 // StandardCTDGatingRules définit le catalogue officiel des règles de dépendance ANPP & BPF

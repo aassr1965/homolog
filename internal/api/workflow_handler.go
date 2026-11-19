@@ -614,7 +614,7 @@ func (h *WorkflowHandler) GetDossierSmartPlanning(w http.ResponseWriter, r *http
 }
 
 type SetDossierTargetDatesRequest struct {
-	TargetDepositDate   *string `json:"target_deposit_date"`   // "YYYY-MM-DD"
+	TargetDepositDate   *string `json:"target_deposit_date"`    // "YYYY-MM-DD"
 	ANPPValidityEndDate *string `json:"anpp_validity_end_date"` // "YYYY-MM-DD"
 }
 
