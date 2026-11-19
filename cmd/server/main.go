@@ -319,6 +319,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Delete("/api/v1/admin/users/{id}", adminHandler.DisallowDeleteUser)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/roles", adminHandler.ListRoles)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/permissions", adminHandler.ListPermissions)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/organization", adminHandler.GetOrganizationSettings)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/organization/settings", adminHandler.UpdateOrganizationSettings)
 			}
 
 			// Console Dédiée Administrateur Système & Maintenance IT (SYS_MAINT / PSSI)

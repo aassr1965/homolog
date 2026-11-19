@@ -272,6 +272,31 @@ func TestRecommendedDepositDate_WorkingDays(t *testing.T) {
 	}
 }
 
+func TestAddWorkingDays_AlgerianHolidays(t *testing.T) {
+	// Cas 1 : 5 Juillet (Fête de l'Indépendance) en 2026 tombe un Dimanche
+	// Le dimanche est normalement ouvré en Algérie, mais le 5 Juillet est un jour férié légal chômé payé.
+	// Samedi 04/07/2026 -> +1 jour ouvré doit sauter le Dimanche 05/07 et atterrir le Lundi 06/07/2026 !
+	saturdayBeforeJuly5 := time.Date(2026, 7, 4, 0, 0, 0, 0, time.UTC)
+	result := AddWorkingDays(saturdayBeforeJuly5, 1, 5)
+	expectedMonday := time.Date(2026, 7, 6, 0, 0, 0, 0, time.UTC)
+
+	if !result.Equal(expectedMonday) {
+		t.Fatalf("Le 5 Juillet (fête nationale chômée) aurait dû être exclu : attendu %v (Lundi), obtenu %v (%s)",
+			expectedMonday, result, result.Weekday())
+	}
+
+	// Cas 2 : 1er Novembre 2026 (Fête de la Révolution) tombe un Dimanche
+	// Samedi 31/10/2026 -> +1 jour ouvré doit sauter le 1er Novembre et atterrir le Lundi 02/11/2026 !
+	saturdayBeforeNov1 := time.Date(2026, 10, 31, 0, 0, 0, 0, time.UTC)
+	resultNov := AddWorkingDays(saturdayBeforeNov1, 1, 5)
+	expectedNov2 := time.Date(2026, 11, 2, 0, 0, 0, 0, time.UTC)
+
+	if !resultNov.Equal(expectedNov2) {
+		t.Fatalf("Le 1er Novembre aurait dû être exclu : attendu %v (Lundi), obtenu %v (%s)",
+			expectedNov2, resultNov, resultNov.Weekday())
+	}
+}
+
 func containsStr(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || (len(s) > 0 && containsSub(s, substr)))
 }

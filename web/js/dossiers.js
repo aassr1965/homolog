@@ -2363,8 +2363,8 @@
                         <span style="font-size:11px; font-weight:700; color:${sp.days_to_target_deposit >= 0 ? 'var(--text-main)' : '#dc2626'};">
                             (${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit} jours` : `Dépassé de ${Math.abs(sp.days_to_target_deposit)}j`})
                         </span>
-                        <span style="font-size:10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:2px 6px; border-radius:3px; font-weight:700;" title="Base de calcul configurable">
-                            📅 ${workingDays}j ouvrés/sem.
+                        <span style="font-size:10px; background:rgba(37,99,235,0.08); color:var(--accent-blue); padding:2px 6px; border-radius:3px; font-weight:700;" title="Base de calcul configurable • Jours fériés officiels algériens déduits">
+                            📅 ${workingDays}j ouvrés/sem. ${sp.holidays_excluded_count > 0 ? `• ${sp.holidays_excluded_count} fériés déduits` : ''}
                         </span>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -2479,7 +2479,7 @@
                         ${sp.recommended_deposit_date ? `
                             <div style="margin-top:6px; font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
                                 <span>📌</span>
-                                <span>Date calculée sur les délais incompressibles réels : <strong>${recDateFormatted}</strong> (${sp.required_working_days || 0} jours ouvrés requis, hors week-ends).</span>
+                                <span>Date calculée sur les délais incompressibles réels : <strong>${recDateFormatted}</strong> (${sp.required_working_days || 0} jours ouvrés requis, hors week-ends et ${sp.holidays_excluded_count || 0} jours fériés officiels déduits).</span>
                             </div>
                         ` : ''}
                     </div>

@@ -40,20 +40,34 @@ type PreSubmissionCheckItem struct {
 	Remediation string          `json:"remediation,omitempty" xml:"remediation,omitempty"`
 }
 
+// SmartPlanningPreSubmissionSummary résume l'audit du chemin critique et des jours ouvrés dans le contrôle pré-dépôt
+type SmartPlanningPreSubmissionSummary struct {
+	TargetDepositDate      time.Time `json:"target_deposit_date"`
+	RecommendedDepositDate time.Time `json:"recommended_deposit_date"`
+	WorkingDaysPerWeek     int       `json:"working_days_per_week"`
+	RequiredWorkingDays    int       `json:"required_working_days"`
+	HolidaysExcludedCount  int       `json:"holidays_excluded_count"`
+	OverallHealth          string    `json:"overall_health"`
+	OverallHealthLabel     string    `json:"overall_health_label"`
+	IsTargetDateSufficient bool      `json:"is_target_date_sufficient"`
+	RecommendedActionFR    string    `json:"recommended_action_fr"`
+}
+
 // PreSubmissionValidationReport synthèse d'audit de conformité pré-dépôt ANPP
 type PreSubmissionValidationReport struct {
-	DossierID             uuid.UUID                `json:"dossier_id"`
-	DossierCode           string                   `json:"dossier_code"`
-	ProcedureCode         ProcedureCode            `json:"procedure_code"`
-	ProductType           ProductType              `json:"product_type"`
-	ProductName           string                   `json:"product_name"`
-	IsEligible            bool                     `json:"is_eligible"`
-	CompletenessScore     int                      `json:"completeness_score"` // 0-100%
-	CriticalBlockersCount int                      `json:"critical_blockers_count"`
-	WarningsCount         int                      `json:"warnings_count"`
-	Checks                []PreSubmissionCheckItem `json:"checks"`
-	EvaluatedAt           time.Time                `json:"evaluated_at"`
-	EvaluatedBy           string                   `json:"evaluated_by"`
+	DossierID             uuid.UUID                          `json:"dossier_id"`
+	DossierCode           string                             `json:"dossier_code"`
+	ProcedureCode         ProcedureCode                      `json:"procedure_code"`
+	ProductType           ProductType                        `json:"product_type"`
+	ProductName           string                             `json:"product_name"`
+	IsEligible            bool                               `json:"is_eligible"`
+	CompletenessScore     int                                `json:"completeness_score"` // 0-100%
+	CriticalBlockersCount int                                `json:"critical_blockers_count"`
+	WarningsCount         int                                `json:"warnings_count"`
+	SmartPlanning         *SmartPlanningPreSubmissionSummary `json:"smart_planning,omitempty"`
+	Checks                []PreSubmissionCheckItem           `json:"checks"`
+	EvaluatedAt           time.Time                          `json:"evaluated_at"`
+	EvaluatedBy           string                             `json:"evaluated_by"`
 }
 
 // ManifestDocumentItem pièce documentaire scellée dans le manifeste E-Services
@@ -136,7 +150,7 @@ type ANPPEservicesManifest struct {
 }
 
 // EvaluatePreSubmission effectue l'audit de complétude et d'éligibilité pré-dépôt ANPP
-func EvaluatePreSubmission(dossier *Dossier, slips []ANPPPaymentSlip, est *Establishment, evaluatorEmail string) *PreSubmissionValidationReport {
+func EvaluatePreSubmission(dossier *Dossier, slips []ANPPPaymentSlip, est *Establishment, evaluatorEmail string, spOptional ...*SmartPlanningAnalysis) *PreSubmissionValidationReport {
 	report := &PreSubmissionValidationReport{
 		DossierID:     dossier.ID,
 		DossierCode:   dossier.DossierCode,
@@ -314,7 +328,55 @@ func EvaluatePreSubmission(dossier *Dossier, slips []ANPPPaymentSlip, est *Estab
 		})
 	}
 
-	// 5. Avertissements non bloquants (Ex: Pièces facultatives [F] non rattachées)
+	// 5. Contrôles de RÉTROPLANNING INVERSÉ & CHEMIN CRITIQUE ANPP (CDC 7.4.3.6)
+	var sp *SmartPlanningAnalysis
+	if len(spOptional) > 0 && spOptional[0] != nil {
+		sp = spOptional[0]
+	} else {
+		sp = EvaluateSmartPlanning(dossier, dossier.Items, time.Now().UTC())
+	}
+
+	if sp != nil {
+		recDate := sp.TargetDepositDate
+		if sp.RecommendedDepositDate != nil {
+			recDate = *sp.RecommendedDepositDate
+		}
+
+		report.SmartPlanning = &SmartPlanningPreSubmissionSummary{
+			TargetDepositDate:      sp.TargetDepositDate,
+			RecommendedDepositDate: recDate,
+			WorkingDaysPerWeek:     sp.WorkingDaysPerWeek,
+			RequiredWorkingDays:    sp.RequiredWorkingDays,
+			HolidaysExcludedCount:  sp.HolidaysExcludedCount,
+			OverallHealth:          string(sp.OverallHealth),
+			OverallHealthLabel:     sp.OverallHealthLabel,
+			IsTargetDateSufficient: sp.IsTargetDateSufficient,
+			RecommendedActionFR:    sp.RecommendedActionFR,
+		}
+
+		if sp.IsTargetDateSufficient {
+			report.Checks = append(report.Checks, PreSubmissionCheckItem{
+				Code:     "PLAN_CRITICAL_PATH",
+				Category: "CHEMIN_CRITIQUE",
+				Label:    "Conformité du Chemin Critique (Délais Incompressibles)",
+				Status:   CheckStatusConforme,
+				Severity: SeverityCritical,
+				Details:  fmt.Sprintf("Échéances incompressibles respectées (Cible : %s, Base : %d jours ouvrables/semaine, %d jours fériés ANPP déduits).", sp.TargetDepositDate.Format("02/01/2006"), sp.WorkingDaysPerWeek, sp.HolidaysExcludedCount),
+			})
+		} else {
+			report.Checks = append(report.Checks, PreSubmissionCheckItem{
+				Code:        "PLAN_CRITICAL_PATH",
+				Category:    "CHEMIN_CRITIQUE",
+				Label:       "Conformité du Chemin Critique (Délais Incompressibles)",
+				Status:      CheckStatusAvertissement,
+				Severity:    SeverityWarning,
+				Details:     fmt.Sprintf("Tension calendaire : la date visée (%s) est prématurée par rapport au délai incompressible requis (%s recommandé sur base %dj/semaine).", sp.TargetDepositDate.Format("02/01/2006"), recDate.Format("02/01/2006"), sp.WorkingDaysPerWeek),
+				Remediation: fmt.Sprintf("Recaler la date cible au %s via l'outil Smart Planning.", recDate.Format("02/01/2006")),
+			})
+		}
+	}
+
+	// 6. Avertissements non bloquants (Ex: Pièces facultatives [F] non rattachées)
 	optionalMissing := 0
 	for _, it := range dossier.Items {
 		if it.RequirementLevel == RequirementFacultative && it.GEDDocumentID == nil {

@@ -60,6 +60,7 @@ type SmartPlanningAnalysis struct {
 	DaysToTargetDeposit     int                      `json:"days_to_target_deposit"`
 	WorkingDaysPerWeek      int                      `json:"working_days_per_week"`
 	RequiredWorkingDays     int                      `json:"required_working_days"`
+	HolidaysExcludedCount   int                      `json:"holidays_excluded_count"`
 	RecommendedDepositDate  *time.Time               `json:"recommended_deposit_date,omitempty"`
 	IsTargetDateSufficient  bool                     `json:"is_target_date_sufficient"`
 	OverallHealth           SmartPlanningHealth      `json:"overall_health"`
@@ -291,11 +292,13 @@ func EvaluateSmartPlanning(d *Dossier, items []ChecklistItem, now time.Time) *Sm
 	analysis.RequiredWorkingDays = requiredWorkDays
 
 	if requiredWorkDays > 0 {
-		recDate := AddWorkingDays(nowMidnight, requiredWorkDays, workingDaysPerWeek)
+		recDate, holidaysCount := AddWorkingDaysWithHolidayCount(nowMidnight, requiredWorkDays, workingDaysPerWeek)
 		analysis.RecommendedDepositDate = &recDate
+		analysis.HolidaysExcludedCount = holidaysCount
 		analysis.IsTargetDateSufficient = !targetMidnight.Before(recDate)
 	} else {
 		analysis.RecommendedDepositDate = &targetMidnight
+		analysis.HolidaysExcludedCount = 0
 		analysis.IsTargetDateSufficient = true
 	}
 
@@ -304,7 +307,12 @@ func EvaluateSmartPlanning(d *Dossier, items []ChecklistItem, now time.Time) *Sm
 		recDateFormatted = analysis.RecommendedDepositDate.Format("02/01/2006")
 	}
 
-	// Labels synthétiques et recommandation réglementaire avec date recommandée basée sur les jours ouvrables
+	holidaysSuffix := ""
+	if analysis.HolidaysExcludedCount > 0 {
+		holidaysSuffix = fmt.Sprintf(" et %d jours fériés ANPP déduits", analysis.HolidaysExcludedCount)
+	}
+
+	// Labels synthétiques et recommandation réglementaire avec date recommandée basée sur les jours ouvrables et fériés
 	switch analysis.OverallHealth {
 	case HealthCompleted:
 		analysis.OverallHealthLabel = "Toutes les étapes critiques sont validées"
@@ -312,34 +320,102 @@ func EvaluateSmartPlanning(d *Dossier, items []ChecklistItem, now time.Time) *Sm
 	case HealthOnTrack:
 		analysis.OverallHealthLabel = "Chemin critique dans les temps (Conforme)"
 		if firstPendingMilestone != nil {
-			analysis.RecommendedActionFR = fmt.Sprintf("Poursuivre la préparation : %s (Échéance dans %d jours). Date butoir recommandée : %s (basée sur %d jours ouvrables/semaine, %d jours ouvrés restants).", firstPendingMilestone.NameFR, firstPendingMilestone.DaysRemaining, recDateFormatted, workingDaysPerWeek, requiredWorkDays)
+			analysis.RecommendedActionFR = fmt.Sprintf("Poursuivre la préparation : %s (Échéance dans %d jours). Date butoir recommandée : %s (basée sur %d jours ouvrables/semaine%s, %d jours ouvrés restants).", firstPendingMilestone.NameFR, firstPendingMilestone.DaysRemaining, recDateFormatted, workingDaysPerWeek, holidaysSuffix, requiredWorkDays)
 		}
 	case HealthWarningTight:
 		analysis.OverallHealthLabel = "Attention : Marge résiduelle faible sur les jalons critiques"
 		if firstPendingMilestone != nil {
-			analysis.RecommendedActionFR = fmt.Sprintf("Accélérer la finalisation de l'étape '%s' (Pôle %s). Date butoir recommandée : %s (calculée sur une base de %d jours ouvrables/semaine).", firstPendingMilestone.NameFR, firstPendingMilestone.DepartmentOwner, recDateFormatted, workingDaysPerWeek)
+			analysis.RecommendedActionFR = fmt.Sprintf("Accélérer la finalisation de l'étape '%s' (Pôle %s). Date butoir recommandée : %s (calculée sur une base de %d jours ouvrables/semaine%s).", firstPendingMilestone.NameFR, firstPendingMilestone.DepartmentOwner, recDateFormatted, workingDaysPerWeek, holidaysSuffix)
 		}
 	case HealthCriticalDelay:
 		analysis.OverallHealthLabel = "Alerte : Dérive active sur le chemin critique du dossier"
 		if firstPendingMilestone != nil {
-			analysis.RecommendedActionFR = fmt.Sprintf("Arbitrage requis par le Pharmacien DT sur l'étape '%s'. Date minimale recommandée : %s (basée sur %d jours ouvrables/semaine, soit %d jours ouvrés incompressibles).", firstPendingMilestone.NameFR, recDateFormatted, workingDaysPerWeek, requiredWorkDays)
+			analysis.RecommendedActionFR = fmt.Sprintf("Arbitrage requis par le Pharmacien DT sur l'étape '%s'. Date minimale recommandée : %s (basée sur %d jours ouvrables/semaine%s, soit %d jours ouvrés incompressibles).", firstPendingMilestone.NameFR, recDateFormatted, workingDaysPerWeek, holidaysSuffix, requiredWorkDays)
 		}
 	case HealthFatalBlock:
 		analysis.OverallHealthLabel = "Rupture réglementaire : Délais incompressibles dépassés"
 		if firstPendingMilestone != nil {
-			analysis.RecommendedActionFR = fmt.Sprintf("Pour rattraper la dérive calendaire sur '%s', la date butoir minimale recommandée est le %s (basée sur %d jours ouvrables par semaine, soit %d jours ouvrés incompressibles).", firstPendingMilestone.NameFR, recDateFormatted, workingDaysPerWeek, requiredWorkDays)
+			analysis.RecommendedActionFR = fmt.Sprintf("Pour rattraper la dérive calendaire sur '%s', la date butoir minimale recommandée est le %s (basée sur %d jours ouvrables par semaine%s, soit %d jours ouvrés incompressibles).", firstPendingMilestone.NameFR, recDateFormatted, workingDaysPerWeek, holidaysSuffix, requiredWorkDays)
 		} else {
-			analysis.RecommendedActionFR = fmt.Sprintf("Date butoir minimale recommandée : %s (basée sur %d jours ouvrables par semaine).", recDateFormatted, workingDaysPerWeek)
+			analysis.RecommendedActionFR = fmt.Sprintf("Date butoir minimale recommandée : %s (basée sur %d jours ouvrables par semaine%s).", recDateFormatted, workingDaysPerWeek, holidaysSuffix)
 		}
 	}
 
 	return analysis
 }
 
-// AddWorkingDays ajoute un nombre de jours ouvrables à une date selon la base hebdomadaire configurée (5 ou 6 jours)
-func AddWorkingDays(start time.Time, workingDays int, daysPerWeek int) time.Time {
+// DefaultAlgerianHolidays répertorie les jours fériés légaux et chômés en Algérie (Loi n° 63-278 modifiée)
+var DefaultAlgerianHolidays = map[string]string{
+	// Fêtes nationales fixes (format MM-DD)
+	"01-01": "Jour de l'An",
+	"01-12": "Yennayer (Nouvel An Amazigh)",
+	"05-01": "Fête du Travail",
+	"07-05": "Fête de l'Indépendance et de la Jeunesse",
+	"11-01": "Fête de la Révolution (1er Novembre)",
+
+	// Fêtes religieuses chômées payées 2026 (format YYYY-MM-DD)
+	"2026-03-20": "Aïd El-Fitr (Jour 1)",
+	"2026-03-21": "Aïd El-Fitr (Jour 2)",
+	"2026-05-27": "Aïd El-Adha (Jour 1)",
+	"2026-05-28": "Aïd El-Adha (Jour 2)",
+	"2026-06-16": "1er Moharram (Nouvel An de l'Hégire)",
+	"2026-06-25": "Achoura (10 Moharram)",
+	"2026-08-25": "El Mawlid Ennabawi Echarif",
+
+	// Fêtes religieuses chômées payées 2027 (format YYYY-MM-DD)
+	"2027-03-10": "Aïd El-Fitr (Jour 1)",
+	"2027-03-11": "Aïd El-Fitr (Jour 2)",
+	"2027-05-17": "Aïd El-Adha (Jour 1)",
+	"2027-05-18": "Aïd El-Adha (Jour 2)",
+	"2027-06-06": "1er Moharram (Nouvel An de l'Hégire)",
+	"2027-06-15": "Achoura (10 Moharram)",
+	"2027-08-15": "El Mawlid Ennabawi Echarif",
+
+	// Fêtes religieuses chômées payées 2028 (format YYYY-MM-DD)
+	"2028-02-27": "Aïd El-Fitr (Jour 1)",
+	"2028-02-28": "Aïd El-Fitr (Jour 2)",
+	"2028-05-05": "Aïd El-Adha (Jour 1)",
+	"2028-05-06": "Aïd El-Adha (Jour 2)",
+	"2028-05-25": "1er Moharram (Nouvel An de l'Hégire)",
+	"2028-06-03": "Achoura (10 Moharram)",
+	"2028-08-03": "El Mawlid Ennabawi Echarif",
+}
+
+// IsAlgerianHoliday vérifie si une date donnée correspond à un jour férié chômé officiel algérien
+func IsAlgerianHoliday(t time.Time, customHolidays ...map[string]string) (bool, string) {
+	var holidays map[string]string
+	if len(customHolidays) > 0 && customHolidays[0] != nil {
+		holidays = customHolidays[0]
+	} else {
+		holidays = DefaultAlgerianHolidays
+	}
+
+	// 1. Recherche par date complète "YYYY-MM-DD" (notamment fêtes religieuses)
+	fullDate := t.Format("2006-01-02")
+	if name, exists := holidays[fullDate]; exists {
+		return true, name
+	}
+
+	// 2. Recherche par jour fixe annuel "MM-DD" (fêtes nationales)
+	fixedDay := t.Format("01-02")
+	if name, exists := holidays[fixedDay]; exists {
+		return true, name
+	}
+
+	return false, ""
+}
+
+// AddWorkingDays calcule la date résultante en ajoutant un nombre de jours ouvrés réels,
+// en excluant les jours de repos hebdomadaires (week-end algérien 5j ou 6j) ainsi que les jours fériés légaux algériens.
+func AddWorkingDays(start time.Time, workingDays int, daysPerWeek int, customHolidays ...map[string]string) time.Time {
+	res, _ := AddWorkingDaysWithHolidayCount(start, workingDays, daysPerWeek, customHolidays...)
+	return res
+}
+
+// AddWorkingDaysWithHolidayCount effectue le calcul en retournant également le nombre de jours fériés rencontrés et exclus.
+func AddWorkingDaysWithHolidayCount(start time.Time, workingDays int, daysPerWeek int, customHolidays ...map[string]string) (time.Time, int) {
 	if workingDays <= 0 {
-		return start
+		return start, 0
 	}
 	if daysPerWeek != 6 {
 		daysPerWeek = 5 // Standard Algérie ANPP / MIPH (Dimanche à Jeudi)
@@ -347,22 +423,36 @@ func AddWorkingDays(start time.Time, workingDays int, daysPerWeek int) time.Time
 
 	curr := start
 	added := 0
+	holidaysCount := 0
+
 	for added < workingDays {
 		curr = curr.AddDate(0, 0, 1)
 		weekday := curr.Weekday() // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+
+		// 1. Contrôle des week-ends
+		isWeekend := false
 		if daysPerWeek == 5 {
-			// Week-end algérien : Vendredi (5) et Samedi (6)
-			if weekday != time.Friday && weekday != time.Saturday {
-				added++
-			}
+			// Dimanche-Jeudi : Vendredi (5) et Samedi (6) chômés
+			isWeekend = (weekday == time.Friday || weekday == time.Saturday)
 		} else if daysPerWeek == 6 {
-			// Week-end 6j : uniquement Vendredi (5) chômé
-			if weekday != time.Friday {
-				added++
-			}
+			// Samedi-Jeudi : Vendredi (5) seul chômé
+			isWeekend = (weekday == time.Friday)
 		}
+
+		if isWeekend {
+			continue
+		}
+
+		// 2. Contrôle des jours fériés légaux algériens
+		isHoliday, _ := IsAlgerianHoliday(curr, customHolidays...)
+		if isHoliday {
+			holidaysCount++
+			continue
+		}
+
+		added++
 	}
-	return curr
+	return curr, holidaysCount
 }
 
 // CalculateRequiredWorkingDays estime le volume minimal de jours ouvrés nécessaires pour franchir les étapes en attente
