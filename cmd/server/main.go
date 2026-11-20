@@ -143,19 +143,16 @@ func main() {
 			ticker := time.NewTicker(tickInterval)
 			defer ticker.Stop()
 			log.Printf("[BailWatcher] Job d'auto-libération des verrous BPF démarré (bail=%dmin, intervalle=%v)", bailMinutes, tickInterval)
-			for {
-				select {
-				case <-ticker.C:
-					jobCtx, jobCancel := context.WithTimeout(context.Background(), 30*time.Second)
-					released, err := workflowRepo.ReleaseExpiredLocks(jobCtx, bailMinutes)
-					jobCancel()
-					if err != nil {
-						log.Printf("[BailWatcher] Erreur lors de la libération des verrous expirés : %v", err)
-					} else if len(released) > 0 {
-						for _, item := range released {
-							log.Printf("[BailWatcher] Verrou expiré libéré automatiquement — Section %s (bail dépassé depuis %s)",
-								item.ItemCode, time.Since(item.LockedAt).Round(time.Second))
-						}
+			for range ticker.C {
+				jobCtx, jobCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				released, err := workflowRepo.ReleaseExpiredLocks(jobCtx, bailMinutes)
+				jobCancel()
+				if err != nil {
+					log.Printf("[BailWatcher] Erreur lors de la libération des verrous expirés : %v", err)
+				} else if len(released) > 0 {
+					for _, item := range released {
+						log.Printf("[BailWatcher] Verrou expiré libéré automatiquement — Section %s (bail dépassé depuis %s)",
+							item.ItemCode, time.Since(item.LockedAt).Round(time.Second))
 					}
 				}
 			}
