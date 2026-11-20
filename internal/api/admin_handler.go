@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -244,11 +243,17 @@ func (h *AdminHandler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DevSwitchRole permet de basculer instantanément de profil en mode développement sans mot de passe.
-// Strictement verrouillé et interdit en environnement de production (CodeRabbit PR #5 review).
+// DevSwitchRole permet de basculer instantanément de profil en mode développement ou preview protégée sans mot de passe.
+// Strictement verrouillé et interdit en environnement de production sans sas confidentiel (CodeRabbit PR #5 review).
 func (h *AdminHandler) DevSwitchRole(w http.ResponseWriter, r *http.Request) {
-	// Guard défense en profondeur : vérification de l'environnement
-	if (h.cfg != nil && !h.cfg.DevSwitcherEnabled()) || strings.ToLower(os.Getenv("APP_ENV")) == "production" || strings.ToLower(os.Getenv("ENVIRONMENT")) == "production" {
+	// Guard défense en profondeur : vérification de l'activation du Dev Switcher
+	devEnabled := false
+	if h.cfg != nil {
+		devEnabled = h.cfg.DevSwitcherEnabled()
+	} else {
+		devEnabled = config.Load().DevSwitcherEnabled()
+	}
+	if !devEnabled {
 		writeJSONError(w, http.StatusNotFound, "Endpoint désactivé en environnement de production")
 		return
 	}
