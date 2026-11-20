@@ -134,7 +134,7 @@ func (c *Config) IsProduction() bool {
 // DevSwitcherEnabled returns true only in non-production environments when explicitly enabled, or in protected preview mode (GateEnabled)
 func (c *Config) DevSwitcherEnabled() bool {
 	if c == nil {
-		if os.Getenv("GATE_PASSCODE") != "" && os.Getenv("ENABLE_DEV_SWITCHER") != "false" {
+		if os.Getenv("GATE_PASSCODE") != "" {
 			return true
 		}
 		appEnv := strings.ToLower(os.Getenv("APP_ENV"))
@@ -146,11 +146,11 @@ func (c *Config) DevSwitcherEnabled() bool {
 		}
 		return true
 	}
-	if os.Getenv("ENABLE_DEV_SWITCHER") == "false" {
-		return false
-	}
 	if c.GateEnabled() {
 		return true
+	}
+	if os.Getenv("ENABLE_DEV_SWITCHER") == "false" {
+		return false
 	}
 	return !c.IsProduction() && c.EnableDevSwitcher
 }
