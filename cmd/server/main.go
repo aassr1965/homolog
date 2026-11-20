@@ -55,6 +55,7 @@ func main() {
 	var adminHandler *api.AdminHandler
 	var systemHandler *api.SystemHandler
 	var pharmaHandler *api.PharmaHandler
+	var settingsHandler *api.SettingsHandler
 	var gedHandler *api.GEDHandler
 	var dossierHandler *api.DossierHandler
 	var deficiencyHandler *api.DeficiencyHandler
@@ -129,6 +130,9 @@ func main() {
 		workflowRepo := repository.NewWorkflowRepository(db.Pool)
 		workflowHandler = api.NewWorkflowHandler(workflowRepo, dossierRepo, auditService, db.Pool)
 		reportHandler = api.NewReportHandler(dossierRepo, workflowRepo, pharmaRepo, auditService, db.Pool)
+
+		settingsRepo := repository.NewSettingsRepository(db.Pool)
+		settingsHandler = api.NewSettingsHandler(settingsRepo, auditService)
 
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
@@ -323,6 +327,15 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/permissions", adminHandler.ListPermissions)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/organization", adminHandler.GetOrganizationSettings)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/organization/settings", adminHandler.UpdateOrganizationSettings)
+			}
+
+			// Settings Réglementaires, Institutionnels & Barèmes Découplés par Tenant (Jalon 2.3)
+			if settingsHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/settings/regulatory", settingsHandler.ListTenantRegulatorySettings)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/settings/regulatory/{key}/history", settingsHandler.GetTenantSettingHistory)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/settings/regulatory/{key}", settingsHandler.UpdateTenantRegulatorySetting)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/admin/settings/regulatory/{key}/approve", settingsHandler.ApproveTenantRegulatorySetting)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/settings/regulatory", settingsHandler.ListTenantRegulatorySettings)
 			}
 
 			// Console Dédiée Administrateur Système & Maintenance IT (SYS_MAINT / PSSI)

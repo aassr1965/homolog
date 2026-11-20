@@ -669,6 +669,11 @@
                             <span>Règles SoD & Zero-Trust</span>
                             <span class="count-badge req">Guardrails</span>
                         </div>
+                        <div class="tree-node ${currentAdminSection === 'settings' ? 'selected' : ''}" onclick="loadAdminSection('settings')">
+                            <span class="chevron">⚙️</span>
+                            <span>Paramètres & Redevances</span>
+                            <span class="count-badge ok">ALCOA+</span>
+                        </div>
                     `;
                 }
             }

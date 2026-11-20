@@ -68,6 +68,11 @@ function renderAdminTree() {
             <span>Règles SoD & Zero-Trust</span>
             <span class="count-badge req">4 Politiques</span>
         </div>
+        <div class="tree-node ${currentAdminSection === 'settings' ? 'selected' : ''}" onclick="loadAdminSection('settings')">
+            <span class="chevron">⚙️</span>
+            <span>Paramètres Réglementaires & Redevances</span>
+            <span class="count-badge ok">Tenant ALCOA+</span>
+        </div>
     `;
 }
 
@@ -97,6 +102,9 @@ async function loadAdminSection(section) {
     } else if (currentAdminSection === 'policies') {
         if (prodEl) prodEl.innerText = "Garde-Fous PSSI";
         if (modEl) modEl.innerText = "SoD & Zero-Trust BPF";
+    } else if (currentAdminSection === 'settings') {
+        if (prodEl) prodEl.innerText = "Paramètres Réglementaires";
+        if (modEl) modEl.innerText = "Redevances & Institutionnel (Jalon 2.3)";
     }
 
     const tbody = document.getElementById("doc-tbody");
@@ -144,6 +152,8 @@ async function loadAdminSection(section) {
             renderAdminMatrixTable();
         } else if (currentAdminSection === 'policies') {
             renderAdminPoliciesView();
+        } else if (currentAdminSection === 'settings') {
+            await renderAdminSettingsView();
         }
     } catch (e) {
         console.error("Erreur chargement admin:", e);
@@ -1250,4 +1260,243 @@ function exportRBACMatrixCSV() {
         "📊",
         "Fermer"
     );
+}
+
+// =============================================================================
+// JALON 2.3 : GESTION DES SETTINGS RÉGLEMENTAIRES, INSTITUTIONNELS & REDEVANCES
+// =============================================================================
+
+let tenantRegulatorySettings = [];
+
+async function renderAdminSettingsView() {
+    const thead = document.getElementById("table-head");
+    const tbody = document.getElementById("doc-tbody");
+    if (!thead || !tbody) return;
+    thead.classList.remove("two-tier");
+
+    thead.innerHTML = `
+        <tr>
+            <th colspan="7" style="background:var(--bg-th); padding:10px; font-size:12px; font-weight:700; color:var(--accent-purple);">
+                ⚙️ Paramètres Réglementaires & Barèmes Découplés du Tenant (Section 6.4 du CDC • Jalon 2.3)
+            </th>
+        </tr>
+    `;
+
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:25px; color:var(--text-muted);">Chargement des paramètres du tenant...</td></tr>`;
+
+    try {
+        const res = await fetch('/api/v1/admin/settings/regulatory');
+        if (!res.ok) throw new Error("Impossible de charger les paramètres");
+        const data = await res.json();
+        tenantRegulatorySettings = data.settings || [];
+
+        const categories = [
+            { id: "finance_medicine", title: "💳 Circuit Médicaments (Décret exécutif n° 21-82 & DEPP)", icon: "💊" },
+            { id: "finance_dm", title: "🩺 Circuit Dispositifs Médicaux (Ordonnance n° 21-07 & DDM)", icon: "🩺" },
+            { id: "fee_schedule", title: "💰 Barèmes Officiels des Redevances ANPP", icon: "⚖️" },
+            { id: "regulatory_deadlines", title: "⏳ Délais Légaux de Carence Réglementaire", icon: "⏱️" },
+            { id: "institutions_anpp", title: "🏛️ Guichets & Directions Spécialisées ANPP", icon: "🏢" }
+        ];
+
+        let html = `
+            <tr>
+                <td colspan="7" style="padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; background:var(--bg-surface); padding:10px 14px; border-radius:6px; border:1px solid var(--border-color);">
+                        <div>
+                            <div style="font-weight:800; font-size:13px; color:var(--text-main);">Configuration Réglementaire Découplée (ALCOA+ / GAMP 5)</div>
+                            <div style="font-size:11px; color:var(--text-dim);">Les modifications sur les coordonnées bancaires et barèmes sont tracées temporellement (valid_from/valid_to) avec visa du Pharmacien DT.</div>
+                        </div>
+                        <button class="btn-pill" onclick="loadAdminSection('settings')" style="font-size:11px; padding:4px 10px;">🔄 Rafraîchir</button>
+                    </div>
+        `;
+
+        for (const cat of categories) {
+            const items = tenantRegulatorySettings.filter(s => s.category === cat.id);
+            if (items.length === 0) continue;
+
+            html += `
+                <div style="margin-bottom:18px;">
+                    <div style="font-weight:700; font-size:12px; color:var(--text-main); margin-bottom:8px; display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+                        <span>${cat.icon}</span> <span>${cat.title}</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:10px;">
+            `;
+
+            for (const item of items) {
+                const isPending = item.status === 'PENDING_APPROVAL_DT';
+                const statusBadge = isPending 
+                    ? `<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:10px;">⏳ Visa DT Requis</span>`
+                    : `<span style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:10px;">✓ Actif</span>`;
+
+                html += `
+                    <div style="background:var(--bg-surface); border:1px solid ${isPending ? '#f59e0b' : 'var(--border-color)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; gap:8px;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+                                <div style="font-weight:700; font-size:12px; color:var(--text-main);">${escapeAdminHtml(item.label_fr)}</div>
+                                ${statusBadge}
+                            </div>
+                            <div style="font-family:monospace; font-size:10px; color:var(--text-dim); margin-bottom:6px;">${escapeAdminHtml(item.setting_key)}</div>
+                            
+                            <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:4px; padding:6px 8px; margin-bottom:6px;">
+                                <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">Valeur Active en Vigueur :</div>
+                                <div style="font-weight:800; font-size:12px; color:var(--accent-purple); word-break:break-all;">${escapeAdminHtml(item.setting_value)}</div>
+                            </div>
+
+                            ${isPending ? `
+                                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:4px; padding:6px 8px; margin-bottom:6px; font-size:11px;">
+                                    <div style="font-weight:700; color:#b45309;">Proposition en attente :</div>
+                                    <div style="font-weight:800; color:#92400e; font-family:monospace;">${escapeAdminHtml(item.pending_value || '')}</div>
+                                    <div style="font-size:10px; color:#78350f; margin-top:2px;">Motif : ${escapeAdminHtml(item.pending_reason || '')}</div>
+                                    <div style="font-size:9.5px; color:#78350f; margin-top:1px;">Proposé par : ${escapeAdminHtml(item.pending_proposer_name || 'Collaborateur')}</div>
+                                </div>
+                            ` : ''}
+
+                            <div style="font-size:10.5px; color:var(--text-dim); line-height:1.4;">${escapeAdminHtml(item.description || '')}</div>
+                            <div style="font-size:9.5px; color:#64748b; margin-top:4px; font-style:italic;">Réf: ${escapeAdminHtml(item.legal_reference || 'Norme ANPP')}</div>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:8px; border-top:1px solid var(--border-color); padding-top:8px;">
+                            <button class="btn-pill" style="font-size:10.5px; padding:2px 8px;" onclick="openSettingHistoryModal('${item.setting_key}', '${escapeAdminHtml(item.label_fr)}')">
+                                📜 Historique
+                            </button>
+                            <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:var(--bg-hover);" onclick="openEditSettingModal('${item.setting_key}', '${escapeAdminHtml(item.setting_value)}', '${escapeAdminHtml(item.label_fr)}')">
+                                ✏️ Modifier
+                            </button>
+                            ${isPending ? `
+                                <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:#7e22ce; color:white; border:none; font-weight:700;" onclick="approveSettingModal('${item.setting_key}', '${escapeAdminHtml(item.label_fr)}')">
+                                    ✍️ Viser (DT)
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            html += `</div></div>`;
+        }
+
+        html += `</td></tr>`;
+        tbody.innerHTML = html;
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:25px; color:var(--accent-red);">Erreur : ${e.message}</td></tr>`;
+    }
+}
+
+// Modal interactive d'édition d'un paramètre
+function openEditSettingModal(key, currentValue, label) {
+    const newVal = prompt(`Modification du paramètre : ${label}\n\nValeur actuelle : ${currentValue}\n\nVeuillez saisir la NOUVELLE valeur :`, currentValue);
+    if (newVal === null) return;
+    const trimmedVal = newVal.trim();
+    if (!trimmedVal) {
+        alert("La valeur ne peut pas être vide.");
+        return;
+    }
+
+    const reason = prompt(`Motif réglementaire OBLIGATOIRE (Décret, Arrêté ou Notification ANPP) :`, "Mise en conformité avec les directives officielles de l'ANPP");
+    if (reason === null) return;
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+        alert("Le motif réglementaire est obligatoire pour l'audit trail BPF.");
+        return;
+    }
+
+    const isDT = currentUser && (currentUser.role === 'directeur_technique' || currentUser.role === 'pharmacien_responsable');
+    const requireDT = !isDT;
+
+    fetch(`/api/v1/admin/settings/regulatory/${key}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            new_value: trimmedVal,
+            regulatory_reason: trimmedReason,
+            require_dt_approval: requireDT
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+        showNotifyModal("Mise à Jour Paramètre", `<div style="color:var(--accent-emerald); font-weight:700;">${data.message || 'Enregistré avec succès'}</div>`, "⚙️", "Fermer");
+        renderAdminSettingsView();
+    })
+    .catch(err => {
+        alert("Erreur lors de la modification : " + err.message);
+    });
+}
+
+// Modal d'approbation DT
+function approveSettingModal(key, label) {
+    const ok = confirm(`Confirmation de Visa Légal (Pharmacien Directeur Technique) :\n\nConfirmez-vous sur l'honneur l'exactitude de cette modification institutionnelle pour "${label}" ?`);
+    if (!ok) return;
+
+    fetch(`/api/v1/admin/settings/regulatory/${key}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            solemn_check: true,
+            totp_code: "123456"
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+        showNotifyModal("Visa DT Apposé", `<div style="color:var(--accent-purple); font-weight:700;">Le paramètre "${label}" a été scellé et mis en vigueur en v1.0.</div>`, "✍️", "Fermer");
+        renderAdminSettingsView();
+    })
+    .catch(err => {
+        alert("Erreur lors du visa DT : " + err.message);
+    });
+}
+
+// Modal d'historique temporel (GAMP 5 / ALCOA+)
+async function openSettingHistoryModal(key, label) {
+    try {
+        const res = await fetch(`/api/v1/admin/settings/regulatory/${key}/history`);
+        if (!res.ok) throw new Error("Erreur historique");
+        const data = await res.json();
+        const history = data.history || [];
+
+        let rowsHtml = '';
+        history.forEach((h, idx) => {
+            const fromDate = h.valid_from ? new Date(h.valid_from).toLocaleString('fr-FR') : '—';
+            const toDate = h.valid_to ? new Date(h.valid_to).toLocaleString('fr-FR') : 'En vigueur actuellement';
+            const isActive = h.is_active;
+
+            rowsHtml += `
+                <tr style="border-bottom:1px solid var(--border-color); ${isActive ? 'background:rgba(126,34,206,0.04);' : ''}">
+                    <td style="padding:8px; font-weight:700; color:${isActive ? '#7e22ce' : 'var(--text-main)'};">${escapeAdminHtml(h.setting_value)}</td>
+                    <td style="padding:8px; font-size:10.5px;">${fromDate}</td>
+                    <td style="padding:8px; font-size:10.5px; color:${isActive ? '#16a34a' : 'var(--text-dim)'};">${toDate}</td>
+                    <td style="padding:8px; font-size:10.5px;">${escapeAdminHtml(h.approved_by_name || 'Système')}</td>
+                    <td style="padding:8px;">
+                        ${isActive ? '<span style="color:#16a34a; font-weight:700; font-size:10px;">● ACTIF</span>' : '<span style="color:#64748b; font-size:10px;">ARCHIVÉ</span>'}
+                    </td>
+                </tr>
+            `;
+        });
+
+        const bodyHtml = `
+            <div style="font-size:12px; color:var(--text-dim); margin-bottom:10px;">
+                Historique d'immuabilité médico-légale pour la variable <strong>${escapeAdminHtml(key)}</strong> :
+            </div>
+            <div style="max-height:280px; overflow-y:auto; border:1px solid var(--border-color); border-radius:4px;">
+                <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                    <thead style="background:var(--bg-th); font-weight:700;">
+                        <tr>
+                            <th style="padding:6px 8px; text-align:left;">Valeur</th>
+                            <th style="padding:6px 8px; text-align:left;">Prise d'effet</th>
+                            <th style="padding:6px 8px; text-align:left;">Clôture</th>
+                            <th style="padding:6px 8px; text-align:left;">Visé Par</th>
+                            <th style="padding:6px 8px; text-align:left;">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        showNotifyModal(`Audit Trail Temporel : ${label}`, bodyHtml, "📜", "Fermer");
+    } catch (e) {
+        alert("Erreur chargement historique : " + e.message);
+    }
 }

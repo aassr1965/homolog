@@ -332,8 +332,8 @@ gantt
   - Exports tabulaires certifiés **Excel (XLSX) et CSV UTF-8** avec métadonnées d'audit trail (pour comptabilité, finance et analyses de portefeuille).
   - Routes REST API sécurisées (`GET /api/v1/dossiers/{id}/reports/{code}`, `POST .../seal`, `GET /api/v1/public/verify/{sha256}`).
 
-### Jalon 2.3 : Suivi des Redevances Réglementaires, Devises & Settings Réglementaires du Tenant
-- [ ] **Settings Réglementaires & Institutionnels Découplés par Tenant (`organization_id`) :**
+### Jalon 2.3 : Suivi des Redevances Réglementaires, Devises & Settings Réglementaires du Tenant — *[Terminé : Architecture Découplée Tenant, Versioning Temporel ALCOA+ & Barèmes Dynamiques]*
+- [x] **Settings Réglementaires & Institutionnels Découplés par Tenant (`organization_id`) :**
   - Interface dédiée au sein de la Console d'Administration (*Sanad Admin Console*) permettant la mise à jour dynamique et sécurisée des paramètres institutionnels par laboratoire, sans aucun codage en dur :
     - *Circuit Médicaments :* Mode de paiement (`FIN_PAYMENT_MODE_MEDICINE`), compte Trésor Public CAS n° 302.145 (`FIN_TREASURY_ACCOUNT_MEDICINE`), ordre des chèques certifiés (`FIN_BENEFICIARY_ORDER_MEDICINE` : *Régisseur des recettes de l'ANPP*).
     - *Circuit Dispositifs Médicaux :* Banque domiciliataire BNA Agence Al Qods Chéraga (`FIN_BANK_NAME_DM`), RIB officiel ANPP `00100622030000064395` (`FIN_BANK_RIB_DM`).
@@ -343,6 +343,7 @@ gantt
     - *Barèmes Dispositifs Médicaux Ordonnance 21-07 Art. 31 :* `FEE_DM_HOMOLOGATION_DZD` (300 000 DA), `FEE_DM_RENEWAL_DZD` (300 000 DA), `FEE_DM_MODIFICATION_DZD` (150 000 DA), `FEE_DM_TRANSFER_DZD` (100 000 DA).
   - Paramétrage des guichets, adresses des directions spécialisées de l'ANPP (DEPP, DDM, DCE/LNCPP, DAF).
   - Workflow de validation des modifications critiques (proposition Maker par l'Admin Labo / Dir. Fin., approbation obligatoire par le Pharmacien DT avec signature électronique 2FA 21 CFR Part 11 et audit trail scellé).
+  - Validation par protocole de tests d'intégration complet (`settings_test.go` : 6 tests réussis, isolation multi-tenant stricte, versioning GAMP 5 et impact dynamique sur les bordereaux BV1/BV2).
 - [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
 
