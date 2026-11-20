@@ -260,6 +260,9 @@
                         <div class="demo-btn" onclick="fillDemoAccount('pdt@pharma.dz', 'Homolog2026!Dev')">
                             <div><strong>💊 Dr. Yacine</strong><div style="color:var(--text-dim); font-size:9px;">Directeur Technique (1.A.7)</div></div>
                         </div>
+                        <div class="demo-btn" onclick="fillDemoAccount('assistant.dt@pharma.dz', 'Homolog2026!Dev')">
+                            <div><strong>👩‍⚕️ Dr. Lynda</strong><div style="color:var(--text-dim); font-size:9px;">Pharmacien Assistant (Intérim DT)</div></div>
+                        </div>
                         <div class="demo-btn" onclick="fillDemoAccount('admin.lab@pharma.dz', 'Homolog2026!Dev')">
                             <div><strong>🏢 Karim M.</strong><div style="color:var(--text-dim); font-size:9px;">Admin Laboratoire</div></div>
                         </div>
@@ -453,6 +456,7 @@
                     <span style="font-size:11px; font-weight:700; color:#0284c7;">🧪 Rôle Dev :</span>
                     <select id="dev-role-select" onchange="devSwitchRole(this.value)" style="font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:2px 6px; cursor:pointer;" title="Basculez instantanément de rôle pour tester les habilitations et masquages">
                         <option value="pdt@pharma.dz">💊 Dr. Yacine (Pharmacien DT - 1.A.7)</option>
+                        <option value="assistant.dt@pharma.dz">👩‍⚕️ Dr. Lynda (Pharmacien Assistant / Intérim DT)</option>
                         <option value="admin.lab@pharma.dz">🏢 Karim M. (Admin Labo)</option>
                         <option value="ra.lead@pharma.dz">📋 Sarah B. (Manager Affaires Réglem.)</option>
                         <option value="ra.assoc@pharma.dz">📝 Sofiane H. (Chargé Affaires Réglem.)</option>
@@ -539,6 +543,11 @@
                 <span class="act-icon">🖥️</span>
                 <span class="act-label" id="lbl-act-sys">Cockpit IT</span>
             </button>
+            <button class="act-btn" id="act-parapheur" data-perm="DOC_APPROVE_PDT" onclick="openParapheurModal()" title="Cockpit de Supervision & Parapheur Électronique Pharmacien DT (21 CFR Part 11)" style="display:none;">
+                <span class="act-icon">⚖️</span>
+                <span class="act-label" id="lbl-act-parapheur">Parapheur DT</span>
+                <span class="act-badge" id="badge-parapheur-count" style="display:none; background:#7e22ce;">0</span>
+            </button>
 
             <div class="act-spacer"></div>
 
@@ -560,6 +569,7 @@
                 <button class="mob-dom-btn" id="mob-act-ged" onclick="switchDomainModule('ged')" title="GED BPF">📁 GED</button>
                 <button class="mob-dom-btn" id="mob-act-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration Labo">⚙️ Admin</button>
                 <button class="mob-dom-btn" id="mob-act-sys" data-perm="SYS_MAINT" onclick="switchDomainModule('sys')" title="Cockpit IT" style="display:none;">🖥️ IT</button>
+                <button class="mob-dom-btn" id="mob-act-parapheur" data-perm="DOC_APPROVE_PDT" onclick="openParapheurModal()" title="Parapheur DT" style="display:none;">⚖️ DT</button>
             </div>
 
             <div class="tree-header">
@@ -3372,6 +3382,361 @@
         </div>
     </div>
 
+    <!-- Modal Parapheur Électronique & Cockpit DT (CDC Section 7.4.6) -->
+    <div class="modal-overlay" id="modal-parapheur-dt" onclick="if(event.target === this) closeParapheurModal()">
+        <div class="modal modal-lg" id="modal-parapheur-dialog" style="width:1120px; max-width:min(1120px, calc(100vw - 24px)); height:88vh; max-height:96vh; min-width:680px; min-height:440px; display:flex; flex-direction:column; overflow:hidden; position:relative;">
+            <!-- Bords & Coins de Redimensionnement Interactif (Style Fenêtre OS : Haut, Bas, Gauche, Droite, 4 Coins) -->
+            <div class="modal-resize-edge edge-n" data-direction="n" title="Étirer vers le haut"></div>
+            <div class="modal-resize-edge edge-s" data-direction="s" title="Étirer vers le bas"></div>
+            <div class="modal-resize-edge edge-w" data-direction="w" title="Étirer vers la gauche"></div>
+            <div class="modal-resize-edge edge-e" data-direction="e" title="Étirer vers la droite"></div>
+            <div class="modal-resize-edge edge-nw" data-direction="nw" title="Étirer l'angle haut-gauche"></div>
+            <div class="modal-resize-edge edge-ne" data-direction="ne" title="Étirer l'angle haut-droit"></div>
+            <div class="modal-resize-edge edge-sw" data-direction="sw" title="Étirer l'angle bas-gauche"></div>
+            <div class="modal-resize-edge edge-se" data-direction="se" title="Étirer l'angle bas-droit"></div>
+
+            <div class="modal-header" id="modal-parapheur-header" ondblclick="if(!event.target.closest('button, a, input, select')) toggleMaximizeParapheurModal()" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06); padding:10px 16px; user-select:none; cursor:grab;" title="Glisser pour déplacer la fenêtre • Double-clic pour plein écran">
+                <div class="modal-title" style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:24px;">⚖️</span>
+                    <div>
+                        <div style="color:var(--text-main); font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px;">
+                            <span>Cockpit de Supervision &amp; Parapheur Électronique</span>
+                            <span style="background:#7e22ce; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;">Pharmacien Directeur Technique</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">
+                            Mandat Légal 1.A.7 &amp; Décret 21-82 • Visa Officiel 21 CFR Part 11 • Ségrégation des Fonctions (SoD) • Signature par Lot &amp; Scellement v1.0
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button type="button" class="btn-pill" id="btn-parapheur-delegations" onclick="openDTDelegationsModal()" title="Consulter ou établir un mandat d'intérim / suppléance (Décret 21-82 Art. 24)" style="font-size:11px; padding:2px 8px; height:26px; color:#d97706; border-color:#d97706; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                        <span>🛡️</span> <span>Intérim DT (Décret 21-82)</span>
+                    </button>
+                    <button type="button" class="btn-pill" id="btn-parapheur-maximize" onclick="toggleMaximizeParapheurModal()" title="Agrandir en plein écran" style="font-size:12px; padding:2px 8px; height:26px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                        ⛶
+                    </button>
+                    <button class="close-btn" onclick="closeParapheurModal()" title="Fermer la fenêtre (Échap)">✕</button>
+                </div>
+            </div>
+
+            <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
+                <!-- 0. Bandeau d'Intérim Officiel Pharmacien Assistant (Décret 21-82 Art. 24) -->
+                <div id="parapheur-delegation-banner" style="display:none; background:linear-gradient(135deg, rgba(217,119,6,0.12), rgba(245,158,11,0.06)); border:1.5px solid #d97706; border-radius:6px; padding:10px 14px; font-size:12px; color:var(--text-main); justify-content:space-between; align-items:center; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:22px;">🛡️</span>
+                        <div>
+                            <div style="font-weight:800; color:#d97706; display:flex; align-items:center; gap:8px;">
+                                <span>Mandat d'Intérim de Direction Technique Actif (Décret exécutif n° 21-82 Art. 24)</span>
+                                <span id="badge-delegation-miph-ref" style="background:#d97706; color:white; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;"></span>
+                            </div>
+                            <div id="parapheur-delegation-desc" style="font-size:11px; color:var(--text-dim); margin-top:2px;">
+                                Vous agissez sous délégation officielle du Pharmacien DT titulaire. Vos visas seront scellés avec mention légale d'intérim.
+                            </div>
+                        </div>
+                    </div>
+                    <div id="parapheur-delegation-period" style="font-size:11px; font-weight:700; color:#b45309; text-align:right; white-space:nowrap;">
+                    </div>
+                </div>
+                <!-- 1. Bandeau KPIs de Synthèse Cockpit -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #7e22ce; border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Pièces Prêtes pour Visa DT</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-total" style="font-size:22px; font-weight:900; color:#7e22ce;">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Sections validées AQ</span>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid var(--accent-blue); border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Dossiers ANPP Concernés</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-dossiers" style="font-size:22px; font-weight:900; color:var(--accent-blue);">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Procédures actives</span>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #f59e0b; border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Verrous Gating Actifs</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-gating" style="font-size:22px; font-weight:900; color:#d97706;">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Prérequis en attente</span>
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #ef4444; border-radius:6px; padding:10px 12px;">
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Échéances Imminentes (&le; 30j)</div>
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
+                            <span id="kpi-parapheur-urgent" style="font-size:22px; font-weight:900; color:#dc2626;">0</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Chemin critique Smart Planning</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Barre d'outils et Filtres Matriciels -->
+                <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                        <div>
+                            <select id="parapheur-filter-dossier" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color); max-width:260px;">
+                                <option value="ALL">Tous les Dossiers</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="parapheur-filter-module" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);">
+                                <option value="ALL">Tous les Modules CTD</option>
+                                <option value="1">Module 1 (Admin &amp; Réglementaire)</option>
+                                <option value="2">Module 2 (Résumés Qualité)</option>
+                                <option value="3">Module 3 (Qualité CMC)</option>
+                                <option value="4">Module 4 (Non-Clinique)</option>
+                                <option value="5">Module 5 (Clinique &amp; BE)</option>
+                                <option value="DM">Dispositifs Médicaux (DM)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="parapheur-filter-dept" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);">
+                                <option value="ALL">Tous les Pôles</option>
+                                <option value="RA">Affaires Réglementaires (RA)</option>
+                                <option value="QA">Assurance Qualité (QA)</option>
+                                <option value="QC">Contrôle Qualité (QC)</option>
+                                <option value="RD">R&amp;D / Production (RD)</option>
+                                <option value="DT">Direction Technique (DT)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="parapheur-filter-gating" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);">
+                                <option value="ALL">Tous les statuts de Gating</option>
+                                <option value="UNBLOCKED">Prêts pour Signature (Sans Verrou)</option>
+                                <option value="BLOCKED">Avec Verrou GxP Actif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="parapheur-search-input" placeholder="Rechercher code, DCI, titre..." oninput="applyParapheurFilters()" style="padding:5px 10px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color); width:210px;">
+                        <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="loadParapheurItems()" title="Rafraîchir les pièces du parapheur">
+                            🔄 Actualiser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Table Consolidée du Parapheur Haute Densité -->
+                <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; overflow:hidden; flex:1; display:flex; flex-direction:column;">
+                    <div style="padding:8px 12px; background:var(--bg-panel); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:11.5px; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                            <span>Liasse Documentaire Soumise au Visa PDT</span>
+                            <span id="parapheur-filtered-count" style="font-size:10px; background:#7e22ce; color:white; padding:1px 6px; border-radius:10px; font-weight:800;">0 pièce(s)</span>
+                        </div>
+                        <div style="font-size:10.5px; color:var(--text-dim);">
+                            ℹ️ Seules les sections validées par le Checker sont éligibles au scellement officiel.
+                        </div>
+                    </div>
+
+                    <div style="overflow-y:auto; flex:1; min-height:220px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
+                            <thead>
+                                <tr style="background:var(--bg-sub); border-bottom:1.5px solid var(--border-color); position:sticky; top:0; z-index:2;">
+                                    <th style="padding:8px 10px; width:36px; text-align:center;">
+                                        <input type="checkbox" id="parapheur-select-all" onchange="toggleSelectAllParapheur(this.checked)" title="Tout sélectionner / désélectionner" style="transform:scale(1.15); cursor:pointer;">
+                                    </th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Dossier &amp; Produit</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Exigence CTD</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Titre de la Pièce</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Rédacteur (Maker)</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Revue Qualité (Checker)</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Cible Dépôt</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Gating GxP</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase; text-align:center; width:90px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parapheur-table-tbody">
+                                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-dim);">Chargement du parapheur...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Barre d'action Flottante de Signature par Lot (Batch Signing) -->
+            <div id="parapheur-batch-bar" style="display:none; padding:10px 16px; background:linear-gradient(135deg, rgba(126,34,206,0.12), rgba(126,34,206,0.04)); border-top:2px solid #7e22ce; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px;">✍️</span>
+                    <div>
+                        <span style="font-weight:800; color:#7e22ce; font-size:13px;">Signature par Lot Sélectionnée :</span>
+                        <span id="parapheur-selected-count" style="font-weight:900; color:var(--text-main); font-size:14px; margin-left:4px;">0</span>
+                        <span style="font-size:12px; color:var(--text-muted);">pièce(s) cochée(s)</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="button" class="btn-pill" onclick="toggleSelectAllParapheur(false)">Désélectionner tout</button>
+                    <button type="button" id="btn-parapheur-batch-submit" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:800; font-size:12px; padding:6px 14px; box-shadow:0 2px 6px rgba(126,34,206,0.3);" onclick="openBatchConfirmModal()">
+                        ✍️ Signer &amp; Sceller la Liasse en 1 Clic (21 CFR Part 11) ➔
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:11px; color:var(--text-dim); display:flex; align-items:center; gap:6px;">
+                    <span>🛡️</span>
+                    <span>ALCOA+ : Chaque visa apposé génère une trace nominative immuable avec scellement SHA-256 dans l'Audit Trail.</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="btn-pill" onclick="closeParapheurModal()">Fermer</button>
+                    <div style="position:absolute; bottom:1px; right:3px; font-size:10px; color:var(--text-dim); pointer-events:none; opacity:0.4; user-select:none;" title="Coin de redimensionnement libre">◢</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Signature par Lot (21 CFR Part 11) -->
+    <div class="modal-overlay" id="modal-parapheur-batch-confirm" onclick="if(event.target === this) closeBatchConfirmModal()">
+        <div class="modal modal-lg" style="width:680px; max-width:min(680px, calc(100vw - 24px)); max-height:88vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #7e22ce; background:rgba(126,34,206,0.06);">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                    <span>✍️</span>
+                    <div>
+                        <span style="font-size:14px; font-weight:800; color:var(--text-main);">Validation &amp; Scellement par Lot (Batch Signing)</span>
+                        <div style="font-size:11px; color:var(--text-dim);">Conforme 21 CFR Part 11 Subpart B &bull; Visa officiel Pharmacien DT (1.A.7)</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeBatchConfirmModal()">✕</button>
+            </div>
+
+            <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
+                <div style="font-size:12px; color:var(--text-main);">
+                    Vous vous apprêtez à apposer votre visa légal et sceller en <strong>v1.0</strong> une liasse de <strong id="parapheur-batch-confirm-count" style="color:#7e22ce; font-size:13px;">0</strong> document(s) :
+                </div>
+
+                <div id="parapheur-batch-confirm-list" style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; max-height:180px; overflow-y:auto; padding:4px;">
+                    <!-- Liste des pièces sélectionnées injectée dynamiquement -->
+                </div>
+
+                <div style="background:rgba(126,34,206,0.06); border:1px solid rgba(126,34,206,0.25); border-radius:6px; padding:10px 12px; font-size:11px; color:var(--text-main); line-height:1.45;">
+                    🛡️ <strong>Effets Juridiques du Visa Pharmacien DT :</strong>
+                    <ul style="margin:4px 0 0 16px; padding:0;">
+                        <li>Chaque document bascule au statut légal <strong>Scellé v1.0</strong> (prêt pour transmission ANPP).</li>
+                        <li>Un hash cryptographique SHA-256 unique est généré et horodaté pour chaque pièce.</li>
+                        <li>Toute modification ultérieure exigera la réouverture formelle d'une version mineure (v1.1) avec motif tracé.</li>
+                    </ul>
+                </div>
+
+                <div id="parapheur-batch-err" class="login-error-banner" style="display:none; margin-bottom:4px;"></div>
+
+                <form onsubmit="submitBatchApproval(event)">
+                    <div style="margin-bottom:12px;">
+                        <label style="display:flex; align-items:flex-start; gap:8px; font-size:11.5px; cursor:pointer;">
+                            <input type="checkbox" id="parapheur-batch-solemn-check" required style="margin-top:2px;">
+                            <span>Je soussigné(e), Pharmacien Directeur Technique légalement désigné, certifie sur l'honneur l'exactitude, la sincérité et la conformité stricte aux exigences ANPP et BPF des documents composant cette liasse.</span>
+                        </label>
+                    </div>
+
+                    <div class="login-field" style="margin-bottom:14px;">
+                        <label for="parapheur-batch-totp" style="font-weight:700; font-size:11.5px;">Code 2FA Authenticator (6 chiffres) ou mot de passe de re-authentification :</label>
+                        <input type="password" id="parapheur-batch-totp" class="login-input" placeholder="Code TOTP ou mot de passe..." style="font-family:monospace; font-size:13px; font-weight:700;">
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:3px;">
+                            Exigence 21 CFR Part 11 : La ré-authentification empêche toute signature accidentelle.
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="padding:10px 0 0 0; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--border-color);">
+                        <button type="button" class="btn-pill" onclick="closeBatchConfirmModal()">Annuler</button>
+                        <button type="submit" id="parapheur-batch-confirm-btn" class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:800; font-size:12px; padding:6px 14px;">
+                            ✍️ Signer &amp; Sceller la Liasse (21 CFR Part 11)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Registre des Mandats d'Intérim & Suppléance DT (Décret 21-82 Art. 24) -->
+    <div class="modal-overlay" id="modal-dt-delegations" onclick="if(event.target === this) closeDTDelegationsModal()">
+        <div class="modal modal-lg" style="width:860px; max-width:min(860px, calc(100vw - 24px)); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #d97706; background:rgba(217,119,6,0.06); padding:10px 16px;">
+                <div class="modal-title" style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:24px;">🛡️</span>
+                    <div>
+                        <div style="color:var(--text-main); font-weight:800; font-size:14px; display:flex; align-items:center; gap:8px;">
+                            <span>Registre des Mandats d'Intérim &amp; Suppléance Technique</span>
+                            <span style="background:#d97706; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;">Décret 21-82 Art. 24</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">
+                            Délégation légale aux Pharmaciens Assistants agréés • Notification ministérielle MIPH obligatoire (Durée max 3 mois)
+                        </div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeDTDelegationsModal()">✕</button>
+            </div>
+
+            <div class="modal-body" style="padding:14px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; flex:1;">
+                <!-- Formulaire d'établissement d'un nouveau mandat (visible pour DT titulaire et Admin) -->
+                <div id="dt-delegation-create-card" style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #d97706; border-radius:6px; padding:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-size:12px; font-weight:800; color:var(--text-main);">➕ Établir un Mandat d'Intérim (Suppléance Temporaire)</span>
+                        <span style="font-size:10px; color:#d97706; font-weight:600;">⚠️ Limite légale : 92 jours maximum (Art. 24)</span>
+                    </div>
+                    <form id="form-create-delegation" onsubmit="handleCreateDelegationSubmit(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Pharmacien Assistant Agréé MIPH :</label>
+                            <select id="deleg-delegate-select" required style="width:100%; padding:6px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                                <option value="">Sélectionnez un Pharmacien Assistant...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Réf. Notification Transmise au MIPH :</label>
+                            <input type="text" id="deleg-miph-ref" placeholder="Ex: NOTIF-MIPH-INT-2026/088" required style="width:100%; padding:6px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Date de Début du Mandat :</label>
+                            <input type="date" id="deleg-start-date" required style="width:100%; padding:5px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Date de Fin (Max 3 mois) :</label>
+                            <input type="date" id="deleg-end-date" required style="width:100%; padding:5px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div style="grid-column:1 / -1;">
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Motif Réglementaire de la Délégation :</label>
+                            <input type="text" id="deleg-reason" placeholder="Ex: Congé annuel / Mission d'audit BPF internationale / Suppléance technique Art. 24" required style="width:100%; padding:6px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        </div>
+                        <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+                            <button type="submit" class="btn-pill" style="background:#d97706; color:white; border:none; font-weight:700; font-size:11.5px; padding:6px 14px;">
+                                ✍️ Enregistrer &amp; Activer le Mandat
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tableau du Registre des Délégations -->
+                <div>
+                    <div style="font-size:12px; font-weight:800; color:var(--text-main); margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+                        <span>📋 Historique des Mandats d'Intérim Enregistrés</span>
+                        <span id="dt-delegations-count" style="font-size:11px; color:var(--text-dim);">0 mandat(s)</span>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
+                        <thead>
+                            <tr style="background:var(--bg-sub); border-bottom:1.5px solid var(--border-color);">
+                                <th style="padding:8px;">Pharmacien Assistant (Délégataire)</th>
+                                <th style="padding:8px;">Réf. MIPH</th>
+                                <th style="padding:8px;">Période Légale</th>
+                                <th style="padding:8px;">Motif</th>
+                                <th style="padding:8px;">Statut</th>
+                                <th style="padding:8px; text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dt-delegations-tbody">
+                            <tr><td colspan="6" style="padding:14px; text-align:center; color:var(--text-muted);">Chargement du registre...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:11px; color:var(--text-dim);">
+                    ⚖️ Décret exécutif n° 21-82 Art. 24 : En cas d'absence > 3 mois, un nouveau DT doit être nommé auprès du MIPH.
+                </div>
+                <button type="button" class="btn-pill" onclick="closeDTDelegationsModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.18.2"></script>
     <script src="/js/auth.js?v=2026.11.18.2"></script>
@@ -3382,6 +3747,7 @@
     <script src="/js/ged.js?v=2026.11.17.11"></script>
     <script src="/js/dossiers.js?v=2026.11.18.12"></script>
     <script src="/js/workflow.js?v=2026.11.18.11"></script>
+    <script src="/js/parapheur.js?v=2026.11.19.5"></script>
     <script src="/js/deficiencies.js?v=2026.11.17.5"></script>
     <script src="/js/fees.js?v=2026.11.17.5"></script>
     <script src="/js/submissions.js?v=2026.11.17.5"></script>

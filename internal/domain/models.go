@@ -15,6 +15,7 @@ const (
 	RoleAdminLaboratoire         UserRole = "admin_laboratoire"
 	RoleResponsableAffairesReg   UserRole = "responsable_affaires_reglementaires"
 	RoleDirecteurTechnique       UserRole = "directeur_technique"
+	RolePharmacienAssistant      UserRole = "pharmacien_assistant"
 	RoleContributeurQualiteBPF   UserRole = "contributeur_qualite_bpf"
 	RoleContributeurRDProd       UserRole = "contributeur_rd_production"
 	RoleConsultantExterne        UserRole = "consultant_externe"

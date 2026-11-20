@@ -51,6 +51,20 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 			LastName:  "Benkhalid (PDT 1.A.7)",
 		},
 		{
+			Email:     "assistant.dt@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RolePharmacienAssistant,
+			FirstName: "Dr. Lynda",
+			LastName:  "Amrani (Assistant DT)",
+		},
+		{
+			Email:     "assistant2.dt@pharma.dz",
+			Password:  "Homolog2026!Dev",
+			Role:      domain.RolePharmacienAssistant,
+			FirstName: "Dr. Mehdi",
+			LastName:  "Khelil (Assistant DT)",
+		},
+		{
 			Email:     "ra.lead@pharma.dz",
 			Password:  "Homolog2026!Dev",
 			Role:      domain.RoleResponsableAffairesReg,
@@ -163,6 +177,20 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 			Role:      domain.RoleResponsableAffairesReg,
 			FirstName: "Sarah",
 			LastName:  "B.",
+		},
+		{
+			Email:     "assistant.dt@homolog.dz",
+			Password:  "Assistant@Pharma2026!",
+			Role:      domain.RolePharmacienAssistant,
+			FirstName: "Dr. Lynda",
+			LastName:  "Amrani",
+		},
+		{
+			Email:     "assistant2.dt@homolog.dz",
+			Password:  "Assistant@Pharma2026!",
+			Role:      domain.RolePharmacienAssistant,
+			FirstName: "Dr. Mehdi",
+			LastName:  "Khelil",
 		},
 	}
 

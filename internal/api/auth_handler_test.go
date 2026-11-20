@@ -24,7 +24,7 @@ func getTestDB(t *testing.T) *database.DB {
 		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	db, err := database.Connect(ctx, dbURL)

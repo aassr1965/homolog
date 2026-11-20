@@ -325,6 +325,8 @@ const mockAuditTrail = [
             switch (role) {
                 case 'directeur_technique':
                     return isArabic ? 'مدير تقني (1.A.7)' : 'Pharmacien DT (1.A.7)';
+                case 'pharmacien_assistant':
+                    return isArabic ? 'الصيدلي المساعد (نائب المدير التقني)' : 'Pharmacien Assistant / Adjoint DT';
                 case 'admin_laboratoire':
                     return isArabic ? 'مسؤول المخبر' : 'Admin Laboratoire';
                 case 'responsable_affaires_reglementaires':
@@ -592,6 +594,9 @@ const mockAuditTrail = [
             }
             if (typeof refreshAlertsModalContent === 'function') {
                 refreshAlertsModalContent();
+            }
+            if (typeof refreshParapheurBadge === 'function') {
+                refreshParapheurBadge();
             }
         }
 

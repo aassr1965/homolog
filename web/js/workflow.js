@@ -481,6 +481,8 @@ async function submitWorkflowReviewDecision(decision) {
             showToast("↩️ Relecture défavorable : section renvoyée au Maker pour corrections.", "info");
         }
 
+        if (typeof refreshParapheurBadge === 'function') refreshParapheurBadge();
+
         if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
             await selectDossier(currentWfDossierId);
@@ -559,6 +561,8 @@ async function submitWorkflowPdtApproval(e) {
 
         closeModal('modal-workflow-pdt-seal');
         showToast(`✍️ Section approuvée et scellée v1.0 avec empreinte SHA-256 : ${data.signature_seal ? data.signature_seal.substring(0, 16) + '...' : ''}`, "success");
+
+        if (typeof refreshParapheurBadge === 'function') refreshParapheurBadge();
 
         if (typeof switchPreviewSubTab === 'function') switchPreviewSubTab('wf');
         if (typeof selectDossier === 'function') {
