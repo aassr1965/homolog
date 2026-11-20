@@ -128,7 +128,7 @@ const mockAuditTrail = [
             } catch (e) {
                 console.warn("Erreur reverrouillage sas:", e);
             }
-            checkAuthSession();
+            window.location.reload();
         }
 
         // Vérification de la session active
@@ -662,11 +662,17 @@ const mockAuditTrail = [
 
         function fillDemoAccount(email, password) {
             document.getElementById("login-email").value = email;
-            document.getElementById("login-password").value = password;
+            if (password) {
+                document.getElementById("login-password").value = password;
+                handleLoginSubmit();
+            } else {
+                const pwdField = document.getElementById("login-password");
+                pwdField.value = "";
+                pwdField.focus();
+            }
             document.getElementById("totp-field-group").style.display = "none";
             document.getElementById("login-totp").value = "";
             document.getElementById("login-error").style.display = "none";
-            handleLoginSubmit();
         }
 
         async function executeLogout() {
