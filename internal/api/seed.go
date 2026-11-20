@@ -38,98 +38,98 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 		// Comptes Démonstration & Matrice des 10 Rôles BPF
 		{
 			Email:     "admin.lab@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleAdminLaboratoire,
 			FirstName: "Karim",
 			LastName:  "Mokrani (Admin Lab)",
 		},
 		{
 			Email:     "pdt@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleDirecteurTechnique,
 			FirstName: "Dr. Yacine",
 			LastName:  "Benkhalid (PDT 1.A.7)",
 		},
 		{
 			Email:     "assistant.dt@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RolePharmacienAssistant,
 			FirstName: "Dr. Lynda",
 			LastName:  "Amrani (Assistant DT)",
 		},
 		{
 			Email:     "assistant2.dt@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RolePharmacienAssistant,
 			FirstName: "Dr. Mehdi",
 			LastName:  "Khelil (Assistant DT)",
 		},
 		{
 			Email:     "ra.lead@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleResponsableAffairesReg,
 			FirstName: "Sarah",
 			LastName:  "Benali (RA Lead)",
 		},
 		{
 			Email:     "ra.assoc@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleResponsableAffairesReg,
 			FirstName: "Sofiane",
 			LastName:  "Hamidi (RA Associate)",
 		},
 		{
 			Email:     "qa.lead@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleContributeurQualiteBPF,
 			FirstName: "Nadir",
 			LastName:  "Touati (QA Manager)",
 		},
 		{
 			Email:     "qc.lead@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleContributeurRDProd,
 			FirstName: "Leila",
 			LastName:  "Mansouri (QC & Stabilités)",
 		},
 		{
 			Email:     "prod.lead@pharma.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleContributeurRDProd,
 			FirstName: "Omar",
 			LastName:  "Belkacem (Production & Validation)",
 		},
 		{
 			Email:     "consultant.ext@cro.com",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleConsultantExterne,
 			FirstName: "David",
 			LastName:  "Moreau (Expert CRO Bioéquivalence)",
 		},
 		{
 			Email:     "auditeur.insp@anpp.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleAuditeurInspecteur,
 			FirstName: "Inspecteur",
 			LastName:  "ANPP (Auditeur Qualité)",
 		},
 		{
 			Email:     "api.holder@zhejiang-chem.com",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RolePartenaireFournisseurAPI,
 			FirstName: "Wei",
 			LastName:  "Zhang (API Holder Zhejiang Chem)",
 		},
 		{
 			Email:     "admin.sys@cloud.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleAdminSystemeLocal,
 			FirstName: "Ahmed",
 			LastName:  "Ziani (Admin Système Zero-Trust)",
 		},
 		{
 			Email:     "super.admin@homolog.dz",
-			Password:  "Homolog2026!Dev",
+			Password:  "Sanad#Secure2026!Key",
 			Role:      domain.RoleSuperAdminEditeur,
 			FirstName: "SuperAdmin",
 			LastName:  "Éditeur SaaS",
@@ -213,8 +213,20 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 			}
 			log.Printf("[Init] Compte créé : %s (%s) - Rôle: %s", u.Email, u.FirstName+" "+u.LastName, u.Role)
 		} else {
-			// S'assurer que le rôle correspond au seed
-			_, _ = pool.Exec(ctx, "UPDATE users SET role = $1 WHERE organization_id = $2 AND email = $3 AND role != $1", string(u.Role), orgID, u.Email)
+			// S'assurer que le rôle et le mot de passe sont synchronisés (rotation de sécurité obligatoire)
+			pwdHash, err := auth.HashPassword(u.Password, nil)
+			if err == nil {
+				_, _ = pool.Exec(ctx, `
+					UPDATE users 
+					SET role = $1, password_hash = $2, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() 
+					WHERE organization_id = $3 AND email = $4
+				`, string(u.Role), pwdHash, orgID, u.Email)
+			}
+			// Révocation immédiate de toutes les sessions actives pour forcer la ré-authentification
+			_, _ = pool.Exec(ctx, `
+				DELETE FROM user_sessions 
+				WHERE user_id IN (SELECT id FROM users WHERE organization_id = $1 AND email = $2)
+			`, orgID, u.Email)
 		}
 	}
 
