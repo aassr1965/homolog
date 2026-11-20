@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"homolog/internal/config"
@@ -16,14 +17,24 @@ import (
 // GateCookieName est le nom du cookie HttpOnly mémorisant l'autorisation du sas confidentiel
 const GateCookieName = "homolog_gate_access"
 
+type gateAttempt struct {
+	count     int
+	firstFail time.Time
+}
+
 // GateHandler gère le sas d'accès confidentiel (Private Preview Gate)
 type GateHandler struct {
-	cfg *config.Config
+	cfg      *config.Config
+	mu       sync.Mutex
+	attempts map[string]*gateAttempt
 }
 
 // NewGateHandler instancie le gestionnaire du sas confidentiel
 func NewGateHandler(cfg *config.Config) *GateHandler {
-	return &GateHandler{cfg: cfg}
+	return &GateHandler{
+		cfg:      cfg,
+		attempts: make(map[string]*gateAttempt),
+	}
 }
 
 // computeGateToken génère un jeton cryptographique HMAC-SHA256 scellé par le secret d'instance
@@ -94,7 +105,7 @@ type GateUnlockRequest struct {
 	Passcode string `json:"passcode"`
 }
 
-// Unlock valide le mot de passe partenaire et pose le cookie sécurisé (30 jours)
+// Unlock valide le mot de passe partenaire et pose le cookie sécurisé (30 jours) avec anti-bruteforce
 func (h *GateHandler) Unlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -105,6 +116,28 @@ func (h *GateHandler) Unlock(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	ip := getClientIP(r)
+
+	// Vérification de la limitation de tentatives (Max 5 échecs par 15 minutes)
+	h.mu.Lock()
+	if attempt, exists := h.attempts[ip]; exists {
+		if time.Since(attempt.firstFail) < 15*time.Minute {
+			if attempt.count >= 5 {
+				h.mu.Unlock()
+				w.WriteHeader(http.StatusTooManyRequests)
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"error": "Trop de tentatives infructueuses. Veuillez patienter 15 minutes avant de réessayer.",
+					"code":  "GATE_RATE_LIMIT",
+				})
+				return
+			}
+		} else {
+			// Réinitialisation de la fenêtre de 15 min après expiration
+			delete(h.attempts, ip)
+		}
+	}
+	h.mu.Unlock()
 
 	var req GateUnlockRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -117,6 +150,14 @@ func (h *GateHandler) Unlock(w http.ResponseWriter, r *http.Request) {
 
 	// Comparaison sécurisée en temps constant (résistance aux attaques par canal auxiliaire)
 	if subtle.ConstantTimeCompare([]byte(inputPasscode), []byte(expectedPasscode)) != 1 {
+		h.mu.Lock()
+		if attempt, exists := h.attempts[ip]; exists && time.Since(attempt.firstFail) < 15*time.Minute {
+			attempt.count++
+		} else {
+			h.attempts[ip] = &gateAttempt{count: 1, firstFail: time.Now()}
+		}
+		h.mu.Unlock()
+
 		w.WriteHeader(http.StatusUnauthorized)
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"error": "Code d'accès partenaire invalide. Veuillez vérifier le code auprès de votre correspondant.",
@@ -124,7 +165,12 @@ func (h *GateHandler) Unlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Code valide -> Pose du Cookie HttpOnly (30 jours)
+	// Code valide -> Réinitialisation des tentatives pour cette IP
+	h.mu.Lock()
+	delete(h.attempts, ip)
+	h.mu.Unlock()
+
+	// Pose du Cookie HttpOnly (30 jours)
 	token := h.computeGateToken()
 	http.SetCookie(w, &http.Cookie{
 		Name:     GateCookieName,

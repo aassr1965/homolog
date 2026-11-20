@@ -87,7 +87,7 @@ type MilestoneTemplate struct {
 var OfficialSmartPlanningTemplates = []MilestoneTemplate{
 	{
 		Code:            MilestoneJ240StabilitiesZoneIVb,
-		NameFR:          "Lancement étuves Stabilités Zone IVb (M6 légal)",
+		NameFR:          "Mise en stabilité Zone IVb en enceinte climatique (seuil légal M6)",
 		DayOffset:       -240,
 		DepartmentOwner: "RD",
 		AssociatedItems: []string{"3.2.P.8", "3.2.S.7"},
