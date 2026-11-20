@@ -131,8 +131,8 @@
                 return;
             }
 
-            // Succès : Rechargement de la page -> Le serveur Go servira index.html grâce au cookie
-            window.location.reload();
+            // Succès : Redirection immédiate avec purge de cache
+            window.location.replace('/?auth=' + Date.now());
         } catch (err) {
             alertBox.style.display = 'block';
             alertBox.style.background = 'rgba(239, 68, 68, 0.12)';

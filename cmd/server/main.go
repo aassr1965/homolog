@@ -224,6 +224,9 @@ func main() {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
 		if !cfg.PitchDeckEnabled() {
 			htmlStr := string(content)
 			// En production, masquer immédiatement le bouton du pitch commercial (Défense en profondeur)
