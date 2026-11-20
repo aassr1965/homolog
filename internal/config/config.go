@@ -131,23 +131,23 @@ func (c *Config) IsProduction() bool {
 	return env == "production" || env == "prod"
 }
 
-// DevSwitcherEnabled returns true only in non-production environments or when protected by the confidential partner preview gate
+// DevSwitcherEnabled returns true only in non-production environments when explicitly enabled, or in protected preview mode (GateEnabled)
 func (c *Config) DevSwitcherEnabled() bool {
-	if os.Getenv("ENABLE_DEV_SWITCHER") == "false" {
-		return false
-	}
-	if os.Getenv("ENABLE_DEV_SWITCHER") == "true" {
-		return true
-	}
 	if c == nil {
-		if os.Getenv("GATE_PASSCODE") != "" {
+		if os.Getenv("GATE_PASSCODE") != "" && os.Getenv("ENABLE_DEV_SWITCHER") != "false" {
 			return true
 		}
 		appEnv := strings.ToLower(os.Getenv("APP_ENV"))
 		if appEnv == "production" || appEnv == "prod" {
 			return false
 		}
+		if os.Getenv("ENABLE_DEV_SWITCHER") == "false" {
+			return false
+		}
 		return true
+	}
+	if os.Getenv("ENABLE_DEV_SWITCHER") == "false" {
+		return false
 	}
 	if c.GateEnabled() {
 		return true
@@ -155,23 +155,23 @@ func (c *Config) DevSwitcherEnabled() bool {
 	return !c.IsProduction() && c.EnableDevSwitcher
 }
 
-// PitchDeckEnabled returns true only in non-production environments or when protected by the confidential partner preview gate
+// PitchDeckEnabled returns true only in non-production environments when pitch deck is enabled, or in protected preview mode (GateEnabled)
 func (c *Config) PitchDeckEnabled() bool {
-	if os.Getenv("ENABLE_PITCH_DECK") == "false" {
-		return false
-	}
-	if os.Getenv("ENABLE_PITCH_DECK") == "true" {
-		return true
-	}
 	if c == nil {
-		if os.Getenv("GATE_PASSCODE") != "" {
+		if os.Getenv("GATE_PASSCODE") != "" && os.Getenv("ENABLE_PITCH_DECK") != "false" {
 			return true
 		}
 		appEnv := strings.ToLower(os.Getenv("APP_ENV"))
 		if appEnv == "production" || appEnv == "prod" {
 			return false
 		}
+		if os.Getenv("ENABLE_PITCH_DECK") == "false" {
+			return false
+		}
 		return true
+	}
+	if os.Getenv("ENABLE_PITCH_DECK") == "false" {
+		return false
 	}
 	if c.GateEnabled() {
 		return true
