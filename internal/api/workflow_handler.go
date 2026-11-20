@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"homolog/internal/audit"
+	"homolog/internal/auth"
 	"homolog/internal/domain"
 	"homolog/internal/repository"
 )
@@ -871,4 +872,367 @@ func (h *WorkflowHandler) logAudit(ctx context.Context, orgID, userID uuid.UUID,
 		EntityID:       entityID,
 		Details:        details,
 	})
+}
+
+// GetParapheurPendingItems liste les pièces en attente de visa réglementaire DT pour l'organisation
+func (h *WorkflowHandler) GetParapheurPendingItems(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	normRole := strings.ToLower(user.Role)
+	if normRole == "pharmacien_assistant" {
+		delegation, _ := h.workflowRepo.GetActiveDTDelegation(r.Context(), user.OrganizationID, user.UserID)
+		if delegation == nil {
+			writeJSONError(w, http.StatusForbidden, "Accès restreint au Pharmacien DT titulaire ou à un Pharmacien Assistant titulaire d'un mandat d'intérim actif (Décret 21-82 Art. 24)")
+			return
+		}
+	} else if normRole != "pharmacien_responsable" && normRole != "directeur_technique" && normRole != "admin" && normRole != "admin_laboratoire" {
+		writeJSONError(w, http.StatusForbidden, "Accès restreint au Pharmacien Directeur Technique (1.A.7)")
+		return
+	}
+
+	items, err := h.workflowRepo.GetParapheurPendingItems(r.Context(), user.OrganizationID)
+	if err != nil {
+		log.Printf("[ERROR] GetParapheurPendingItems: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les pièces du parapheur")
+		return
+	}
+
+	if items == nil {
+		items = []*domain.ParapheurPendingItem{}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items": items,
+		"count": len(items),
+	})
+}
+
+// BatchApproveSections applique le visa officiel 21 CFR Part 11 sur une liasse de pièces documentaires
+func (h *WorkflowHandler) BatchApproveSections(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	normRole := strings.ToLower(user.Role)
+	var activeDelegation *domain.DTDelegation
+	if normRole == "pharmacien_assistant" {
+		var err error
+		activeDelegation, err = h.workflowRepo.GetActiveDTDelegation(r.Context(), user.OrganizationID, user.UserID)
+		if err != nil || activeDelegation == nil {
+			writeJSONError(w, http.StatusForbidden, "Garde-fou BPF & Décret 21-82 : Aucun mandat d'intérim actif ou notifié au MIPH pour ce Pharmacien Assistant")
+			return
+		}
+	} else if normRole != "pharmacien_responsable" && normRole != "directeur_technique" && normRole != "admin" && normRole != "admin_laboratoire" {
+		writeJSONError(w, http.StatusForbidden, "Garde-fou BPF : Seul le Pharmacien Directeur Technique titulaire (1.A.7) ou son Pharmacien Assistant sous mandat d'intérim (Décret 21-82) est habilité à apposer ce visa légal")
+		return
+	}
+
+	var req domain.BatchApproveRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	if len(req.ItemIDs) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "Aucune section sélectionnée pour la signature par lot")
+		return
+	}
+
+	if !req.SolemnDeclarationAccepted {
+		writeJSONError(w, http.StatusBadRequest, "La déclaration solennelle sur l'honneur du Pharmacien DT est obligatoire pour valider la signature par lot")
+		return
+	}
+
+	// Re-authentification de sécurité (mot de passe ou TOTP 21 CFR Part 11) si mot de passe ou code fourni
+	if strings.TrimSpace(req.Password) != "" || strings.TrimSpace(req.TOTPCode) != "" {
+		var passwordHash string
+		var totpEnabled bool
+		var totpSecret *string
+		userQuery := `SELECT password_hash, totp_enabled, totp_secret FROM users WHERE id = $1`
+		err := h.pool.QueryRow(r.Context(), userQuery, user.UserID).Scan(&passwordHash, &totpEnabled, &totpSecret)
+		if err == nil {
+			if strings.TrimSpace(req.Password) != "" {
+				validPassword, err := auth.VerifyPassword(req.Password, passwordHash)
+				if err != nil || !validPassword {
+					writeJSONError(w, http.StatusUnauthorized, "Mot de passe incorrect : signature par lot refusée")
+					return
+				}
+			}
+			if totpEnabled && totpSecret != nil && strings.TrimSpace(req.TOTPCode) != "" {
+				if !auth.ValidateTOTPCode(req.TOTPCode, *totpSecret) {
+					writeJSONError(w, http.StatusUnauthorized, "Code 2FA TOTP invalide : signature par lot refusée")
+					return
+				}
+			}
+		}
+	}
+
+	approverName := user.Email
+	var uFirst, uLast string
+	_ = h.pool.QueryRow(r.Context(), `SELECT first_name, last_name FROM users WHERE id = $1`, user.UserID).Scan(&uFirst, &uLast)
+	if uFirst != "" || uLast != "" {
+		approverName = strings.TrimSpace(uFirst + " " + uLast)
+	}
+
+	res, err := h.workflowRepo.BatchApproveSections(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		user.Role,
+		user.Email,
+		approverName,
+		req.ItemIDs,
+	)
+	if err != nil {
+		log.Printf("[ERROR] BatchApproveSections: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur lors de la signature par lot : %v", err))
+		return
+	}
+
+	// Audit trail consolidé
+	for _, it := range res.Items {
+		if it.Success {
+			auditDetails := map[string]any{
+				"item_code":    it.ItemCode,
+				"dossier_code": it.DossierCode,
+				"seal_hash":    it.SealHash,
+				"batch_mode":   true,
+			}
+			if activeDelegation != nil {
+				auditDetails["delegation_id"] = activeDelegation.ID
+				auditDetails["miph_notification_ref"] = activeDelegation.MIPHNotificationRef
+				auditDetails["interim_mandate"] = true
+			}
+			h.logAudit(
+				r.Context(),
+				user.OrganizationID,
+				user.UserID,
+				user.Email,
+				user.Role,
+				"batch_approve_sealed",
+				"workflow_item",
+				it.ItemID.String(),
+				auditDetails,
+			)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, res)
+}
+
+// ListDTDelegations liste tous les mandats d'intérim DT pour l'organisation
+func (h *WorkflowHandler) ListDTDelegations(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	delegations, err := h.workflowRepo.ListDTDelegations(r.Context(), user.OrganizationID)
+	if err != nil {
+		log.Printf("[ERROR] ListDTDelegations: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les délégations")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"delegations": delegations,
+		"count":       len(delegations),
+	})
+}
+
+// GetActiveDTDelegation renvoie le mandat d'intérim actif pour l'utilisateur courant s'il est assistant DT
+func (h *WorkflowHandler) GetActiveDTDelegation(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	delegation, err := h.workflowRepo.GetActiveDTDelegation(r.Context(), user.OrganizationID, user.UserID)
+	if err != nil {
+		log.Printf("[ERROR] GetActiveDTDelegation: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Erreur recherche mandat d'intérim")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"has_active_delegation": delegation != nil,
+		"delegation":            delegation,
+	})
+}
+
+// CreateDTDelegation enregistre un mandat d'intérim / suppléance (Décret 21-82 Art. 24)
+func (h *WorkflowHandler) CreateDTDelegation(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	normRole := strings.ToLower(user.Role)
+	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" && normRole != "admin" && normRole != "admin_laboratoire" {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire ou l'administrateur peut déléguer ses fonctions")
+		return
+	}
+
+	var req domain.CreateDTDelegationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	if req.DelegateID == uuid.Nil {
+		writeJSONError(w, http.StatusBadRequest, "Le pharmacien assistant délégataire est requis")
+		return
+	}
+	if strings.TrimSpace(req.MIPHNotificationRef) == "" {
+		writeJSONError(w, http.StatusBadRequest, "La référence de la notification transmise au MIPH est obligatoire (Décret 21-82 Art. 24)")
+		return
+	}
+	if strings.TrimSpace(req.Reason) == "" {
+		writeJSONError(w, http.StatusBadRequest, "Le motif de la délégation / intérim est obligatoire")
+		return
+	}
+
+	delegation, err := h.workflowRepo.CreateDTDelegation(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		req.DelegateID,
+		strings.TrimSpace(req.MIPHNotificationRef),
+		strings.TrimSpace(req.Reason),
+		req.StartDate,
+		req.EndDate,
+	)
+	if err != nil {
+		log.Printf("[ERROR] CreateDTDelegation: %v", err)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logAudit(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		user.Email,
+		user.Role,
+		"create_dt_delegation",
+		"dt_delegation",
+		delegation.ID.String(),
+		map[string]any{
+			"delegate_id":           req.DelegateID.String(),
+			"miph_notification_ref": req.MIPHNotificationRef,
+			"start_date":            req.StartDate,
+			"end_date":              req.EndDate,
+			"reason":                req.Reason,
+		},
+	)
+
+	writeJSON(w, http.StatusCreated, delegation)
+}
+
+// RevokeDTDelegation met fin anticipée à un mandat d'intérim
+func (h *WorkflowHandler) RevokeDTDelegation(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	normRole := strings.ToLower(user.Role)
+	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" && normRole != "admin" && normRole != "admin_laboratoire" {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire ou l'administrateur peut révoquer un mandat")
+		return
+	}
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/parapheur/delegations/")
+	idStr = strings.TrimSuffix(idStr, "/revoke")
+	delegationID, err := uuid.Parse(idStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "ID de délégation invalide")
+		return
+	}
+
+	var req domain.RevokeDTDelegationRequest
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		reason = "Reprise de fonctions du Pharmacien Directeur Technique titulaire"
+	}
+
+	if err := h.workflowRepo.RevokeDTDelegation(r.Context(), user.OrganizationID, delegationID, user.UserID, reason); err != nil {
+		log.Printf("[ERROR] RevokeDTDelegation: %v", err)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logAudit(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		user.Email,
+		user.Role,
+		"revoke_dt_delegation",
+		"dt_delegation",
+		delegationID.String(),
+		map[string]any{
+			"revoke_reason": reason,
+		},
+	)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Mandat d'intérim révoqué avec succès",
+	})
+}
+
+// GetAvailableAssistants liste STRICTEMENT les pharmaciens assistants éligibles pour un mandat de suppléance DT
+func (h *WorkflowHandler) GetAvailableAssistants(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	query := `
+		SELECT id, first_name, last_name, email, role
+		FROM users
+		WHERE organization_id = $1 
+		  AND is_active = TRUE
+		  AND role = 'pharmacien_assistant'
+		  AND id != $2
+		ORDER BY first_name, last_name
+	`
+	rows, err := h.pool.Query(r.Context(), query, user.OrganizationID, user.UserID)
+	if err != nil {
+		log.Printf("[ERROR] GetAvailableAssistants: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Erreur chargement assistants")
+		return
+	}
+	defer rows.Close()
+
+	type AssistantItem struct {
+		ID        uuid.UUID `json:"id"`
+		FirstName string    `json:"first_name"`
+		LastName  string    `json:"last_name"`
+		Email     string    `json:"email"`
+		Role      string    `json:"role"`
+	}
+
+	assistants := make([]AssistantItem, 0)
+	for rows.Next() {
+		var a AssistantItem
+		if err := rows.Scan(&a.ID, &a.FirstName, &a.LastName, &a.Email, &a.Role); err == nil {
+			assistants = append(assistants, a)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, assistants)
 }

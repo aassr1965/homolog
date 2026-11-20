@@ -83,6 +83,8 @@ func main() {
 
 		// Initialisation des dossiers réglementaires ANPP de démonstration (Jalon 1.5)
 		api.SeedInitialDossiers(ctx, db.Pool, cfg.OnPremOrgSlug)
+		api.SeedWorkflowPendingApprovals(ctx, db.Pool, cfg.OnPremOrgSlug)
+		api.SeedWorkflowDTDelegations(ctx, db.Pool, cfg.OnPremOrgSlug)
 
 		// Initialisation du Studio de Compléments ANPP & Traçabilité Délais (Jalon 1.7)
 		api.SeedInitialDeficiencies(ctx, db.Pool, cfg.OnPremOrgSlug)
@@ -485,6 +487,15 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/templates/{code}", workflowHandler.GetMasterTemplateByCode)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates", workflowHandler.GetMasterTemplates)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/master-templates/{code}", workflowHandler.GetMasterTemplateByCode)
+
+				// Cockpit de Supervision & Parapheur Électronique Pharmacien DT (CDC Section 7.4.6 & Décret 21-82)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDossierView)).Get("/api/v1/parapheur/pending", workflowHandler.GetParapheurPendingItems)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDocCheckReview)).Post("/api/v1/parapheur/batch-approve", workflowHandler.BatchApproveSections)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/parapheur/delegations", workflowHandler.ListDTDelegations)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/parapheur/delegation/active", workflowHandler.GetActiveDTDelegation)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/parapheur/assistants", workflowHandler.GetAvailableAssistants)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermRefEdit)).Post("/api/v1/parapheur/delegations", workflowHandler.CreateDTDelegation)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermRefEdit)).Post("/api/v1/parapheur/delegations/{id}/revoke", workflowHandler.RevokeDTDelegation)
 			}
 
 			// Moteur de Reporting Réglementaire BPF & Référentiel des 28 États Documentaires (Jalon 2.2)

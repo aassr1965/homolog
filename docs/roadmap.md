@@ -300,9 +300,16 @@ gantt
     - Attestation d'évaluation et de conformité par le Pharmacien Directeur Technique (1.H.10).
     - Attestation de non-modification des autres sections pour dossiers de variations (LD-DEPP07/V01).
 - [x] **Cockpit de Supervision & Parapheur Électronique pour le Pharmacien Directeur Technique :**
-  - Tableau de bord de pilotage temps réel : vue matricielle d'avancement par module CTD et par département rédacteur, alertes sur retards et goulots d'étranglement.
-  - Parapheur électronique consolidé pour les pièces au statut *Prêt pour Visa DT*, avec comparaison visuelle des versions (*diff*) et rapport du *Checker*.
-  - Signature électronique par lot (*Batch Signing*) avec validation TOTP unique, audit trail individuel 21 CFR Part 11 et scellement cryptographique SHA-256.
+  - **Bouton d'accès rapide & Badge temps réel :** Bouton dédié dans la barre latérale d'actions (`#act-parapheur`) avec badge violet dynamique notifiant en temps réel le nombre de sections en attente de visa réglementaire DT (`#badge-parapheur-count`).
+  - **Console de pilotage & Cockpit DT (`#modal-parapheur-dt`) :** 4 cartouches KPIs temps réel consolidés (Pièces prêtes pour visa DT, Dossiers ANPP concernés, Verrous Gating actifs, Échéances imminentes &le; 30j du Smart Planning).
+  - **Filtres matriciels consolidés multi-dossiers :** Sélecteurs dynamiques par dossier, par module CTD (Module 1 à 5 et DM), par pôle rédacteur (Affaires Réglementaires, Assurance Qualité, Contrôle Qualité, R&D/Production, DT), par statut de Gating GxP (déverrouillé / verrouillé), et moteur de recherche instantané.
+  - **Table consolidée haute densité du Parapheur :** Vue unifiée avec statut d'exigence [E], révision courante, identité du Rédacteur (*Maker*), avis et notes d'audit du Réviseur Qualité (*Checker*), cible de dépôt Smart Planning avec compte à rebours, et statut de déverrouillage GxP.
+  - **Signature électronique par lot (*Batch Signing*) 21 CFR Part 11 :**
+    - Transaction atomique multi-dossiers (`POST /api/v1/parapheur/batch-approve`) avec sélection multiple par case à cocher.
+    - Contrôle de ré-authentification 2FA TOTP (ou mot de passe) et engagement solennel obligatoire du Pharmacien DT (Mandat 1.A.7).
+    - Garde-fou strict de Ségrégation des Fonctions (SoD BPF) empêchant l'auto-approbation même en lot.
+    - Scellement cryptographique individuel SHA-256 avec passage immédiat en version `v1.0` et inscription immuable dans l'Audit Trail médico-légal (`dossier_item_reviews` et `audit_logs`).
+  - **Qualification & Recette :** 100% de tests unitaires et d'intégration validés (`parapheur_test.go`), couvrant la consultation multi-dossiers, l'isolation tenant, le rejet sans engagement solennel et l'exécution batch avec SoD.
 
 ### Jalon 2.2 : Moteur Universel d'Édition Haute Fidélité & Référentiel des 28 États Documentaires BPF (Chapitre 11 du CDC) — *[Terminé : Référentiel 28 États (20 ES + 8 EI), Moteur Vectoriel 300 DPI & Scellement 2FA]*
 - [x] **Architecture du Moteur d'Édition Backend Go & Formats Opposables :**
