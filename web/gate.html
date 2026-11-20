@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANAD PHARMA — Sas d'Accès Partenaire Confidentiel</title>
+    <meta name="description" content="Sas d'accès confidentiel au progiciel réglementaire SANAD PHARMA : homologation ANPP et GED pharmaceutique.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23ffffff'/%3E%3Cpath d='M 52 3 C 25 3, 3 24, 3 50 C 3 76, 25 97, 52 97 C 40 93, 26 84, 18 73 C 10 62, 10 38, 18 27 C 26 16, 40 7, 52 3 Z' fill='%2300a651'/%3E%3Cpath d='M 27 91 C 32 89, 44 88, 52 88 C 60 88, 72 89, 77 91 L 31 93 Z' fill='%2300a651'/%3E%3Cpath d='M 50.5 54 L 50.5 89 L 53.5 89 L 53.5 54 Z' fill='%2300a651'/%3E%3Cpath d='M 22 43 L 82 43 C 78 47, 68 56, 54 57 L 50 57 C 36 56, 26 47, 22 43 Z' fill='%2300a651'/%3E%3Cg fill='%23e52421' stroke='%23e52421' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M 59 86 C 54 87, 46 86, 44 82 C 42 78, 48 76, 52 75 C 57 74, 62 76, 61 80 C 60 83, 55 84, 52 84' stroke-width='5' fill='none'/%3E%3Cpath d='M 44 80 C 40 76, 42 66, 48 64 C 54 62, 62 65, 62 71 C 62 77, 54 80, 48 79' stroke-width='5' fill='none'/%3E%3Cpath d='M 52 75 C 57 74, 64 68, 64 58 C 64 48, 58 43, 52 38 C 47 34, 44 26, 45 20' stroke-width='5.5' fill='none'/%3E%3Cpath d='M 45 20 C 46 13, 50 8, 57 8 C 64 8, 67 14, 64 21 C 63 23, 61 24, 60 25' stroke-width='5' fill='none'/%3E%3Cpath d='M 60 25 C 61 23, 63 21, 65 23 C 67 25, 66 29, 63 32 C 60 30, 59 27, 60 25 Z' fill='%23e52421' stroke='none'/%3E%3Ccircle cx='63.5' cy='25.5' r='1.2' fill='%23ffffff' stroke='none'/%3E%3C/g%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/css/style.css?v=2026.11.18.5">
+</head>
+<body style="min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; background:var(--bg-app); font-family:system-ui, -apple-system, sans-serif;">
+    <div style="padding:20px 16px; width:100%; display:flex; justify-content:center;">
+        <div class="login-card" style="max-width:640px; width:100%; border-color:rgba(147, 51, 234, 0.35); box-shadow:0 24px 48px rgba(0, 0, 0, 0.3), 0 0 30px rgba(147, 51, 234, 0.12); margin:auto; background:var(--bg-panel); border-radius:12px; padding:24px; border-width:1.5px; border-style:solid;">
+            
+            <!-- Header du Sas -->
+            <div style="border-bottom:1px solid var(--border-color); padding-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="brand-caducee-icon" title="Caducée Pharmaceutique Algérien Officiel (Croissant, Coupe & Serpent)">
+                            <img src="/img/caducee-algerie.png" alt="Caducée Pharmacie Algérien" width="28" height="28" loading="eager" style="width:28px; height:28px; object-fit:contain;">
+                        </span>
+                        <div>
+                            <span class="brand-badge" style="font-size:13px; padding:3px 10px; font-weight:800; letter-spacing:0.5px;">SANAD</span>
+                            <span style="font-size:10px; color:var(--text-dim); margin-left:6px;">Plateforme Réglementaire Souveraine</span>
+                        </div>
+                    </div>
+                    <span style="font-size:10px; background:rgba(147,51,234,0.18); color:#c084fc; border:1px solid rgba(192,132,252,0.3); padding:3px 10px; border-radius:12px; font-weight:700;">ACCÈS PRIVÉ CONFIDENTIEL</span>
+                </div>
+                <h2 style="font-size:18px; font-weight:800; color:var(--text-main); margin:0 0 6px 0;">Progiciel SANAD — Homologation ANPP &amp; GED</h2>
+                <p style="font-size:12px; color:var(--text-muted); line-height:1.45; margin:0;">Cockpit réglementaire pour l'enregistrement des Médicaments (CTD), Dispositifs Médicaux (DDM) et Compléments Alimentaires en Algérie (ANPP / MIPH).</p>
+            </div>
+
+            <div style="padding-top:18px;">
+                <!-- 1. Formulaire de Déverrouillage par Code Partenaire -->
+                <form id="form-gate" onsubmit="handleGateUnlock(event)" style="background:rgba(147, 51, 234, 0.08); border:1.5px solid rgba(192, 132, 252, 0.35); border-radius:8px; padding:16px; margin-bottom:16px;">
+                    <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                        <span>🔑 Code d'Accès Partenaire Confidentiel</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                        Cet environnement est soumis au secret industriel. Veuillez saisir votre mot de passe d'accès partenaire pour déverrouiller la plateforme.
+                    </div>
+
+                    <div id="gate-alert" style="display:none; padding:10px 12px; border-radius:6px; font-size:12px; margin-bottom:12px; font-weight:600;"></div>
+
+                    <div style="display:flex; gap:8px; align-items:stretch; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px;">
+                            <input type="password" id="gate-passcode" placeholder="Saisissez le mot de passe d'accès..." required autocomplete="current-password" autofocus style="width:100%; box-sizing:border-box; letter-spacing:2px; font-size:13px; height:42px; background:var(--bg-input); border:1.5px solid rgba(147, 51, 234, 0.4); border-radius:6px; color:var(--text-main); padding:0 12px;">
+                        </div>
+                        <button type="submit" id="btn-gate-submit" style="background:linear-gradient(135deg, #7c3aed 0%, #9333ea 100%); border:none; border-radius:6px; color:#ffffff; font-weight:700; height:42px; padding:0 22px; cursor:pointer; white-space:nowrap;">
+                            Déverrouiller l'accès ➔
+                        </button>
+                    </div>
+                </form>
+
+                <!-- 2. Présentation du Progiciel -->
+                <div style="background:linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(147, 51, 234, 0.12)); border:1.5px solid rgba(56, 189, 248, 0.35); border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:220px;">
+                        <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:2px; display:flex; align-items:center; gap:6px;">
+                            <span>📑 Présentation Complète du Progiciel SANAD</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">
+                            Consultez la présentation exécutive interactive (10 diapositives : architecture souveraine, rôles BPF et gouvernance).
+                        </div>
+                    </div>
+                    <a href="/presentation" target="_blank" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#ffffff; font-weight:700; font-size:12px; padding:8px 18px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; border-radius:6px; box-shadow:0 4px 12px rgba(2, 132, 199, 0.35); white-space:nowrap;">
+                        <span>Ouvrir la Présentation ➔</span>
+                    </a>
+                </div>
+
+                <!-- 3. Contact Référent -->
+                <div style="background:var(--bg-surface); border:1.5px solid var(--border-color); border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+                    <div style="font-size:11px; font-weight:800; color:var(--accent-purple); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+                        📞 Contact &amp; Demande d'Accès Partenaire :
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <div style="font-size:14px; font-weight:800; color:var(--text-main);">
+                                Soufiene Aït Ali
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:500; margin-top:2px;">
+                                Concepteur &amp; Responsable du Progiciel SANAD
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <a href="mailto:soufiene.aitali@gmail.com" style="background:#0284c7; color:#ffffff; border-radius:6px; text-decoration:none; font-size:11px; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; font-weight:700;">
+                                <span>✉️ soufiene.aitali@gmail.com</span>
+                            </a>
+                            <a href="tel:0661605066" style="background:#059669; color:#ffffff; border-radius:6px; text-decoration:none; font-size:11px; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; font-weight:700;">
+                                <span>📱 06 61 60 50 66</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Sécurité -->
+                <div style="text-align:center; font-size:10px; color:var(--text-dim); line-height:1.4; border-top:1px dashed var(--border-color); padding-top:10px;">
+                    🛡️ <strong>Souveraineté Numérique &amp; Conformité BPF :</strong> Données hébergées en Algérie • Scellement SHA-256 CAS • Piste d'audit ALCOA+ • Conforme 21 CFR Part 11.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function handleGateUnlock(event) {
+        event.preventDefault();
+        const passcode = document.getElementById('gate-passcode').value;
+        const alertBox = document.getElementById('gate-alert');
+        const submitBtn = document.getElementById('btn-gate-submit');
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Vérification en cours...';
+        alertBox.style.display = 'none';
+
+        try {
+            const resp = await fetch('/api/v1/gate/unlock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ passcode: passcode })
+            });
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'rgba(239, 68, 68, 0.12)';
+                alertBox.style.color = '#ef4444';
+                alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                alertBox.innerText = data.error || 'Code d\\'accès invalide';
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Déverrouiller l\\'accès ➔';
+                return;
+            }
+
+            // Succès : Rechargement de la page -> Le serveur Go servira index.html grâce au cookie
+            window.location.reload();
+        } catch (err) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'rgba(239, 68, 68, 0.12)';
+            alertBox.style.color = '#ef4444';
+            alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            alertBox.innerText = 'Erreur réseau lors de la validation.';
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Déverrouiller l\\'accès ➔';
+        }
+    }
+    </script>
+</body>
+</html>
