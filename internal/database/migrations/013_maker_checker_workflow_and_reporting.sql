@@ -111,7 +111,7 @@ VALUES
     'lettre_engagement',
     1,
     '1.P.9',
-    '# ENGAGEMENT DE SUIVI DE STABILITÉ CONTINUE EN CONDITIONS ZONE IVb\n\n**Produit :** {{PRODUCT_NAME}}\n**DCI :** {{INN}}\n\nLe laboratoire {{ESTABLISHMENT_NAME}} s''engage à soumettre un lot commercial annuel de {{PRODUCT_NAME}} au programme d''études de stabilité continue en étuves régulées sous conditions climatiques Zone IVb (30°C ± 2°C / 75% HR ± 5% HR) conformément aux exigences de l''ANPP et aux directives ICH Q1A(R2).\n\nTout résultat hors spécification (OOS) ou dérive analytique constatée sera immédiatement notifié à la Direction de l''Enregistrement de l''ANPP.'
+    '# ENGAGEMENT DE SUIVI DE STABILITÉ CONTINUE EN CONDITIONS ZONE IVb\n\n**Produit :** {{PRODUCT_NAME}}\n**DCI :** {{INN}}\n\nLe laboratoire {{ESTABLISHMENT_NAME}} s''engage à soumettre un lot commercial annuel de {{PRODUCT_NAME}} au programme d''études de stabilité continue en enceintes climatiques régulées sous conditions Zone IVb (30°C ± 2°C / 75% HR ± 5% HR) conformément aux exigences de l''ANPP et aux directives ICH Q1A(R2).\n\nTout résultat hors spécification (OOS) ou dérive analytique constatée sera immédiatement notifié à la Direction de l''Enregistrement de l''ANPP.'
 ),
 (
     'TEMPLATE-1.H.10-ATTESTATION-PDT',

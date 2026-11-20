@@ -724,7 +724,7 @@ flowchart TD
 5. **Verrou de complétude pré-dépôt :** L'export du Submission Package (E-TASJIL) et la signature légale finale du PDT sont techniquement bloqués tant que l'ensemble des branches du DAG (Directed Acyclic Graph) documentaire ne sont pas toutes à l'état *« Approuvé & Scellé »*.
 6. **Moteur de Rétroplanning Dynamique Inversé (*Smart Planning* ANPP) :**
    - À partir d'une date cible de dépôt fixée (ex: renouvellement quinquennal impératif à **J-180** avant échéance de la Décision d'Enregistrement, ou date visée de mise sur le marché), le moteur calcule automatiquement par chemin critique inversé l'ensemble des dates butoirs intermédiaires :
-     - *J-240 :* Lancement obligatoire des étuves de stabilité Zone IVb (M6 légal).
+     - *J-240 :* Lancement obligatoire des études de stabilité Zone IVb en enceinte climatique (seuil légal M6).
      - *J-150 :* Clôture des synthèses qualité (QOS Module 2.3) et soumission au Checker.
      - *J-60 :* Réservation du créneau sur `rdvpp.anpp.dz` ou `rdvdm.anpp.dz`.
      - *J-30 :* Finalisation du double visa bilingue Notice 1.P.2 et génération des bordereaux BV1/BV2.
@@ -1219,7 +1219,7 @@ Contrairement aux états réglementaires finaux destinés aux autorités sanitai
 | **EI-AVT-02** | **Relevé des Écarts & Pièces Manquantes (Gap Analysis Matrix)** (Inventaire des pièces [E] manquantes/rejetées, ventilé par service responsable et dates butoirs) | PDF + XLSX | À chaque sprint de montage / Revue mensuelle | Responsable Affaires Réglem. | Rédacteurs (Makers) & Chefs de Départements |
 | **EI-AVT-03** | **Fiche de Revue & d'Annotation Checker (Quality Review Card)** (Relevé d'arbitrage émis lors d'un rejet : écarts constatés vs BPF/ICH et actions correctives) | PDF généré in-app | À chaque rejet ou demande d'ajustement | Relecteur Qualité (*Checker*) | Rédacteur (*Maker*) & Assurance Qualité |
 | **Volet 2 : Suivi Chronologique des Épreuves Incompressibles** | | | | | |
-| **EI-CHR-01** | **Fiche de Suivi des Stabilités Zone IVb (Stability Milestone Card)** (Suivi des échéances d'étuves M0, M3, M6 seuil légal dépôt, M9, M12, M24 et conformité CoA) | PDF + XLSX | Mensuel / À chaque échéance de prélèvement | Responsable Stabilités / CQ | Directeur Technique & R&D |
+| **EI-CHR-01** | **Fiche de Suivi des Stabilités Zone IVb (Stability Milestone Card)** (Suivi des échéances de prélèvement en enceinte climatique M0, M3, M6 seuil légal dépôt, M9, M12, M24 et conformité CoA) | PDF + XLSX | Mensuel / À chaque échéance de prélèvement | Responsable Stabilités / CQ | Directeur Technique & R&D |
 | **EI-CHR-02** | **Rapport d'Étape de l'Étude de Bioéquivalence (BE Study Tracker)** (Suivi des jalons CRO : éthique, phase clinique, dosage bioanalytique BPL et calculs IC 90%) | PDF | Mensuel / À réception d'un livrable CRO | Chef de Projet Galénique / R&D | Directeur Technique |
 | **Volet 3 : Instruction Opérationnelle des Compléments & Pilotage Pipeline** | | | | | |
 | **EI-VIG-01** | **Fiche d'Instruction des Compléments & Plan d'Action Interne** (Découpage des questions de la lettre de carence, jalons internes J-15/J-5 et chronomètre 60j/90j) | PDF + Fiche active | Dès notification d'une lettre ANPP | Coordinateur Réglementaire | Équipe Projet Compléments ANPP |
