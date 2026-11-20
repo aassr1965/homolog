@@ -45,7 +45,7 @@ func main() {
 	_ = storageProvider // sera injecté dans les services GED
 
 	// 2. Connexion à PostgreSQL
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	var db *database.DB
@@ -55,6 +55,7 @@ func main() {
 	var adminHandler *api.AdminHandler
 	var systemHandler *api.SystemHandler
 	var pharmaHandler *api.PharmaHandler
+	var settingsHandler *api.SettingsHandler
 	var gedHandler *api.GEDHandler
 	var dossierHandler *api.DossierHandler
 	var deficiencyHandler *api.DeficiencyHandler
@@ -130,6 +131,9 @@ func main() {
 		workflowHandler = api.NewWorkflowHandler(workflowRepo, dossierRepo, auditService, db.Pool)
 		reportHandler = api.NewReportHandler(dossierRepo, workflowRepo, pharmaRepo, auditService, db.Pool)
 
+		settingsRepo := repository.NewSettingsRepository(db.Pool)
+		settingsHandler = api.NewSettingsHandler(settingsRepo, auditService)
+
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
 		// avec entrée immuable dans l'audit trail de revue.
@@ -139,19 +143,16 @@ func main() {
 			ticker := time.NewTicker(tickInterval)
 			defer ticker.Stop()
 			log.Printf("[BailWatcher] Job d'auto-libération des verrous BPF démarré (bail=%dmin, intervalle=%v)", bailMinutes, tickInterval)
-			for {
-				select {
-				case <-ticker.C:
-					jobCtx, jobCancel := context.WithTimeout(context.Background(), 30*time.Second)
-					released, err := workflowRepo.ReleaseExpiredLocks(jobCtx, bailMinutes)
-					jobCancel()
-					if err != nil {
-						log.Printf("[BailWatcher] Erreur lors de la libération des verrous expirés : %v", err)
-					} else if len(released) > 0 {
-						for _, item := range released {
-							log.Printf("[BailWatcher] Verrou expiré libéré automatiquement — Section %s (bail dépassé depuis %s)",
-								item.ItemCode, time.Since(item.LockedAt).Round(time.Second))
-						}
+			for range ticker.C {
+				jobCtx, jobCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				released, err := workflowRepo.ReleaseExpiredLocks(jobCtx, bailMinutes)
+				jobCancel()
+				if err != nil {
+					log.Printf("[BailWatcher] Erreur lors de la libération des verrous expirés : %v", err)
+				} else if len(released) > 0 {
+					for _, item := range released {
+						log.Printf("[BailWatcher] Verrou expiré libéré automatiquement — Section %s (bail dépassé depuis %s)",
+							item.ItemCode, time.Since(item.LockedAt).Round(time.Second))
 					}
 				}
 			}
@@ -172,9 +173,25 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 	r.Use(gateHandler.Middleware)
 
+	// En-têtes de sécurité HTTP (Défense en profondeur / OWASP ASVS)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+			w.Header().Set("X-XSS-Protection", "0")
+			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+			w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	// CORS sécurisé
+	corsOrigins := []string{"http://localhost:*", "http://127.0.0.1:*", "https://*.homolog.dz", "https://homolog.dz"}
+	if allowed := os.Getenv("CORS_ALLOWED_ORIGINS"); allowed != "" {
+		corsOrigins = strings.Split(allowed, ",")
+	}
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   corsOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -184,6 +201,22 @@ func main() {
 
 	// Interface Web Haute Densité 'Pharma Explorer' (embarquée dans le binaire)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		// Contrôle hermétique du Sas Partenaire (Option B) :
+		// Si le sas est actif et non déverrouillé, renvoyer EXCLUSIVEMENT gate.html
+		// (Aucun compte, aucun mot de passe, aucun JS métier n'est transmis au client)
+		if cfg != nil && cfg.GateEnabled() && !gateHandler.IsUnlocked(r) {
+			gateContent, err := web.Files.ReadFile("gate.html")
+			if err != nil {
+				http.Error(w, "Page du sas confidentiel introuvable", http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Write(gateContent)
+			return
+		}
+
+		// Utilisateur autorisé par le sas -> Servir l'application index.html
 		content, err := web.Files.ReadFile("index.html")
 		if err != nil {
 			http.Error(w, "Interface web non trouvée", http.StatusNotFound)
@@ -244,10 +277,20 @@ func main() {
 			h.ServeHTTP(w, r)
 		})
 	}
+	// Garde-fou Sas Partenaire : interdiction de télécharger le code source JS ou les rapports sans déverrouillage préalable
+	gateAssetGuard := func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if cfg != nil && cfg.GateEnabled() && !gateHandler.IsUnlocked(r) {
+				http.Error(w, "Accès refusé : Sas d'accès partenaire non déverrouillé", http.StatusForbidden)
+				return
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
 	r.Handle("/css/*", noCacheWrapper(staticFS))
-	r.Handle("/js/*", noCacheWrapper(staticFS))
+	r.Handle("/js/*", gateAssetGuard(noCacheWrapper(staticFS)))
 	r.Handle("/img/*", staticFS)
-	r.Handle("/reports/*", noCacheWrapper(staticFS))
+	r.Handle("/reports/*", gateAssetGuard(noCacheWrapper(staticFS)))
 
 	// Routes de diagnostic et d'état de santé
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -323,6 +366,15 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/permissions", adminHandler.ListPermissions)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/organization", adminHandler.GetOrganizationSettings)
 				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/organization/settings", adminHandler.UpdateOrganizationSettings)
+			}
+
+			// Settings Réglementaires, Institutionnels & Barèmes Découplés par Tenant (Jalon 2.3)
+			if settingsHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/settings/regulatory", settingsHandler.ListTenantRegulatorySettings)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/settings/regulatory/{key}/history", settingsHandler.GetTenantSettingHistory)
+				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/settings/regulatory/{key}", settingsHandler.UpdateTenantRegulatorySetting)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/admin/settings/regulatory/{key}/approve", settingsHandler.ApproveTenantRegulatorySetting)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/settings/regulatory", settingsHandler.ListTenantRegulatorySettings)
 			}
 
 			// Console Dédiée Administrateur Système & Maintenance IT (SYS_MAINT / PSSI)

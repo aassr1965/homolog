@@ -383,7 +383,7 @@ func RenderEICHR01HTML(
 	prodName, dci, dosage, form, _, _ := extractProductDetails(d)
 	wmHTML := RenderWatermark(domain.WatermarkDraft, "DOCUMENT INTERNE DE TRAVAIL")
 
-	headerHTML := RenderInstitutionalHeader(estName, "Laboratoire de Contrôle Qualité", "Service Stabilités", pdtName, "", "EI-CHR-01 • Chronomètre Étuves Climatiques")
+	headerHTML := RenderInstitutionalHeader(estName, "Laboratoire de Contrôle Qualité", "Service Stabilités", pdtName, "", "EI-CHR-01 • Chronomètre Enceintes Climatiques & Stabilités")
 	footerHTML := renderEIFooter("EI-CHR-01", sha256Hash, generatedAt)
 
 	content := fmt.Sprintf(`
@@ -455,7 +455,7 @@ func RenderEICHR01HTML(
                     <td>Stabilité temps réel 30°C / 75%% HR</td>
                     <td style="text-align:center; color:#64748b;">—</td>
                     <td style="text-align:center; color:#64748b;">—</td>
-                    <td style="text-align:center; color:#0284c7; font-weight:700;">EN ÉTUVE</td>
+                    <td style="text-align:center; color:#0284c7; font-weight:700;">EN STABILITÉ</td>
                 </tr>
                 <tr>
                     <td style="text-align:center; font-weight:700; font-family:monospace; color:#64748b;">M12</td>
