@@ -141,7 +141,7 @@ const mockAuditTrail = [
                         const gateData = await gateRes.json();
                         isGateRequired = !!gateData.gate_required;
                         if (gateData.gate_required && !gateData.unlocked) {
-                            showGateView(gateData);
+                            window.location.replace('/?gate=1');
                             return;
                         }
                     }
