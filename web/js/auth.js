@@ -662,17 +662,13 @@ const mockAuditTrail = [
 
         function fillDemoAccount(email, password) {
             document.getElementById("login-email").value = email;
-            if (password) {
-                document.getElementById("login-password").value = password;
-                handleLoginSubmit();
-            } else {
-                const pwdField = document.getElementById("login-password");
-                pwdField.value = "";
-                pwdField.focus();
-            }
+            const pwd = password || "Sanad#Secure2026!Key";
+            const pwdField = document.getElementById("login-password");
+            if (pwdField) pwdField.value = pwd;
             document.getElementById("totp-field-group").style.display = "none";
             document.getElementById("login-totp").value = "";
             document.getElementById("login-error").style.display = "none";
+            handleLoginSubmit();
         }
 
         async function executeLogout() {
