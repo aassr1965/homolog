@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -44,6 +45,31 @@ func NewReportHandler(
 		auditService: auditService,
 		pool:         pool,
 	}
+}
+
+// loadTenantSettings extrait les paramètres réglementaires et barèmes actifs du tenant
+func (h *ReportHandler) loadTenantSettings(ctx context.Context, orgID uuid.UUID) map[string]string {
+	res := make(map[string]string)
+	if h.pool == nil {
+		return res
+	}
+	rows, err := h.pool.Query(ctx, `
+		SELECT setting_key, setting_value 
+		FROM tenant_regulatory_settings 
+		WHERE organization_id = $1 AND is_active = TRUE AND valid_to IS NULL
+	`, orgID)
+	if err != nil {
+		return res
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var k, v string
+		if err := rows.Scan(&k, &v); err == nil {
+			res[k] = v
+		}
+	}
+	return res
 }
 
 // GenerateDossierReport produit dynamiquement un état de sortie officiel pré-rempli à partir de la base de données
@@ -186,6 +212,7 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 
 	// Rendu HTML Haute Fidélité A4 300 DPI
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	tenantSettings := h.loadTenantSettings(r.Context(), dossier.OrganizationID)
 	var htmlOutput string
 	switch reportCode {
 	case "ES-REG-02":
@@ -205,7 +232,7 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 	case "ES-REG-05":
 		htmlOutput = reporting.RenderESREG05HTML(dossier, "", "", "", "", "", "", 300, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-FIN-01":
-		htmlOutput = renderESFIN01HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+		htmlOutput = renderESFIN01HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now, tenantSettings)
 	case "ES-FIN-02":
 		htmlOutput = reporting.RenderESFIN02HTML(dossier, "", 0, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-ENG-1P8", "1.P.8", "1P8":
@@ -981,7 +1008,16 @@ func renderESFIN01HTML(
 	watermark domain.WatermarkStatus,
 	sha256Hash, qrURL string,
 	generatedAt time.Time,
+	tenantSettings ...map[string]string,
 ) string {
+	var settings map[string]string
+	if len(tenantSettings) > 0 {
+		settings = tenantSettings[0]
+	}
+	if settings == nil {
+		settings = make(map[string]string)
+	}
+
 	prodName := "Spécialité Pharmaceutique"
 	dci := "Non spécifiée"
 	dosage := "Non spécifié"
@@ -1028,6 +1064,14 @@ func renderESFIN01HTML(
 	bankDepot := "Banque Nationale d'Algérie (BNA) • Agence Al Qods — Chéraga (Compte CAS N° 302.145)"
 	ribCode := "001 00622 0300000643 95"
 
+	// Surcharge dynamique depuis les settings découplés du tenant (Jalon 2.3)
+	if val, ok := settings[domain.SettingFinBeneficiaryOrderMed]; ok && val != "" {
+		bankBeneficiary = val
+	}
+	if val, ok := settings[domain.SettingFinTreasuryAccountMed]; ok && val != "" {
+		bankDepot = "Trésor Public • " + val
+	}
+
 	if isDM {
 		legalRef = "Ordonnance n° 21-07 (Art. 31) & Décret 20-324"
 		subDirection = "Direction des Dispositifs Médicaux (DDM) • Régie des Recettes BNA"
@@ -1048,7 +1092,21 @@ func renderESFIN01HTML(
 		bankBeneficiary = "Agence Nationale des Produits Pharmaceutiques (ANPP) — Direction des Dispositifs Médicaux"
 		bankDepot = "Banque Nationale d'Algérie (BNA) • Agence Al Qods — Chéraga (Code Guichet : 00622)"
 		ribCode = "001 00622 0300000643 95"
+
+		if val, ok := settings[domain.SettingFinBankNameDM]; ok && val != "" {
+			bankDepot = val
+		}
+		if val, ok := settings[domain.SettingFinBankRibDM]; ok && val != "" {
+			ribCode = val
+		}
+		if val, ok := settings[domain.SettingFeeDMHomologation]; ok && val != "" {
+			feeTotal = val + " DZD"
+			feeInstruction = val + " DZD"
+		}
 	} else {
+		if val, ok := settings[domain.SettingFinBankRibDM]; ok && val != "" {
+			ribCode = val
+		}
 		switch d.ProcedureCode {
 		case domain.ProcedureRI, domain.ProcedureRF:
 			procedureLabel = "Renouvellement Quinquennal Décision d'Enregistrement"
@@ -1056,12 +1114,22 @@ func renderESFIN01HTML(
 			feeControl = "50 000,00 DZD"
 			feeTotal = "205 000,00 DZD"
 			feeInWords = "Deux cent cinq mille dinars algériens nets"
+			if val, ok := settings[domain.SettingFeeMedicineRI]; ok && val != "" {
+				feeTotal = val + " DZD"
+			}
 		case domain.ProcedureMI, domain.ProcedureMF:
 			procedureLabel = "Modification Majeure / Variation de l'Autorisation (Grouping)"
 			feeInstruction = "80 000,00 DZD"
 			feeControl = "30 000,00 DZD"
 			feeTotal = "115 000,00 DZD"
 			feeInWords = "Cent quinze mille dinars algériens nets"
+			if val, ok := settings[domain.SettingFeeMedicineMI]; ok && val != "" {
+				feeTotal = val + " DZD"
+			}
+		default:
+			if val, ok := settings[domain.SettingFeeMedicineNI]; ok && val != "" {
+				feeTotal = val + " DZD"
+			}
 		}
 	}
 
