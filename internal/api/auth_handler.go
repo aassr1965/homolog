@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -487,16 +488,29 @@ func (h *AuthHandler) logAuthEvent(ctx context.Context, orgID uuid.UUID, userID 
 	return err
 }
 
+// getClientIP extrait l'adresse IP cliente réelle de manière sécurisée
+// En présence d'un reverse proxy local (Nginx/Caddy sur 127.0.0.1 ou ::1), X-Real-IP est privilégié.
+// Pour les connexions directes sans proxy local, r.RemoteAddr fait foi pour empêcher l'usurpation via faux en-têtes HTTP.
 func getClientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.Split(xff, ",")
-		return strings.TrimSpace(parts[0])
+	remoteHost, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		remoteHost = r.RemoteAddr
 	}
-	if rip := r.Header.Get("X-Real-IP"); rip != "" {
-		return strings.TrimSpace(rip)
+
+	isLocalProxy := remoteHost == "127.0.0.1" || remoteHost == "::1" || remoteHost == "localhost"
+	if isLocalProxy {
+		if rip := strings.TrimSpace(r.Header.Get("X-Real-IP")); rip != "" {
+			return rip
+		}
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			parts := strings.Split(xff, ",")
+			if len(parts) > 0 && strings.TrimSpace(parts[0]) != "" {
+				return strings.TrimSpace(parts[0])
+			}
+		}
 	}
-	parts := strings.Split(r.RemoteAddr, ":")
-	return parts[0]
+
+	return remoteHost
 }
 
 func writeJSONError(w http.ResponseWriter, status int, message string) {

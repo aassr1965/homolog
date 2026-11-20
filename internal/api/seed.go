@@ -213,8 +213,20 @@ func SeedInitialData(ctx context.Context, pool *pgxpool.Pool, orgSlug, orgName s
 			}
 			log.Printf("[Init] Compte créé : %s (%s) - Rôle: %s", u.Email, u.FirstName+" "+u.LastName, u.Role)
 		} else {
-			// S'assurer que le rôle correspond au seed
-			_, _ = pool.Exec(ctx, "UPDATE users SET role = $1 WHERE organization_id = $2 AND email = $3 AND role != $1", string(u.Role), orgID, u.Email)
+			// S'assurer que le rôle et le mot de passe sont synchronisés (rotation de sécurité obligatoire)
+			pwdHash, err := auth.HashPassword(u.Password, nil)
+			if err == nil {
+				_, _ = pool.Exec(ctx, `
+					UPDATE users 
+					SET role = $1, password_hash = $2, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() 
+					WHERE organization_id = $3 AND email = $4
+				`, string(u.Role), pwdHash, orgID, u.Email)
+			}
+			// Révocation immédiate de toutes les sessions actives pour forcer la ré-authentification
+			_, _ = pool.Exec(ctx, `
+				DELETE FROM user_sessions 
+				WHERE user_id IN (SELECT id FROM users WHERE organization_id = $1 AND email = $2)
+			`, orgID, u.Email)
 		}
 	}
 
