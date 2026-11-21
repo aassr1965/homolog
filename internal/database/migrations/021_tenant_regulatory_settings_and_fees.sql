@@ -39,6 +39,10 @@ ON tenant_regulatory_settings(organization_id, category);
 CREATE OR REPLACE FUNCTION seed_tenant_default_settings(org_id UUID) 
 RETURNS VOID AS $$
 BEGIN
+    IF EXISTS (SELECT 1 FROM tenant_regulatory_settings WHERE organization_id = org_id AND valid_to IS NULL) THEN
+        RETURN;
+    END IF;
+
     -- 1. Circuit Médicaments
     INSERT INTO tenant_regulatory_settings (
         organization_id, setting_key, setting_value, data_type, category, label_fr, description, legal_reference, valid_from, is_active, status
