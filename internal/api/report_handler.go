@@ -539,7 +539,11 @@ func (h *ReportHandler) generateTabularReportRows(
 	}
 	signDateStr := "En attente de scellement"
 	if d.PDTSignedAt != nil {
-		signDateStr = d.PDTSignedAt.UTC().Format(time.RFC3339)
+		algiersLoc, _ := time.LoadLocation("Africa/Algiers")
+		if algiersLoc == nil {
+			algiersLoc = time.FixedZone("UTC+1", 3600)
+		}
+		signDateStr = d.PDTSignedAt.In(algiersLoc).Format("2006-01-02 15:04:05 (Heure d'Alger)")
 	}
 
 	treasuryAccount := "Trésor Public CAS N° 302.145 / BNA Chéraga 00100622030000064395"
@@ -561,7 +565,7 @@ func (h *ReportHandler) generateTabularReportRows(
 		headers := []string{
 			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
 			"Procedure", "Statut_Opposable", "Ligne_Num", "Article_Rubrique", "Designation_Prestation",
-			"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 		if d.ProductType == domain.ProductTypeMedicalDevice || d.MedicalDevice != nil {
@@ -603,7 +607,7 @@ func (h *ReportHandler) generateTabularReportRows(
 		headers := []string{
 			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
 			"Procedure", "Statut_Opposable", "Ligne_Num", "Article_Rubrique", "Designation_Prestation",
-			"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 		if d.ProductType == domain.ProductTypeMedicalDevice || d.MedicalDevice != nil {
@@ -637,7 +641,7 @@ func (h *ReportHandler) generateTabularReportRows(
 			"Procedure", "Statut_Dossier", "Ligne_Num", "Niveau_Synthese", "Code_Element",
 			"Designation_Element", "Niveau_Exigence", "Pieces_Requises", "Pieces_Attachees",
 			"Taux_Completude_Pct", "Statut_Validation", "Departement_Responsable", "Commentaires_Gating",
-			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 
@@ -747,7 +751,7 @@ func (h *ReportHandler) generateTabularReportRows(
 			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
 			"Procedure", "Ligne_Num", "Module_CTD", "Code_Exigence", "Intitule_Piece_Manquante",
 			"Niveau_Exigence", "Statut_Actuel", "Departement_Assigne", "Action_Corrective_Requise",
-			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 		lineIdx := 1
@@ -773,7 +777,7 @@ func (h *ReportHandler) generateTabularReportRows(
 			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
 			"Procedure", "Statut_Opposable", "Ligne_Num", "Module_CTD", "Designation_Module",
 			"Volume_Physique", "Volume_Numerique", "Pieces_Repertoriees", "Statut_Conformite",
-			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 		modules := []struct {
@@ -801,7 +805,7 @@ func (h *ReportHandler) generateTabularReportRows(
 			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
 			"Procedure", "Ligne_Num", "Point_Controle", "Echeance_Mois", "Condition_Climatique",
 			"Parametres_Testes", "Statut_Echantillon", "Resultat_Conformite", "Date_Prelevement",
-			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 		points := []struct {
@@ -830,7 +834,7 @@ func (h *ReportHandler) generateTabularReportRows(
 		headers := []string{
 			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
 			"Procedure", "Statut_Projet", "Completude_Pct", "Date_Cible_Depot", "Sante_Planning",
-			"Jalon_Critique_Actuel", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Jalon_Critique_Actuel", "Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 		targetStr := "Non fixée"
@@ -853,7 +857,7 @@ func (h *ReportHandler) generateTabularReportRows(
 		headers := []string{
 			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
 			"Procedure", "Statut_Opposable", "Ligne_Num", "Rubrique", "Designation",
-			"Valeur_Metrique", "Unite", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+			"Valeur_Metrique", "Unite", "Signataire_PDT", "Horodatage_Scellement", "Sceau_SHA256",
 		}
 		rows = append(rows, headers)
 		totalItems := len(d.Items)
