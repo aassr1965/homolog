@@ -189,7 +189,7 @@ func (h *GEDHandler) CreateDocument(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !domain.ValidateTaxonomyPath(taxonomyPath) {
-		writeJSONError(w, http.StatusBadRequest, "Chemin de taxonomie non conforme à la Section 8 du CDC")
+		writeJSONError(w, http.StatusBadRequest, "Chemin de taxonomie non conforme au plan de classement réglementaire BPF")
 		return
 	}
 

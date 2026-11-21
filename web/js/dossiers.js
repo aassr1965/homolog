@@ -251,7 +251,7 @@
                     ${isConsultant ? `
                         <div style="background:rgba(2,132,199,0.08); border:1px solid #0284c7; border-radius:4px; padding:6px 8px; font-size:10px; color:#0369a1; line-height:1.4;">
                             <strong>🤝 Accès Invité Cloisonné (CRO) :</strong><br>
-                            Seul le dossier d'expertise contractuellement assigné est affiché ci-dessous (CDC Section 7.2.2).
+                            Seul le dossier d'expertise contractuellement assigné est affiché ci-dessous (Cloisonnement Réglementaire).
                         </div>
                     ` : `
                         <button class="btn-pill" data-perm="DOSSIER_CREATE" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:600;" onclick="openNewDossierModal()">
@@ -260,7 +260,7 @@
                     `}
                     <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch;">
                         <button class="btn-pill ${currentDossierFilterProc === '' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('')">Tous (${dossiersPool.length})</button>
-                        <button class="btn-pill ${currentDossierFilterProc === 'CRITICAL' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0; ${criticalCount > 0 ? (currentDossierFilterProc === 'CRITICAL' ? 'background:#dc2626; color:white;' : 'background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.3);') : ''}" onclick="loadDossiers('CRITICAL')" title="Filtrer les dossiers en rupture calendaire ou jalon critique">🚨 Alertes (${criticalCount})</button>
+                        <button class="btn-pill ${currentDossierFilterProc === 'CRITICAL' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0; ${criticalCount > 0 ? (currentDossierFilterProc === 'CRITICAL' ? 'background:#dc2626; color:white;' : 'background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.3);') : ''}" onclick="loadDossiers('CRITICAL')" title="Filtrer les dossiers en rupture calendaire ou étape critique">🚨 Alertes (${criticalCount})</button>
                         <button class="btn-pill ${currentDossierFilterProc === 'NI' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('NI')">NI</button>
                         <button class="btn-pill ${currentDossierFilterProc === 'NF' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('NF')">NF</button>
                         <button class="btn-pill ${currentDossierFilterProc === 'RI' ? 'active' : ''}" style="height:26px; font-size:11px; font-weight:700; padding:2px 8px; flex-shrink:0;" onclick="loadDossiers('RI')">RI/RF</button>
@@ -317,9 +317,9 @@
 
                         if (sp && sp.active_critical_milestone_name) {
                             jalonAlertHTML = `
-                                <div style="font-size:9.5px; color:#b91c1c; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:2px 6px; border-radius:3px; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Jalon critique bloquant : ${escapeHTML(sp.active_critical_milestone_name)}">
+                                <div style="font-size:9.5px; color:#b91c1c; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:2px 6px; border-radius:3px; font-weight:600; margin-top:3px; display:flex; align-items:center; gap:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Étape critique bloquante : ${escapeHTML(sp.active_critical_milestone_name)}">
                                     <span style="flex-shrink:0;">⏳</span>
-                                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Jalon : <strong>${escapeHTML(sp.active_critical_milestone_name)}</strong></span>
+                                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Étape critique : <strong>${escapeHTML(sp.active_critical_milestone_name)}</strong></span>
                                 </div>
                             `;
                         }
@@ -1200,7 +1200,7 @@
                             }
                             if (isBlockingPrereq) {
                                 const bCodes = blockingPrereqInfo.blocked_codes ? blockingPrereqInfo.blocked_codes.join(', ') : '';
-                                gatingPill += `<span class="badge badge-gating-blocking" onclick="event.stopPropagation(); showBlockingPrereqModal('${it.id}', '${escapeHTML(it.item_code)}', ${blockingPrereqInfo.blocks_count}, '${escapeHTML(bCodes)}')" title="⚡ Débloqueur Critique : cette pièce conditionne ${blockingPrereqInfo.blocks_count} autre(s) section(s) du CTD">⚡ Débloqueur (${blockingPrereqInfo.blocks_count})</span>`;
+                                gatingPill += `<span class="badge badge-gating-blocking" onclick="event.stopPropagation(); showBlockingPrereqModal('${it.id}', '${escapeHTML(it.item_code)}', ${blockingPrereqInfo.blocks_count}, '${escapeHTML(bCodes)}')" title="⚡ Prérequis Majeur : cette pièce conditionne ${blockingPrereqInfo.blocks_count} autre(s) section(s) du CTD">⚡ Prérequis (${blockingPrereqInfo.blocks_count})</span>`;
                             }
                             let lockIndicator = '';
                             if (it.is_locked) {
@@ -1393,7 +1393,7 @@
                                 DONNÉES FINANCIÈRES &amp; PRIX CONFIDENTIELLES
                             </div>
                             <div style="font-size:11px; color:var(--text-main); line-height:1.6; max-width:400px; margin:0 auto;">
-                                Conformément aux règles de protection du secret d'affaires pharmaceutique (Cahier des Charges Section 7.2.2), cette section (PCSU, FOB, Benchmark, Redevances bancaires) est strictement masquée pour votre profil.
+                                Conformément aux règles de protection du secret d'affaires et de la politique de sécurité BPF, cette section financière et commerciale (PCSU, FOB, Benchmark, Redevances bancaires) est confidentielle et masquée pour votre profil.
                             </div>
                             <div style="margin-top:16px; font-size:10px; color:var(--text-dim); background:rgba(239,68,68,0.08); padding:6px 12px; border-radius:4px; display:inline-block; border:1px solid rgba(239,68,68,0.2);">
                                 Règle PSSI : Accès réservé aux Affaires Réglementaires et au Pharmacien Directeur Technique
@@ -1413,7 +1413,7 @@
                                 SECRET INDUSTRIEL &amp; PROCÉDÉ BREVETÉ DU FABRICANT
                             </div>
                             <div style="font-size:11px; color:var(--text-main); line-height:1.6; max-width:400px; margin:0 auto;">
-                                Conformément aux règles de protection de la propriété intellectuelle industrielle (Cahier des Charges Section 7.2.2), les voies de synthèse chimique (ASMF / DMF) et les procédés de fabrication brevetés sont réservés aux équipes internes du laboratoire.
+                                Conformément aux règles de protection de la propriété industrielle et des secrets de fabrication BPF, les données chimiques et procédés de fabrication brevetés (ASMF / DMF) sont strictement réservés aux équipes autorisées du laboratoire.
                             </div>
                             <div style="margin-top:16px; font-size:10px; color:var(--text-dim); background:rgba(147,51,234,0.08); padding:6px 12px; border-radius:4px; display:inline-block; border:1px solid rgba(147,51,234,0.2);">
                                 Règle PSSI : Accès restreint aux prestataires externes non habilités
@@ -1478,7 +1478,7 @@
                 preview.innerHTML = `
                     <div class="pdf-sim-page">
                         <div class="pdf-sim-header" style="display:flex; justify-content:space-between; align-items:center;">
-                            <span>🛠️ Atelier BPF Maker-Checker — [${escapeHTML(item.item_code)}]</span>
+                            <span>🛠️ Atelier Rédactionnel &amp; Visa Qualité — [${escapeHTML(item.item_code)}]</span>
                             ${typeof formatRevisionBadge === 'function' ? formatRevisionBadge(item.current_revision, isApprovedSealed) : ''}
                         </div>
 
@@ -1551,7 +1551,7 @@
                                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                                             <span style="font-size:11.5px; font-weight:800; color:#b91c1c; display:flex; align-items:center; gap:6px;">
                                                 <span>🔒</span>
-                                                <span>TÂCHE EN ATTENTE DE DÉVERROUILLAGE (GATING ACTIF)</span>
+                                                <span>SECTION EN ATTENTE DE DÉVERROUILLAGE (PRÉREQUIS AMONT EXIGÉS)</span>
                                             </span>
                                             <span style="background:rgba(239,68,68,0.2); color:#991b1b; font-size:10px; font-weight:700; padding:1px 6px; border-radius:4px;">Bloquée</span>
                                         </div>
@@ -1579,7 +1579,7 @@
                                             <span style="background:#fef3c7; color:#92400e; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; border:1px solid #f59e0b;">Prioritaire</span>
                                         </div>
                                         <div style="font-size:11.5px; color:var(--text-main); margin-bottom:6px; line-height:1.4;">
-                                            Cette section est un <strong>débloqueur critique</strong> du chemin critique. Tant qu'elle n'est pas scellée en v1.0 par le Pharmacien DT, elle bloque <strong>${itemBlockingPrereq.blocks_count} autre(s) section(s)</strong>.
+                                            Cette section est un <strong>prérequis majeur</strong> du chemin critique. Tant qu'elle n'est pas scellée en v1.0 par le Pharmacien DT, elle bloque <strong>${itemBlockingPrereq.blocks_count} autre(s) section(s)</strong>.
                                         </div>
                                         <div style="font-size:10.5px; color:var(--text-dim); background:var(--bg-panel); border:1px solid rgba(245,158,11,0.25); border-radius:4px; padding:6px 8px;">
                                             📌 <strong>Sections en attente :</strong> <code>${escapeHTML(itemBlockingPrereq.blocked_codes.join(', '))}</code>
@@ -2582,7 +2582,7 @@
 
                     <!-- Frise Chronologique Inversée Détaillée -->
                     <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px;">
-                        Les 6 Jalons Incompressibles du Chemin Critique ANPP (CDC 7.4.3.6) :
+                        Les 6 Étapes Incompressibles du Chemin Critique Réglementaire :
                     </div>
                     <div style="display:flex; flex-direction:column; gap:10px;">
                         ${(sp.milestones || []).map(m => {

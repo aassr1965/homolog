@@ -150,7 +150,7 @@ func RenderEIAVT01HTML(
         </table>
 
         <div class="info-card" style="margin-top:10px; border-left:3px solid #0284c7;">
-            <div class="info-card-header" style="color:#0369a1;">⏱️ Smart Planning ANPP &amp; Chemin Critique Inversé (CDC 7.4.3.6)</div>
+            <div class="info-card-header" style="color:#0369a1;">⏱️ Rétroplanning Réglementaire ANPP &amp; Chemin Critique Inversé</div>
             <div style="font-size:7.5pt; color:#334155; line-height:1.45;">
                 • <strong>Date Butoir Visée :</strong> %s (%d jours restants) • <strong>Date Recommandée :</strong> <span style="font-weight:700; color:#0f766e;">%s</span> (base %d jours ouvrés/semaine, %d jours fériés ANPP déduits).<br/>
                 • <strong>Diagnostic Global :</strong> <span style="font-weight:700;">%s</span> — %s<br/>

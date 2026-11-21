@@ -300,7 +300,7 @@
 
                 <!-- Sélecteur Rapide de Rôles pour le Développement -->
                 <div id="dev-role-switcher-container" style="display:flex; align-items:center; gap:6px; background:rgba(2,132,199,0.08); padding:3px 8px; border-radius:6px; border:1px dashed #0284c7;">
-                    <span style="font-size:11px; font-weight:700; color:#0284c7;">🧪 Rôle Dev :</span>
+                    <span style="font-size:11px; font-weight:700; color:#0284c7;">👤 Profil Démo :</span>
                     <select id="dev-role-select" onchange="devSwitchRole(this.value)" style="font-size:11px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; padding:2px 6px; cursor:pointer;" title="Basculez instantanément de rôle pour tester les habilitations et masquages">
                         <option value="pdt@pharma.dz">💊 Dr. Yacine (Pharmacien DT - 1.A.7)</option>
                         <option value="assistant.dt@pharma.dz">👩‍⚕️ Dr. Lynda (Pharmacien Assistant / Intérim DT)</option>
@@ -475,7 +475,7 @@
                 <div class="preview-tabs-nav" id="preview-tabs-container">
                     <button class="pvt-btn active" id="pvt-btn-doc" onclick="switchPreviewSubTab('doc')">📄 Aperçu Pièce GED</button>
                     <button class="pvt-btn" id="pvt-btn-anpp" onclick="switchPreviewSubTab('anpp')">📋 Fiche ANPP</button>
-                    <button class="pvt-btn" id="pvt-btn-wf" onclick="switchPreviewSubTab('wf')">🛠️ Atelier BPF &amp; Maker-Checker</button>
+                    <button class="pvt-btn" id="pvt-btn-wf" onclick="switchPreviewSubTab('wf')">🛠️ Atelier Rédactionnel &amp; Visa Qualité</button>
                 </div>
                 <button class="btn-close-pvt" onclick="togglePreviewPane(false)" title="Fermer le volet (Alt+P ou Échap)">✕ Alt+P</button>
             </div>
@@ -1303,7 +1303,7 @@
             <div class="modal-body">
                 <form id="form-new-ged-doc" onsubmit="handleCreateGEDDocument(event)" style="display:flex; flex-direction:column; gap:12px;">
                     <div>
-                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Dossier de Taxonomie BPF (Section 8 du CDC) * :</label>
+                        <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Répertoire de Classement BPF * :</label>
                         <select id="ged-doc-taxonomy" required style="width:100%; padding:6px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:4px; font-size:12px;">
                             <optgroup label="01. Affaires Réglementaires">
                                 <option value="01_Affaires_Reglementaires/01_01_Agrements_Etablissement">01.01 Agréments Établissement (MIPH)</option>
@@ -2969,7 +2969,7 @@
                 <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
                     <span style="font-size:20px;">🔒</span>
                     <div>
-                        <span style="color:#b91c1c; font-weight:800;">Verrou Réglementaire BPF / ANPP (Gating)</span>
+                        <span style="color:#b91c1c; font-weight:800;">Verrou Réglementaire BPF / ANPP (Prérequis Non Levés)</span>
                         <div style="font-size:11px; color:var(--text-dim);" id="gating-modal-sub">Contrôle du chemin critique et dépendances CTD</div>
                     </div>
                 </div>
@@ -2992,7 +2992,7 @@
                     <span style="font-size:22px;">⏱️</span>
                     <div>
                         <span style="color:var(--text-main); font-weight:800; font-size:14px;">Smart Planning ANPP — Chronogramme Inversé &amp; Chemin Critique</span>
-                        <div style="font-size:11px; color:var(--text-dim);" id="sp-timeline-sub">Calcul automatique à rebours des 6 jalons incompressibles</div>
+                        <div style="font-size:11px; color:var(--text-dim);" id="sp-timeline-sub">Calcul automatique à rebours des 6 étapes incompressibles</div>
                     </div>
                 </div>
                 <button class="close-btn" onclick="closeModal('modal-smart-planning-timeline')">✕</button>
@@ -3306,7 +3306,7 @@
                     </div>
 
                     <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #f59e0b; border-radius:6px; padding:10px 12px;">
-                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Verrous Gating Actifs</div>
+                        <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-dim);">Verrous de Prérequis Actifs</div>
                         <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:4px;">
                             <span id="kpi-parapheur-gating" style="font-size:22px; font-weight:900; color:#d97706;">0</span>
                             <span style="font-size:11px; color:var(--text-muted);">Prérequis en attente</span>
@@ -3353,7 +3353,7 @@
                         </div>
                         <div>
                             <select id="parapheur-filter-gating" onchange="applyParapheurFilters()" style="padding:5px 8px; font-size:11px; border-radius:4px; background:var(--bg-surface); color:var(--text-main); border:1px solid var(--border-color);">
-                                <option value="ALL">Tous les statuts de Gating</option>
+                                <option value="ALL">Tous les statuts de prérequis</option>
                                 <option value="UNBLOCKED">Prêts pour Signature (Sans Verrou)</option>
                                 <option value="BLOCKED">Avec Verrou GxP Actif</option>
                             </select>
@@ -3393,7 +3393,7 @@
                                     <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Rédacteur (Maker)</th>
                                     <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Revue Qualité (Checker)</th>
                                     <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Cible Dépôt</th>
-                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Gating GxP</th>
+                                    <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase;">Prérequis BPF</th>
                                     <th style="padding:8px 10px; font-size:10.5px; color:var(--text-dim); text-transform:uppercase; text-align:center; width:90px;">Actions</th>
                                 </tr>
                             </thead>
