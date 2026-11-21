@@ -344,7 +344,12 @@ gantt
   - Paramétrage des guichets, adresses des directions spécialisées de l'ANPP (DEPP, DDM, DCE/LNCPP, DAF).
   - Workflow de validation des modifications critiques (proposition Maker par l'Admin Labo / Dir. Fin., approbation obligatoire par le Pharmacien DT avec signature électronique 2FA 21 CFR Part 11 et audit trail scellé).
   - Validation par protocole de tests d'intégration complet (`settings_test.go` : 6 tests réussis, isolation multi-tenant stricte, versioning GAMP 5 et impact dynamique sur les bordereaux BV1/BV2).
-- [ ] Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie.
+- [x] **Enregistrement et contrôle des bordereaux de versement (1.A.4), quittances bancaires et attestations de taux de change Banque d'Algérie :**
+  - **Migration 024 & Traçabilité complète :** Enrichissement de `anpp_payment_slips` avec le mode de paiement, la banque domiciliataire, la date et référence de quittance, ainsi que les justificatifs GED.
+  - **Attestation de taux de change Banque d'Algérie (dossiers en devises) :** Gestion des devises étrangères (EUR, USD, CHF, GBP), cours officiel Banque d'Algérie à date, référence officielle de l'attestation BA et liaison au document scanné.
+  - **Moteur de concordance financière & SoD :** Rapprochement automatique entre le montant payé et le barème légal ANPP en vigueur ; visa obligatoire par le Pharmacien DT / Responsable Réglementaire (interdit aux rôles non habilités).
+  - **Scellement automatique de la section 1.A.4 :** Dès validation conforme, la section `1.A.4` de la checklist CTD passe à `valide_qualite` avec rattachement de la quittance et audit trail ALCOA+.
+  - **Qualification par tests automatisés :** 100% de réussite sur la suite `TestFeeAPI_Volet1A4_VerificationAndFX` (5 tests réussis couvrant le rapprochement, le rejet SoD, l'obligation du change BA sur l'importé et la conformité finale).
 - [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
 
 ### Jalon 2.4 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
