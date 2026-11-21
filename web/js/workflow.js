@@ -987,6 +987,10 @@ function downloadActiveReportJSON() {
     window.open(`/api/v1/dossiers/${currentWfDossierId}/reports/${currentReportCode}?format=json`, '_blank');
 }
 
+function downloadActiveReportCSV() {
+    window.open(`/api/v1/dossiers/${currentWfDossierId}/reports/${currentReportCode}?format=csv`, '_blank');
+}
+
 async function sealActiveReport() {
     if (!confirm(`Confirmer le scellement formel de l'état ${currentReportCode} avec signature numérique Pharmacien DT et horodatage certifié ?`)) {
         return;

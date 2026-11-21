@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/csv"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -201,18 +202,39 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 		})
 	}
 
+	tenantSettings := h.loadTenantSettings(r.Context(), dossier.OrganizationID)
+	rows, csvFilename := h.generateTabularReportRows(dossier, reportCode, watermark, reportSHA256, now, tenantSettings)
+
 	// 7. Restitution selon le format
+	if format == "csv" || format == "xlsx" {
+		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", csvFilename))
+		// Écriture du BOM UTF-8 (\xef\xbb\xbf) indispensable pour qu'Excel ouvre directement le fichier avec les bons accents
+		_, _ = w.Write([]byte("\xef\xbb\xbf"))
+		writer := csv.NewWriter(w)
+		writer.Comma = ';' // Délimiteur point-virgule standard pour Excel francophone
+		for _, row := range rows {
+			_ = writer.Write(row)
+		}
+		writer.Flush()
+		return
+	}
+
 	if format == "json" {
 		writeJSON(w, http.StatusOK, map[string]interface{}{
 			"success": true,
 			"report":  generatedRep,
+			"tabular_data": map[string]interface{}{
+				"headers": rows[0],
+				"rows":    rows[1:],
+				"count":   len(rows) - 1,
+			},
 		})
 		return
 	}
 
 	// Rendu HTML Haute Fidélité A4 300 DPI
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	tenantSettings := h.loadTenantSettings(r.Context(), dossier.OrganizationID)
 	var htmlOutput string
 	switch reportCode {
 	case "ES-REG-02":
@@ -485,6 +507,157 @@ func getReportTitle(code string) string {
 		return def.Title
 	}
 	return "État de Sortie Réglementaire BPF"
+}
+
+// generateTabularReportRows produit les lignes de données certifiées pour export CSV UTF-8 (Excel) et JSON structuré
+func (h *ReportHandler) generateTabularReportRows(
+	d *domain.Dossier,
+	reportCode string,
+	watermark domain.WatermarkStatus,
+	sha256Hash string,
+	now time.Time,
+	tenantSettings map[string]string,
+) ([][]string, string) {
+	prodName := "Spécialité Pharmaceutique"
+	if d.Medicine != nil {
+		prodName = d.Medicine.BrandNameFR
+	} else if d.MedicalDevice != nil {
+		prodName = d.MedicalDevice.CommercialNameFR
+	}
+
+	pdtDisplay := "Pharmacien DT Titulaire"
+	if d.PDTSignedBy != nil {
+		pdtDisplay = fmt.Sprintf("ID: %s", d.PDTSignedBy.String())
+	}
+	signDateStr := "En attente de scellement"
+	if d.PDTSignedAt != nil {
+		signDateStr = d.PDTSignedAt.UTC().Format(time.RFC3339)
+	}
+
+	treasuryAccount := "Trésor Public CAS N° 302.145 / BNA Chéraga 00100622030000064395"
+	if val, ok := tenantSettings[domain.SettingFinTreasuryAccountMed]; ok && val != "" {
+		treasuryAccount = val
+	}
+
+	statusStr := string(watermark)
+	if statusStr == "" {
+		statusStr = "BROUILLON"
+	}
+
+	headers := []string{
+		"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+		"Procedure", "Statut_Opposable", "Ligne_Num", "Article_Rubrique", "Designation_Prestation",
+		"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+	}
+
+	rows := [][]string{headers}
+	reportTitle := getReportTitle(reportCode)
+
+	switch reportCode {
+	case "ES-FIN-01":
+		// Bordereau BV1 Initial (Décret 21-82 / Ord. 21-07)
+		if d.ProductType == domain.ProductTypeMedicalDevice || d.MedicalDevice != nil {
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "1", "Ord. 21-07 Art. 31", "Redevance d'homologation initiale Dispositif Médical",
+				"BNA Agence Al Qods Chéraga - Compte ANPP N° 00100622030000064395", "300000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "TOTAL", "TOTAL LIQUIDATION", "Total des droits d'homologation DM à acquitter",
+				"BNA Agence Al Qods Chéraga - Compte ANPP N° 00100622030000064395", "300000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+		} else {
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "1", "Art. 3", "Redevance fixe d'instruction et d'évaluation du dossier de soumission",
+				treasuryAccount, "250000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "2", "Art. 5", "Contribution aux frais d'expertise analytique et contrôle de conformité LNCM",
+				treasuryAccount, "100000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "3", "Art. 12", "Frais de traitement du dossier, droits de timbre et archivage pérenne",
+				treasuryAccount, "5000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "TOTAL", "TOTAL LIQUIDATION", "Total net des droits d'enregistrement à acquitter (Décret 21-82)",
+				treasuryAccount, "355000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+		}
+
+	case "ES-FIN-02":
+		// Bordereau BV2 Variations, Renouvellements & Transferts
+		if d.ProductType == domain.ProductTypeMedicalDevice || d.MedicalDevice != nil {
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "1", "Ord. 21-07 Art. 31", "Redevance de renouvellement / modification DM",
+				"BNA Chéraga - Compte ANPP N° 00100622030000064395", "150000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "TOTAL", "TOTAL LIQUIDATION", "Total des droits de modification DM à acquitter",
+				"BNA Chéraga - Compte ANPP N° 00100622030000064395", "150000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+		} else {
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "1", "Décret 21-82 Art. 3-5", "Redevance de renouvellement quinquennal / variation AMM",
+				treasuryAccount, "205000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, "TOTAL", "TOTAL LIQUIDATION", "Total des droits de renouvellement à acquitter",
+				treasuryAccount, "205000.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+		}
+
+	case "ES-REG-01":
+		// Bordereau Transmission 5 Modules CTD
+		modules := []struct {
+			num  string
+			name string
+		}{
+			{"M1", "Module 1 - Renseignements Administratifs & Légaux (1.A à 1.H)"},
+			{"M2", "Module 2 - Résumés Globaux & Overviews Qualité / Clinique (QOS)"},
+			{"M3", "Module 3 - Qualité Pharmaceutique & Contrôle (3.2.S Substance & 3.2.P Produit)"},
+			{"M4", "Module 4 - Rapports d'Études Non-Cliniques & Toxicologie"},
+			{"M5", "Module 5 - Rapports d'Études Cliniques & Bioéquivalence in vivo"},
+		}
+		for i, m := range modules {
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", i+1), m.num, m.name,
+				"Dépôt Direction DEPP / Bureau d'Ordre ANPP", "0.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+		}
+
+	case "EI-CHR-01":
+		// Fiche de Suivi des Stabilités Zone IVb
+		points := []string{"M0 (Libération initiale)", "M3 (Point intermédiaire)", "M6 (Seuil légal dépôt ANPP)", "M9 (Point intermédiaire)", "M12 (Stabilité à long terme)", "M24 (Durée de validité finale)"}
+		for i, pt := range points {
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", i+1), fmt.Sprintf("Point M%d", i*3), fmt.Sprintf("Prélèvement Stabilité Zone IVb (30°C/75%% HR) - %s", pt),
+				"Laboratoire Contrôle Qualité / Enceinte Climatique", "0.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			})
+		}
+
+	default:
+		// Ligne générique d'audit et de synthèse du rapport
+		rows = append(rows, []string{
+			reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+			string(d.ProcedureCode), statusStr, "1", "SYNTHÈSE", fmt.Sprintf("État réglementaire %s pour dossier %s (%s)", reportCode, d.DossierCode, prodName),
+			treasuryAccount, "0.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+		})
+	}
+
+	filename := fmt.Sprintf("%s_%s_%s.csv", strings.ToLower(reportCode), strings.ToLower(d.DossierCode), now.Format("20060102_150405"))
+	return rows, filename
 }
 
 // renderESREG01HTML injecte les données réelles du dossier dans le template HTML haute fidélité A4 300 DPI
