@@ -255,6 +255,26 @@
      * Ouvre la modale principale du Cockpit & Parapheur DT
      */
     window.openParapheurModal = function () {
+        const isEligible = typeof hasPermission === 'function' && (hasPermission('DOC_APPROVE_PDT') || (typeof hasRole === 'function' && (hasRole('directeur_technique') || hasRole('pharmacien_assistant'))));
+        if (!isEligible) {
+            if (typeof showNotifyModal === 'function') {
+                showNotifyModal(
+                    "Accès Réservé Direction Technique",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-red); font-weight:700;">
+                            ⚖️ Monopole Légal du Pharmacien Directeur Technique (1.A.7)
+                        </div>
+                        <div style="font-size:11px; color:var(--text-main); line-height:1.5;">
+                            Conformément au Décret exécutif 20-325, l'accès au Parapheur électronique et l'apposition du visa légal sont strictement réservés au Pharmacien Directeur Technique titulaire de la décision ministérielle nominative ou à son Pharmacien Assistant sous délégation d'intérim (Décret 21-82).
+                        </div>
+                    </div>`,
+                    "⚖️",
+                    "Compris"
+                );
+            }
+            return;
+        }
+
         if (typeof openModal === 'function') {
             openModal('modal-parapheur-dt');
         } else {
@@ -285,10 +305,10 @@
         const mobBtn = document.getElementById('mob-act-parapheur');
         if (!badge) return;
 
-        // Contrôle de visibilité : Pharmacien DT ou Admin labo ou Pharmacien Assistant
+        // Contrôle de visibilité : Pharmacien DT titulaire ou titulaire DOC_APPROVE_PDT (Strict SoD)
         let isEligible = typeof hasPermission === 'function' 
-            ? (hasPermission('DOC_APPROVE_PDT') || (typeof hasRole === 'function' && (hasRole('directeur_technique', 'admin_laboratoire'))))
-            : true;
+            ? (hasPermission('DOC_APPROVE_PDT') || (typeof hasRole === 'function' && hasRole('directeur_technique')))
+            : false;
 
         if (!isEligible && typeof hasRole === 'function' && hasRole('pharmacien_assistant')) {
             // Vérifier s'il y a un mandat d'intérim actif (Décret 21-82 Art. 24)
@@ -951,7 +971,7 @@
                 }
 
                 const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
-                const canRevoke = isCurrent && (typeof hasRole === 'function' && hasRole('directeur_technique', 'admin_laboratoire'));
+                const canRevoke = isCurrent && (typeof hasRole === 'function' && hasRole('directeur_technique'));
 
                 return `
                     <tr style="border-bottom:1px solid var(--border-color);">
