@@ -1356,14 +1356,14 @@ async function renderAdminSettingsView() {
                         </div>
 
                         <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:8px; border-top:1px solid var(--border-color); padding-top:8px;">
-                            <button class="btn-pill" style="font-size:10.5px; padding:2px 8px;" onclick="openSettingHistoryModal('${item.setting_key}', '${escapeAdminHtml(item.label_fr)}')">
+                            <button class="btn-pill" style="font-size:10.5px; padding:2px 8px;" onclick="openSettingHistoryModal('${item.setting_key}')">
                                 📜 Historique
                             </button>
-                            <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:var(--bg-hover);" onclick="openEditSettingModal('${item.setting_key}', '${escapeAdminHtml(item.setting_value)}', '${escapeAdminHtml(item.label_fr)}')">
+                            <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:var(--bg-hover);" onclick="openEditSettingModal('${item.setting_key}')">
                                 ✏️ Modifier
                             </button>
                             ${isPending ? `
-                                <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:#7e22ce; color:white; border:none; font-weight:700;" onclick="approveSettingModal('${item.setting_key}', '${escapeAdminHtml(item.label_fr)}')">
+                                <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:#7e22ce; color:white; border:none; font-weight:700;" onclick="approveSettingModal('${item.setting_key}')">
                                     ✍️ Viser (DT)
                                 </button>
                             ` : ''}
@@ -1382,52 +1382,104 @@ async function renderAdminSettingsView() {
 }
 
 // Modal interactive d'édition d'un paramètre
-function openEditSettingModal(key, currentValue, label) {
-    const newVal = prompt(`Modification du paramètre : ${label}\n\nValeur actuelle : ${currentValue}\n\nVeuillez saisir la NOUVELLE valeur :`, currentValue);
-    if (newVal === null) return;
-    const trimmedVal = newVal.trim();
-    if (!trimmedVal) {
-        alert("La valeur ne peut pas être vide.");
+function openEditSettingModal(key) {
+    const item = tenantRegulatorySettings.find(s => s.setting_key === key);
+    if (!item) {
+        alert("Paramètre introuvable.");
         return;
     }
 
-    const reason = prompt(`Motif réglementaire OBLIGATOIRE (Décret, Arrêté ou Notification ANPP) :`, "Mise en conformité avec les directives officielles de l'ANPP");
-    if (reason === null) return;
-    const trimmedReason = reason.trim();
-    if (!trimmedReason) {
-        alert("Le motif réglementaire est obligatoire pour l'audit trail BPF.");
+    const titleEl = document.getElementById("edit-setting-title");
+    const keyEl = document.getElementById("edit-setting-key");
+    const inputKeyEl = document.getElementById("edit-setting-input-key");
+    const currentValEl = document.getElementById("edit-setting-current-val");
+    const newValEl = document.getElementById("edit-setting-new-val");
+    const reasonEl = document.getElementById("edit-setting-reason");
+    const dtNoticeEl = document.getElementById("edit-setting-dt-notice");
+    const btnSubmit = document.getElementById("btn-submit-edit-setting");
+
+    if (titleEl) titleEl.innerText = `Modifier : ${item.label_fr}`;
+    if (keyEl) keyEl.innerText = item.setting_key;
+    if (inputKeyEl) inputKeyEl.value = item.setting_key;
+    if (currentValEl) currentValEl.innerText = item.setting_value;
+    if (newValEl) newValEl.value = item.setting_value;
+    if (reasonEl) reasonEl.value = "Mise en conformité avec les directives officielles de l'ANPP";
+
+    const isDT = currentUser && (currentUser.role === 'directeur_technique' || currentUser.role === 'pharmacien_responsable' || currentUser.role === 'pharmacien_assistant');
+    if (dtNoticeEl) {
+        if (isDT) {
+            dtNoticeEl.style.background = '#dcfce7';
+            dtNoticeEl.style.borderColor = '#bbf7d0';
+            dtNoticeEl.style.color = '#14532d';
+            dtNoticeEl.innerHTML = `✓ Vous êtes habilité <strong>Direction Technique</strong>. La modification sera directement scellée et mise en vigueur.`;
+            if (btnSubmit) btnSubmit.innerText = "✍️ Sceller & Mettre en Vigueur";
+        } else {
+            dtNoticeEl.style.background = '#fef3c7';
+            dtNoticeEl.style.borderColor = '#fde68a';
+            dtNoticeEl.style.color = '#78350f';
+            dtNoticeEl.innerHTML = `ℹ️ Votre profil soumettra cette modification comme <strong>proposition en attente</strong> du visa du Pharmacien DT.`;
+            if (btnSubmit) btnSubmit.innerText = "📨 Soumettre au Visa DT";
+        }
+    }
+
+    if (typeof openModal === 'function') {
+        openModal('modal-edit-setting');
+    }
+}
+
+async function submitEditSettingForm(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const key = document.getElementById("edit-setting-input-key").value;
+    const newVal = document.getElementById("edit-setting-new-val").value.trim();
+    const reason = document.getElementById("edit-setting-reason").value.trim();
+
+    if (!key || !newVal || !reason) {
+        alert("Veuillez remplir tous les champs obligatoires.");
         return;
     }
 
-    const isDT = currentUser && (currentUser.role === 'directeur_technique' || currentUser.role === 'pharmacien_responsable');
+    const isDT = currentUser && (currentUser.role === 'directeur_technique' || currentUser.role === 'pharmacien_responsable' || currentUser.role === 'pharmacien_assistant');
     const requireDT = !isDT;
 
-    fetch(`/api/v1/admin/settings/regulatory/${key}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            new_value: trimmedVal,
-            regulatory_reason: trimmedReason,
-            require_dt_approval: requireDT
-        })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.error) throw new Error(data.error);
-        showNotifyModal("Mise à Jour Paramètre", `<div style="color:var(--accent-emerald); font-weight:700;">${data.message || 'Enregistré avec succès'}</div>`, "⚙️", "Fermer");
+    try {
+        const resp = await fetch(`/api/v1/admin/settings/regulatory/${encodeURIComponent(key)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                new_value: newVal,
+                regulatory_reason: reason,
+                require_dt_approval: requireDT
+            })
+        });
+
+        const data = await resp.json();
+        if (!resp.ok || data.error) {
+            throw new Error(data.error || "Échec de l'enregistrement");
+        }
+
+        if (typeof closeModal === 'function') {
+            closeModal('modal-edit-setting');
+        }
+        if (typeof showToast === 'function') {
+            showToast(data.message || "Paramètre enregistré avec succès", "success");
+        } else {
+            alert(data.message || "Paramètre enregistré avec succès");
+        }
         renderAdminSettingsView();
-    })
-    .catch(err => {
+    } catch(err) {
         alert("Erreur lors de la modification : " + err.message);
-    });
+    }
 }
 
 // Modal d'approbation DT
-function approveSettingModal(key, label) {
+function approveSettingModal(key) {
+    const item = tenantRegulatorySettings.find(s => s.setting_key === key);
+    const label = item ? item.label_fr : key;
+
     const ok = confirm(`Confirmation de Visa Légal (Pharmacien Directeur Technique) :\n\nConfirmez-vous sur l'honneur l'exactitude de cette modification institutionnelle pour "${label}" ?`);
     if (!ok) return;
 
-    fetch(`/api/v1/admin/settings/regulatory/${key}/approve`, {
+    fetch(`/api/v1/admin/settings/regulatory/${encodeURIComponent(key)}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1438,7 +1490,11 @@ function approveSettingModal(key, label) {
     .then(r => r.json())
     .then(data => {
         if (data.error) throw new Error(data.error);
-        showNotifyModal("Visa DT Apposé", `<div style="color:var(--accent-purple); font-weight:700;">Le paramètre "${label}" a été scellé et mis en vigueur en v1.0.</div>`, "✍️", "Fermer");
+        if (typeof showToast === 'function') {
+            showToast(`Le paramètre "${label}" a été scellé et mis en vigueur.`, "success");
+        } else {
+            showNotifyModal("Visa DT Apposé", `<div style="color:var(--accent-purple); font-weight:700;">Le paramètre "${label}" a été scellé et mis en vigueur en v1.0.</div>`, "✍️", "Fermer");
+        }
         renderAdminSettingsView();
     })
     .catch(err => {
@@ -1447,15 +1503,18 @@ function approveSettingModal(key, label) {
 }
 
 // Modal d'historique temporel (GAMP 5 / ALCOA+)
-async function openSettingHistoryModal(key, label) {
+async function openSettingHistoryModal(key) {
+    const item = tenantRegulatorySettings.find(s => s.setting_key === key);
+    const label = item ? item.label_fr : key;
+
     try {
-        const res = await fetch(`/api/v1/admin/settings/regulatory/${key}/history`);
+        const res = await fetch(`/api/v1/admin/settings/regulatory/${encodeURIComponent(key)}/history`);
         if (!res.ok) throw new Error("Erreur historique");
         const data = await res.json();
         const history = data.history || [];
 
         let rowsHtml = '';
-        history.forEach((h, idx) => {
+        history.forEach((h) => {
             const fromDate = h.valid_from ? new Date(h.valid_from).toLocaleString('fr-FR') : '—';
             const toDate = h.valid_to ? new Date(h.valid_to).toLocaleString('fr-FR') : 'En vigueur actuellement';
             const isActive = h.is_active;
@@ -1500,3 +1559,8 @@ async function openSettingHistoryModal(key, label) {
         alert("Erreur chargement historique : " + e.message);
     }
 }
+
+window.openEditSettingModal = openEditSettingModal;
+window.submitEditSettingForm = submitEditSettingForm;
+window.approveSettingModal = approveSettingModal;
+window.openSettingHistoryModal = openSettingHistoryModal;
