@@ -82,6 +82,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/023_sod_prevent_self_granting_and_admin_lab_escalation.sql",
 		"migrations/024_volet_1a4_payment_slip_verification_and_fx_attestation.sql",
 		"migrations/025_volet_1a5_presubmission_and_cost_consolidation.sql",
+		"migrations/026_anpp_variations_engine.sql",
 	}
 
 	for _, file := range migrationFiles {
