@@ -65,6 +65,64 @@ type ANPPPaymentSlip struct {
 	GeneratedAt          time.Time  `json:"generated_at"`
 	CreatedAt            time.Time  `json:"created_at"`
 	UpdatedAt            time.Time  `json:"updated_at"`
+
+	// Volet 1.A.4 : Traçabilité quittance bancaire, conformité financière & Attestation Banque d'Algérie
+	Currency              string     `json:"currency"` // DZD, EUR, USD...
+	CurrencyAmount        *float64   `json:"currency_amount,omitempty"`
+	BankName              string     `json:"bank_name,omitempty"`        // BNA, CPA, BEA...
+	PaymentMode           string     `json:"payment_mode"`               // virement, cheque_certifie, versement_especes
+	BankReceiptRef        string     `json:"bank_receipt_ref,omitempty"` // Réf avis de débit ou quittance
+	BankReceiptDate       *time.Time `json:"bank_receipt_date,omitempty"`
+	RequiresFXAttestation bool       `json:"requires_fx_attestation"`         // Obligatoire pour importé si devises
+	FXRate                *float64   `json:"fx_rate,omitempty"`               // Taux officiel Banque d'Algérie
+	FXRateDate            *time.Time `json:"fx_rate_date,omitempty"`          // Date cours Banque d'Algérie
+	FXAttestationRef      string     `json:"fx_attestation_ref,omitempty"`    // N° attestation Banque d'Algérie
+	FXAttestationDocID    *string    `json:"fx_attestation_doc_id,omitempty"` // Scan GED attestation de cours
+	FXAttestationDocTitle string     `json:"fx_attestation_doc_title,omitempty"`
+	VerificationStatus    string     `json:"verification_status"` // pending, conforme, non_conforme
+	VerifiedBy            *string    `json:"verified_by,omitempty"`
+	VerifiedByName        string     `json:"verified_by_name,omitempty"`
+	VerifiedAt            *time.Time `json:"verified_at,omitempty"`
+	VerificationNotes     string     `json:"verification_notes,omitempty"`
+	AmountConcordanceOK   bool       `json:"amount_concordance_ok"`
+	SoDCheckPassed        bool       `json:"sod_check_passed"`
+}
+
+// VerifyPaymentSlip1A4Request représente la demande de vérification réglementaire et financière 1.A.4
+type VerifyPaymentSlip1A4Request struct {
+	BankName              string   `json:"bank_name"`
+	PaymentMode           string   `json:"payment_mode"` // virement, cheque_certifie, versement_especes
+	BankReceiptRef        string   `json:"bank_receipt_ref"`
+	BankReceiptDate       string   `json:"bank_receipt_date"` // YYYY-MM-DD
+	ReceiptDocumentID     *string  `json:"receipt_document_id,omitempty"`
+	Currency              string   `json:"currency"` // DZD, EUR, USD
+	CurrencyAmount        *float64 `json:"currency_amount,omitempty"`
+	RequiresFXAttestation bool     `json:"requires_fx_attestation"`
+	FXRate                *float64 `json:"fx_rate,omitempty"`
+	FXRateDate            *string  `json:"fx_rate_date,omitempty"` // YYYY-MM-DD
+	FXAttestationRef      string   `json:"fx_attestation_ref,omitempty"`
+	FXAttestationDocID    *string  `json:"fx_attestation_doc_id,omitempty"`
+	VerificationNotes     string   `json:"verification_notes,omitempty"`
+}
+
+// Section1A4Summary représente le statut de conformité et l'ensemble des pièces pour la section 1.A.4
+type Section1A4Summary struct {
+	DossierID            string           `json:"dossier_id"`
+	DossierCode          string           `json:"dossier_code"`
+	ProcedureCode        string           `json:"procedure_code"` // NI, RI, MI, NF, RF, MF
+	IsImported           bool             `json:"is_imported"`
+	Section1A4Status     string           `json:"section_1a4_status"` // manquant, rattache, valide_qualite, approuve_dt
+	ActiveSlip           *ANPPPaymentSlip `json:"active_slip,omitempty"`
+	ExpectedFeeAmountDZD float64          `json:"expected_fee_amount_dzd"`
+	FeeScheduleLabel     string           `json:"fee_schedule_label"`
+	LegalReference       string           `json:"legal_reference"`
+	IsFeeSatisfied       bool             `json:"is_fee_satisfied"`
+	IsReceiptAttached    bool             `json:"is_receipt_attached"`
+	IsFXRequired         bool             `json:"is_fx_required"`
+	IsFXSatisfied        bool             `json:"is_fx_satisfied"`
+	OverallCompliant     bool             `json:"overall_compliant"`
+	ComplianceChecklist  []string         `json:"compliance_checklist"`
+	BlockingIssues       []string         `json:"blocking_issues"`
 }
 
 // CreateFeeScheduleRequest représente la demande de mise à jour ou création d'un barème

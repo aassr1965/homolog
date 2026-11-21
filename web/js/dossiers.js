@@ -979,13 +979,11 @@
                                             ${s.payment_reference ? `<span style="margin-left:8px; font-size:10px; color:#10b981;">(Quittance : ${escapeHTML(s.payment_reference)})</span>` : ''}
                                         </div>
                                         <div style="display:flex; gap:6px; align-items:center;">
-                                            <span class="badge" style="background:${s.status === 'paye' ? 'rgba(16,185,129,0.15)' : 'rgba(234,179,8,0.15)'}; color:${s.status === 'paye' ? '#10b981' : '#b45309'}; font-size:10px;">
-                                                ${s.status === 'paye' ? '✅ Quittance Enregistrée' : '⏳ Émis (En attente règlement)'}
+                                            <span class="badge" style="background:${s.verification_status === 'conforme' ? 'rgba(16,185,129,0.15)' : (s.status === 'paye' || s.status === 'quittance_recue' ? 'rgba(59,130,246,0.15)' : 'rgba(234,179,8,0.15)')}; color:${s.verification_status === 'conforme' ? '#10b981' : (s.status === 'paye' || s.status === 'quittance_recue' ? '#2563eb' : '#b45309')}; font-size:10px;">
+                                                ${s.verification_status === 'conforme' ? '✅ 1.A.4 Conforme (Visé DT)' : (s.status === 'paye' || s.status === 'quittance_recue' ? '🏛️ Quittance Enregistrée' : '⏳ Émis (En attente)')}
                                             </span>
                                             <button class="btn-pill" style="font-size:10px; padding:2px 6px;" onclick="openPrintSlipWindow('${s.id}')">🖨️ Imprimer</button>
-                                            ${s.status !== 'paye' ? `
-                                                <button class="btn-pill" style="font-size:10px; padding:2px 6px; background:#10b981; color:white; border:none;" onclick="openRecordSlipPaymentModal('${s.id}', '${s.slip_number}', ${s.amount_dzd})">🏛️ Saisir Quittance</button>
-                                            ` : ''}
+                                            <button class="btn-pill" style="font-size:10px; padding:2px 6px; background:${s.verification_status === 'conforme' ? 'var(--accent-purple)' : '#10b981'}; color:white; border:none;" onclick="openRecordSlipPaymentModal('${s.id}', '${s.slip_number}', ${s.amount_dzd}, '${currentDossierDetail.id}')">${s.verification_status === 'conforme' ? '🔍 Consulter 1.A.4' : '🏛️ Contrôle 1.A.4'}</button>
                                         </div>
                                     </div>
                                 `).join('')}
@@ -1670,6 +1668,19 @@
                                 </div>
                             </div>
 
+                            <!-- Volet Spécifique 1.A.4 : Contrôle des Redevances, Quittance & Change BA -->
+                            ${item.item_code === '1.A.4' ? `
+                                <div style="background:rgba(126,34,206,0.06); border:1.5px solid rgba(126,34,206,0.25); border-radius:6px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <div style="font-size:11.5px; font-weight:800; color:#7e22ce;">🏛️ Volet 1.A.4 : Quittance Bancaire, Barème ANPP &amp; Change BA</div>
+                                        <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">${escapeHTML(item.validation_notes || 'Concordance des redevances et cours officiel Banque d\'Algérie')}</div>
+                                    </div>
+                                    <button class="btn-pill" style="background:#7e22ce; color:white; border:none; font-size:11px; font-weight:700; padding:4px 10px;" onclick="openRecordSlipPaymentModal('', '', 0, '${currentDossierDetail.id}')">
+                                        🔍 Rapprocher / Modifier 1.A.4
+                                    </button>
+                                </div>
+                            ` : ''}
+
                             <!-- Cartouche Intégrité CAS & Horodatage BPF -->
                             <div style="background:var(--bg-surface); border:1.5px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:14px;">
                                 <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">
@@ -1722,6 +1733,13 @@
                                     L'exigence réglementaire <strong>${item.item_code}</strong> est actuellement vacante dans le coffre-fort CTD.
                                 </div>
                                 <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+                                    ${item.item_code === '1.A.4' ? `
+                                        <button class="btn-pill" style="background:#7e22ce; color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:800;" 
+                                                onclick="openRecordSlipPaymentModal('', '', 0, '${currentDossierDetail.id}')"
+                                                ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                            🏛️ Contrôle Quittance &amp; Change BA (1.A.4)
+                                        </button>
+                                    ` : ''}
                                     <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; padding:8px 14px; font-size:11.5px; font-weight:700;" 
                                             onclick="openNewGEDDocModal({ dossierId: '${currentDossierDetail.id}', dossierCode: '${escapeHTML(currentDossierDetail.dossier_code)}', itemId: '${item.id}', itemCode: '${item.item_code}', itemTitle: '${escapeHTML(item.title_fr)}', itemTitleAr: '${escapeHTML(item.title_ar || '')}' })"
                                             ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>

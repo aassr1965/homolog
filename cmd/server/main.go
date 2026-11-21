@@ -493,6 +493,10 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}", feeHandler.GetPaymentSlip)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/slips/{slipId}/print-html", feeHandler.GetPaymentSlipPrintHTML)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermUserManage)).Put("/api/v1/fees/slips/{slipId}/status", feeHandler.UpdatePaymentSlipStatus)
+
+				// Volet 1.A.4 : Contrôle de concordance financière & attestation Banque d'Algérie
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/fees/1a4-summary", feeHandler.GetSection1A4Summary)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDocCheckReview, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/fees/slips/{slipId}/verify-1a4", feeHandler.VerifyPaymentSlip1A4)
 			}
 
 			// Assistant de Soumission E-Services ANPP & Validation Pré-Dépôt (Jalon 1.7 Phase 3)
