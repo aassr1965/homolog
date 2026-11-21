@@ -322,8 +322,8 @@
 
         function switchDomainModule(domain) {
             // Contrôle d'habilitation préventif côté UI (CDC 7.2.2)
-            if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE')) {
-                showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas de la permission <code>USER_MANAGE</code> pour accéder à la Console d'Administration.", "🚫", "Fermer");
+            if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE') && !hasPermission('DOC_APPROVE_PDT')) {
+                showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas des permissions requises (<code>USER_MANAGE</code> ou <code>DOC_APPROVE_PDT</code>) pour accéder aux Paramètres et à la Console d'Administration.", "🚫", "Fermer");
                 return;
             }
             if (domain === 'ged' && typeof hasPermission === 'function' && !hasPermission('DOC_READ')) {
