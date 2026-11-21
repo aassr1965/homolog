@@ -183,34 +183,44 @@ func (r *FeeRepository) CreatePaymentSlip(ctx context.Context, slip *domain.ANPP
 	return slip, nil
 }
 
-// GetPaymentSlip retourne un bordereau de versement enrichi avec les informations du dossier et produit
-func (r *FeeRepository) GetPaymentSlip(ctx context.Context, orgID, slipID string) (*domain.ANPPPaymentSlip, error) {
-	query := `
-		SELECT 
-			s.id, s.organization_id, org.legal_name AS organization_name,
-			s.dossier_id, d.dossier_code,
-			COALESCE(p_med.brand_name_fr, p_dm.commercial_name_fr, '') AS product_brand_name,
-			COALESCE(est.name_fr, '') AS establishment_name,
-			s.fee_schedule_id, COALESCE(sch.legal_reference, '') AS fee_schedule_reference,
-			s.slip_type, s.slip_number, s.payment_purpose, s.amount_dzd,
-			s.amount_words_fr, s.amount_words_ar, s.bank_account_rib,
-			s.status, COALESCE(s.payment_reference, ''), s.paid_at,
-			s.receipt_document_id, COALESCE(doc.title_fr, '') AS receipt_document_title,
-			s.generated_by, COALESCE(TRIM(CONCAT(u.first_name, ' ', u.last_name)), '') AS generated_by_name,
-			s.generated_at, s.created_at, s.updated_at
-		FROM anpp_payment_slips s
-		JOIN organizations org ON org.id = s.organization_id
-		JOIN dossiers d ON d.id = s.dossier_id
-		LEFT JOIN medicines p_med ON p_med.id = d.medicine_id
-		LEFT JOIN medical_devices p_dm ON p_dm.id = d.medical_device_id
-		LEFT JOIN establishments est ON est.id = org.id
-		LEFT JOIN anpp_fee_schedules sch ON sch.id = s.fee_schedule_id
-		LEFT JOIN ged_documents doc ON doc.id = s.receipt_document_id
-		LEFT JOIN users u ON u.id = s.generated_by
-		WHERE s.id = $1 AND s.organization_id = $2
-	`
-	var slip domain.ANPPPaymentSlip
-	err := r.pool.QueryRow(ctx, query, slipID, orgID).Scan(
+const paymentSlipSelectFields = `
+	s.id, s.organization_id, org.legal_name AS organization_name,
+	s.dossier_id, d.dossier_code,
+	COALESCE(p_med.brand_name_fr, p_dm.commercial_name_fr, '') AS product_brand_name,
+	COALESCE(est.name_fr, '') AS establishment_name,
+	s.fee_schedule_id, COALESCE(sch.legal_reference, '') AS fee_schedule_reference,
+	s.slip_type, s.slip_number, s.payment_purpose, s.amount_dzd,
+	s.amount_words_fr, s.amount_words_ar, s.bank_account_rib,
+	s.status, COALESCE(s.payment_reference, ''), s.paid_at,
+	s.receipt_document_id, COALESCE(doc.title_fr, '') AS receipt_document_title,
+	s.generated_by, COALESCE(TRIM(CONCAT(u.first_name, ' ', u.last_name)), '') AS generated_by_name,
+	s.generated_at, s.created_at, s.updated_at,
+	COALESCE(s.currency, 'DZD'), s.currency_amount, COALESCE(s.bank_name, ''),
+	COALESCE(s.payment_mode, 'virement'), COALESCE(s.bank_receipt_ref, ''), s.bank_receipt_date,
+	COALESCE(s.requires_fx_attestation, FALSE), s.fx_rate, s.fx_rate_date,
+	COALESCE(s.fx_attestation_ref, ''), s.fx_attestation_doc_id, COALESCE(fx_doc.title_fr, ''),
+	COALESCE(s.verification_status, 'pending'), s.verified_by,
+	COALESCE(TRIM(CONCAT(v_u.first_name, ' ', v_u.last_name)), '') AS verified_by_name,
+	s.verified_at, COALESCE(s.verification_notes, ''),
+	COALESCE(s.amount_concordance_ok, FALSE), COALESCE(s.sod_check_passed, FALSE)
+`
+
+const paymentSlipFromJoin = `
+	FROM anpp_payment_slips s
+	JOIN organizations org ON org.id = s.organization_id
+	JOIN dossiers d ON d.id = s.dossier_id
+	LEFT JOIN medicines p_med ON p_med.id = d.medicine_id
+	LEFT JOIN medical_devices p_dm ON p_dm.id = d.medical_device_id
+	LEFT JOIN establishments est ON est.id = org.id
+	LEFT JOIN anpp_fee_schedules sch ON sch.id = s.fee_schedule_id
+	LEFT JOIN ged_documents doc ON doc.id = s.receipt_document_id
+	LEFT JOIN ged_documents fx_doc ON fx_doc.id = s.fx_attestation_doc_id
+	LEFT JOIN users u ON u.id = s.generated_by
+	LEFT JOIN users v_u ON v_u.id = s.verified_by
+`
+
+func scanSlipRow(row pgx.Row, slip *domain.ANPPPaymentSlip) error {
+	return row.Scan(
 		&slip.ID, &slip.OrganizationID, &slip.OrganizationName,
 		&slip.DossierID, &slip.DossierCode,
 		&slip.ProductBrandName, &slip.EstablishmentName,
@@ -221,7 +231,22 @@ func (r *FeeRepository) GetPaymentSlip(ctx context.Context, orgID, slipID string
 		&slip.ReceiptDocumentID, &slip.ReceiptDocumentTitle,
 		&slip.GeneratedBy, &slip.GeneratedByName,
 		&slip.GeneratedAt, &slip.CreatedAt, &slip.UpdatedAt,
+		&slip.Currency, &slip.CurrencyAmount, &slip.BankName,
+		&slip.PaymentMode, &slip.BankReceiptRef, &slip.BankReceiptDate,
+		&slip.RequiresFXAttestation, &slip.FXRate, &slip.FXRateDate,
+		&slip.FXAttestationRef, &slip.FXAttestationDocID, &slip.FXAttestationDocTitle,
+		&slip.VerificationStatus, &slip.VerifiedBy,
+		&slip.VerifiedByName,
+		&slip.VerifiedAt, &slip.VerificationNotes,
+		&slip.AmountConcordanceOK, &slip.SoDCheckPassed,
 	)
+}
+
+// GetPaymentSlip retourne un bordereau de versement enrichi avec les informations du dossier et produit
+func (r *FeeRepository) GetPaymentSlip(ctx context.Context, orgID, slipID string) (*domain.ANPPPaymentSlip, error) {
+	query := "SELECT " + paymentSlipSelectFields + " " + paymentSlipFromJoin + " WHERE s.id = $1 AND s.organization_id = $2"
+	var slip domain.ANPPPaymentSlip
+	err := scanSlipRow(r.pool.QueryRow(ctx, query, slipID, orgID), &slip)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrPaymentSlipNotFound
@@ -233,31 +258,7 @@ func (r *FeeRepository) GetPaymentSlip(ctx context.Context, orgID, slipID string
 
 // ListPaymentSlipsByDossier retourne tous les bordereaux émis pour un dossier
 func (r *FeeRepository) ListPaymentSlipsByDossier(ctx context.Context, orgID, dossierID string) ([]domain.ANPPPaymentSlip, error) {
-	query := `
-		SELECT 
-			s.id, s.organization_id, org.legal_name AS organization_name,
-			s.dossier_id, d.dossier_code,
-			COALESCE(p_med.brand_name_fr, p_dm.commercial_name_fr, '') AS product_brand_name,
-			COALESCE(est.name_fr, '') AS establishment_name,
-			s.fee_schedule_id, COALESCE(sch.legal_reference, '') AS fee_schedule_reference,
-			s.slip_type, s.slip_number, s.payment_purpose, s.amount_dzd,
-			s.amount_words_fr, s.amount_words_ar, s.bank_account_rib,
-			s.status, COALESCE(s.payment_reference, ''), s.paid_at,
-			s.receipt_document_id, COALESCE(doc.title_fr, '') AS receipt_document_title,
-			s.generated_by, COALESCE(TRIM(CONCAT(u.first_name, ' ', u.last_name)), '') AS generated_by_name,
-			s.generated_at, s.created_at, s.updated_at
-		FROM anpp_payment_slips s
-		JOIN organizations org ON org.id = s.organization_id
-		JOIN dossiers d ON d.id = s.dossier_id
-		LEFT JOIN medicines p_med ON p_med.id = d.medicine_id
-		LEFT JOIN medical_devices p_dm ON p_dm.id = d.medical_device_id
-		LEFT JOIN establishments est ON est.id = org.id
-		LEFT JOIN anpp_fee_schedules sch ON sch.id = s.fee_schedule_id
-		LEFT JOIN ged_documents doc ON doc.id = s.receipt_document_id
-		LEFT JOIN users u ON u.id = s.generated_by
-		WHERE s.dossier_id = $1 AND s.organization_id = $2
-		ORDER BY s.generated_at DESC
-	`
+	query := "SELECT " + paymentSlipSelectFields + " " + paymentSlipFromJoin + " WHERE s.dossier_id = $1 AND s.organization_id = $2 ORDER BY s.generated_at DESC"
 	rows, err := r.pool.Query(ctx, query, dossierID, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("requête liste bordereaux échouée: %w", err)
@@ -267,18 +268,7 @@ func (r *FeeRepository) ListPaymentSlipsByDossier(ctx context.Context, orgID, do
 	slips := make([]domain.ANPPPaymentSlip, 0)
 	for rows.Next() {
 		var slip domain.ANPPPaymentSlip
-		err := rows.Scan(
-			&slip.ID, &slip.OrganizationID, &slip.OrganizationName,
-			&slip.DossierID, &slip.DossierCode,
-			&slip.ProductBrandName, &slip.EstablishmentName,
-			&slip.FeeScheduleID, &slip.FeeScheduleReference,
-			&slip.SlipType, &slip.SlipNumber, &slip.PaymentPurpose, &slip.AmountDZD,
-			&slip.AmountWordsFR, &slip.AmountWordsAR, &slip.BankAccountRIB,
-			&slip.Status, &slip.PaymentReference, &slip.PaidAt,
-			&slip.ReceiptDocumentID, &slip.ReceiptDocumentTitle,
-			&slip.GeneratedBy, &slip.GeneratedByName,
-			&slip.GeneratedAt, &slip.CreatedAt, &slip.UpdatedAt,
-		)
+		err := scanSlipRow(rows, &slip)
 		if err != nil {
 			return nil, fmt.Errorf("scan bordereau échoué: %w", err)
 		}
@@ -316,4 +306,285 @@ func (r *FeeRepository) UpdatePaymentSlipStatus(ctx context.Context, orgID, slip
 		return ErrPaymentSlipNotFound
 	}
 	return nil
+}
+
+// VerifyPaymentSlip1A4 applique le contrôle de concordance financière et de l'attestation Banque d'Algérie
+func (r *FeeRepository) VerifyPaymentSlip1A4(
+	ctx context.Context,
+	orgID, slipID, verifierID, verifierName string,
+	req domain.VerifyPaymentSlip1A4Request,
+	expectedAmount float64,
+	isImported bool,
+) (*domain.ANPPPaymentSlip, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("début transaction vérification 1.A.4 échouée: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Récupération du bordereau
+	var slip domain.ANPPPaymentSlip
+	queryGet := "SELECT " + paymentSlipSelectFields + " " + paymentSlipFromJoin + " WHERE s.id = $1 AND s.organization_id = $2 FOR UPDATE OF s"
+	if err := scanSlipRow(tx.QueryRow(ctx, queryGet, slipID, orgID), &slip); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrPaymentSlipNotFound
+		}
+		return nil, fmt.Errorf("lecture bordereau pour vérification échouée: %w", err)
+	}
+
+	// 2. Contrôle de concordance financière
+	amountOK := slip.AmountDZD >= expectedAmount
+
+	// 3. Contrôle de l'attestation de taux de change Banque d'Algérie
+	requiresFX := req.RequiresFXAttestation
+	if isImported && req.Currency != "" && req.Currency != "DZD" {
+		requiresFX = true
+	}
+
+	fxOK := true
+	if requiresFX {
+		if req.FXRate == nil || *req.FXRate <= 0 || req.FXAttestationDocID == nil || req.FXAttestationRef == "" {
+			fxOK = false
+		}
+	}
+
+	// 4. Détermination du statut de conformité
+	verifStatus := "conforme"
+	payStatus := "quittance_recue"
+	if !amountOK || !fxOK {
+		verifStatus = "non_conforme"
+		payStatus = "paye" // Payé mais incomplet/non conforme
+	}
+
+	// Parsing dates
+	var paidDate *time.Time
+	if req.BankReceiptDate != "" {
+		if t, err := time.Parse("2006-01-02", req.BankReceiptDate); err == nil {
+			paidDate = &t
+		}
+	}
+	var fxDate *time.Time
+	if req.FXRateDate != nil && *req.FXRateDate != "" {
+		if t, err := time.Parse("2006-01-02", *req.FXRateDate); err == nil {
+			fxDate = &t
+		}
+	}
+
+	currency := req.Currency
+	if currency == "" {
+		currency = "DZD"
+	}
+	paymentMode := req.PaymentMode
+	if paymentMode == "" {
+		paymentMode = "virement"
+	}
+
+	now := time.Now().UTC()
+
+	// 5. Mise à jour de anpp_payment_slips
+	updateSlipQuery := `
+		UPDATE anpp_payment_slips
+		SET
+			currency = $1,
+			currency_amount = $2,
+			bank_name = $3,
+			payment_mode = $4,
+			bank_receipt_ref = $5,
+			bank_receipt_date = $6,
+			receipt_document_id = $7,
+			requires_fx_attestation = $8,
+			fx_rate = $9,
+			fx_rate_date = $10,
+			fx_attestation_ref = $11,
+			fx_attestation_doc_id = $12,
+			verification_status = $13,
+			verified_by = $14,
+			verified_at = $15,
+			verification_notes = $16,
+			amount_concordance_ok = $17,
+			sod_check_passed = TRUE,
+			status = $18,
+			payment_reference = $19,
+			paid_at = $20,
+			updated_at = $21
+		WHERE id = $22 AND organization_id = $23
+	`
+	_, err = tx.Exec(ctx, updateSlipQuery,
+		currency,
+		req.CurrencyAmount,
+		req.BankName,
+		paymentMode,
+		req.BankReceiptRef,
+		paidDate,
+		req.ReceiptDocumentID,
+		requiresFX,
+		req.FXRate,
+		fxDate,
+		req.FXAttestationRef,
+		req.FXAttestationDocID,
+		verifStatus,
+		verifierID,
+		now,
+		req.VerificationNotes,
+		amountOK,
+		payStatus,
+		req.BankReceiptRef,
+		paidDate,
+		now,
+		slipID,
+		orgID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("mise à jour vérification bordereau échouée: %w", err)
+	}
+
+	// 6. Si conforme, mise à jour de la checklist CTD (item 1.A.4)
+	if verifStatus == "conforme" && req.ReceiptDocumentID != nil {
+		notes := fmt.Sprintf("Conformité 1.A.4 scellée le %s : Bordereau %s acquitté (%.2f DZD), Quittance %s (%s).",
+			now.Format("02/01/2006"), slip.SlipNumber, slip.AmountDZD, req.BankReceiptRef, req.BankName)
+		if requiresFX && req.FXRate != nil {
+			notes += fmt.Sprintf(" Attestation Change BA n° %s (1 %s = %.4f DZD).", req.FXAttestationRef, currency, *req.FXRate)
+		}
+		notes += fmt.Sprintf(" Visa vérificateur : %s.", verifierName)
+
+		updateChecklistQuery := `
+			UPDATE dossier_checklist_items
+			SET 
+				ged_document_id = $1,
+				status = 'valide_qualite',
+				validation_notes = $2,
+				updated_at = $3
+			WHERE dossier_id = $4 AND item_code = '1.A.4'
+		`
+		_, err = tx.Exec(ctx, updateChecklistQuery, req.ReceiptDocumentID, notes, now, slip.DossierID)
+		if err != nil {
+			return nil, fmt.Errorf("mise à jour checklist 1.A.4 échouée: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit vérification 1.A.4 échoué: %w", err)
+	}
+
+	return r.GetPaymentSlip(ctx, orgID, slipID)
+}
+
+// GetSection1A4Summary compile un état des lieux exhaustif de la section 1.A.4 pour un dossier
+func (r *FeeRepository) GetSection1A4Summary(ctx context.Context, orgID, dossierID string) (*domain.Section1A4Summary, error) {
+	// 1. Lire le dossier
+	var dossierCode, procCode, productType string
+	err := r.pool.QueryRow(ctx, `
+		SELECT dossier_code, COALESCE(procedure_code, 'NI'), COALESCE(product_type, 'medicament')
+		FROM dossiers
+		WHERE id = $1 AND organization_id = $2
+	`, dossierID, orgID).Scan(&dossierCode, &procCode, &productType)
+	if err != nil {
+		return nil, fmt.Errorf("dossier introuvable: %w", err)
+	}
+
+	isImported := (procCode == "NI" || procCode == "RI" || procCode == "MI" || procCode == "dm_importe")
+
+	// 2. Barème attendu
+	feeSched, err := r.GetFeeScheduleForProcedure(ctx, procCode, time.Now())
+	var expectedAmt float64
+	var feeLabel, legalRef string
+	if err == nil && feeSched != nil {
+		expectedAmt = feeSched.AmountDZD
+		feeLabel = feeSched.LabelFR
+		legalRef = feeSched.LegalReference
+	} else {
+		// Valeurs par défaut si barème spécifique non matché
+		if isImported {
+			expectedAmt = 250000.00
+			feeLabel = "Enregistrement Médicament (Importation)"
+			legalRef = "Décret Exécutif 20-325 & Arrêté des Redevances ANPP"
+		} else {
+			expectedAmt = 150000.00
+			feeLabel = "Enregistrement Médicament (Fabrication Locale)"
+			legalRef = "Décret Exécutif 20-325 & Arrêté des Redevances ANPP"
+		}
+	}
+
+	// 3. Lire le statut de la section 1.A.4 dans dossier_checklist_items
+	var itemStatus string
+	_ = r.pool.QueryRow(ctx, `
+		SELECT status FROM dossier_checklist_items
+		WHERE dossier_id = $1 AND item_code = '1.A.4'
+	`, dossierID).Scan(&itemStatus)
+	if itemStatus == "" {
+		itemStatus = "manquant"
+	}
+
+	// 4. Lire les bordereaux existants (prendre BV1 en priorité)
+	slips, _ := r.ListPaymentSlipsByDossier(ctx, orgID, dossierID)
+	var activeSlip *domain.ANPPPaymentSlip
+	for i := range slips {
+		if slips[i].SlipType == domain.SlipTypeBV1 {
+			activeSlip = &slips[i]
+			break
+		}
+	}
+	if activeSlip == nil && len(slips) > 0 {
+		activeSlip = &slips[0]
+	}
+
+	summary := &domain.Section1A4Summary{
+		DossierID:            dossierID,
+		DossierCode:          dossierCode,
+		ProcedureCode:        procCode,
+		IsImported:           isImported,
+		Section1A4Status:     itemStatus,
+		ActiveSlip:           activeSlip,
+		ExpectedFeeAmountDZD: expectedAmt,
+		FeeScheduleLabel:     feeLabel,
+		LegalReference:       legalRef,
+		ComplianceChecklist:  make([]string, 0),
+		BlockingIssues:       make([]string, 0),
+	}
+
+	if activeSlip == nil {
+		summary.BlockingIssues = append(summary.BlockingIssues, "Bordereau de versement BV1 non émis pour ce dossier.")
+		return summary, nil
+	}
+
+	summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Bordereau %s émis (%s)", activeSlip.SlipNumber, activeSlip.SlipType))
+
+	// Concordance financière
+	if activeSlip.AmountDZD >= expectedAmt {
+		summary.IsFeeSatisfied = true
+		summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Concordance montant vérifiée (%.2f DZD >= %.2f DZD)", activeSlip.AmountDZD, expectedAmt))
+	} else {
+		summary.BlockingIssues = append(summary.BlockingIssues, fmt.Sprintf("Montant du bordereau (%.2f DZD) inférieur au barème officiel exigible (%.2f DZD)", activeSlip.AmountDZD, expectedAmt))
+	}
+
+	// Quittance bancaire
+	if activeSlip.BankReceiptRef != "" && activeSlip.ReceiptDocumentID != nil {
+		summary.IsReceiptAttached = true
+		summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Quittance bancaire rattachée : réf %s (%s)", activeSlip.BankReceiptRef, activeSlip.BankName))
+	} else if activeSlip.Status == "paye" || activeSlip.Status == "quittance_recue" {
+		summary.IsReceiptAttached = true
+		summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Paiement enregistré avec référence %s", activeSlip.PaymentReference))
+	} else {
+		summary.BlockingIssues = append(summary.BlockingIssues, "Quittance ou avis d'opéré bancaire non rattaché.")
+	}
+
+	// Change Banque d'Algérie
+	summary.IsFXRequired = isImported && activeSlip.Currency != "DZD" && activeSlip.Currency != ""
+	if summary.IsFXRequired {
+		if activeSlip.FXRate != nil && *activeSlip.FXRate > 0 && activeSlip.FXAttestationDocID != nil {
+			summary.IsFXSatisfied = true
+			summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Attestation de change Banque d'Algérie conforme (1 %s = %.4f DZD)", activeSlip.Currency, *activeSlip.FXRate))
+		} else {
+			summary.BlockingIssues = append(summary.BlockingIssues, fmt.Sprintf("Attestation de taux de change officielle Banque d'Algérie requise pour ce dossier en devises (%s).", activeSlip.Currency))
+		}
+	} else {
+		summary.IsFXSatisfied = true
+		if !isImported {
+			summary.ComplianceChecklist = append(summary.ComplianceChecklist, "Production locale en DZD : Attestation de change non exigée.")
+		}
+	}
+
+	summary.OverallCompliant = summary.IsFeeSatisfied && summary.IsReceiptAttached && summary.IsFXSatisfied && (activeSlip.VerificationStatus == "conforme")
+
+	return summary, nil
 }

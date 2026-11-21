@@ -124,44 +124,152 @@ function openPrintSlipWindow(slipId) {
     window.open(`/api/v1/fees/slips/${slipId}/print-html`, '_blank');
 }
 
-// Ouverture de la modale de saisie de quittance Trésor
-function openRecordSlipPaymentModal(slipId, slipNumber, amountDZD) {
+// Affiche/Masque les champs d'attestation de taux de change Banque d'Algérie
+function toggleFXFields(show) {
+    const box = document.getElementById("pay-slip-fx-fields");
+    if (box) box.style.display = show ? "block" : "none";
+}
+
+// Ouverture de la modale de contrôle 1.A.4 & quittance bancaire
+async function openRecordSlipPaymentModal(slipId, slipNumber, amountDZD, dossierId) {
     const modal = document.getElementById("modal-record-slip-payment");
     if (!modal) return;
 
+    const dId = dossierId || (typeof selectedDossierId !== 'undefined' ? selectedDossierId : null);
     document.getElementById("pay-slip-id").value = slipId;
+    document.getElementById("pay-slip-dossier-id").value = dId || "";
     document.getElementById("pay-slip-number-disp").innerText = slipNumber;
     document.getElementById("pay-slip-amount-disp").innerText = formatDZD(amountDZD);
     document.getElementById("pay-slip-ref").value = "";
     document.getElementById("pay-slip-date").value = new Date().toISOString().substring(0, 10);
+    document.getElementById("pay-slip-notes").value = "";
+
+    // Charger les documents GED du dossier pour les sélecteurs de fichiers
+    loadGEDDocsForSelect("pay-slip-receipt-doc", dId);
+    loadGEDDocsForSelect("pay-slip-fx-doc", dId);
+
+    // Charger le résumé 1.A.4 et les détails du bordereau si dispo
+    if (dId) {
+        try {
+            const summaryResp = await fetch(`/api/v1/dossiers/${dId}/fees/1a4-summary`);
+            if (summaryResp.ok) {
+                const summary = await summaryResp.json();
+                const badge = document.getElementById("pay-slip-concordance-badge");
+                const text = document.getElementById("pay-slip-concordance-text");
+                const fxCheck = document.getElementById("pay-slip-requires-fx");
+                
+                if (summary.expected_fee_amount_dzd) {
+                    if (amountDZD >= summary.expected_fee_amount_dzd) {
+                        badge.style.background = "rgba(16,185,129,0.12)";
+                        badge.style.borderColor = "rgba(16,185,129,0.3)";
+                        badge.style.color = "#10b981";
+                        text.innerHTML = `<strong>Concordance Conforme :</strong> Montant du bordereau (${formatDZD(amountDZD)}) &ge; Barème officiel (${formatDZD(summary.expected_fee_amount_dzd)} - ${escapeHTML(summary.fee_schedule_label)})`;
+                    } else {
+                        badge.style.background = "rgba(239,68,68,0.12)";
+                        badge.style.borderColor = "rgba(239,68,68,0.3)";
+                        badge.style.color = "#ef4444";
+                        text.innerHTML = `<strong>Écart Financier Détecté :</strong> Montant du bordereau (${formatDZD(amountDZD)}) &lt; Barème officiel exigé (${formatDZD(summary.expected_fee_amount_dzd)}). Justification requise.`;
+                    }
+                }
+
+                if (summary.is_imported) {
+                    fxCheck.checked = true;
+                    toggleFXFields(true);
+                } else {
+                    fxCheck.checked = false;
+                    toggleFXFields(false);
+                }
+            }
+        } catch (e) {
+            console.warn("Impossible de charger la synthèse 1.A.4:", e);
+        }
+    }
 
     openModal("modal-record-slip-payment");
 }
 
-async function executeRecordSlipPayment(e) {
+// Charge les documents de la GED pour peupler un <select>
+async function loadGEDDocsForSelect(selectId, dossierId) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Aucun document GED sélectionné --</option>';
+    if (!dossierId) return;
+
+    try {
+        const resp = await fetch(`/api/v1/dossiers/${dossierId}/ged`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const docs = data.documents || data || [];
+        docs.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d.id;
+            opt.textContent = `[${d.document_code || 'GED'}] ${d.title_fr} (${d.file_name || d.current_version || 'v1.0'})`;
+            sel.appendChild(opt);
+        });
+    } catch (e) {
+        console.warn("Erreur chargement docs GED pour select:", e);
+    }
+}
+
+// Exécution du contrôle réglementaire 1.A.4
+async function executeVerifySlip1A4(e) {
     if (e) e.preventDefault();
 
     const slipId = document.getElementById("pay-slip-id").value;
+    const dossierId = document.getElementById("pay-slip-dossier-id").value || (typeof selectedDossierId !== 'undefined' ? selectedDossierId : null);
+    const mode = document.getElementById("pay-slip-mode").value;
+    const bank = document.getElementById("pay-slip-bank").value;
     const ref = document.getElementById("pay-slip-ref").value.trim();
     const payDate = document.getElementById("pay-slip-date").value;
+    const receiptDocId = document.getElementById("pay-slip-receipt-doc").value || null;
+    const notes = document.getElementById("pay-slip-notes").value.trim();
 
-    if (!ref) {
-        alert("Le numéro de quittance ou référence de paiement est obligatoire");
+    const requiresFX = document.getElementById("pay-slip-requires-fx").checked;
+    const currency = document.getElementById("pay-slip-currency").value;
+    const curAmtStr = document.getElementById("pay-slip-currency-amount").value.trim();
+    const fxRateStr = document.getElementById("pay-slip-fx-rate").value.trim();
+    const fxDate = document.getElementById("pay-slip-fx-date").value;
+    const fxRef = document.getElementById("pay-slip-fx-ref").value.trim();
+    const fxDocId = document.getElementById("pay-slip-fx-doc").value || null;
+
+    if (!ref || !payDate) {
+        alert("La référence de quittance/avis bancaire et la date de paiement sont obligatoires.");
         return;
     }
 
+    const payload = {
+        bank_name: bank,
+        payment_mode: mode,
+        bank_receipt_ref: ref,
+        bank_receipt_date: payDate,
+        receipt_document_id: receiptDocId,
+        currency: currency,
+        requires_fx_attestation: requiresFX,
+        verification_notes: notes
+    };
+
+    if (curAmtStr) {
+        payload.currency_amount = parseFloat(curAmtStr);
+    }
+    if (requiresFX) {
+        if (!fxRateStr || !fxRef || !fxDate) {
+            alert("Pour un dossier avec change en devises, le cours officiel BA, la référence de l'attestation et la date sont obligatoires.");
+            return;
+        }
+        payload.fx_rate = parseFloat(fxRateStr);
+        payload.fx_rate_date = fxDate;
+        payload.fx_attestation_ref = fxRef;
+        payload.fx_attestation_doc_id = fxDocId;
+    }
+
     try {
-        const resp = await fetch(`/api/v1/fees/slips/${slipId}/status`, {
-            method: 'PUT',
+        const resp = await fetch(`/api/v1/dossiers/${dossierId}/fees/slips/${slipId}/verify-1a4`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                status: 'paye',
-                payment_reference: ref,
-                paid_at: payDate
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!resp.ok) {
@@ -169,20 +277,30 @@ async function executeRecordSlipPayment(e) {
             throw new Error(err.error || `Erreur HTTP ${resp.status}`);
         }
 
+        const data = await resp.json();
         closeModal("modal-record-slip-payment");
 
-        if (typeof showToast === 'function') {
-            showToast("Quittance de versement Trésor enregistrée avec succès");
+        if (data.slip && data.slip.verification_status === 'conforme') {
+            if (typeof showToast === 'function') {
+                showToast("✅ Conformité 1.A.4 validée et scellée avec succès !");
+            } else {
+                alert("Conformité 1.A.4 validée et scellée avec succès !");
+            }
         } else {
-            alert("Quittance de versement Trésor enregistrée avec succès");
+            alert("Attention : Enregistrement effectué mais des non-conformités subsistent (vérifiez l'attestation BA ou la concordance du montant).");
         }
 
-        if (typeof selectedDossierId !== 'undefined' && selectedDossierId && typeof selectDossier === 'function') {
-            selectDossier(selectedDossierId);
+        if (dossierId && typeof selectDossier === 'function') {
+            selectDossier(dossierId);
         }
     } catch (err) {
-        alert("Erreur lors de l'enregistrement de la quittance: " + err.message);
+        alert("Erreur lors de la vérification 1.A.4: " + err.message);
     }
+}
+
+// Fonction de rétrocompatibilité
+function executeRecordSlipPayment(e) {
+    return executeVerifySlip1A4(e);
 }
 
 // Ouverture de la modale d'administration des barèmes officiels

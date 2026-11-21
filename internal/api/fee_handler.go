@@ -586,6 +586,150 @@ func (h *FeeHandler) GetPaymentSlipPrintHTML(w http.ResponseWriter, r *http.Requ
 	w.Write([]byte(html))
 }
 
+// VerifyPaymentSlip1A4 applique le contrôle officiel 1.A.4 sur un bordereau (quittance, concordance, change BA)
+func (h *FeeHandler) VerifyPaymentSlip1A4(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID := chi.URLParam(r, "id")
+	slipID := chi.URLParam(r, "slipId")
+	if dossierID == "" || slipID == "" {
+		writeJSONError(w, http.StatusBadRequest, "Identifiants dossier et bordereau requis")
+		return
+	}
+
+	// Contrôle SoD : la validation financière 1.A.4 est réservée aux profils réglementaires et DT
+	normRole := strings.ToLower(user.Role)
+	canVerify := user.HasPermission(string(domain.PermDocApprovePDT)) ||
+		user.HasPermission(string(domain.PermDocCheckReview)) ||
+		normRole == "directeur_technique" ||
+		normRole == "pharmacien_responsable" ||
+		normRole == "responsable_reglementaire" ||
+		normRole == "admin"
+	if !canVerify {
+		writeJSONError(w, http.StatusForbidden, "Ségrégation des tâches : seul le Responsable Réglementaire ou le Pharmacien DT peut viser la conformité financière 1.A.4")
+		return
+	}
+
+	var req domain.VerifyPaymentSlip1A4Request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	req.BankName = strings.TrimSpace(req.BankName)
+	req.BankReceiptRef = strings.TrimSpace(req.BankReceiptRef)
+	req.BankReceiptDate = strings.TrimSpace(req.BankReceiptDate)
+	if req.BankReceiptRef == "" || req.BankReceiptDate == "" {
+		writeJSONError(w, http.StatusBadRequest, "La référence de quittance/avis bancaire et la date de paiement sont obligatoires")
+		return
+	}
+
+	dossUUID, err := uuid.Parse(dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant dossier invalide")
+		return
+	}
+
+	// Récupérer le dossier pour connaître le type de procédure
+	dossier, err := h.dossierRepo.GetDossierByID(r.Context(), user.OrganizationID, dossUUID)
+	if err != nil {
+		writeJSONError(w, http.StatusNotFound, "Dossier réglementaire introuvable")
+		return
+	}
+
+	isImported := (dossier.ProcedureCode == "NI" || dossier.ProcedureCode == "RI" || dossier.ProcedureCode == "MI" || dossier.ProcedureCode == "dm_importe")
+
+	// Récupérer le barème légal attendu
+	expectedAmt := 150000.00 // Par défaut générique local
+	sched, err := h.feeRepo.GetFeeScheduleForProcedure(r.Context(), string(dossier.ProcedureCode), time.Now())
+	if err == nil && sched != nil {
+		expectedAmt = sched.AmountDZD
+	} else if isImported {
+		expectedAmt = 250000.00
+	}
+
+	verifierName := strings.TrimSpace(user.FirstName + " " + user.LastName)
+	if verifierName == "" {
+		verifierName = user.Email
+	}
+
+	updatedSlip, err := h.feeRepo.VerifyPaymentSlip1A4(
+		r.Context(),
+		user.OrganizationID.String(),
+		slipID,
+		user.UserID.String(),
+		verifierName,
+		req,
+		expectedAmt,
+		isImported,
+	)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur vérification 1.A.4: %v", err))
+		return
+	}
+
+	// Audit Trail ALCOA+
+	if h.auditService != nil {
+		h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         "FEE_VERIFY_1A4",
+			EntityType:     "anpp_payment_slips",
+			EntityID:       slipID,
+			Details: map[string]any{
+				"dossier_id":            dossierID,
+				"dossier_code":          dossier.DossierCode,
+				"slip_number":           updatedSlip.SlipNumber,
+				"amount_dzd":            updatedSlip.AmountDZD,
+				"expected_amount_dzd":   expectedAmt,
+				"bank_name":             req.BankName,
+				"bank_receipt_ref":      req.BankReceiptRef,
+				"verification_status":   updatedSlip.VerificationStatus,
+				"amount_concordance_ok": updatedSlip.AmountConcordanceOK,
+				"requires_fx":           updatedSlip.RequiresFXAttestation,
+				"fx_rate":               updatedSlip.FXRate,
+			},
+		})
+	}
+
+	summary, _ := h.feeRepo.GetSection1A4Summary(r.Context(), user.OrganizationID.String(), dossierID)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"message": "Contrôle réglementaire 1.A.4 consigné avec succès",
+		"slip":    updatedSlip,
+		"summary": summary,
+	})
+}
+
+// GetSection1A4Summary retourne l'analyse de conformité financière pour la section 1.A.4
+func (h *FeeHandler) GetSection1A4Summary(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID := chi.URLParam(r, "id")
+	if dossierID == "" {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant dossier requis")
+		return
+	}
+
+	summary, err := h.feeRepo.GetSection1A4Summary(r.Context(), user.OrganizationID.String(), dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur récupération synthèse 1.A.4: %v", err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, summary)
+}
+
 func escapeHTMLStr(s string) string {
 	s = strings.ReplaceAll(s, "&", "&amp;")
 	s = strings.ReplaceAll(s, "<", "&lt;")
