@@ -374,9 +374,9 @@ func main() {
 
 			// Settings Réglementaires, Institutionnels & Barèmes Découplés par Tenant (Jalon 2.3)
 			if settingsHandler != nil {
-				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/settings/regulatory", settingsHandler.ListTenantRegulatorySettings)
-				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Get("/api/v1/admin/settings/regulatory/{key}/history", settingsHandler.GetTenantSettingHistory)
-				protected.With(api.RequirePermission(auditService, domain.PermUserManage)).Put("/api/v1/admin/settings/regulatory/{key}", settingsHandler.UpdateTenantRegulatorySetting)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermUserManage, domain.PermDocApprovePDT, domain.PermRefEdit)).Get("/api/v1/admin/settings/regulatory", settingsHandler.ListTenantRegulatorySettings)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermUserManage, domain.PermDocApprovePDT, domain.PermRefEdit)).Get("/api/v1/admin/settings/regulatory/{key}/history", settingsHandler.GetTenantSettingHistory)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermUserManage, domain.PermDocApprovePDT, domain.PermRefEdit)).Put("/api/v1/admin/settings/regulatory/{key}", settingsHandler.UpdateTenantRegulatorySetting)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/admin/settings/regulatory/{key}/approve", settingsHandler.ApproveTenantRegulatorySetting)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/settings/regulatory", settingsHandler.ListTenantRegulatorySettings)
 			}

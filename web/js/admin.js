@@ -51,34 +51,48 @@ const RBAC_PERMS_LIST = [
 function renderAdminTree() {
     const container = document.getElementById("tree-root");
     if (!container) return;
+    const canManageUsers = typeof hasPermission === 'function' && hasPermission('USER_MANAGE');
     const usersCount = adminUsers.length > 0 ? `${adminUsers.length} actifs` : '9 actifs';
-    container.innerHTML = `
-        <div class="tree-node ${currentAdminSection === 'users' ? 'selected' : ''}" onclick="loadAdminSection('users')">
-            <span class="chevron">👥</span>
-            <span>Collaborateurs & Rôles</span>
-            <span class="count-badge ok">${usersCount}</span>
-        </div>
-        <div class="tree-node ${currentAdminSection === 'matrix' ? 'selected' : ''}" onclick="loadAdminSection('matrix')">
-            <span class="chevron">🔐</span>
-            <span>Matrice 14 Permissions</span>
-            <span class="count-badge ok">Tableau BPF</span>
-        </div>
-        <div class="tree-node ${currentAdminSection === 'policies' ? 'selected' : ''}" onclick="loadAdminSection('policies')">
-            <span class="chevron">🛡️</span>
-            <span>Règles SoD & Zero-Trust</span>
-            <span class="count-badge req">4 Politiques</span>
-        </div>
+
+    let html = '';
+    if (canManageUsers) {
+        html += `
+            <div class="tree-node ${currentAdminSection === 'users' ? 'selected' : ''}" onclick="loadAdminSection('users')">
+                <span class="chevron">👥</span>
+                <span>Collaborateurs & Rôles</span>
+                <span class="count-badge ok">${usersCount}</span>
+            </div>
+            <div class="tree-node ${currentAdminSection === 'matrix' ? 'selected' : ''}" onclick="loadAdminSection('matrix')">
+                <span class="chevron">🔐</span>
+                <span>Matrice 14 Permissions</span>
+                <span class="count-badge ok">Tableau BPF</span>
+            </div>
+            <div class="tree-node ${currentAdminSection === 'policies' ? 'selected' : ''}" onclick="loadAdminSection('policies')">
+                <span class="chevron">🛡️</span>
+                <span>Règles SoD & Zero-Trust</span>
+                <span class="count-badge req">4 Politiques</span>
+            </div>
+        `;
+    }
+
+    html += `
         <div class="tree-node ${currentAdminSection === 'settings' ? 'selected' : ''}" onclick="loadAdminSection('settings')">
             <span class="chevron">⚙️</span>
             <span>Paramètres Réglementaires & Redevances</span>
             <span class="count-badge ok">ALCOA+</span>
         </div>
     `;
+    container.innerHTML = html;
 }
 
 // Chargement principal de la section administration
 async function loadAdminSection(section) {
-    currentAdminSection = section || 'users';
+    const canManageUsers = typeof hasPermission === 'function' && hasPermission('USER_MANAGE');
+    if (!canManageUsers) {
+        currentAdminSection = 'settings';
+    } else {
+        currentAdminSection = section || currentAdminSection || 'users';
+    }
     renderAdminTree();
 
     if (window.innerWidth < 768) {
@@ -93,6 +107,13 @@ async function loadAdminSection(section) {
     if (rootEl) rootEl.innerText = "ADMINISTRATION";
     if (secEl) secEl.innerText = "Habilitations_RBAC";
 
+    if (currentAdminSection === 'settings') {
+        if (prodEl) prodEl.innerText = "Paramètres Réglementaires";
+        if (modEl) modEl.innerText = "Paramètres & Redevances";
+        await renderAdminSettingsView();
+        return;
+    }
+
     if (currentAdminSection === 'users') {
         if (prodEl) prodEl.innerText = "Collaborateurs";
         if (modEl) modEl.innerText = "Gestion des Profils";
@@ -102,9 +123,6 @@ async function loadAdminSection(section) {
     } else if (currentAdminSection === 'policies') {
         if (prodEl) prodEl.innerText = "Garde-Fous PSSI";
         if (modEl) modEl.innerText = "SoD & Zero-Trust BPF";
-    } else if (currentAdminSection === 'settings') {
-        if (prodEl) prodEl.innerText = "Paramètres Réglementaires";
-        if (modEl) modEl.innerText = "Paramètres & Redevances";
     }
 
     const tbody = document.getElementById("doc-tbody");
