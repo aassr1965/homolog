@@ -1093,10 +1093,121 @@
             }
         }
 
-        // Horloge UTC
-        setInterval(() => {
-            document.getElementById("clock-utc").innerText = new Date().toUTCString().split(" ")[4];
-        }, 1000);
+        // ==============================================================================
+        // GESTION DYNAMIQUE DU FUSEAU HORAIRE & HORLOGE RÉGLEMENTAIRE
+        // ==============================================================================
+        let appTimezone = localStorage.getItem('homolog_timezone') || 'Africa/Algiers';
+
+        function getTimezoneDisplayName(tz) {
+            if (tz === 'Africa/Algiers') return 'UTC+1 (Alger)';
+            if (tz === 'UTC') return 'UTC';
+            if (tz === 'LOCAL') {
+                const offsetMin = -new Date().getTimezoneOffset();
+                const sign = offsetMin >= 0 ? '+' : '-';
+                const h = Math.floor(Math.abs(offsetMin) / 60);
+                return `Local (UTC${sign}${h})`;
+            }
+            if (tz === 'Europe/Paris') return 'Paris';
+            if (tz === 'Asia/Riyadh') return 'Riyad (UTC+3)';
+            return tz.split('/')[1] || tz;
+        }
+
+        function updateClock() {
+            const clockEl = document.getElementById("clock-utc");
+            const badgeEl = document.getElementById("clock-tz-badge");
+            const labelEl = document.getElementById("clock-label");
+            if (!clockEl) return;
+
+            const now = new Date();
+            let timeStr = "";
+
+            try {
+                if (appTimezone === 'UTC') {
+                    timeStr = now.toUTCString().split(" ")[4];
+                    if (labelEl) labelEl.innerText = "Heure UTC :";
+                } else if (appTimezone === 'LOCAL') {
+                    timeStr = now.toLocaleTimeString('fr-FR', { hour12: false });
+                    if (labelEl) labelEl.innerText = "Heure Locale :";
+                } else {
+                    timeStr = now.toLocaleTimeString('fr-FR', { timeZone: appTimezone, hour12: false });
+                    if (labelEl) labelEl.innerText = "Heure :";
+                }
+            } catch(e) {
+                timeStr = now.toLocaleTimeString('fr-FR', { hour12: false });
+            }
+
+            clockEl.innerText = timeStr;
+            if (badgeEl) badgeEl.innerText = getTimezoneDisplayName(appTimezone);
+
+            // Mettre à jour l'aperçu dans le modal s'il est ouvert
+            const previewEl = document.getElementById("tz-current-time-preview");
+            if (previewEl) {
+                previewEl.innerText = `Heure affichée : ${timeStr} • ${getTimezoneDisplayName(appTimezone)}`;
+            }
+        }
+
+        function openTimezoneModal() {
+            const radios = document.querySelectorAll('input[name="app-tz-radio"]');
+            radios.forEach(r => {
+                r.checked = (r.value === appTimezone);
+                const card = r.closest('.tz-option-card');
+                if (card) {
+                    if (r.checked) {
+                        card.style.borderColor = 'var(--accent-blue)';
+                        card.style.background = 'rgba(14,165,233,0.06)';
+                    } else {
+                        card.style.borderColor = 'var(--border-color)';
+                        card.style.background = 'transparent';
+                    }
+                }
+            });
+
+            const localDesc = document.getElementById("tz-local-detected-desc");
+            if (localDesc) {
+                try {
+                    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    const offsetMin = -new Date().getTimezoneOffset();
+                    const sign = offsetMin >= 0 ? '+' : '-';
+                    const h = Math.floor(Math.abs(offsetMin) / 60);
+                    localDesc.innerText = `Détecté : ${detected} (UTC${sign}${h})`;
+                } catch(e) {}
+            }
+
+            if (typeof openModal === 'function') {
+                openModal('modal-timezone-picker');
+            }
+        }
+
+        function setTimezonePreference(tz) {
+            appTimezone = tz;
+            localStorage.setItem('homolog_timezone', tz);
+            updateClock();
+
+            const radios = document.querySelectorAll('input[name="app-tz-radio"]');
+            radios.forEach(r => {
+                const card = r.closest('.tz-option-card');
+                if (card) {
+                    if (r.value === tz) {
+                        card.style.borderColor = 'var(--accent-blue)';
+                        card.style.background = 'rgba(14,165,233,0.06)';
+                    } else {
+                        card.style.borderColor = 'var(--border-color)';
+                        card.style.background = 'transparent';
+                    }
+                }
+            });
+
+            if (typeof showToast === 'function') {
+                showToast(`Fuseau horaire réglé sur ${getTimezoneDisplayName(tz)}`, 'success', 2500);
+            }
+        }
+
+        window.openTimezoneModal = openTimezoneModal;
+        window.setTimezonePreference = setTimezonePreference;
+
+        // Lancement immédiat puis rafraîchissement chaque seconde
+        updateClock();
+        setInterval(updateClock, 1000);
 
         // Initialisation des splitters glissants
         initSplitters();
