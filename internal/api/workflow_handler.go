@@ -889,7 +889,7 @@ func (h *WorkflowHandler) GetParapheurPendingItems(w http.ResponseWriter, r *htt
 			writeJSONError(w, http.StatusForbidden, "Accès restreint au Pharmacien DT titulaire ou à un Pharmacien Assistant titulaire d'un mandat d'intérim actif (Décret 21-82 Art. 24)")
 			return
 		}
-	} else if normRole != "pharmacien_responsable" && normRole != "directeur_technique" && normRole != "admin" && normRole != "admin_laboratoire" {
+	} else if normRole != "pharmacien_responsable" && normRole != "directeur_technique" && !user.HasPermission("DOC_APPROVE_PDT") {
 		writeJSONError(w, http.StatusForbidden, "Accès restreint au Pharmacien Directeur Technique (1.A.7)")
 		return
 	}
@@ -928,7 +928,7 @@ func (h *WorkflowHandler) BatchApproveSections(w http.ResponseWriter, r *http.Re
 			writeJSONError(w, http.StatusForbidden, "Garde-fou BPF & Décret 21-82 : Aucun mandat d'intérim actif ou notifié au MIPH pour ce Pharmacien Assistant")
 			return
 		}
-	} else if normRole != "pharmacien_responsable" && normRole != "directeur_technique" && normRole != "admin" && normRole != "admin_laboratoire" {
+	} else if normRole != "pharmacien_responsable" && normRole != "directeur_technique" && !user.HasPermission("DOC_APPROVE_PDT") {
 		writeJSONError(w, http.StatusForbidden, "Garde-fou BPF : Seul le Pharmacien Directeur Technique titulaire (1.A.7) ou son Pharmacien Assistant sous mandat d'intérim (Décret 21-82) est habilité à apposer ce visa légal")
 		return
 	}
@@ -1077,8 +1077,8 @@ func (h *WorkflowHandler) CreateDTDelegation(w http.ResponseWriter, r *http.Requ
 	}
 
 	normRole := strings.ToLower(user.Role)
-	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" && normRole != "admin" && normRole != "admin_laboratoire" {
-		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire ou l'administrateur peut déléguer ses fonctions")
+	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire peut déléguer ses fonctions")
 		return
 	}
 
@@ -1147,8 +1147,8 @@ func (h *WorkflowHandler) RevokeDTDelegation(w http.ResponseWriter, r *http.Requ
 	}
 
 	normRole := strings.ToLower(user.Role)
-	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" && normRole != "admin" && normRole != "admin_laboratoire" {
-		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire ou l'administrateur peut révoquer un mandat")
+	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire peut révoquer un mandat")
 		return
 	}
 
