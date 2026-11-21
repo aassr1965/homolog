@@ -730,6 +730,181 @@ func (h *FeeHandler) GetSection1A4Summary(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, summary)
 }
 
+// VerifyPreSubmission1A5 enregistre et valide la décision préalable et les frais de pré-soumission ANPP
+func (h *FeeHandler) VerifyPreSubmission1A5(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID := chi.URLParam(r, "id")
+	if dossierID == "" {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant dossier requis")
+		return
+	}
+
+	// Contrôle SoD
+	normRole := strings.ToLower(user.Role)
+	canVerify := user.HasPermission(string(domain.PermDocApprovePDT)) ||
+		user.HasPermission(string(domain.PermDocCheckReview)) ||
+		normRole == "directeur_technique" ||
+		normRole == "pharmacien_responsable" ||
+		normRole == "responsable_reglementaire" ||
+		normRole == "admin"
+	if !canVerify {
+		writeJSONError(w, http.StatusForbidden, "Ségrégation des tâches : seul le Responsable Réglementaire ou le Pharmacien DT peut viser la pré-soumission 1.A.5")
+		return
+	}
+
+	var req domain.VerifyPreSubmission1A5Request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	req.ANPPReference = strings.TrimSpace(req.ANPPReference)
+	req.SlipReference = strings.TrimSpace(req.SlipReference)
+	req.ANPPNotificationDate = strings.TrimSpace(req.ANPPNotificationDate)
+	req.PaymentDate = strings.TrimSpace(req.PaymentDate)
+
+	verifierName := strings.TrimSpace(user.FirstName + " " + user.LastName)
+	if verifierName == "" {
+		verifierName = user.Email
+	}
+
+	preSub, err := h.feeRepo.VerifyPreSubmission1A5(
+		r.Context(),
+		user.OrganizationID.String(),
+		dossierID,
+		user.UserID.String(),
+		verifierName,
+		req,
+	)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur enregistrement pré-soumission 1.A.5: %v", err))
+		return
+	}
+
+	// Audit Trail ALCOA+
+	if h.auditService != nil {
+		h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         "FEE_VERIFY_1A5",
+			EntityType:     "anpp_pre_submissions",
+			EntityID:       preSub.ID,
+			Details: map[string]any{
+				"dossier_id":           dossierID,
+				"anpp_reference":       req.ANPPReference,
+				"decision_type":        preSub.DecisionType,
+				"fee_amount_dzd":       preSub.FeeAmountDZD,
+				"slip_reference":       preSub.SlipReference,
+				"verification_status":  preSub.VerificationStatus,
+			},
+		})
+	}
+
+	summary, _ := h.feeRepo.GetSection1A5Summary(r.Context(), user.OrganizationID.String(), dossierID)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"message":        "Accord et redevance de pré-soumission enregistrés avec succès",
+		"pre_submission": preSub,
+		"summary":        summary,
+	})
+}
+
+// GetSection1A5Summary retourne l'analyse de conformité pour la section 1.A.5
+func (h *FeeHandler) GetSection1A5Summary(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID := chi.URLParam(r, "id")
+	if dossierID == "" {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant dossier requis")
+		return
+	}
+
+	summary, err := h.feeRepo.GetSection1A5Summary(r.Context(), user.OrganizationID.String(), dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur récupération synthèse 1.A.5: %v", err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, summary)
+}
+
+// GetCostConsolidationDashboard retourne la synthèse consolidée des dépenses réglementaires
+func (h *FeeHandler) GetCostConsolidationDashboard(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	summary, err := h.feeRepo.GetCostConsolidationSummary(r.Context(), user.OrganizationID.String())
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur consolidation coûts: %v", err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, summary)
+}
+
+// ExportCostConsolidationCSV génère un export CSV officiel pour la comptabilité et la DAF
+func (h *FeeHandler) ExportCostConsolidationCSV(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	summary, err := h.feeRepo.GetCostConsolidationSummary(r.Context(), user.OrganizationID.String())
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, fmt.Sprintf("Erreur export coûts: %v", err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"sanad_couts_reglementaires_consolides.csv\"")
+
+	// UTF-8 BOM
+	w.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	b := &strings.Builder{}
+	b.WriteString("# SANAD PHARMA — ÉTAT RÉCAPITULATIF CONSOLIDÉ DES REDEVANCES ANPP (ALCOA+)\n")
+	b.WriteString(fmt.Sprintf("# Établissement : %s\n", summary.OrganizationName))
+	b.WriteString(fmt.Sprintf("# Date d'extraction : %s\n", time.Now().Format("02/01/2006 15:04:05")))
+	b.WriteString(fmt.Sprintf("# Total Émis : %.2f DZD | Total Acquitté : %.2f DZD | En Attente : %.2f DZD\n\n",
+		summary.TotalFeesEmittedDZD, summary.TotalFeesPaidDZD, summary.TotalFeesPendingDZD))
+
+	b.WriteString("SECTION 1 : COÛTS RÉGLEMENTAIRES PAR PRODUIT & DOSSIER\n")
+	b.WriteString("Produit;Type;Dossier;Procédure;Pré-soumission (1.A.5) DZD;Dépôt Initial (1.A.4) DZD;Analyses LNCM (BV2) DZD;Variations DZD;Total Engagé DZD;Total Acquitté DZD;Statut Financier\n")
+
+	for _, p := range summary.ProductBreakdown {
+		b.WriteString(fmt.Sprintf("%s;%s;%s;%s;%.2f;%.2f;%.2f;%.2f;%.2f;%.2f;%s\n",
+			p.ProductName, p.ProductType, p.DossierCode, p.ProcedureCode,
+			p.PreSubmissionDZD, p.InitialDepositDZD, p.ComplementaryDZD, p.VariationsDZD,
+			p.TotalCommittedDZD, p.TotalPaidDZD, p.FinancialStatus))
+	}
+
+	b.WriteString("\nSECTION 2 : CONSOLIDATION PAR EXERCICE ANNUEL\n")
+	b.WriteString("Année;Nombre de Dossiers;Total Émis DZD;Total Acquitté DZD;Reste à Décaisser DZD;Pré-soumission DZD;Dépôt Initial DZD;Analyses LNCM DZD\n")
+
+	for _, y := range summary.YearlyBreakdown {
+		b.WriteString(fmt.Sprintf("%d;%d;%.2f;%.2f;%.2f;%.2f;%.2f;%.2f\n",
+			y.Year, y.DossierCount, y.TotalEmittedDZD, y.TotalPaidDZD, y.TotalPendingDZD,
+			y.PreSubmissionDZD, y.InitialDepositDZD, y.ComplementaryDZD))
+	}
+
+	w.Write([]byte(b.String()))
+}
+
 func escapeHTMLStr(s string) string {
 	s = strings.ReplaceAll(s, "&", "&amp;")
 	s = strings.ReplaceAll(s, "<", "&lt;")

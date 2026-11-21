@@ -588,3 +588,415 @@ func (r *FeeRepository) GetSection1A4Summary(ctx context.Context, orgID, dossier
 
 	return summary, nil
 }
+
+// GetPreSubmissionByDossier retourne l'enregistrement de pré-soumission pour un dossier
+func (r *FeeRepository) GetPreSubmissionByDossier(ctx context.Context, orgID, dossierID string) (*domain.ANPPPreSubmission, error) {
+	query := `
+		SELECT 
+			p.id, p.organization_id, p.dossier_id, p.anpp_reference, p.anpp_notification_date,
+			p.decision_type, p.fee_amount_dzd, p.slip_reference, p.payment_date,
+			p.response_document_id, COALESCE(doc_resp.title_fr, ''),
+			p.payment_document_id, COALESCE(doc_pay.title_fr, ''),
+			p.verification_status, p.verified_by,
+			COALESCE(TRIM(CONCAT(u.first_name, ' ', u.last_name)), ''),
+			p.verified_at, COALESCE(p.verification_notes, ''),
+			p.created_at, p.updated_at
+		FROM anpp_pre_submissions p
+		LEFT JOIN ged_documents doc_resp ON doc_resp.id = p.response_document_id
+		LEFT JOIN ged_documents doc_pay ON doc_pay.id = p.payment_document_id
+		LEFT JOIN users u ON u.id = p.verified_by
+		WHERE p.dossier_id = $1 AND p.organization_id = $2
+	`
+	var p domain.ANPPPreSubmission
+	err := r.pool.QueryRow(ctx, query, dossierID, orgID).Scan(
+		&p.ID, &p.OrganizationID, &p.DossierID, &p.ANPPReference, &p.ANPPNotificationDate,
+		&p.DecisionType, &p.FeeAmountDZD, &p.SlipReference, &p.PaymentDate,
+		&p.ResponseDocumentID, &p.ResponseDocumentTitle,
+		&p.PaymentDocumentID, &p.PaymentDocumentTitle,
+		&p.VerificationStatus, &p.VerifiedBy,
+		&p.VerifiedByName,
+		&p.VerifiedAt, &p.VerificationNotes,
+		&p.CreatedAt, &p.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("lecture pré-soumission échouée: %w", err)
+	}
+	return &p, nil
+}
+
+// VerifyPreSubmission1A5 enregistre et valide la conformité de l'accord et des frais de pré-soumission
+func (r *FeeRepository) VerifyPreSubmission1A5(
+	ctx context.Context,
+	orgID, dossierID, verifierID, verifierName string,
+	req domain.VerifyPreSubmission1A5Request,
+) (*domain.ANPPPreSubmission, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("début transaction 1.A.5 échouée: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Lire le dossier pour vérifier la procédure
+	var procCode string
+	err = tx.QueryRow(ctx, `
+		SELECT COALESCE(procedure_code, 'NI')
+		FROM dossiers
+		WHERE id = $1 AND organization_id = $2
+	`, dossierID, orgID).Scan(&procCode)
+	if err != nil {
+		return nil, fmt.Errorf("dossier introuvable: %w", err)
+	}
+
+	isPreSubRequired := (procCode == "NI" || procCode == "NF" || procCode == "MI" || procCode == "MF")
+
+	// Parse dates
+	notifDate, err := time.Parse("2006-01-02", req.ANPPNotificationDate)
+	if err != nil {
+		notifDate = time.Now()
+	}
+	payDate, err := time.Parse("2006-01-02", req.PaymentDate)
+	if err != nil {
+		payDate = time.Now()
+	}
+
+	feeAmount := req.FeeAmountDZD
+	if feeAmount <= 0 {
+		feeAmount = 50000.00
+	}
+
+	decType := req.DecisionType
+	if decType == "" {
+		decType = "favorable"
+	}
+
+	// Déterminer la conformité
+	verifStatus := "conforme"
+	if isPreSubRequired {
+		if req.ANPPReference == "" || req.SlipReference == "" || req.ResponseDocumentID == nil || req.PaymentDocumentID == nil || decType != "favorable" {
+			verifStatus = "non_conforme"
+		}
+	}
+
+	now := time.Now().UTC()
+
+	// Insérer ou mettre à jour dans anpp_pre_submissions
+	upsertQuery := `
+		INSERT INTO anpp_pre_submissions (
+			organization_id, dossier_id, anpp_reference, anpp_notification_date,
+			decision_type, fee_amount_dzd, slip_reference, payment_date,
+			response_document_id, payment_document_id, verification_status,
+			verified_by, verified_at, verification_notes, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $15)
+		ON CONFLICT (dossier_id) DO UPDATE SET
+			anpp_reference = EXCLUDED.anpp_reference,
+			anpp_notification_date = EXCLUDED.anpp_notification_date,
+			decision_type = EXCLUDED.decision_type,
+			fee_amount_dzd = EXCLUDED.fee_amount_dzd,
+			slip_reference = EXCLUDED.slip_reference,
+			payment_date = EXCLUDED.payment_date,
+			response_document_id = EXCLUDED.response_document_id,
+			payment_document_id = EXCLUDED.payment_document_id,
+			verification_status = EXCLUDED.verification_status,
+			verified_by = EXCLUDED.verified_by,
+			verified_at = EXCLUDED.verified_at,
+			verification_notes = EXCLUDED.verification_notes,
+			updated_at = EXCLUDED.updated_at
+	`
+	_, err = tx.Exec(ctx, upsertQuery,
+		orgID, dossierID, req.ANPPReference, notifDate,
+		decType, feeAmount, req.SlipReference, payDate,
+		req.ResponseDocumentID, req.PaymentDocumentID, verifStatus,
+		verifierID, now, req.VerificationNotes, now,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("enregistrement pré-soumission échoué: %w", err)
+	}
+
+	// Si conforme, mettre à jour la checklist 1.A.5
+	if verifStatus == "conforme" && req.ResponseDocumentID != nil {
+		notes := fmt.Sprintf("Accord de pré-soumission ANPP validé le %s : Réf %s (décision %s). Redevance acquittée (%.2f DZD, réf %s). Visa : %s",
+			now.Format("02/01/2006"), req.ANPPReference, decType, feeAmount, req.SlipReference, verifierName)
+		updateChecklistQuery := `
+			UPDATE dossier_checklist_items
+			SET 
+				ged_document_id = $1,
+				status = 'valide_qualite',
+				validation_notes = $2,
+				updated_at = $3
+			WHERE dossier_id = $4 AND item_code = '1.A.5'
+		`
+		_, err = tx.Exec(ctx, updateChecklistQuery, req.ResponseDocumentID, notes, now, dossierID)
+		if err != nil {
+			return nil, fmt.Errorf("mise à jour checklist 1.A.5 échouée: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit 1.A.5 échoué: %w", err)
+	}
+
+	return r.GetPreSubmissionByDossier(ctx, orgID, dossierID)
+}
+
+// GetSection1A5Summary compile l'état de conformité de l'accord et des frais de pré-soumission
+func (r *FeeRepository) GetSection1A5Summary(ctx context.Context, orgID, dossierID string) (*domain.Section1A5Summary, error) {
+	// 1. Lire le dossier
+	var dossierCode, procCode string
+	err := r.pool.QueryRow(ctx, `
+		SELECT dossier_code, COALESCE(procedure_code, 'NI')
+		FROM dossiers
+		WHERE id = $1 AND organization_id = $2
+	`, dossierID, orgID).Scan(&dossierCode, &procCode)
+	if err != nil {
+		return nil, fmt.Errorf("dossier introuvable: %w", err)
+	}
+
+	isPreSubRequired := (procCode == "NI" || procCode == "NF" || procCode == "MI" || procCode == "MF")
+
+	// 2. Lire le statut de la section 1.A.5 dans dossier_checklist_items
+	var itemStatus string
+	_ = r.pool.QueryRow(ctx, `
+		SELECT status FROM dossier_checklist_items
+		WHERE dossier_id = $1 AND item_code = '1.A.5'
+	`, dossierID).Scan(&itemStatus)
+	if itemStatus == "" {
+		if !isPreSubRequired {
+			itemStatus = "non_applicable"
+		} else {
+			itemStatus = "manquant"
+		}
+	}
+
+	preSub, _ := r.GetPreSubmissionByDossier(ctx, orgID, dossierID)
+
+	summary := &domain.Section1A5Summary{
+		DossierID:               dossierID,
+		DossierCode:             dossierCode,
+		ProcedureCode:           procCode,
+		IsPreSubmissionRequired: isPreSubRequired,
+		Section1A5Status:        itemStatus,
+		PreSubmission:           preSub,
+		ComplianceChecklist:     make([]string, 0),
+		BlockingIssues:          make([]string, 0),
+	}
+
+	if !isPreSubRequired {
+		summary.OverallCompliant = true
+		summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Procédure %s : Accord de pré-soumission non applicable (Décret 20-325)", procCode))
+		return summary, nil
+	}
+
+	if preSub == nil {
+		summary.BlockingIssues = append(summary.BlockingIssues, "Accord formel et frais de pré-soumission non consignés.")
+		return summary, nil
+	}
+
+	if preSub.ANPPReference != "" && preSub.DecisionType == "favorable" {
+		summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Accord préalable favorable de l'ANPP : réf %s du %s", preSub.ANPPReference, preSub.ANPPNotificationDate.Format("02/01/2006")))
+	} else {
+		summary.BlockingIssues = append(summary.BlockingIssues, "Accord formel préalable de l'ANPP non favorable ou référence manquante.")
+	}
+
+	if preSub.SlipReference != "" && preSub.PaymentDocumentID != nil {
+		summary.ComplianceChecklist = append(summary.ComplianceChecklist, fmt.Sprintf("Quittance redevance de pré-soumission rattachée : réf %s (%.2f DZD)", preSub.SlipReference, preSub.FeeAmountDZD))
+	} else {
+		summary.BlockingIssues = append(summary.BlockingIssues, "Justificatif de versement de la redevance de pré-soumission non rattaché.")
+	}
+
+	if preSub.ResponseDocumentID != nil {
+		summary.ComplianceChecklist = append(summary.ComplianceChecklist, "Copie officielle de la réponse de l'ANPP archivée en GED.")
+	} else {
+		summary.BlockingIssues = append(summary.BlockingIssues, "Scan de la réponse formelle de l'ANPP manquant dans la GED.")
+	}
+
+	summary.OverallCompliant = (len(summary.BlockingIssues) == 0 && preSub.VerificationStatus == "conforme")
+	return summary, nil
+}
+
+// GetCostConsolidationSummary agrège l'ensemble des dépenses réglementaires par produit et par année
+func (r *FeeRepository) GetCostConsolidationSummary(ctx context.Context, orgID string) (*domain.CostConsolidationSummary, error) {
+	// 1. Lire le nom de l'organisation
+	var orgName string
+	_ = r.pool.QueryRow(ctx, "SELECT legal_name FROM organizations WHERE id = $1", orgID).Scan(&orgName)
+
+	// 2. Lire l'ensemble des dossiers avec leurs produits
+	queryDossiers := `
+		SELECT 
+			d.id, d.dossier_code, COALESCE(d.procedure_code, 'NI'),
+			COALESCE(d.product_type, 'medicament'),
+			COALESCE(p_med.id, p_dm.id, d.id),
+			COALESCE(p_med.brand_name_fr, p_dm.commercial_name_fr, d.dossier_code),
+			EXTRACT(YEAR FROM d.created_at)::int
+		FROM dossiers d
+		LEFT JOIN medicines p_med ON p_med.id = d.medicine_id
+		LEFT JOIN medical_devices p_dm ON p_dm.id = d.medical_device_id
+		WHERE d.organization_id = $1
+		ORDER BY d.created_at DESC
+	`
+	rowsD, err := r.pool.Query(ctx, queryDossiers, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("requête consolidation dossiers échouée: %w", err)
+	}
+	defer rowsD.Close()
+
+	type dossierMeta struct {
+		ID            string
+		Code          string
+		ProcedureCode string
+		ProductType   string
+		ProductID     string
+		ProductName   string
+		Year          int
+	}
+	dossiers := make([]dossierMeta, 0)
+	for rowsD.Next() {
+		var dm dossierMeta
+		if err := rowsD.Scan(&dm.ID, &dm.Code, &dm.ProcedureCode, &dm.ProductType, &dm.ProductID, &dm.ProductName, &dm.Year); err == nil {
+			dossiers = append(dossiers, dm)
+		}
+	}
+	rowsD.Close()
+
+	summary := &domain.CostConsolidationSummary{
+		OrganizationID:    orgID,
+		OrganizationName:  orgName,
+		TotalDossiers:     len(dossiers),
+		ProductBreakdown:  make([]domain.ProductCostSummary, 0),
+		YearlyBreakdown:   make([]domain.YearlyCostSummary, 0),
+		CategoryBreakdown: make([]domain.CategoryCostSummary, 0),
+	}
+
+	yearlyMap := make(map[int]*domain.YearlyCostSummary)
+	catTotals := map[string]float64{
+		"pre_submission":     0,
+		"initial_deposit":    0,
+		"complementary_lncm": 0,
+		"variations":         0,
+		"dm":                 0,
+	}
+
+	for _, d := range dossiers {
+		var preSubAmt float64
+		_ = r.pool.QueryRow(ctx, `
+			SELECT COALESCE(fee_amount_dzd, 0)
+			FROM anpp_pre_submissions
+			WHERE dossier_id = $1 AND organization_id = $2
+		`, d.ID, orgID).Scan(&preSubAmt)
+
+		slips, _ := r.ListPaymentSlipsByDossier(ctx, orgID, d.ID)
+
+		var bv1Amt, bv2Amt, varAmt, paidAmt, commAmt float64
+		for _, s := range slips {
+			commAmt += s.AmountDZD
+			if s.Status == "paye" || s.Status == "quittance_recue" {
+				paidAmt += s.AmountDZD
+			}
+			if s.SlipType == "BV1" {
+				bv1Amt += s.AmountDZD
+			} else if s.SlipType == "BV2" {
+				bv2Amt += s.AmountDZD
+			} else {
+				varAmt += s.AmountDZD
+			}
+		}
+
+		if preSubAmt > 0 {
+			commAmt += preSubAmt
+			paidAmt += preSubAmt // Pré-soumission considérée acquittée lors de sa validation
+		}
+
+		statusFin := "en_attente"
+		if paidAmt >= commAmt && commAmt > 0 {
+			statusFin = "acquitte"
+			summary.FullySettledCount++
+		} else if paidAmt > 0 {
+			statusFin = "partiel"
+			summary.PendingSettledCount++
+		} else {
+			summary.PendingSettledCount++
+		}
+
+		prodSum := domain.ProductCostSummary{
+			ProductID:         d.ProductID,
+			ProductName:       d.ProductName,
+			ProductType:       d.ProductType,
+			DossierID:         d.ID,
+			DossierCode:       d.Code,
+			ProcedureCode:     d.ProcedureCode,
+			PreSubmissionDZD:  preSubAmt,
+			InitialDepositDZD: bv1Amt,
+			ComplementaryDZD:  bv2Amt,
+			VariationsDZD:     varAmt,
+			TotalCommittedDZD: commAmt,
+			TotalPaidDZD:      paidAmt,
+			FinancialStatus:   statusFin,
+		}
+		summary.ProductBreakdown = append(summary.ProductBreakdown, prodSum)
+
+		summary.TotalFeesEmittedDZD += commAmt
+		summary.TotalFeesPaidDZD += paidAmt
+
+		// Consolidation annuelle
+		yr := d.Year
+		if yr == 0 {
+			yr = time.Now().Year()
+		}
+		if _, ok := yearlyMap[yr]; !ok {
+			yearlyMap[yr] = &domain.YearlyCostSummary{Year: yr}
+		}
+		ys := yearlyMap[yr]
+		ys.DossierCount++
+		ys.TotalEmittedDZD += commAmt
+		ys.TotalPaidDZD += paidAmt
+		ys.TotalPendingDZD += (commAmt - paidAmt)
+		ys.PreSubmissionDZD += preSubAmt
+		ys.InitialDepositDZD += bv1Amt
+		ys.ComplementaryDZD += bv2Amt
+
+		// Catégories
+		catTotals["pre_submission"] += preSubAmt
+		catTotals["initial_deposit"] += bv1Amt
+		catTotals["complementary_lncm"] += bv2Amt
+		catTotals["variations"] += varAmt
+		if d.ProductType == "dispositif_medical" {
+			catTotals["dm"] += (bv1Amt + bv2Amt)
+		}
+	}
+
+	summary.TotalFeesPendingDZD = summary.TotalFeesEmittedDZD - summary.TotalFeesPaidDZD
+	if summary.TotalFeesPendingDZD < 0 {
+		summary.TotalFeesPendingDZD = 0
+	}
+
+	// Construire YearlyBreakdown
+	for _, ys := range yearlyMap {
+		summary.YearlyBreakdown = append(summary.YearlyBreakdown, *ys)
+	}
+
+	// Construire CategoryBreakdown
+	catLabels := map[string]string{
+		"pre_submission":     "Frais de Pré-soumission (Section 1.A.5)",
+		"initial_deposit":    "Redevances Dépôt Initial BV1 (Section 1.A.4)",
+		"complementary_lncm": "Analyses LNCM & Expertises BV2",
+		"variations":         "Redevances de Modifications & Variations",
+		"dm":                 "Homologations Dispositifs Médicaux",
+	}
+	for catKey, label := range catLabels {
+		amt := catTotals[catKey]
+		pct := 0.0
+		if summary.TotalFeesEmittedDZD > 0 {
+			pct = (amt / summary.TotalFeesEmittedDZD) * 100.0
+		}
+		summary.CategoryBreakdown = append(summary.CategoryBreakdown, domain.CategoryCostSummary{
+			Category:   catKey,
+			LabelFR:    label,
+			AmountDZD:  amt,
+			Percentage: pct,
+		})
+	}
+
+	return summary, nil
+}
