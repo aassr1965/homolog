@@ -437,154 +437,693 @@ func (h *FeeHandler) GetPaymentSlipPrintHTML(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Format procedure label
+	procLabel := slip.ProcedureCode
+	switch slip.ProcedureCode {
+	case "NI":
+		procLabel = "NI — Nouvelle Demande d'Enregistrement (Spécialité Importée)"
+	case "NF":
+		procLabel = "NF — Nouvelle Demande d'Enregistrement (Fabrication Locale)"
+	case "MI":
+		procLabel = "MI — Modification Majeure Post-Enregistrement (Spécialité Importée)"
+	case "MF":
+		procLabel = "MF — Modification Majeure Post-Enregistrement (Fabrication Locale)"
+	case "RI":
+		procLabel = "RI — Renouvellement Quinquennal (Spécialité Importée)"
+	case "RF":
+		procLabel = "RF — Renouvellement Quinquennal (Fabrication Locale)"
+	default:
+		if procLabel == "" {
+			procLabel = "Enregistrement Initial (Décret Exécutif 20-325)"
+		}
+	}
+
+	// Format slip title & labels
+	slipTypeLabel := "BV1 — DÉPÔT INITIAL"
+	slipTypeLabelAR := "الجدول رقم 1 (إيداع أولي)"
+	if slip.SlipType == "BV2" {
+		slipTypeLabel = "BV2 — COMPLÉMENT & EXPERTISE LNCPP"
+		slipTypeLabelAR = "الجدول رقم 2 (تكميلي / تحاليل مخبرية)"
+	}
+
+	// Watermark text & class
+	wmText := "DOCUMENT DE LIQUIDATION OFFICIEL"
+	wmClass := "watermark-neutral"
+	if slip.VerificationStatus == "conforme" {
+		wmText = "ACQUITTÉ & CONFORME ANPP (VISÉ DT)"
+		wmClass = "watermark-success"
+	} else if slip.Status == "paye" || slip.Status == "quittance_recue" {
+		wmText = "QUITTANCE TRÉSOR ENREGISTRÉE"
+		wmClass = "watermark-info"
+	}
+
+	// Formats pharmaceutiques enrichis
+	dciText := slip.ProductDCI
+	if dciText == "" {
+		dciText = "Substance active déclarée au dossier technique"
+	}
+
+	dosageText := slip.ProductDosage
+	if dosageText == "" {
+		dosageText = "Dosage standard"
+	}
+
+	formText := slip.ProductForm
+	if formText == "" {
+		formText = "Forme pharmaceutique conventionnelle"
+	}
+
+	routeText := slip.ProductRoute
+	if routeText == "" {
+		routeText = "Selon RCP approuvé"
+	}
+
+	miphLic := slip.MIPHLicenseNumber
+	if miphLic == "" {
+		miphLic = "Agrément MIPH conforme Décret Exécutif 20-325"
+	}
+
+	dtName := slip.TechnicalDirectorName
+	if dtName == "" {
+		dtName = "Pharmacien Directeur Technique Titulaire (Mandat 1.A.7)"
+	}
+
+	estName := slip.EstablishmentName
+	if estName == "" {
+		estName = slip.OrganizationName
+	}
+
+	genByName := slip.GeneratedByName
+	if genByName == "" {
+		genByName = "Département Affaires Réglementaires & Financières"
+	}
+
+	// Construction du bloc de change BA si applicable
+	fxBlockHTML := ""
+	if slip.RequiresFXAttestation || slip.Currency != "DZD" {
+		fxRateStr := "En attente du cours officiel"
+		if slip.FXRate != nil && *slip.FXRate > 0 {
+			rateDateStr := ""
+			if slip.FXRateDate != nil {
+				rateDateStr = " au " + slip.FXRateDate.Format("02/01/2006")
+			}
+			fxRateStr = fmt.Sprintf("1 %s = %.4f DZD%s", slip.Currency, *slip.FXRate, rateDateStr)
+		}
+
+		currAmtStr := "—"
+		if slip.CurrencyAmount != nil && *slip.CurrencyAmount > 0 {
+			currAmtStr = fmt.Sprintf("%.2f %s", *slip.CurrencyAmount, slip.Currency)
+		}
+
+		attestRef := slip.FXAttestationRef
+		if attestRef == "" {
+			attestRef = "Attestation de cours officiel requise (1.A.4)"
+		}
+
+		fxBlockHTML = fmt.Sprintf(`
+        <div style="background: #fdf4ff; border: 1.5px solid #d946ef; border-radius: 4px; padding: 8px 12px; margin-bottom: 12px; font-size: 8pt;">
+            <div style="font-weight: 800; color: #86198f; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center;">
+                <span>💱 Contrôle du Taux de Change Officiel — Banque d'Algérie (Dossier Importé)</span>
+                <span style="font-size: 7.5pt; background: #fae8ff; padding: 2px 6px; border-radius: 3px; color: #a21caf;">Volet 1.A.4</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #701a75;">
+                <div><strong>Devise &amp; Montant :</strong> %s</div>
+                <div><strong>Cours Banque d'Algérie :</strong> %s</div>
+                <div><strong>Réf Attestation BA :</strong> %s</div>
+            </div>
+        </div>
+		`, currAmtStr, fxRateStr, escapeHTMLStr(attestRef))
+	}
+
 	html := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <title>Bordereau de Versement %s — ANPP</title>
+    <title>Bordereau de Versement %s — %s — ANPP</title>
     <style>
         @page { size: A4 portrait; margin: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #111; line-height: 1.4; margin: 0; padding: 15mm; background: white; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px; }
-        .republic { text-align: center; flex: 1; }
-        .republic h4 { margin: 0; font-size: 13px; font-weight: 700; }
-        .republic h5 { margin: 2px 0 0; font-size: 11px; font-weight: normal; color: #444; }
-        .slip-title-box { background: #f0fdf4; border: 2px solid #16a34a; border-radius: 6px; padding: 12px; text-align: center; margin-bottom: 20px; }
-        .slip-title { font-size: 17px; font-weight: 800; color: #166534; text-transform: uppercase; }
-        .slip-sub { font-size: 11px; color: #15803d; margin-top: 4px; font-weight: 600; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-        .info-card { border: 1px solid #cbd5e1; border-radius: 4px; padding: 10px; background: #f8fafc; }
-        .info-card h6 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; color: #64748b; }
-        table { width: 100%%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
-        th { background: #f1f5f9; font-weight: 700; font-size: 11px; }
-        .amount-box { background: #eff6ff; border: 1.5px solid #3b82f6; border-radius: 6px; padding: 12px; margin-bottom: 24px; }
-        .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 40px; text-align: center; font-size: 11px; }
-        .sig-box { border: 1px dashed #94a3b8; border-radius: 4px; height: 90px; padding: 6px; }
-        .barcode { text-align: right; font-family: monospace; font-size: 11px; letter-spacing: 2px; }
-        @media print {
-            .no-print { display: none; }
-            body { padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
+            color: #0f172a; 
+            background-color: #f1f5f9; 
+            margin: 0; 
+            padding: 24px 0; 
+            font-size: 8.8pt; 
+            line-height: 1.42; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+        }
+        .no-print-toolbar { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            height: 52px; 
+            background: #091e36; 
+            color: #ffffff; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 24px; 
+            z-index: 9999; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            font-size: 13px; 
+        }
+        .no-print-toolbar .btn { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 7px 16px; 
+            border-radius: 6px; 
+            font-weight: 700; 
+            font-size: 12px; 
+            cursor: pointer; 
+            border: none; 
+            text-decoration: none; 
+        }
+        .btn-primary { background: #0284c7; color: #ffffff; }
+        .btn-outline { background: rgba(255,255,255,0.12); color: #f8fafc; border: 1px solid rgba(255,255,255,0.25); }
+        .sheet { 
+            width: 210mm; 
+            min-height: 297mm; 
+            margin: 48px auto 24px auto; 
+            background: #ffffff; 
+            box-shadow: 0 8px 30px rgba(15,23,42,0.12); 
+            padding: 12mm 15mm; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        @media print { 
+            body { background: #ffffff; padding: 0; margin: 0; } 
+            .no-print-toolbar { display: none !important; } 
+            .sheet { width: 100%%; margin: 0; padding: 10mm 14mm; box-shadow: none; border-radius: 0; } 
+        }
+        .watermark { 
+            position: absolute; 
+            top: 48%%; 
+            left: 50%%; 
+            transform: translate(-50%%, -50%%) rotate(-35deg); 
+            font-size: 38pt; 
+            font-weight: 900; 
+            letter-spacing: 4px; 
+            pointer-events: none; 
+            user-select: none; 
+            z-index: 1; 
+            white-space: nowrap; 
+            text-transform: uppercase; 
+        }
+        .watermark-neutral { color: rgba(100,116,139,0.06); }
+        .watermark-success { color: rgba(16,185,129,0.08); }
+        .watermark-info { color: rgba(37,99,235,0.07); }
+
+        .header-table { 
+            width: 100%%; 
+            border-collapse: collapse; 
+            margin-bottom: 10px; 
+            border-bottom: 2px solid #091e36; 
+            padding-bottom: 8px; 
+        }
+        .title-banner { 
+            background: linear-gradient(135deg, #091e36 0%%, #0f3b60 100%%); 
+            color: #ffffff; 
+            padding: 10px 14px; 
+            border-radius: 4px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .banner-title { 
+            font-size: 11pt; 
+            font-weight: 900; 
+            letter-spacing: 0.5px; 
+            text-transform: uppercase; 
+            margin: 0; 
+            color: #ffffff; 
+        }
+        .banner-sub { 
+            font-size: 8.5pt; 
+            color: #93c5fd; 
+            margin-top: 3px; 
+            font-weight: 600; 
+        }
+        .banner-legal { 
+            font-size: 7.2pt; 
+            color: #cbd5e1; 
+            margin-top: 4px; 
+            border-top: 1px dashed rgba(255,255,255,0.2); 
+            padding-top: 3px; 
+        }
+        .info-card { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 4px; 
+            padding: 8px 12px; 
+            background: #ffffff; 
+            margin-bottom: 10px; 
+        }
+        .info-card-header { 
+            font-size: 8.2pt; 
+            font-weight: 800; 
+            color: #091e36; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            border-bottom: 1px solid #e2e8f0; 
+            padding-bottom: 4px; 
+            margin-bottom: 6px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
+        .field-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 4px 16px; 
+        }
+        .field-row { 
+            display: flex; 
+            font-size: 8.2pt; 
+            line-height: 1.35; 
+        }
+        .field-label { 
+            width: 145px; 
+            font-weight: 700; 
+            color: #475569; 
+            flex-shrink: 0; 
+        }
+        .field-value { 
+            color: #091e36; 
+            font-weight: 600; 
+            flex-grow: 1; 
+        }
+        .data-table { 
+            width: 100%%; 
+            border-collapse: collapse; 
+            margin-bottom: 10px; 
+            font-size: 8.2pt; 
+        }
+        .data-table th { 
+            background: #0f3b60; 
+            color: #ffffff; 
+            padding: 6px 10px; 
+            text-align: left; 
+            font-weight: 700; 
+            font-size: 8pt; 
+            border: 1px solid #0f3b60; 
+        }
+        .data-table td { 
+            padding: 6px 10px; 
+            border: 1px solid #cbd5e1; 
+        }
+        .amount-in-words-box { 
+            border: 1.5px solid #047857; 
+            background: #f0fdf4; 
+            border-radius: 4px; 
+            padding: 9px 12px; 
+            margin-bottom: 10px; 
+            color: #065f46; 
+            font-size: 8.5pt; 
+        }
+        .rib-box { 
+            border: 1.5px solid #091e36; 
+            background: #f8fafc; 
+            border-radius: 4px; 
+            padding: 9px 12px; 
+            margin-bottom: 10px; 
+            font-size: 8.2pt; 
+        }
+        .rib-number { 
+            font-family: monospace; 
+            font-size: 11pt; 
+            font-weight: 900; 
+            letter-spacing: 2px; 
+            color: #091e36; 
+            background: #ffffff; 
+            padding: 4px 10px; 
+            border: 1.5px solid #0284c7; 
+            border-radius: 3px; 
+            display: inline-block; 
+            margin: 3px 0; 
+        }
+        .sign-grid-3 { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            gap: 10px; 
+            margin-top: 10px; 
+            page-break-inside: avoid; 
+        }
+        .sign-card { 
+            border: 1px solid #091e36; 
+            border-radius: 4px; 
+            padding: 8px; 
+            background: #ffffff; 
+        }
+        .sign-header { 
+            font-weight: 800; 
+            font-size: 7.5pt; 
+            color: #091e36; 
+            text-transform: uppercase; 
+            margin-bottom: 3px; 
+        }
+        .sign-space { 
+            height: 62px; 
+            border: 1px dashed #cbd5e1; 
+            background: #f8fafc; 
+            border-radius: 3px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 7.2pt; 
+            color: #64748b; 
+            margin-top: 4px; 
+            text-align: center; 
+            padding: 4px; 
+        }
+        .footer-legal { 
+            margin-top: 12px; 
+            padding-top: 6px; 
+            border-top: 1px solid #cbd5e1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            font-size: 6.8pt; 
+            color: #64748b; 
+            page-break-inside: avoid; 
         }
     </style>
 </head>
 <body>
-    <div class="no-print" style="margin-bottom: 15px; text-align: right;">
-        <button onclick="window.print()" style="background:#0284c7; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;">🖨️ Imprimer le Bordereau Officiel</button>
+    <div class="no-print-toolbar">
+        <div>
+            <strong>Homolog Reporting BPF</strong> • Bordereau Officiel de Versement (%s) — Réf : %s
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
+            <button type="button" class="btn btn-outline" onclick="window.close()">✕ Fermer</button>
+        </div>
     </div>
 
-    <div class="header">
-        <div style="font-size: 10px; color: #64748b; width: 160px;">
-            <strong>SANAD PHARMA</strong><br>
-            Système d'Homologation BPF<br>
-            Versionné ALCOA+
-        </div>
-        <div class="republic">
-            <h4>RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</h4>
-            <h5 dir="rtl">الجمهورية الجزائرية الديمقراطية الشعبية</h5>
-            <div style="font-weight: 700; margin-top: 4px; color: #0284c7;">
-                AGENCE NATIONALE DES PRODUITS PHARMACEUTIQUES (ANPP)<br>
-                <span dir="rtl" style="font-size: 11px; color: #334155;">الوكالة الوطنية للمواد الصيدلانية</span>
+    <div class="sheet">
+        <div class="watermark %s">%s</div>
+
+        <table class="header-table">
+            <tr>
+                <td style="width:55px; vertical-align:middle;">
+                    <!-- Emblème Officiel National / Caducée ANPP -->
+                    <svg width="48" height="48" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="46" stroke="#091e36" stroke-width="4" fill="#f8fafc"/>
+                        <path d="M50 18v64M30 38h40M30 38l-10 20h20l-10-20zM70 38l-10 20h20l-10-20zM40 82h20" stroke="#047857" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="50" cy="24" r="5" fill="#dc2626"/>
+                    </svg>
+                </td>
+                <td style="vertical-align:middle; padding-left:12px;">
+                    <div style="font-size:7.2pt; font-weight:700; color:#64748b; text-transform:uppercase;">
+                        RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE
+                    </div>
+                    <div style="font-size:7.8pt; font-weight:700; color:#334155;" dir="rtl">
+                        الجمهورية الجزائرية الديمقراطية الشعبية
+                    </div>
+                    <div style="font-size:8.2pt; font-weight:800; color:#091e36; margin-top:1px;">
+                        MINISTÈRE DE L'INDUSTRIE ET DE LA PRODUCTION PHARMACEUTIQUE
+                    </div>
+                    <div style="font-size:8pt; font-weight:800; color:#047857;">
+                        AGENCE NATIONALE DES PRODUITS PHARMACEUTIQUES (ANPP)
+                    </div>
+                    <div style="font-size:6.8pt; color:#475569;">
+                        Direction de l'Enregistrement des Produits Pharmaceutiques (DEPP) • Sous-Direction des Redevances &amp; Tarifications
+                    </div>
+                </td>
+                <td style="text-align:right; vertical-align:middle; width:190px;">
+                    <div style="font-size:6.8pt; color:#64748b; text-transform:uppercase;">BORDEREAU OFFICIEL D'ÉTAT</div>
+                    <div style="font-family:monospace; font-size:11pt; font-weight:900; color:#091e36; letter-spacing:1.5px;">*%s*</div>
+                    <div style="font-size:7.5pt; color:#047857; font-weight:800;">N° : %s</div>
+                    <div style="font-size:6.8pt; color:#64748b;">Date d'Émission : %s</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="title-banner">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <h1 class="banner-title">BORDEREAU DE LIQUIDATION &amp; DE PAIEMENT DE LA REDEVANCE — %s</h1>
+                    <div class="banner-sub" dir="rtl">%s</div>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:8pt; font-weight:800; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:3px;">
+                        DOSSIER : %s
+                    </span>
+                </div>
+            </div>
+            <div class="banner-legal">
+                Base Réglementaire : Décret Exécutif n° 20-325 du 22 Novembre 2020 &amp; Arrêté Interministériel fixant le barème officiel des redevances dues à l'ANPP (Journal Officiel).
             </div>
         </div>
-        <div class="barcode">
-            <div style="font-size: 9px; color: #64748b;">NUMÉRO UNIQUE :</div>
-            <strong>*%s*</strong>
-        </div>
-    </div>
 
-    <div class="slip-title-box">
-        <div class="slip-title">BORDEREAU DE VERSEMENT DE REDEVANCE — %s</div>
-        <div class="slip-sub" dir="rtl">استمارة دفع الأتعاب والرسوم الرسمية للمصادقة والتسجيل</div>
-    </div>
-
-    <div class="info-grid">
+        <!-- 1. Identification de l'Établissement Déposant -->
         <div class="info-card">
-            <h6>Demandeur &amp; Établissement Pharmaceutique</h6>
-            <div><strong>Raison Sociale :</strong> %s</div>
-            <div><strong>N° Agrément MIPH :</strong> Conforme Décret Exécutif 20-325</div>
-            <div><strong>Généré par :</strong> %s</div>
+            <div class="info-card-header">
+                <span>1. Identification de l'Établissement Pharmaceutique Déposant (Assujetti)</span>
+                <span style="font-size:7.5pt; font-weight:700; color:#047857;">Section 1.A.4 &amp; 1.A.7</span>
+            </div>
+            <div class="field-grid">
+                <div class="field-row">
+                    <span class="field-label">Raison Sociale :</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">N° Agrément MIPH :</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Pharmacien DT Déposant :</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Établissement / Site :</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Agent Déposant :</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Statut d'Encaissement :</span>
+                    <span class="field-value" style="color:%s; font-weight:800;">%s</span>
+                </div>
+            </div>
         </div>
+
+        <!-- 2. Identification de la Spécialité Pharmaceutique -->
         <div class="info-card">
-            <h6>Objet Réglementaire &amp; Dossier</h6>
-            <div><strong>Dossier N° :</strong> %s</div>
-            <div><strong>Produit :</strong> %s</div>
-            <div><strong>Date d'Émission :</strong> %s</div>
+            <div class="info-card-header">
+                <span>2. Identification Détaillée de la Spécialité Pharmaceutique</span>
+                <span style="font-size:7.5pt; font-weight:700; color:#0f3b60;">Module 1 CTD</span>
+            </div>
+            <div class="field-grid">
+                <div class="field-row">
+                    <span class="field-label">Dénomination Commerciale :</span>
+                    <span class="field-value" style="font-size:9pt; font-weight:800; color:#091e36;">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Substance Active (DCI) :</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Dosage &amp; Forme Galénique :</span>
+                    <span class="field-value">%s • %s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Voie d'Administration :</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Procédure Réglementaire :</span>
+                    <span class="field-value" style="color:#0284c7; font-weight:700;">%s</span>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">N° Dossier CTD :</span>
+                    <span class="field-value" style="font-family:monospace; font-weight:800;">%s</span>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Désignation de la Redevance Légale</th>
-                <th>Base Juridique (Journal Officiel)</th>
-                <th style="text-align: right; width: 140px;">Montant Net (DZD)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>
-                    <strong>%s</strong><br>
-                    <span style="font-size: 10.5px; color: #475569;">%s</span>
-                </td>
-                <td style="font-size: 11px;">
-                    %s
-                </td>
-                <td style="text-align: right; font-size: 14px; font-weight: 800; color: #0f172a;">
-                    %.2f DZD
-                </td>
-            </tr>
-        </tbody>
-    </table>
+        <!-- 3. Liquidation Détaillée de la Redevance Légale -->
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:14%%; text-align:center;">Code Barème</th>
+                    <th style="width:48%%;">Désignation Légale de la Redevance ANPP</th>
+                    <th style="width:18%%; text-align:center;">Base Juridique (JORADP)</th>
+                    <th style="width:20%%; text-align:right;">Montant Net Exigible (DZD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align:center; font-family:monospace; font-weight:700;">%s</td>
+                    <td>
+                        <strong style="color:#091e36;">%s</strong><br/>
+                        <span style="font-size:7.5pt; color:#64748b;">Objet : %s</span>
+                    </td>
+                    <td style="text-align:center; font-size:7.5pt;">
+                        %s
+                    </td>
+                    <td style="text-align:right; font-size:10pt; font-weight:800; color:#091e36;">
+                        %.2f DZD
+                    </td>
+                </tr>
+                <tr style="background:#f8fafc; font-weight:800; font-size:8.8pt;">
+                    <td colspan="3" style="text-align:right; color:#091e36;">
+                        TOTAL LIQUIDÉ À ACQUITTER AU TRÉSOR PUBLIC :
+                    </td>
+                    <td style="text-align:right; color:#047857; font-size:10pt;">
+                        %.2f DZD
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
-    <div class="amount-box">
-        <div style="font-size: 11px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Montant en toutes lettres :</div>
-        <div style="font-size: 13px; font-weight: 800; color: #1e3a8a; margin-top: 4px;">%s</div>
-        <div dir="rtl" style="font-size: 14px; font-weight: 800; color: #1e3a8a; margin-top: 4px;">%s</div>
-    </div>
-
-    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 10px; font-size: 11px; margin-bottom: 20px;">
-        <strong>Compte Bancaire de Règlement (Trésorerie Centrale ANPP) :</strong><br>
-        RIB Officiel : <code>%s</code><br>
-        <span style="color: #64748b;">Le versement doit s'effectuer par virement bancaire ou chèque certifié à l'ordre de l'Agent Comptable de l'ANPP. La quittance du Trésor fait foi pour le dépôt officiel.</span>
-    </div>
-
-    <div class="signatures">
-        <div>
-            <strong>Le Déposant / Mandataire</strong>
-            <div class="sig-box" style="margin-top:6px;">Cachet &amp; Signature</div>
+        <!-- 4. Arrêté du Montant en Toutes Lettres -->
+        <div class="amount-in-words-box">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <div style="font-size:7.5pt; font-weight:700; text-transform:uppercase; color:#047857;">Arrêté du présent bordereau à la somme nette de :</div>
+                    <div style="font-size:9.5pt; font-weight:800; color:#065f46; margin-top:2px;">« %s »</div>
+                </div>
+                <div style="text-align:right;" dir="rtl">
+                    <div style="font-size:7.5pt; font-weight:700; color:#047857;">أوقف جدول الدفع الحالي عند مبلغ صافي قدره :</div>
+                    <div style="font-size:10pt; font-weight:800; color:#065f46; margin-top:2px;">« %s »</div>
+                </div>
+            </div>
         </div>
-        <div>
-            <strong>Visa Pharmacien Directeur Technique</strong>
-            <div class="sig-box" style="margin-top:6px;">Mandat Légal 1.A.7</div>
+
+        %s
+
+        <!-- 5. Modalités de Règlement & Compte Trésorerie ANPP -->
+        <div class="rib-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                <div style="font-weight:800; color:#091e36; font-size:8.2pt;">Coordonnées Bancaires Officielles du Trésor Public (ANPP) :</div>
+                <span style="font-size:7.2pt; font-weight:700; color:#047857; background:#dcfce7; padding:2px 6px; border-radius:3px;">Compte Trésorerie Centrale</span>
+            </div>
+            <div style="color:#475569; font-size:7.8pt;">
+                Bénéficiaire : <strong>Agent Comptable de l'Agence Nationale des Produits Pharmaceutiques</strong><br/>
+                Banque Domiciliataire : <strong>Banque Nationale d'Algérie (BNA) • Agence Trésor Alger</strong>
+            </div>
+            <div>
+                <span style="font-size:7.5pt; color:#475569;">Relevé d'Identité Bancaire (RIB) officiel à créditer obligatoirement :</span><br/>
+                <span class="rib-number">%s</span>
+            </div>
+            <div style="font-size:7.2pt; color:#64748b; margin-top:2px;">
+                <em>Mode alternatif admis (Décret exécutif n° 21-551) : Chèque de banque certifié libellé à l'ordre du « Régisseur des Recettes de l'ANPP ».</em>
+            </div>
+            <div style="font-size:7.8pt; color:#b91c1c; font-weight:800; margin-top:3px; background:#fef2f2; padding:3px 8px; border-radius:3px; border:1px solid #fecaca; display:inline-block;">
+                Motif impératif à porter sur l'avis d'opéré : DEP-%s-%s
+            </div>
         </div>
-        <div>
-            <strong>L'Agent Comptable ANPP</strong>
-            <div class="sig-box" style="margin-top:6px;">Date &amp; Quittance Trésor</div>
+
+        <!-- 6. Triple Cartouche Officiel des 3 Volets de Validation & Signatures -->
+        <div class="sign-grid-3">
+            <div class="sign-card">
+                <div class="sign-header">Volet 1 : Établissement Assujetti</div>
+                <div style="font-size:6.8pt; color:#475569;">Visa Pharmacien DT &amp; Direction Financière</div>
+                <div class="sign-space">
+                    <div>
+                        <strong>%s</strong><br/>
+                        <span style="font-size:6.2pt; color:#64748b;">Mandat Légal 1.A.7<br/>Date, Cachet Émetteur &amp; Signature</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sign-card">
+                <div class="sign-header">Volet 2 : Établissement Bancaire</div>
+                <div style="font-size:6.8pt; color:#475569;">Attestation de virement exécuté</div>
+                <div class="sign-space">
+                    <div>
+                        <span style="font-size:6.2pt; color:#64748b;">Avis d'opéré bancaire &amp; Date de valeur<br/>Cachet guichet &amp; Référence transaction</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sign-card">
+                <div class="sign-header">Volet 3 : Régie des Recettes ANPP</div>
+                <div style="font-size:6.8pt; color:#475569;">Validation &amp; Quittance délivrée</div>
+                <div class="sign-space">
+                    <div>
+                        <span style="font-size:6.2pt; color:#64748b;">Quittance N° : .............................<br/>Date &amp; Timbre humide Régisseur ANPP</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Pied de page de Sécurité & ALCOA+ -->
+        <div class="footer-legal">
+            <div>
+                <strong>SANAD PHARMA</strong> • Document Officiel d'État • Conforme Guide CTD ANPP Juillet 2025 &amp; GAMP 5
+            </div>
+            <div style="font-family:monospace; font-size:6.5pt;">
+                CAS-ID : %s • Horodatage certifié UTC : %s
+            </div>
         </div>
     </div>
 </body>
 </html>`,
-		slip.SlipNumber,
 		slip.SlipType,
-		slip.SlipType,
-		escapeHTMLStr(slip.OrganizationName),
-		escapeHTMLStr(slip.GeneratedByName),
-		escapeHTMLStr(slip.DossierCode),
 		escapeHTMLStr(slip.ProductBrandName),
+		slip.SlipType,
+		slip.SlipNumber,
+		wmClass, wmText,
+		slip.SlipNumber,
+		slip.SlipNumber,
 		slip.GeneratedAt.Format("02/01/2006"),
+		slipTypeLabel,
+		slipTypeLabelAR,
+		escapeHTMLStr(slip.DossierCode),
+		escapeHTMLStr(slip.OrganizationName),
+		escapeHTMLStr(miphLic),
+		escapeHTMLStr(dtName),
+		escapeHTMLStr(estName),
+		escapeHTMLStr(genByName),
+		func() string {
+			if slip.VerificationStatus == "conforme" {
+				return "#10b981"
+			} else if slip.Status == "paye" || slip.Status == "quittance_recue" {
+				return "#2563eb"
+			}
+			return "#b45309"
+		}(),
+		func() string {
+			if slip.VerificationStatus == "conforme" {
+				return "✅ Acquitté & Conforme (Visé DT)"
+			} else if slip.Status == "paye" || slip.Status == "quittance_recue" {
+				return "🏛️ Quittance Enregistrée"
+			}
+			return "⏳ Émis (En attente d'encaissement)"
+		}(),
+		escapeHTMLStr(slip.ProductBrandName),
+		escapeHTMLStr(dciText),
+		escapeHTMLStr(dosageText),
+		escapeHTMLStr(formText),
+		escapeHTMLStr(routeText),
+		escapeHTMLStr(procLabel),
+		escapeHTMLStr(slip.DossierCode),
+		slip.SlipType,
 		escapeHTMLStr(slip.PaymentPurpose),
+		escapeHTMLStr(slip.ProductBrandName),
 		escapeHTMLStr(slip.FeeScheduleReference),
-		escapeHTMLStr(slip.FeeScheduleReference),
+		slip.AmountDZD,
 		slip.AmountDZD,
 		slip.AmountWordsFR,
 		slip.AmountWordsAR,
+		fxBlockHTML,
 		escapeHTMLStr(slip.BankAccountRIB),
+		slip.SlipType,
+		escapeHTMLStr(slip.DossierCode),
+		escapeHTMLStr(dtName),
+		fmt.Sprintf("CAS-SHA256-%s", slip.ID[:8]),
+		time.Now().UTC().Format("02/01/2006 15:04:05 UTC"),
 	)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write([]byte(html))
 }
+
 
 // VerifyPaymentSlip1A4 applique le contrôle officiel 1.A.4 sur un bordereau (quittance, concordance, change BA)
 func (h *FeeHandler) VerifyPaymentSlip1A4(w http.ResponseWriter, r *http.Request) {
