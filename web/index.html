@@ -497,9 +497,9 @@
             <span style="color:var(--accent-blue);">Mode : On-Premise 100% Hors-Ligne</span>
         </div>
         <div class="footer-right">
-            <span>Base : PostgreSQL 16+ (pgx)</span>
+            <span>Registre Réglementaire : Connecté</span>
             <span>|</span>
-            <span>Stockage CAS : 18.4 Go / 50 Go</span>
+            <span>Coffre-fort Électronique : 18.4 Go / 50 Go</span>
             <span>|</span>
             <span>Heure UTC : <span id="clock-utc">12:00:00</span></span>
         </div>
@@ -635,7 +635,7 @@
             </div>
             <div class="modal-body">
                 <div class="legal-notice">
-                    🔒 <strong>Intégrité Cryptographique Chaînée :</strong> Chaque action sensible est enregistrée avec horodatage UTC à la seconde exacte et empreinte SHA-256. La table PostgreSQL est protégée par un trigger SQL interdisant tout UPDATE et DELETE.
+                    🔒 <strong>Intégrité Cryptographique Chaînée :</strong> Chaque action sensible est enregistrée avec horodatage UTC à la seconde exacte et empreinte SHA-256. Le journal d'audit est scellé et protégé contre toute modification ou suppression ultérieure.
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
@@ -1380,7 +1380,7 @@
 
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                         <div>
-                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Fichier Physique (Stockage CAS Dédupliqué SHA-256) * :</label>
+                            <label style="display:block; margin-bottom:4px; font-weight:600; font-size:11px;">Document Source (Coffre-fort Électronique Dédupliqué SHA-256) * :</label>
                             <input type="file" id="ged-doc-file" required style="width:100%; padding:4px; font-size:11px; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main);">
                         </div>
                         <div>
@@ -1401,7 +1401,7 @@
 
                     <div class="modal-footer" style="padding:10px 0 0 0; margin-top:5px;">
                         <button type="button" class="btn-pill" onclick="closeModal('modal-new-ged-doc')">Annuler</button>
-                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">📥 Déposer dans le CAS &amp; Enregistrer</button>
+                        <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none;">📥 Déposer au Coffre-fort &amp; Enregistrer</button>
                     </div>
                 </form>
             </div>
@@ -1862,7 +1862,7 @@
             </div>
             <div class="modal-body">
                 <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.5; color:var(--text-main);">
-                    <strong>⚖️ Garantie d'Intégrité 21 CFR Part 11 :</strong> Aucun compte n'est supprimé physiquement (Hard Delete). En cas de départ ou de suspension, l'accès est désactivé et l'ensemble des sessions actives est révoqué immédiatement, préservant ainsi l'opposabilité juridique de toutes les signatures électroniques historiques du collaborateur.
+                    <strong>⚖️ Garantie d'Intégrité 21 CFR Part 11 :</strong> Aucun compte n'est supprimé physiquement. Conformément aux exigences BPF, en cas de départ ou de suspension, l'accès est désactivé et l'ensemble des sessions actives est révoqué immédiatement, préservant ainsi l'opposabilité juridique de toutes les signatures électroniques historiques du collaborateur.
                 </div>
                 <form id="form-user-status" onsubmit="handleUserStatusSubmit(event)" style="display:flex; flex-direction:column; gap:12px;">
                     <input type="hidden" id="status-user-id">

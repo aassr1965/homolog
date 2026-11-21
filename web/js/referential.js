@@ -18,7 +18,7 @@ var currentRefSection = window.currentRefSection || 'establishments';
                     <table id="doc-table">
                         <thead id="table-head"></thead>
                         <tbody id="doc-tbody">
-                            <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement depuis PostgreSQL...</td></tr>
+                            <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement des données réglementaires...</td></tr>
                         </tbody>
                     </table>
                 `;
@@ -48,7 +48,7 @@ var currentRefSection = window.currentRefSection || 'establishments';
 
             const tbody = document.getElementById("doc-tbody");
             if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement depuis PostgreSQL...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement des données réglementaires...</td></tr>`;
             }
 
             let url = '/api/v1/establishments';
@@ -724,7 +724,7 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 });
                 if (res.ok) {
                     closeModal('modal-new-est');
-                    const msg = isEdit ? "L'établissement a été mis à jour avec succès dans PostgreSQL." : "L'établissement pharmaceutique a été inscrit en base PostgreSQL et son agrément MIPH a été validé.";
+                    const msg = isEdit ? "L'établissement a été mis à jour avec succès dans le registre officiel." : "L'établissement pharmaceutique a été inscrit au registre officiel et son agrément MIPH a été validé.";
                     showNotifyModal(isEdit ? "Établissement Mis à Jour" : "Établissement Enregistré", msg, "🏢");
                     editingEstID = null;
                     loadRefSection('establishments');
@@ -865,7 +865,7 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 });
                 if (res.ok) {
                     closeModal('modal-new-med');
-                    const msg = isEdit ? "La spécialité pharmaceutique a été mise à jour avec succès dans PostgreSQL." : "La spécialité pharmaceutique a été enregistrée avec ses données médico-économiques selon la typologie ANPP 2025.";
+                    const msg = isEdit ? "La spécialité pharmaceutique a été mise à jour avec succès dans le référentiel officiel." : "La spécialité pharmaceutique a été enregistrée avec ses données médico-économiques selon la typologie ANPP 2025.";
                     showNotifyModal(isEdit ? "Médicament Mis à Jour" : "Médicament Enregistré", msg, "💊");
                     editingMedID = null;
                     loadRefSection('medicines');
@@ -1032,7 +1032,7 @@ var currentRefSection = window.currentRefSection || 'establishments';
                 });
                 if (res.ok) {
                     closeModal('modal-new-dm');
-                    const msg = isEdit ? "Le dispositif médical a été mis à jour avec succès dans PostgreSQL." : "Le dossier d'homologation DM a été créé conformément au Décret 20-324 et à l'Arrêté du 10 mai 2021.";
+                    const msg = isEdit ? "Le dispositif médical a été mis à jour avec succès dans le registre officiel." : "Le dossier d'homologation DM a été créé conformément au Décret 20-324 et à l'Arrêté du 10 mai 2021.";
                     showNotifyModal(isEdit ? "DM Mis à Jour" : "DM Enregistré", msg, "💉");
                     editingDeviceID = null;
                     loadRefSection('devices');

@@ -448,7 +448,7 @@
             } else if (domain === 'sys') {
                 document.getElementById("bc-root").innerText = "INFRASTRUCTURE_IT";
                 document.getElementById("bc-sec").innerText = "On-Premise_BPF";
-                document.getElementById("bc-prod").innerText = "PostgreSQL & CAS";
+                document.getElementById("bc-prod").innerText = "Registre & Coffre-fort GED";
                 document.getElementById("bc-mod").innerText = "Haute Disponibilité";
                 if (typeof loadSystemSection === 'function') {
                     loadSystemSection(currentSystemSection || 'status');
@@ -471,7 +471,7 @@
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
-                        Base Référentiel : <strong style="color:var(--accent-emerald);">PostgreSQL Connecté</strong>
+                        Base Référentiel : <strong style="color:var(--accent-emerald);">Opérationnelle &amp; Conforme</strong>
                     </div>
                 `;
             } else if (domain === 'ctd') {
@@ -561,7 +561,7 @@
                     <button class="btn-pill" style="border-color:#ef4444; color:#ef4444;" onclick="openEmergencyLockdownModal()">🚨 Verrouillage Urgence</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
-                        Infrastructure : <strong style="color:var(--accent-emerald);">PostgreSQL 16+ &amp; CAS SHA-256</strong>
+                        Infrastructure : <strong style="color:var(--accent-emerald);">Coffre-fort Qualifié &amp; Empreinte SHA-256</strong>
                     </div>
                 `;
             }

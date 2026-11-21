@@ -18,7 +18,7 @@ function renderSystemTree() {
     container.innerHTML = `
         <div class="tree-node ${currentSystemSection === 'status' ? 'selected' : ''}" onclick="loadSystemSection('status')">
             <span class="chevron">🖥️</span>
-            <span>Santé Serveur &amp; PostgreSQL</span>
+            <span>Santé Serveur &amp; Base de Données</span>
             <span class="count-badge ok">Healthy</span>
         </div>
         <div class="tree-node ${currentSystemSection === 'storage' ? 'selected' : ''}" onclick="loadSystemSection('storage')">
@@ -62,7 +62,7 @@ async function loadSystemSection(section) {
     if (secEl) secEl.innerText = "On-Premise_BPF";
 
     if (currentSystemSection === 'status') {
-        if (prodEl) prodEl.innerText = "Serveur & PostgreSQL";
+        if (prodEl) prodEl.innerText = "Serveur & Base de Données";
         if (modEl) modEl.innerText = "Télémétries Live";
         loadSystemMetrics();
     } else if (currentSystemSection === 'storage') {
@@ -90,8 +90,8 @@ async function loadSystemMetrics() {
     const thead = document.getElementById("table-head");
     if (!tbody || !thead) return;
 
-    thead.innerHTML = `<tr><th colspan="7">Cockpit Télémétries Temps Réel (PostgreSQL, Stockage CAS, Processus Go)</th></tr>`;
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:25px; color:var(--text-muted);">Interrogation de l'infrastructure PostgreSQL et du serveur...</td></tr>`;
+    thead.innerHTML = `<tr><th colspan="7">Cockpit Télémétries Temps Réel (Base de Données, Coffre-fort Électronique, Moteur Système)</th></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:25px; color:var(--text-muted);">Interrogation de l'infrastructure et des services...</td></tr>`;
 
     try {
         const res = await fetch("/api/v1/system/metrics");
@@ -139,8 +139,8 @@ function renderSystemDashboard(data) {
 
     const rows = [
         {
-            comp: "🐘 Base SQL",
-            label: "PostgreSQL 16+ (Pool pgx)",
+            comp: "🗄️ Base Réglementaire",
+            label: "Registre Central Qualifié",
             val: `${db.tables_count || 0} tables | Taille: ${db.size_pretty || '0 B'} | Connexions: ${db.acquired_conns || 0}/${db.max_conns || 25}`,
             status: '<span class="status-tag status-ok">CONNECTÉ 🟢</span>',
             action: `<button class="btn-pill" style="font-size:10px; padding:2px 8px; border-color:var(--accent-emerald); color:var(--accent-emerald);" onclick="triggerSystemBackup()">💾 Sauvegarde</button>`,
@@ -216,13 +216,13 @@ function renderSystemDetailPane(key, data) {
         const db = data.database || {};
         contentHtml = `
             <div style="font-size:12px; font-weight:700; color:#0369a1; text-align:center; margin-bottom:10px;">
-                MOTEUR DE BASE DE DONNÉES POSTGRESQL 16+
+                REGISTRE CENTRAL ET BASE DE DONNÉES SÉCURISÉE
             </div>
             <div style="font-size:11px; line-height:1.7;">
-                <strong>Version moteur :</strong> <div style="font-family:monospace; font-size:10px; background:var(--bg-panel); padding:4px; border-radius:3px; margin:3px 0;">${db.version || 'PostgreSQL'}</div>
+                <strong>Moteur de persistance :</strong> <div style="font-family:monospace; font-size:10px; background:var(--bg-panel); padding:4px; border-radius:3px; margin:3px 0;">${db.version || 'Base Sécurisée'}</div>
                 <strong>Taille de la base :</strong> <code>${db.size_pretty || 'N/A'}</code> (${(db.size_bytes || 0).toLocaleString()} octets)<br>
                 <strong>Nombre de tables publiques :</strong> <code>${db.tables_count || 0}</code> tables relationnelles BPF<br>
-                <strong>Pool de connexions pgx :</strong><br>
+                <strong>Gestionnaire de connexions sécurisées :</strong><br>
                 • Connexions actives acquises : <code>${db.acquired_conns || 0}</code><br>
                 • Connexions en attente (idle) : <code>${db.idle_conns || 0}</code><br>
                 • Connexions maximales autorisées : <code>${db.max_conns || 25}</code><br>
