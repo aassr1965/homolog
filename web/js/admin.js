@@ -732,7 +732,7 @@ function renderAdminPoliciesView() {
                             <span style="font-weight:700; font-size:13px; color:var(--text-main);">4. Audit Trail Scellé (21 CFR Part 11)</span>
                         </div>
                         <div style="font-size:11px; color:var(--text-dim); line-height:1.5;">
-                            Toute modification d'habilitation, attribution de rôle ou signature est consignée de manière inaltérable dans la table PostgreSQL <code>audit_logs</code> protégée par un trigger SQL interdisant tout <code>UPDATE</code> et <code>DELETE</code>.
+                            Toute modification d'habilitation, attribution de rôle ou signature est consignée de manière inaltérable dans le registre d'audit ALCOA+ scellé par empreinte cryptographique interdisant toute modification ou suppression.
                         </div>
                         <div style="margin-top:auto; font-size:10px; background:rgba(16,185,129,0.1); color:var(--accent-emerald); padding:4px 8px; border-radius:4px; font-family:monospace;">
                             Horodatage UTC exact + Empreinte SHA-256

@@ -766,7 +766,7 @@ const mockAuditTrail = [
                 `<div style="display:flex; flex-direction:column; gap:8px;">
                     <div style="display:flex; align-items:center; gap:8px; color:var(--accent-emerald); font-weight:700;">
                         <span style="font-size:18px;">✓</span>
-                        <span>Document visé et scellé en base PostgreSQL</span>
+                        <span>Document visé et scellé dans le registre officiel</span>
                     </div>
                     <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:4px; padding:10px; font-size:11px; display:flex; flex-direction:column; gap:4px;">
                         <div><strong>Signataire :</strong> Dr. Amine K. (Directeur Technique)</div>
