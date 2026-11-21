@@ -541,12 +541,12 @@
                 `;
             } else if (domain === 'variations') {
                 tb.innerHTML = `
-                    <button class="btn-pill" style="background:var(--accent-amber); color:white; border:none;" onclick="showNotifyModal('Dépôt de Variation ANPP', 'Le formulaire de dépôt selon les 12 items de la directive LD-DEPP07/V01 permet d\\'enregistrer les modifications Mmin, Mmod ou Mmaj avec pièces justificatives régionales 3.2.R.', '🔄')">➕ Déposer une Variation</button>
+                    <button class="btn-pill" id="tb-btn-new-variation" data-perm="DOSSIER_CREATE" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewVariationModal()">➕ Déposer une Variation (LD-DEPP07)</button>
                     <button class="btn-pill" onclick="renderVariationsTable()">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
-                        Directive : <strong>ANPP LD-DEPP07/V01</strong>
+                        Ligne Directrice : <strong style="color:var(--accent-blue);">ANPP LD-DEPP07/V01 (Avril 2026)</strong>
                     </div>
                 `;
             } else if (domain === 'dm') {
