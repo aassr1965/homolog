@@ -428,3 +428,332 @@ function formatDZD(amount) {
         maximumFractionDigits: 2
     }).format(amount) + " DZD";
 }
+
+// =========================================================================
+// VOLET 1.A.5 : ACCORD DE PRÉ-SOUMISSION & REDEVANCE ANPP
+// =========================================================================
+
+async function openRecordPreSubmissionModal(dossierId) {
+    const dId = dossierId || (typeof selectedDossierId !== 'undefined' ? selectedDossierId : null);
+    if (!dId) {
+        alert("Veuillez d'abord sélectionner un dossier.");
+        return;
+    }
+
+    const modal = document.getElementById("modal-record-presubmission");
+    if (!modal) return;
+
+    document.getElementById("presub-dossier-id").value = dId;
+
+    // Réinitialiser les champs
+    document.getElementById("presub-anpp-ref").value = "";
+    document.getElementById("presub-notif-date").value = new Date().toISOString().split("T")[0];
+    document.getElementById("presub-decision-type").value = "favorable";
+    document.getElementById("presub-fee-amount").value = "50000.00";
+    document.getElementById("presub-slip-ref").value = "";
+    document.getElementById("presub-payment-date").value = new Date().toISOString().split("T")[0];
+    document.getElementById("presub-verification-notes").value = "";
+
+    const accordSelect = document.getElementById("presub-doc-accord");
+    const paymentSelect = document.getElementById("presub-doc-payment");
+    accordSelect.innerHTML = '<option value="">Sélectionner un document GED...</option>';
+    paymentSelect.innerHTML = '<option value="">Sélectionner un document GED...</option>';
+
+    // Charger les documents de la GED pour ce dossier
+    try {
+        const gedResp = await fetch(`/api/v1/ged/documents`);
+        if (gedResp.ok) {
+            const docs = await gedResp.json();
+            (docs || []).forEach(doc => {
+                const opt1 = document.createElement("option");
+                opt1.value = doc.id;
+                opt1.textContent = `${doc.document_code || 'GED'} - ${doc.title_fr}`;
+                accordSelect.appendChild(opt1);
+
+                const opt2 = document.createElement("option");
+                opt2.value = doc.id;
+                opt2.textContent = `${doc.document_code || 'GED'} - ${doc.title_fr}`;
+                paymentSelect.appendChild(opt2);
+            });
+        }
+    } catch (e) {
+        console.warn("Échec chargement liste documents GED:", e);
+    }
+
+    // Charger la synthèse 1.A.5 actuelle
+    try {
+        const resp = await fetch(`/api/v1/dossiers/${dId}/fees/1a5-summary`);
+        if (resp.ok) {
+            const summary = await resp.json();
+            const labelEl = document.getElementById("presub-dossier-label");
+            const badgeEl = document.getElementById("presub-status-badge");
+            const noticeEl = document.getElementById("presub-procedure-notice");
+            const issuesEl = document.getElementById("presub-issues-list");
+
+            labelEl.textContent = `Dossier : ${summary.dossier_code} (Procédure ${summary.procedure_code})`;
+
+            if (!summary.is_pre_submission_required) {
+                badgeEl.style.background = "rgba(59,130,246,0.15)";
+                badgeEl.style.color = "#2563eb";
+                badgeEl.textContent = "ℹ️ Non Applicable (RI/RF)";
+                noticeEl.textContent = `Pour la procédure ${summary.procedure_code} (Renouvellement quinquennal), l'accord préalable de pré-soumission n'est pas exigé selon le Décret 20-325.`;
+            } else if (summary.overall_compliant) {
+                badgeEl.style.background = "rgba(16,185,129,0.15)";
+                badgeEl.style.color = "#10b981";
+                badgeEl.textContent = "✅ 1.A.5 Conforme & Scellé";
+                noticeEl.textContent = "L'accord préalable de l'ANPP et la redevance ont été contrôlés et scellés sous visa du Pharmacien Directeur Technique.";
+            } else {
+                badgeEl.style.background = "rgba(234,179,8,0.15)";
+                badgeEl.style.color = "#b45309";
+                badgeEl.textContent = "⚠️ Action Requise";
+                noticeEl.textContent = "L'accord formel préalable de pré-soumission et la quittance de redevance doivent être consignés et validés par le Pharmacien Directeur Technique.";
+            }
+
+            if (summary.blocking_issues && summary.blocking_issues.length > 0) {
+                issuesEl.style.display = "block";
+                issuesEl.innerHTML = "<strong>Points à régulariser :</strong><br>• " + summary.blocking_issues.join("<br>• ");
+            } else {
+                issuesEl.style.display = "none";
+            }
+
+            // Pré-remplir si déjà existant
+            if (summary.pre_submission) {
+                const ps = summary.pre_submission;
+                document.getElementById("presub-anpp-ref").value = ps.anpp_reference || "";
+                if (ps.anpp_notification_date) {
+                    document.getElementById("presub-notif-date").value = ps.anpp_notification_date.split("T")[0];
+                }
+                document.getElementById("presub-decision-type").value = ps.decision_type || "favorable";
+                document.getElementById("presub-fee-amount").value = ps.fee_amount_dzd || 50000.00;
+                document.getElementById("presub-slip-ref").value = ps.slip_reference || "";
+                if (ps.payment_date) {
+                    document.getElementById("presub-payment-date").value = ps.payment_date.split("T")[0];
+                }
+                document.getElementById("presub-verification-notes").value = ps.verification_notes || "";
+                if (ps.response_document_id) {
+                    accordSelect.value = ps.response_document_id;
+                }
+                if (ps.payment_document_id) {
+                    paymentSelect.value = ps.payment_document_id;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("Échec chargement synthèse 1.A.5:", e);
+    }
+
+    if (typeof openModal === 'function') {
+        openModal("modal-record-presubmission");
+    } else {
+        const el = document.getElementById("modal-record-presubmission");
+        if (el) { el.classList.add("open"); el.style.display = "flex"; }
+    }
+}
+
+async function executeVerifyPreSubmission1A5(e) {
+    if (e) e.preventDefault();
+
+    const dossierId = document.getElementById("presub-dossier-id").value;
+    const anppRef = document.getElementById("presub-anpp-ref").value.trim();
+    const notifDate = document.getElementById("presub-notif-date").value;
+    const decType = document.getElementById("presub-decision-type").value;
+    const feeAmt = parseFloat(document.getElementById("presub-fee-amount").value) || 0;
+    const slipRef = document.getElementById("presub-slip-ref").value.trim();
+    const payDate = document.getElementById("presub-payment-date").value;
+    const accordDocId = document.getElementById("presub-doc-accord").value || null;
+    const paymentDocId = document.getElementById("presub-doc-payment").value || null;
+    const notes = document.getElementById("presub-verification-notes").value.trim();
+
+    if (!anppRef || !notifDate || !slipRef || !payDate || !accordDocId || !paymentDocId) {
+        alert("Veuillez remplir l'ensemble des champs obligatoires et sélectionner les deux justificatifs GED (Accord préalable & Quittance).");
+        return;
+    }
+
+    try {
+        const resp = await fetch(`/api/v1/dossiers/${dossierId}/fees/verify-1a5`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                anpp_reference: anppRef,
+                anpp_notification_date: notifDate,
+                decision_type: decType,
+                fee_amount_dzd: feeAmt,
+                slip_reference: slipRef,
+                payment_date: payDate,
+                response_document_id: accordDocId,
+                payment_document_id: paymentDocId,
+                verification_notes: notes
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err.error || `Erreur HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        closeModal("modal-record-presubmission");
+
+        if (typeof showToast === 'function') {
+            showToast("✅ Accord et redevance de pré-soumission 1.A.5 validés et scellés avec succès !");
+        } else {
+            alert("Accord et redevance de pré-soumission 1.A.5 validés et scellés avec succès !");
+        }
+
+        if (dossierId && typeof selectDossier === 'function') {
+            selectDossier(dossierId);
+        }
+    } catch (err) {
+        alert("Erreur lors de la validation 1.A.5: " + err.message);
+    }
+}
+
+// =========================================================================
+// TABLEAU DE BORD CONSOLIDÉ DES COÛTS D'ENREGISTREMENT (ANPP & ALCOA+)
+// =========================================================================
+
+function openCostAnalyticsDashboardModal() {
+    if (typeof openModal === 'function') {
+        openModal("modal-cost-analytics-dashboard");
+    } else {
+        const el = document.getElementById("modal-cost-analytics-dashboard");
+        if (el) { el.classList.add("open"); el.style.display = "flex"; }
+    }
+    loadCostAnalyticsDashboard();
+}
+
+let costDashboardData = null;
+
+async function loadCostAnalyticsDashboard() {
+    try {
+        const resp = await fetch('/api/v1/fees/analytics/dashboard');
+        if (!resp.ok) {
+            const err = await resp.json();
+            throw new Error(err.error || `Erreur HTTP ${resp.status}`);
+        }
+
+        costDashboardData = await resp.json();
+        renderCostDashboard(costDashboardData);
+    } catch (err) {
+        alert("Erreur lors du chargement du tableau de bord des coûts: " + err.message);
+    }
+}
+
+function renderCostDashboard(data) {
+    if (!data) return;
+
+    // 1. KPI Cards
+    const totalEmittedEl = document.getElementById("kpi-cost-total-emitted");
+    const totalPaidEl = document.getElementById("kpi-cost-total-paid");
+    const totalPendingEl = document.getElementById("kpi-cost-total-pending");
+    const paidRatioEl = document.getElementById("kpi-cost-paid-ratio");
+    const settledCountEl = document.getElementById("kpi-cost-settled-count");
+
+    const emitted = data.total_fees_emitted_dzd || 0;
+    const paid = data.total_fees_paid_dzd || 0;
+    const pending = data.total_fees_pending_dzd || 0;
+
+    totalEmittedEl.textContent = formatDZD(emitted);
+    totalPaidEl.textContent = formatDZD(paid);
+    totalPendingEl.textContent = formatDZD(pending);
+
+    const ratio = emitted > 0 ? Math.round((paid / emitted) * 100) : 0;
+    paidRatioEl.textContent = `${ratio}% du total engagé`;
+
+    const totalDossiers = data.total_dossiers || 0;
+    const fullySettled = data.fully_settled_count || 0;
+    settledCountEl.textContent = `${fullySettled} / ${totalDossiers}`;
+
+    // 2. Table Produits & Dossiers
+    const tbodyProducts = document.getElementById("table-costs-products-body");
+    if (data.product_breakdown && data.product_breakdown.length > 0) {
+        tbodyProducts.innerHTML = data.product_breakdown.map(p => {
+            const statusBadge = p.financial_status === 'acquitte'
+                ? '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10b981; font-weight:700;">✅ Acquitté</span>'
+                : (p.financial_status === 'partiel'
+                    ? '<span class="badge" style="background:rgba(234,179,8,0.15); color:#b45309; font-weight:700;">🟡 Partiel</span>'
+                    : '<span class="badge" style="background:rgba(239,68,68,0.15); color:#ef4444; font-weight:700;">⏳ En attente</span>');
+
+            return `
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:8px 10px; font-weight:700; color:var(--text-main);">${escapeHTML(p.product_name)}</td>
+                    <td style="padding:8px 10px; font-family:monospace; color:var(--accent-blue);">${escapeHTML(p.dossier_code)}</td>
+                    <td style="padding:8px 10px;"><span class="badge" style="font-size:10px;">${escapeHTML(p.procedure_code)}</span></td>
+                    <td style="padding:8px 10px; text-align:right;">${formatDZD(p.pre_submission_dzd)}</td>
+                    <td style="padding:8px 10px; text-align:right;">${formatDZD(p.initial_deposit_dzd)}</td>
+                    <td style="padding:8px 10px; text-align:right;">${formatDZD(p.complementary_dzd)}</td>
+                    <td style="padding:8px 10px; text-align:right; font-weight:700;">${formatDZD(p.total_committed_dzd)}</td>
+                    <td style="padding:8px 10px; text-align:right; font-weight:700; color:#10b981;">${formatDZD(p.total_paid_dzd)}</td>
+                    <td style="padding:8px 10px; text-align:center;">${statusBadge}</td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        tbodyProducts.innerHTML = '<tr><td colspan="9" style="padding:16px; text-align:center; color:var(--text-dim);">Aucun dossier enregistré.</td></tr>';
+    }
+
+    // 3. Table Exercice Annuel
+    const tbodyYears = document.getElementById("table-costs-years-body");
+    if (data.yearly_breakdown && data.yearly_breakdown.length > 0) {
+        tbodyYears.innerHTML = data.yearly_breakdown.map(y => `
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:8px 10px; font-weight:800; color:var(--text-main);">${y.year}</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:700;">${y.dossier_count}</td>
+                <td style="padding:8px 10px; text-align:right; font-weight:700;">${formatDZD(y.total_emitted_dzd)}</td>
+                <td style="padding:8px 10px; text-align:right; font-weight:700; color:#10b981;">${formatDZD(y.total_paid_dzd)}</td>
+                <td style="padding:8px 10px; text-align:right; font-weight:700; color:#b45309;">${formatDZD(y.total_pending_dzd)}</td>
+                <td style="padding:8px 10px; text-align:right;">${formatDZD(y.pre_submission_dzd)}</td>
+                <td style="padding:8px 10px; text-align:right;">${formatDZD(y.initial_deposit_dzd)}</td>
+                <td style="padding:8px 10px; text-align:right;">${formatDZD(y.complementary_dzd)}</td>
+            </tr>
+        `).join('');
+    } else {
+        tbodyYears.innerHTML = '<tr><td colspan="8" style="padding:16px; text-align:center; color:var(--text-dim);">Aucun exercice disponible.</td></tr>';
+    }
+
+    // 4. Catégories
+    const catContainer = document.getElementById("cost-categories-container");
+    if (data.category_breakdown && data.category_breakdown.length > 0) {
+        catContainer.innerHTML = data.category_breakdown.map(c => `
+            <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:6px; padding:10px 14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <div>
+                        <strong style="font-size:12px; color:var(--text-main);">${escapeHTML(c.label_fr)}</strong>
+                        <span style="font-size:10.5px; color:var(--text-dim); margin-left:8px;">(${c.percentage.toFixed(1)}%)</span>
+                    </div>
+                    <strong style="font-size:13px; color:var(--accent-blue);">${formatDZD(c.amount_dzd)}</strong>
+                </div>
+                <div style="width:100%; height:6px; background:var(--border-color); border-radius:3px; overflow:hidden;">
+                    <div style="width:${Math.min(100, Math.max(0, c.percentage))}%; height:100%; background:var(--accent-blue); border-radius:3px;"></div>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        catContainer.innerHTML = '<div style="padding:16px; text-align:center; color:var(--text-dim);">Aucune dépense catégorisée.</div>';
+    }
+}
+
+function switchCostTab(tabName) {
+    const tabs = ['products', 'years', 'categories'];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-costs-${t}`);
+        const view = document.getElementById(`cost-view-${t}`);
+        if (t === tabName) {
+            btn.classList.add("active");
+            btn.style.color = "var(--accent-blue)";
+            view.style.display = "block";
+        } else {
+            btn.classList.remove("active");
+            btn.style.color = "var(--text-dim)";
+            view.style.display = "none";
+        }
+    });
+}
+
+function exportCostConsolidationCSV() {
+    window.open('/api/v1/fees/analytics/export', '_blank');
+}
+

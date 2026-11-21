@@ -497,6 +497,12 @@ func main() {
 				// Volet 1.A.4 : Contrôle de concordance financière & attestation Banque d'Algérie
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/fees/1a4-summary", feeHandler.GetSection1A4Summary)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDocCheckReview, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/fees/slips/{slipId}/verify-1a4", feeHandler.VerifyPaymentSlip1A4)
+
+				// Volet 1.A.5 : Suivi des frais de pré-soumission ANPP & Dashboard consolidé des coûts
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/fees/1a5-summary", feeHandler.GetSection1A5Summary)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDocCheckReview, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/fees/verify-1a5", feeHandler.VerifyPreSubmission1A5)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/analytics/dashboard", feeHandler.GetCostConsolidationDashboard)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/fees/analytics/export", feeHandler.ExportCostConsolidationCSV)
 			}
 
 			// Assistant de Soumission E-Services ANPP & Validation Pré-Dépôt (Jalon 1.7 Phase 3)
