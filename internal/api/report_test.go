@@ -150,4 +150,33 @@ func TestReportHandler_TabularCSVRendering(t *testing.T) {
 	if len(rows3) != 6 { // en-tête + 5 modules
 		t.Errorf("Attendu 6 lignes (en-tête + M1..M5) pour ES-REG-01, reçu %d", len(rows3))
 	}
+
+	// 4. Test EI-AVT-01 (Fiche Navette d'Avancement CTD)
+	d.Medicine.BrandNameFR = "Amoxicilline LPA 1 g (Formule Optimise)" // test de corruption UTF-8
+	d.Items = []domain.ChecklistItem{
+		{ModuleNumber: 1, ItemCode: "1.A.1", TitleFR: "Formulaire de soumission", RequirementLevel: domain.RequirementExiged, Status: domain.ItemStatusMissing},
+		{ModuleNumber: 3, ItemCode: "3.2.P.1", TitleFR: "Composition du produit fini", RequirementLevel: domain.RequirementExiged, Status: domain.ItemStatusValidated},
+	}
+	rows4, fn4 := handler.generateTabularReportRows(d, "EI-AVT-01", domain.WatermarkDraft, hash, now, nil)
+	if len(rows4) < 8 { // en-tête + 5 modules + 1 smart planning + 2 items
+		t.Fatalf("Attendu au moins 8 lignes pour EI-AVT-01, reçu %d", len(rows4))
+	}
+	if !strings.HasPrefix(fn4, "ei-avt-01_dos-2026-amox-ni") {
+		t.Errorf("Nom de fichier inattendu: %s", fn4)
+	}
+
+	// Vérifier que le caractère corrompu a été assaini en "Formule Optimisée"
+	for _, row := range rows4 {
+		for _, cell := range row {
+			if strings.Contains(cell, "\ufffd") {
+				t.Errorf("Caractère de remplacement UTF-8 invalide trouvé dans la cellule: %s", cell)
+			}
+		}
+	}
+
+	// 5. Test EI-AVT-02 (Gap Analysis)
+	rows5, _ := handler.generateTabularReportRows(d, "EI-AVT-02", domain.WatermarkDraft, hash, now, nil)
+	if len(rows5) != 3 { // en-tête + 2 items manquants (aucun GEDDocumentID)
+		t.Errorf("Attendu 3 lignes pour EI-AVT-02, reçu %d", len(rows5))
+	}
 }

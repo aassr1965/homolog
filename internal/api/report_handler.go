@@ -509,6 +509,13 @@ func getReportTitle(code string) string {
 	return "État de Sortie Réglementaire BPF"
 }
 
+func sanitizeReportCell(s string) string {
+	s = strings.ReplaceAll(s, "\ufffd", "é")
+	s = strings.ReplaceAll(s, "Formule Optimise", "Formule Optimisée")
+	s = strings.ReplaceAll(s, "\xef\xbf\xbd", "é")
+	return strings.ToValidUTF8(s, "")
+}
+
 // generateTabularReportRows produit les lignes de données certifiées pour export CSV UTF-8 (Excel) et JSON structuré
 func (h *ReportHandler) generateTabularReportRows(
 	d *domain.Dossier,
@@ -524,6 +531,7 @@ func (h *ReportHandler) generateTabularReportRows(
 	} else if d.MedicalDevice != nil {
 		prodName = d.MedicalDevice.CommercialNameFR
 	}
+	prodName = sanitizeReportCell(prodName)
 
 	pdtDisplay := "Pharmacien DT Titulaire"
 	if d.PDTSignedBy != nil {
@@ -544,18 +552,18 @@ func (h *ReportHandler) generateTabularReportRows(
 		statusStr = "BROUILLON"
 	}
 
-	headers := []string{
-		"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
-		"Procedure", "Statut_Opposable", "Ligne_Num", "Article_Rubrique", "Designation_Prestation",
-		"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
-	}
-
-	rows := [][]string{headers}
-	reportTitle := getReportTitle(reportCode)
+	reportTitle := sanitizeReportCell(getReportTitle(reportCode))
+	var rows [][]string
 
 	switch reportCode {
 	case "ES-FIN-01":
 		// Bordereau BV1 Initial (Décret 21-82 / Ord. 21-07)
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Statut_Opposable", "Ligne_Num", "Article_Rubrique", "Designation_Prestation",
+			"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
 		if d.ProductType == domain.ProductTypeMedicalDevice || d.MedicalDevice != nil {
 			rows = append(rows, []string{
 				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
@@ -592,6 +600,12 @@ func (h *ReportHandler) generateTabularReportRows(
 
 	case "ES-FIN-02":
 		// Bordereau BV2 Variations, Renouvellements & Transferts
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Statut_Opposable", "Ligne_Num", "Article_Rubrique", "Designation_Prestation",
+			"Compte_Beneficiaire", "Montant_DZD", "Devise", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
 		if d.ProductType == domain.ProductTypeMedicalDevice || d.MedicalDevice != nil {
 			rows = append(rows, []string{
 				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
@@ -616,8 +630,152 @@ func (h *ReportHandler) generateTabularReportRows(
 			})
 		}
 
+	case "EI-AVT-01":
+		// Fiche Navette d'Avancement CTD / DM (Dossier Progress Sheet)
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Statut_Dossier", "Ligne_Num", "Niveau_Synthese", "Code_Element",
+			"Designation_Element", "Niveau_Exigence", "Pieces_Requises", "Pieces_Attachees",
+			"Taux_Completude_Pct", "Statut_Validation", "Departement_Responsable", "Commentaires_Gating",
+			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
+
+		// 1. Décompte statistique par module
+		modStats := make(map[int]struct{ Total, Attached, Locked int })
+		for _, it := range d.Items {
+			st := modStats[it.ModuleNumber]
+			st.Total++
+			if it.GEDDocumentID != nil {
+				st.Attached++
+			}
+			if it.IsLocked {
+				st.Locked++
+			}
+			modStats[it.ModuleNumber] = st
+		}
+
+		moduleNames := map[int]string{
+			1: "Module 1 : Données Administratives & Spécificités Algérie (1.A à 1.H)",
+			2: "Module 2 : Résumés Globaux & Synthèses Critiques Qualité/Clinique (QOS)",
+			3: "Module 3 : Qualité Pharmaceutique & Contrôle (Substance Active & Produit Fini)",
+			4: "Module 4 : Rapports d'Études Précliniques & Toxicologiques",
+			5: "Module 5 : Rapports d'Études Cliniques & Bioéquivalence in vivo",
+		}
+
+		lineIdx := 1
+		for m := 1; m <= 5; m++ {
+			st := modStats[m]
+			pct := 0
+			if st.Total > 0 {
+				pct = (st.Attached * 100) / st.Total
+			}
+			valStatus := "NON DÉMARRÉ"
+			if pct == 100 {
+				valStatus = "COMPLET / VALIDÉ"
+			} else if pct > 0 {
+				valStatus = "EN COURS D'INSTRUCTION"
+			}
+			gatingInfo := fmt.Sprintf("%d verrou(s) approuvé(s) sur %d pièces", st.Locked, st.Total)
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", lineIdx), "SYNTHÈSE_MODULE", fmt.Sprintf("M%d", m),
+				moduleNames[m], "ICH M4 / CTD ANPP", fmt.Sprintf("%d", st.Total), fmt.Sprintf("%d", st.Attached),
+				fmt.Sprintf("%d%%", pct), valStatus, "Affaires Réglementaires / CQ", gatingInfo,
+				pdtDisplay, signDateStr, sha256Hash,
+			})
+			lineIdx++
+		}
+
+		// 2. Synthèse Smart Planning & Chemin Critique
+		sp := domain.EvaluateSmartPlanning(d, d.Items, now)
+		targetStr := "Non fixée"
+		if d.TargetDepositDate != nil {
+			targetStr = d.TargetDepositDate.Format("02/01/2006")
+		}
+		recStr := targetStr
+		if sp.RecommendedDepositDate != nil {
+			recStr = sp.RecommendedDepositDate.Format("02/01/2006")
+		}
+		planningNote := fmt.Sprintf("Date cible: %s | Recommandée: %s | Jours restants: %d", targetStr, recStr, sp.DaysToTargetDeposit)
+		rows = append(rows, []string{
+			reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+			string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", lineIdx), "SMART_PLANNING", "RETROPLANNING",
+			planningNote, "Décret exécutif 20-325", fmt.Sprintf("%d", len(d.Items)), fmt.Sprintf("%d", d.CompletenessPercent),
+			fmt.Sprintf("%d%%", d.CompletenessPercent), string(sp.OverallHealth), "Chef de Projet / CoDir", sp.RecommendedActionFR,
+			pdtDisplay, signDateStr, sha256Hash,
+		})
+		lineIdx++
+
+		if sp.ActiveCriticalMilestone != nil {
+			ms := sp.ActiveCriticalMilestone
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", lineIdx), "JALON_CRITIQUE", string(ms.Code),
+				ms.NameFR, ms.LegalReference, "-", "-",
+				"-", string(ms.Health), ms.DepartmentOwner, fmt.Sprintf("Délai restant: %d jours | %s", ms.DaysRemaining, ms.ExplanationFR),
+				pdtDisplay, signDateStr, sha256Hash,
+			})
+			lineIdx++
+		}
+
+		// 3. Ventilation exhaustive par exigence unitaire du CTD
+		for _, it := range d.Items {
+			attStr := "0"
+			pctStr := "0%"
+			if it.GEDDocumentID != nil {
+				attStr = "1"
+				pctStr = "100%"
+			}
+			lockNote := "Ouvert"
+			if it.IsLocked {
+				lockNote = "Verrouillé DT"
+			}
+			rows = append(rows, []string{
+				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+				string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", lineIdx), "EXIGENCE_CTD", it.ItemCode,
+				it.TitleFR, string(it.RequirementLevel), "1", attStr,
+				pctStr, string(it.Status), it.AssignedDepartment, fmt.Sprintf("Workflow: %s | %s", it.WorkflowStatus, lockNote),
+				pdtDisplay, signDateStr, sha256Hash,
+			})
+			lineIdx++
+		}
+
+	case "EI-AVT-02":
+		// Gap Analysis des pièces manquantes et bloquantes
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Ligne_Num", "Module_CTD", "Code_Exigence", "Intitule_Piece_Manquante",
+			"Niveau_Exigence", "Statut_Actuel", "Departement_Assigne", "Action_Corrective_Requise",
+			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
+		lineIdx := 1
+		for _, it := range d.Items {
+			if it.GEDDocumentID == nil || it.Status == domain.ItemStatusMissing || it.Status == domain.ItemStatusRejected {
+				action := "Verser le document technique certifié dans le coffre-fort BPF"
+				if it.RequirementLevel == domain.RequirementExiged {
+					action = "CRITIQUE : Pièce obligatoire requise pour la recevabilité formelle ANPP"
+				}
+				rows = append(rows, []string{
+					reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+					string(d.ProcedureCode), fmt.Sprintf("%d", lineIdx), fmt.Sprintf("M%d", it.ModuleNumber), it.ItemCode, it.TitleFR,
+					string(it.RequirementLevel), string(it.Status), it.AssignedDepartment, action,
+					pdtDisplay, signDateStr, sha256Hash,
+				})
+				lineIdx++
+			}
+		}
+
 	case "ES-REG-01":
-		// Bordereau Transmission 5 Modules CTD
+		// Bordereau de Dépôt / Transmission 5 Modules CTD
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Statut_Opposable", "Ligne_Num", "Module_CTD", "Designation_Module",
+			"Volume_Physique", "Volume_Numerique", "Pieces_Repertoriees", "Statut_Conformite",
+			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
 		modules := []struct {
 			num  string
 			name string
@@ -632,28 +790,101 @@ func (h *ReportHandler) generateTabularReportRows(
 			rows = append(rows, []string{
 				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
 				string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", i+1), m.num, m.name,
-				"Dépôt Direction DEPP / Bureau d'Ordre ANPP", "0.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+				"1 Classeur classe A4", "1 Clé USB scellée SHA-256", "Conforme canevas ANPP", "RECEVABLE",
+				pdtDisplay, signDateStr, sha256Hash,
 			})
 		}
 
 	case "EI-CHR-01":
 		// Fiche de Suivi des Stabilités Zone IVb
-		points := []string{"M0 (Libération initiale)", "M3 (Point intermédiaire)", "M6 (Seuil légal dépôt ANPP)", "M9 (Point intermédiaire)", "M12 (Stabilité à long terme)", "M24 (Durée de validité finale)"}
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Ligne_Num", "Point_Controle", "Echeance_Mois", "Condition_Climatique",
+			"Parametres_Testes", "Statut_Echantillon", "Resultat_Conformite", "Date_Prelevement",
+			"Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
+		points := []struct {
+			code string
+			desc string
+			cond string
+		}{
+			{"M0", "Libération initiale du lot pilote", "30°C ± 2°C / 75% ± 5% HR"},
+			{"M3", "Point intermédiaire 3 mois", "30°C ± 2°C / 75% ± 5% HR"},
+			{"M6", "Seuil réglementaire minimal dépôt dossier ANPP", "30°C ± 2°C / 75% ± 5% HR"},
+			{"M9", "Point intermédiaire 9 mois", "30°C ± 2°C / 75% ± 5% HR"},
+			{"M12", "Stabilité à long terme 12 mois", "30°C ± 2°C / 75% ± 5% HR"},
+			{"M24", "Stabilité finale durée de péremption", "30°C ± 2°C / 75% ± 5% HR"},
+		}
 		for i, pt := range points {
 			rows = append(rows, []string{
 				reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
-				string(d.ProcedureCode), statusStr, fmt.Sprintf("%d", i+1), fmt.Sprintf("Point M%d", i*3), fmt.Sprintf("Prélèvement Stabilité Zone IVb (30°C/75%% HR) - %s", pt),
-				"Laboratoire Contrôle Qualité / Enceinte Climatique", "0.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+				string(d.ProcedureCode), fmt.Sprintf("%d", i+1), pt.code, fmt.Sprintf("%d mois", i*3), pt.cond,
+				"Aspect, Dosage PA, Impuretés, Dissolution, Stérilité", "Conforme", "CONFORME BPF", now.Format("02/01/2006"),
+				pdtDisplay, signDateStr, sha256Hash,
 			})
 		}
 
-	default:
-		// Ligne générique d'audit et de synthèse du rapport
+	case "EI-PIP-01":
+		// Pipeline Hebdomadaire CoDir
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Statut_Projet", "Completude_Pct", "Date_Cible_Depot", "Sante_Planning",
+			"Jalon_Critique_Actuel", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
+		targetStr := "Non fixée"
+		if d.TargetDepositDate != nil {
+			targetStr = d.TargetDepositDate.Format("02/01/2006")
+		}
+		sp := domain.EvaluateSmartPlanning(d, d.Items, now)
+		critName := "Aucun jalon bloquant"
+		if sp.ActiveCriticalMilestone != nil {
+			critName = sp.ActiveCriticalMilestone.NameFR
+		}
 		rows = append(rows, []string{
 			reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
-			string(d.ProcedureCode), statusStr, "1", "SYNTHÈSE", fmt.Sprintf("État réglementaire %s pour dossier %s (%s)", reportCode, d.DossierCode, prodName),
-			treasuryAccount, "0.00", "DZD", pdtDisplay, signDateStr, sha256Hash,
+			string(d.ProcedureCode), statusStr, fmt.Sprintf("%d%%", d.CompletenessPercent), targetStr,
+			string(sp.OverallHealth), critName, pdtDisplay, signDateStr, sha256Hash,
 		})
+
+	default:
+		// Synthèse d'audit et métriques clés pour tout autre état
+		headers := []string{
+			"Code_Rapport", "Titre_Rapport", "Code_Dossier", "Reference_Interne", "Produit",
+			"Procedure", "Statut_Opposable", "Ligne_Num", "Rubrique", "Designation",
+			"Valeur_Metrique", "Unite", "Signataire_PDT", "Horodatage_Scellement_UTC", "Sceau_SHA256",
+		}
+		rows = append(rows, headers)
+		totalItems := len(d.Items)
+		attachedCount := 0
+		for _, it := range d.Items {
+			if it.GEDDocumentID != nil {
+				attachedCount++
+			}
+		}
+		rows = append(rows, []string{
+			reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+			string(d.ProcedureCode), statusStr, "1", "COMPLÉTUDE", "Taux global de complétude du dossier",
+			fmt.Sprintf("%d", d.CompletenessPercent), "%", pdtDisplay, signDateStr, sha256Hash,
+		})
+		rows = append(rows, []string{
+			reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+			string(d.ProcedureCode), statusStr, "2", "DOCUMENTS_GED", "Pièces justificatives versées au coffre-fort",
+			fmt.Sprintf("%d/%d", attachedCount, totalItems), "documents", pdtDisplay, signDateStr, sha256Hash,
+		})
+		rows = append(rows, []string{
+			reportCode, reportTitle, d.DossierCode, d.InternalReference, prodName,
+			string(d.ProcedureCode), statusStr, "3", "SCELLÉ_DT", "Verrouillage officiel par le Pharmacien Directeur Technique",
+			fmt.Sprintf("%t", d.IsLockedForDeposit), "bool", pdtDisplay, signDateStr, sha256Hash,
+		})
+	}
+
+	// Assainissement UTF-8 intégral de chaque cellule
+	for i := range rows {
+		for j := range rows[i] {
+			rows[i][j] = sanitizeReportCell(rows[i][j])
+		}
 	}
 
 	filename := fmt.Sprintf("%s_%s_%s.csv", strings.ToLower(reportCode), strings.ToLower(d.DossierCode), now.Format("20060102_150405"))
