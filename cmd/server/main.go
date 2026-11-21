@@ -66,6 +66,7 @@ func main() {
 	var setupHandler *api.SetupHandler
 	var workflowHandler *api.WorkflowHandler
 	var reportHandler *api.ReportHandler
+	var variationHandler *api.VariationHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -92,6 +93,9 @@ func main() {
 
 		// Initialisation des Bordereaux de Redevances BV1/BV2 (Jalon 1.7 Phase 2)
 		api.SeedInitialPaymentSlips(ctx, db.Pool, cfg.OnPremOrgSlug)
+
+		// Initialisation des Variations Post-AMM & Grouping (Jalon 2.4 - LD-DEPP07/V01)
+		api.SeedInitialVariations(ctx, db.Pool, cfg.OnPremOrgSlug)
 
 		// Initialisation de la Veille Réglementaire & Séances ANPP (Jalon 1.7 Phase 4)
 		api.SeedInitialRegulatoryWatchAndAppointments(ctx, db.Pool, cfg.OnPremOrgSlug)
@@ -133,6 +137,9 @@ func main() {
 
 		settingsRepo := repository.NewSettingsRepository(db.Pool)
 		settingsHandler = api.NewSettingsHandler(settingsRepo, auditService)
+
+		varRepo := repository.NewVariationRepository(db.Pool)
+		variationHandler = api.NewVariationHandler(varRepo, dossierRepo, auditService)
 
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
@@ -569,6 +576,32 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/reports/registry", reportHandler.GetReportRegistry)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/reports/{code}", reportHandler.GenerateDossierReport)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/reports/{code}/seal", reportHandler.SealDossierReport)
+			}
+
+			// Moteur de Variations ANPP & Reclassement Automatique (Jalon 2.4 - Ligne Directrice LD-DEPP07/V01)
+			if variationHandler != nil {
+				// Consultation du catalogue officiel des 34 rubriques algériennes
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/variations/rubriques", variationHandler.ListRubriques)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/variations/rubriques/{code}", variationHandler.GetRubrique)
+
+				// Demandes de modifications
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/variations", variationHandler.ListVariations)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/variations", variationHandler.CreateVariation)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/variations/{id}", variationHandler.GetVariation)
+
+				// Rubriques sélectionnées & évaluation de l'escalade
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/variations/{id}/items", variationHandler.AddVariationItem)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Put("/api/v1/variations/{id}/items/{itemId}", variationHandler.UpdateVariationItem)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Delete("/api/v1/variations/{id}/items/{itemId}", variationHandler.DeleteVariationItem)
+
+				// Rattachement des 12 pièces obligatoires de la LD-DEPP07
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker)).Post("/api/v1/variations/{id}/documents/{docId}/attach", variationHandler.AttachDocument)
+
+				// Scellement électronique légal du Pharmacien Directeur Technique (21 CFR Part 11)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/variations/{id}/seal", variationHandler.SealVariationDT)
+
+				// Tableau comparatif standardisé ES-REG-04 (haute fidélité A4)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/variations/{id}/comparative-table", variationHandler.GetComparativeTableHTML)
 			}
 		})
 	}
