@@ -2,6 +2,22 @@
 // APPLICATION CORE, NAVIGATION & INTERFACE PHARMA EXPLORER
 // ============================================================================
 
+// Nettoyage esthétique de l'URL post-authentification / post-sas (?auth=... & ?gate=...)
+(function cleanQueryAuthParam() {
+    try {
+        if (window.location.search && (window.location.search.includes('auth=') || window.location.search.includes('gate='))) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('auth');
+            url.searchParams.delete('gate');
+            const cleanSearch = url.searchParams.toString();
+            const cleanUrl = url.pathname + (cleanSearch ? '?' + cleanSearch : '') + url.hash;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    } catch (e) {
+        // En cas d'environnement restreint sans Support URL/history
+    }
+})();
+
 // Cibles de navigation pour la barre d'adresse (Ctrl+K)
         const addressLocations = [
             { icon: "💊", title: "Paracétamol 500mg Comprimé — Module 3 : Qualité CMC", path: "📁 GED > 01_Affaires_Reglementaires > CTD_Paracetamol > Module 3", target: "ctd-para-3" },
