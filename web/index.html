@@ -335,6 +335,9 @@
                         <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openFeeSchedulesModal(); toggleUserDropdown();">
                             ⚖️ Barème Officiel des Redevances ANPP
                         </button>
+                        <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openCostAnalyticsDashboardModal(); toggleUserDropdown();">
+                            📊 Tableau de Bord Consolidé des Coûts
+                        </button>
                         <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openAppointmentsModal(); toggleUserDropdown();">
                             📅 Séances &amp; Rendez-vous ANPP
                         </button>
@@ -2383,6 +2386,253 @@
                         <button type="submit" class="btn-pill" style="background:#16a34a; color:white; font-weight:800; border:none; padding:7px 16px;">⚖️ Valider &amp; Sceller la Conformité 1.A.4</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Enregistrement Accord de Pré-soumission & Redevance 1.A.5 -->
+    <div class="modal-overlay" id="modal-record-presubmission" onclick="if(event.target === this) closeModal('modal-record-presubmission')">
+        <div class="modal" style="width:680px; max-width:min(680px, calc(100vw - 24px)); max-height:92vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📑</span>
+                    <span>Volet 1.A.5 : Accord de Pré-soumission &amp; Redevances ANPP</span>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-record-presubmission')">✕</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; padding:16px;">
+                <form id="form-record-presubmission" onsubmit="executeVerifyPreSubmission1A5(event)">
+                    <input type="hidden" id="presub-dossier-id">
+
+                    <!-- Bannière de Synthèse & Éligibilité Procédure -->
+                    <div id="presub-summary-banner" style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <div>
+                                <span style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--text-dim);">Contrôle Réglementaire 1.A.5</span>
+                                <div style="font-size:12px; font-weight:700; color:var(--text-main);" id="presub-dossier-label">Dossier : Chargement...</div>
+                            </div>
+                            <span class="badge" id="presub-status-badge" style="background:rgba(234,179,8,0.15); color:#b45309; font-weight:800; padding:4px 8px;">
+                                ⏳ Vérification en attente
+                            </span>
+                        </div>
+                        <div id="presub-procedure-notice" style="font-size:11px; color:var(--text-dim); line-height:1.4;">
+                            Décret Exécutif 20-325 &amp; Guide CTD ANPP Juillet 2025 : L'accord formel préalable de pré-soumission et la quittance de redevance sont requis pour toute nouvelle soumission (NI/NF/MI/MF).
+                        </div>
+                        <div id="presub-issues-list" style="margin-top:8px; display:none; font-size:11px; color:#ef4444; background:rgba(239,68,68,0.08); padding:8px; border-radius:4px;"></div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">
+                                N° Référence Accord ANPP <span style="color:#ef4444;">*</span>
+                            </label>
+                            <input type="text" id="presub-anpp-ref" class="form-control" placeholder="ex: ANPP/DREC/2026/045" required
+                                   style="width:100%; padding:7px 10px; font-size:12px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main); font-family:monospace;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">
+                                Date Notification Accord <span style="color:#ef4444;">*</span>
+                            </label>
+                            <input type="date" id="presub-notif-date" class="form-control" required
+                                   style="width:100%; padding:7px 10px; font-size:12px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main);">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">
+                                Type de Décision ANPP <span style="color:#ef4444;">*</span>
+                            </label>
+                            <select id="presub-decision-type" class="form-control" required
+                                    style="width:100%; padding:7px 10px; font-size:12px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main);">
+                                <option value="favorable">🟢 Favorable (Autorisation de dépôt)</option>
+                                <option value="reserve">🟡 Favorable avec réserves mineures</option>
+                                <option value="defavorable">🔴 Défavorable (Dépôt rejeté)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">
+                                Montant Redevance Pré-soumission (DZD) <span style="color:#ef4444;">*</span>
+                            </label>
+                            <input type="number" id="presub-fee-amount" class="form-control" step="0.01" min="0" value="50000.00" required
+                                   style="width:100%; padding:7px 10px; font-size:12px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main); font-weight:700;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">
+                                Réf Quittance Trésor / Bordereau <span style="color:#ef4444;">*</span>
+                            </label>
+                            <input type="text" id="presub-slip-ref" class="form-control" placeholder="ex: QUITT-ANPP-2026-089" required
+                                   style="width:100%; padding:7px 10px; font-size:12px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main); font-family:monospace;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">
+                                Date Paiement Redevance <span style="color:#ef4444;">*</span>
+                            </label>
+                            <input type="date" id="presub-payment-date" class="form-control" required
+                                   style="width:100%; padding:7px 10px; font-size:12px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main);">
+                        </div>
+                    </div>
+
+                    <!-- Justificatifs GED Numérisés -->
+                    <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:14px;">
+                        <div style="font-size:11px; font-weight:800; color:var(--text-main); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                            <span>📁</span>
+                            <span>Pièces Justificatives Numérisées en GED Pharmaceutique (21 CFR Part 11)</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div>
+                                <label style="display:block; font-size:10.5px; font-weight:700; margin-bottom:3px; color:var(--text-dim);">
+                                    Copie Décision ANPP (PDF) <span style="color:#ef4444;">*</span>
+                                </label>
+                                <select id="presub-doc-accord" class="form-control" required
+                                        style="width:100%; padding:6px 8px; font-size:11px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main);">
+                                    <option value="">Sélectionner un document GED...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:10.5px; font-weight:700; margin-bottom:3px; color:var(--text-dim);">
+                                    Quittance / Preuve de Virement (PDF) <span style="color:#ef4444;">*</span>
+                                </label>
+                                <select id="presub-doc-payment" class="form-control" required
+                                        style="width:100%; padding:6px 8px; font-size:11px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main);">
+                                    <option value="">Sélectionner un document GED...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">
+                            Observations Réglementaires &amp; Visa Pharmacien Directeur Technique
+                        </label>
+                        <textarea id="presub-verification-notes" rows="2" class="form-control"
+                                  placeholder="Mention de vérification de l'accord préalable et conformité de la redevance..."
+                                  style="width:100%; padding:7px 10px; font-size:11.5px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-main);"></textarea>
+                    </div>
+
+                    <div class="modal-footer" style="padding:14px 0 0 0; display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-record-presubmission')">Annuler</button>
+                        <button type="submit" class="btn-pill" style="background:#2563eb; color:white; font-weight:800; border:none; padding:7px 16px;">
+                            ⚖️ Valider &amp; Sceller l'Accord 1.A.5
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tableau de Bord Consolidé des Coûts d'Enregistrement ANPP -->
+    <div class="modal-overlay" id="modal-cost-analytics-dashboard" onclick="if(event.target === this) closeModal('modal-cost-analytics-dashboard')">
+        <div class="modal modal-xl" style="width:1120px; max-width:min(1120px, calc(100vw - 24px)); max-height:92vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="modal-title">
+                    <span>📊</span>
+                    <span>Tableau de Bord Consolidé des Coûts d'Enregistrement ANPP</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button class="btn-pill" style="background:#16a34a; color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="exportCostConsolidationCSV()">
+                        📥 Exporter CSV (DAF)
+                    </button>
+                    <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="loadCostAnalyticsDashboard()">
+                        🔄 Actualiser
+                    </button>
+                    <button class="close-btn" onclick="closeModal('modal-cost-analytics-dashboard')">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1; padding:16px;">
+                <!-- 4 KPI Cards -->
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:16px;">
+                    <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
+                        <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--text-dim); margin-bottom:4px;">Total Redevances Engagées</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--text-main);" id="kpi-cost-total-emitted">0.00 DZD</div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">Tous dossiers &amp; barèmes</div>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:12px;">
+                        <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:#10b981; margin-bottom:4px;">Total Acquitté &amp; Justifié</div>
+                        <div style="font-size:18px; font-weight:800; color:#10b981;" id="kpi-cost-total-paid">0.00 DZD</div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:2px;" id="kpi-cost-paid-ratio">0% du total engagé</div>
+                    </div>
+                    <div style="background:rgba(234,179,8,0.06); border:1px solid rgba(234,179,8,0.3); border-radius:6px; padding:12px;">
+                        <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:#b45309; margin-bottom:4px;">Reste à Régulariser</div>
+                        <div style="font-size:18px; font-weight:800; color:#b45309;" id="kpi-cost-total-pending">0.00 DZD</div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">Quittances en attente</div>
+                    </div>
+                    <div style="background:rgba(37,99,235,0.06); border:1px solid rgba(37,99,235,0.3); border-radius:6px; padding:12px;">
+                        <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--accent-blue); margin-bottom:4px;">Dossiers Soldés</div>
+                        <div style="font-size:18px; font-weight:800; color:var(--accent-blue);" id="kpi-cost-settled-count">0 / 0</div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">Clôture financière 100%</div>
+                    </div>
+                </div>
+
+                <!-- Onglets d'analyse -->
+                <div style="display:flex; gap:8px; border-bottom:1px solid var(--border-color); margin-bottom:14px;">
+                    <button class="btn-pill active" id="tab-btn-costs-products" style="border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none; font-weight:700;" onclick="switchCostTab('products')">
+                        📦 Par Produit &amp; Dossier
+                    </button>
+                    <button class="btn-pill" id="tab-btn-costs-years" style="border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none; font-weight:700;" onclick="switchCostTab('years')">
+                        📅 Par Exercice Annuel
+                    </button>
+                    <button class="btn-pill" id="tab-btn-costs-categories" style="border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none; font-weight:700;" onclick="switchCostTab('categories')">
+                        ⚖️ Répartition par Catégorie de Frais
+                    </button>
+                </div>
+
+                <!-- Section 1 : Produits & Dossiers -->
+                <div id="cost-view-products" style="display:block;">
+                    <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:4px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
+                            <thead style="background:var(--bg-sub); color:var(--text-dim); font-size:10px; text-transform:uppercase;">
+                                <tr>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color);">Produit</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color);">Dossier</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color);">Proc.</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">1.A.5 Pré-soum.</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">1.A.4 Dépôt BV1</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Complém. BV2</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Total Engagé</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Total Acquitté</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:center;">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-costs-products-body">
+                                <tr><td colspan="9" style="padding:16px; text-align:center; color:var(--text-dim);">Chargement des données...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 2 : Années -->
+                <div id="cost-view-years" style="display:none;">
+                    <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:4px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
+                            <thead style="background:var(--bg-sub); color:var(--text-dim); font-size:10px; text-transform:uppercase;">
+                                <tr>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color);">Exercice</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:center;">Nb Dossiers</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Total Émis</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Total Acquitté</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Reste à Décaisser</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Pré-soumission</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Dépôt BV1</th>
+                                    <th style="padding:8px 10px; border-bottom:1px solid var(--border-color); text-align:right;">Analyses LNCM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-costs-years-body">
+                                <tr><td colspan="8" style="padding:16px; text-align:center; color:var(--text-dim);">Chargement des données...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 3 : Catégories -->
+                <div id="cost-view-categories" style="display:none;">
+                    <div id="cost-categories-container" style="display:flex; flex-direction:column; gap:10px;">
+                        <div style="padding:16px; text-align:center; color:var(--text-dim);">Chargement des catégories...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

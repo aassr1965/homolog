@@ -966,7 +966,10 @@
                         <div style="margin-top:8px; background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:8px 10px;">
                             <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--text-dim); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
                                 <span>💰 Bordereaux de Redevances Légales ANPP (${currentDossierPaymentSlips.length})</span>
-                                <button class="btn-pill" style="font-size:10px; padding:2px 8px;" onclick="openGenerateFeeSlipModal('${dossier.id}')">➕ Émettre Nouveau Bordereau</button>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn-pill" style="font-size:10px; padding:2px 8px;" onclick="openGenerateFeeSlipModal('${dossier.id}')">➕ Émettre Bordereau</button>
+                                    <button class="btn-pill" style="font-size:10px; padding:2px 8px; background:rgba(37,99,235,0.1); color:var(--accent-blue); border:1px solid rgba(37,99,235,0.3); font-weight:700;" onclick="openCostAnalyticsDashboardModal()">📊 Coûts Consolidés</button>
+                                </div>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:6px;">
                                 ${currentDossierPaymentSlips.map(s => `
@@ -1681,6 +1684,19 @@
                                 </div>
                             ` : ''}
 
+                            <!-- Volet Spécifique 1.A.5 : Accord de Pré-soumission & Redevance ANPP -->
+                            ${item.item_code === '1.A.5' ? `
+                                <div style="background:rgba(37,99,235,0.06); border:1.5px solid rgba(37,99,235,0.25); border-radius:6px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <div style="font-size:11.5px; font-weight:800; color:#2563eb;">📑 Volet 1.A.5 : Accord de Pré-soumission &amp; Redevances ANPP</div>
+                                        <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">${escapeHTML(item.validation_notes || 'Décision préalable ANPP et quittance des frais de pré-soumission')}</div>
+                                    </div>
+                                    <button class="btn-pill" style="background:#2563eb; color:white; border:none; font-size:11px; font-weight:700; padding:4px 10px;" onclick="openRecordPreSubmissionModal('${currentDossierDetail.id}')">
+                                        🔍 Rapprocher / Enregistrer 1.A.5
+                                    </button>
+                                </div>
+                            ` : ''}
+
                             <!-- Cartouche Intégrité CAS & Horodatage BPF -->
                             <div style="background:var(--bg-surface); border:1.5px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:14px;">
                                 <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">
@@ -1738,6 +1754,13 @@
                                                 onclick="openRecordSlipPaymentModal('', '', 0, '${currentDossierDetail.id}')"
                                                 ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
                                             🏛️ Contrôle Quittance &amp; Change BA (1.A.4)
+                                        </button>
+                                    ` : ''}
+                                    ${item.item_code === '1.A.5' ? `
+                                        <button class="btn-pill" style="background:#2563eb; color:white; border:none; padding:8px 16px; font-size:11.5px; font-weight:800;" 
+                                                onclick="openRecordPreSubmissionModal('${currentDossierDetail.id}')"
+                                                ${isLocked ? 'disabled title="Dossier verrouillé"' : ''}>
+                                            📑 Enregistrer Accord Pré-soumission (1.A.5)
                                         </button>
                                     ` : ''}
                                     <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; padding:8px 14px; font-size:11.5px; font-weight:700;" 
