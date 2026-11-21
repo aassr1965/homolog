@@ -200,6 +200,18 @@ func (h *AdminHandler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Garde-fou 1 : Anti-Auto-Promotion (Self-Role Modification)
+	if user.UserID == targetUserID {
+		writeJSONError(w, http.StatusForbidden, "Garde-fou BPF / 21 CFR Part 11 : L'auto-modification de son propre rôle est strictement interdite.")
+		return
+	}
+
+	// Garde-fou 2 : Ségrégation des Tâches (SoD)
+	if user.Role == "admin_laboratoire" && (req.Role == "directeur_technique" || req.Role == "super_admin_editeur" || req.Role == "admin_systeme_local") {
+		writeJSONError(w, http.StatusForbidden, "Garde-fou SoD (BPF) : L'Administrateur Laboratoire ne peut pas nommer de Pharmacien DT (1.A.7) ni de compte d'Administration Système.")
+		return
+	}
+
 	// Mise à jour et incrémentation de permissions_version pour invalidation immédiate du cache
 	updateQuery := `
 		UPDATE users 
@@ -487,6 +499,12 @@ func (h *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	_ = h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM roles WHERE id = $1)`, req.Role).Scan(&roleExists)
 	if !roleExists {
 		writeJSONError(w, http.StatusBadRequest, "Rôle non reconnu dans le système")
+		return
+	}
+
+	// Garde-fou SoD : L'Administrateur Laboratoire ne peut pas créer de compte Directeur Technique ni Admin Système
+	if admin.Role == "admin_laboratoire" && (req.Role == "directeur_technique" || req.Role == "super_admin_editeur" || req.Role == "admin_systeme_local") {
+		writeJSONError(w, http.StatusForbidden, "Garde-fou SoD (BPF) : L'Administrateur Laboratoire n'a pas l'autorité statutaire requise pour créer un compte de Direction Technique (1.A.7) ou d'Administration Système.")
 		return
 	}
 
@@ -873,6 +891,34 @@ func (h *AdminHandler) UpdateUserPermissions(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		writeJSONError(w, http.StatusNotFound, "Utilisateur introuvable dans votre laboratoire")
 		return
+	}
+
+	// Garde-fou 1 : Anti-Auto-Élévation de Privilèges (Self-Privilege Escalation / 21 CFR Part 11)
+	if admin.UserID == targetUserID {
+		writeJSONError(w, http.StatusForbidden, "Garde-fou BPF / 21 CFR Part 11 : L'auto-attribution ou modification de ses propres dérogations de droits est strictement interdite.")
+		return
+	}
+
+	// Garde-fou 2 : Incompatibilité absolue de fonctions (SoD) pour le rôle admin_laboratoire
+	prohibitedForAdminLab := map[string]string{
+		"DOSSIER_VIEW":     "L'accès au contenu des dossiers techniques CTD et DM relève du secret industriel et pharmaceutique",
+		"DOSSIER_CREATE":   "La création de dossiers d'enregistrement relève exclusivement des Affaires Réglementaires",
+		"DOC_READ":         "La consultation des pièces confidentielles de la GED relève des BPF et du secret de fabrication",
+		"DOC_DRAFT_MAKER":  "L'élaboration de documents opposables relève des rédacteurs techniques habilités",
+		"DOC_CHECK_REVIEW": "La revue critique relève du Contrôle/Assurance Qualité",
+		"DOC_APPROVE_PDT":  "Le visa légal relève du monopole exclusif du Pharmacien Directeur Technique titulaire (1.A.7)",
+		"SYS_MAINT":        "La maintenance serveur relève exclusivement de l'administrateur infrastructure IT",
+	}
+
+	if targetRole == "admin_laboratoire" {
+		for _, item := range req.Overrides {
+			if item.Granted != nil && *item.Granted {
+				if motive, prohibited := prohibitedForAdminLab[item.PermissionID]; prohibited {
+					writeJSONError(w, http.StatusForbidden, fmt.Sprintf("Garde-fou SoD (BPF) : Le rôle Administrateur Laboratoire ne peut en aucun cas se voir attribuer la permission '%s'. %s.", item.PermissionID, motive))
+					return
+				}
+			}
+		}
 	}
 
 	tx, err := h.pool.Begin(r.Context())

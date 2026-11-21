@@ -79,6 +79,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/020_pharmacien_assistant_and_dt_delegations.sql",
 		"migrations/021_tenant_regulatory_settings_and_fees.sql",
 		"migrations/022_harden_admin_lab_need_to_know.sql",
+		"migrations/023_sod_prevent_self_granting_and_admin_lab_escalation.sql",
 	}
 
 	for _, file := range migrationFiles {
