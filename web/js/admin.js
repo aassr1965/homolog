@@ -21,7 +21,7 @@ const RBAC_PERM_METADATA = {
 
     "DOC_READ": { icon: "📖", label: "Lire GED", fullTitle: "Lire / Télécharger GED", desc: "Lecture et téléchargement des pièces GED (bloqué aux profils IT par Zero-Trust)", cat: "ged", isLast: false },
     "DOC_WRITE": { icon: "📤", label: "Dépôt GED", fullTitle: "Déposer en GED", desc: "Téléversement de pièces, nouvelles versions et check-in/out", cat: "ged", isLast: false },
-    "DOC_REVIEW": { icon: "🔍", label: "Revue BPF", fullTitle: "Revue Qualité BPF", desc: "Revue technique et vérification qualité BPF (Maker-Checker)", cat: "ged", isLast: false },
+    "DOC_REVIEW": { icon: "🔍", label: "Revue BPF", fullTitle: "Revue Qualité BPF", desc: "Revue technique contradictoire et vérification qualité BPF (Double Contrôle)", cat: "ged", isLast: false },
     "DOC_APPROVE_PDT": { icon: "✍️", label: "Visa PDT", fullTitle: "Visa Légal DT (1.A.7)", desc: "Signature électronique légale exclusive du Pharmacien Directeur Technique", cat: "ged", isLast: false },
     "EXPORT_LEGAL": { icon: "📦", label: "Export ANPP", fullTitle: "Export Légal Souverain", desc: "Génération de l'archive officielle scellée ANPP et bordereaux BV", cat: "ged", isLast: true },
 
@@ -71,7 +71,7 @@ function renderAdminTree() {
         <div class="tree-node ${currentAdminSection === 'settings' ? 'selected' : ''}" onclick="loadAdminSection('settings')">
             <span class="chevron">⚙️</span>
             <span>Paramètres Réglementaires & Redevances</span>
-            <span class="count-badge ok">Tenant ALCOA+</span>
+            <span class="count-badge ok">ALCOA+</span>
         </div>
     `;
 }
@@ -104,7 +104,7 @@ async function loadAdminSection(section) {
         if (modEl) modEl.innerText = "SoD & Zero-Trust BPF";
     } else if (currentAdminSection === 'settings') {
         if (prodEl) prodEl.innerText = "Paramètres Réglementaires";
-        if (modEl) modEl.innerText = "Redevances & Institutionnel (Jalon 2.3)";
+        if (modEl) modEl.innerText = "Paramètres & Redevances";
     }
 
     const tbody = document.getElementById("doc-tbody");
@@ -457,7 +457,7 @@ function renderAdminMatrixTable() {
                 <div style="font-size: 11px; font-weight: 700; color: var(--text-main); display:flex; align-items:center; gap:5px;">
                     <span>🛡️</span> Rôle Réglementaire BPF
                 </div>
-                <div style="font-size: 10px; color: var(--text-dim); font-weight: normal; margin-top:2px;">10 profils métier (CDC 7.1)</div>
+                <div style="font-size: 10px; color: var(--text-dim); font-weight: normal; margin-top:2px;">10 profils pharmaceutiques habilités</div>
             </th>
             <th colspan="2" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(3, 105, 161, 0.12); color: #0284c7; padding: 6px 4px; border-right: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;">
                 🏢 Référentiel MIPH
@@ -671,7 +671,7 @@ function renderAdminPoliciesView() {
     thead.innerHTML = `
         <tr>
             <th colspan="7" style="background:var(--bg-th); padding:10px; font-size:12px; font-weight:700; color:var(--accent-blue);">
-                🛡️ Politiques d'Intégrité BPF & Garde-Fous Cryptographiques (Section 7.2 du CDC)
+                🛡️ Politiques d'Intégrité BPF & Contrôles d'Accès Qualifiés (Norme 21 CFR Part 11)
             </th>
         </tr>
     `;
@@ -1277,12 +1277,12 @@ async function renderAdminSettingsView() {
     thead.innerHTML = `
         <tr>
             <th colspan="7" style="background:var(--bg-th); padding:10px; font-size:12px; font-weight:700; color:var(--accent-purple);">
-                ⚙️ Paramètres Réglementaires & Barèmes Découplés du Tenant (Section 6.4 du CDC • Jalon 2.3)
+                ⚙️ Paramètres Réglementaires & Barèmes Officiels de l'Établissement
             </th>
         </tr>
     `;
 
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:25px; color:var(--text-muted);">Chargement des paramètres du tenant...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:25px; color:var(--text-muted);">Chargement des paramètres réglementaires...</td></tr>`;
 
     try {
         const res = await fetch('/api/v1/admin/settings/regulatory');
@@ -1303,7 +1303,7 @@ async function renderAdminSettingsView() {
                 <td colspan="7" style="padding:16px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; background:var(--bg-surface); padding:10px 14px; border-radius:6px; border:1px solid var(--border-color);">
                         <div>
-                            <div style="font-weight:800; font-size:13px; color:var(--text-main);">Configuration Réglementaire Découplée (ALCOA+ / GAMP 5)</div>
+                            <div style="font-weight:800; font-size:13px; color:var(--text-main);">Configuration Réglementaire & Institutionnelle (ALCOA+ / GAMP 5)</div>
                             <div style="font-size:11px; color:var(--text-dim);">Les modifications sur les coordonnées bancaires et barèmes sont tracées temporellement (valid_from/valid_to) avec visa du Pharmacien DT.</div>
                         </div>
                         <button class="btn-pill" onclick="loadAdminSection('settings')" style="font-size:11px; padding:4px 10px;">🔄 Rafraîchir</button>

@@ -541,9 +541,9 @@
             // Statut Gating
             let gatingBadge = `<span style="color:#10b981; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;"><span style="font-size:12px;">✅</span> Déverrouillé</span>`;
             if (isBlocked) {
-                gatingBadge = `<span style="color:#ef4444; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;" title="${escapeHtml(it.gating_block_reason || 'Prérequis bloquant non scellé')}"><span style="font-size:12px;">🔒</span> Verrou GxP</span>`;
+                gatingBadge = `<span style="color:#ef4444; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;" title="${escapeHtml(it.gating_block_reason || 'Prérequis bloquant non scellé')}"><span style="font-size:12px;">🔒</span> Prérequis Requis</span>`;
             } else if (isSelfMade) {
-                gatingBadge = `<span style="color:#f59e0b; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;" title="Ségrégation des fonctions BPF : Vous êtes l'auteur de cette pièce"><span style="font-size:12px;">⚠️</span> SoD Auteur</span>`;
+                gatingBadge = `<span style="color:#f59e0b; font-size:10.5px; font-weight:700; display:flex; align-items:center; gap:4px;" title="Ségrégation des fonctions BPF : Vous êtes l'auteur de cette pièce"><span style="font-size:12px;">⚠️</span> Auto-visa Exclu</span>`;
             }
 
             // Échéance / Smart Planning

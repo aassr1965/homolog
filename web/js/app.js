@@ -339,7 +339,7 @@
                             🤝 Périmètre d'intervention strictement restreint
                         </div>
                         <div style="font-size:11px; color:var(--text-main); line-height:1.5;">
-                            Conformément à la politique de sécurité BPF et à l'article 7.2.2 du Cahier des Charges, les consultants externes n'ont pas accès à la GED transverse de l'entreprise, au Référentiel, ni aux Variations.<br>
+                            Conformément à la politique de sécurité BPF et aux règles de cloisonnement des tiers, les consultants externes ont un accès strictement restreint à leur périmètre d'expertise contractuel.<br>
                             Votre mandat est strictement confiné au <strong>dossier d'enregistrement contractuellement assigné</strong>.
                         </div>
                     </div>`,
@@ -433,7 +433,7 @@
                 document.getElementById("bc-root").innerText = "COFFRE-FORT";
                 document.getElementById("bc-sec").innerText = "GED_BPF";
                 document.getElementById("bc-prod").innerText = "Taxonomie";
-                document.getElementById("bc-mod").innerText = "Section 8 du CDC";
+                document.getElementById("bc-mod").innerText = "Répertoire BPF";
                 currentGEDTaxonomyPath = '';
                 loadGEDTaxonomy();
                 loadGEDDocuments();
@@ -667,7 +667,7 @@
                         <div class="tree-node ${currentAdminSection === 'policies' ? 'selected' : ''}" onclick="loadAdminSection('policies')">
                             <span class="chevron">🛡️</span>
                             <span>Règles SoD & Zero-Trust</span>
-                            <span class="count-badge req">Guardrails</span>
+                            <span class="count-badge req">Garde-fous</span>
                         </div>
                         <div class="tree-node ${currentAdminSection === 'settings' ? 'selected' : ''}" onclick="loadAdminSection('settings')">
                             <span class="chevron">⚙️</span>

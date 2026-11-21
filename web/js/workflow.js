@@ -397,7 +397,7 @@ function openReviewDecisionModal(dossierId, itemId, itemCode, title) {
                         👉 Cette revue contradictoire doit être effectuée par un vérificateur indépendant (ex: <strong>Responsable Assurance Qualité</strong> ou pair technique).
                     </div>
                     <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
-                        <em>💡 Astuce de test : Utilisez le commutateur de rôle <strong>(Dev-Switcher en haut à droite)</strong> pour basculer sur un profil indépendant tel que 'Responsable AQ' ou 'Pharmacien Directeur Technique'.</em>
+                        <em>💡 Utilisez le sélecteur de profil en haut à droite pour basculer sur un profil indépendant tel que 'Responsable AQ' ou 'Pharmacien Directeur Technique'.</em>
                     </div>
                 </div>`,
                 "⚖️",
@@ -463,8 +463,8 @@ async function submitWorkflowReviewDecision(decision) {
                             ${escapeHTML(errorMsg)}
                         </div>
                         <div style="background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:10px; font-size:11.5px; color:var(--text-muted); line-height:1.4;">
-                            <strong>Règle Maker ≠ Checker :</strong> Conformément à l'Annexe 11 BPF et aux normes ALCOA+, le rédacteur d'une section ne peut pas valider ou approuver son propre document.<br><br>
-                            👉 <strong>Pour valider la revue :</strong> Utilisez le commutateur de rôle en haut à droite <em>(Dev-Switcher)</em> pour basculer sur le profil d'un vérificateur indépendant tel que <strong>Karim Belkacem (Pharmacien Responsable Qualité / Checker)</strong> ou <strong>Directeur Technique</strong>.
+                            <strong>Règle du Double Contrôle Qualité :</strong> Conformément à l'Annexe 11 BPF et aux normes ALCOA+, le rédacteur d'une section ne peut pas valider ou approuver son propre document.<br><br>
+                            👉 <strong>Pour valider la revue :</strong> Utilisez le sélecteur de profil en haut à droite pour basculer sur le profil d'un vérificateur indépendant tel que <strong>Karim Belkacem (Pharmacien Responsable Qualité)</strong> ou <strong>Directeur Technique</strong>.
                         </div>
                     </div>`,
                     "🚫",
@@ -1037,7 +1037,7 @@ function showGatingBlockedAlert(data) {
         <div style="background:rgba(239,68,68,0.08); border:1.5px solid #f87171; border-radius:6px; padding:12px; margin-bottom:14px;">
             <div style="font-size:13px; font-weight:800; color:#b91c1c; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
                 <span>⛔</span>
-                <span>TRANSITION BLOQUÉE PAR RÈGLE RÉGLEMENTAIRE (GATING)</span>
+                <span>TRANSITION INTERROMPUE : PRÉREQUIS RÉGLEMENTAIRES OBLIGATOIRES</span>
             </div>
             <div style="font-size:12px; color:var(--text-main); line-height:1.5;">
                 ${escapeHTML(data.error || "Cette pièce ne peut franchir cette étape tant que ses dépendances critiques ne sont pas résolues.")}
@@ -1162,7 +1162,7 @@ async function showDossierGatingSummaryModal() {
     if (!contentEl) return;
 
     if (titleEl) {
-        titleEl.textContent = "Synthèse Globale du Chemin Critique & Progression DAG (5 Phases CTD)";
+        titleEl.textContent = "Synthèse Globale du Chemin Critique & Progression des 5 Phases CTD";
     }
 
     contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-dim);">Calcul du chemin critique...</div>`;
@@ -1186,7 +1186,7 @@ async function showDossierGatingSummaryModal() {
             <!-- Frise chronologique des 5 phases DAG -->
             <div style="margin-bottom:16px; background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; padding:12px;">
                 <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px;">
-                    Progression du Dossier dans le Graphe de Dépendances (DAG) :
+                    Progression Séquentielle des 5 Phases du Dossier CTD :
                 </div>
                 <div style="display:flex; flex-direction:column; gap:6px;">
                     ${phases.map(p => {
@@ -1259,7 +1259,7 @@ function showBlockingPrereqModal(itemId, itemCode, blocksCount, blockedCodesStr)
                 <span>PIÈCE CLÉ DE VOÛTE (PRÉREQUIS BLOQUANT DU CHEMIN CRITIQUE)</span>
             </div>
             <div style="font-size:12px; color:var(--text-main); line-height:1.5;">
-                Cette section constitue un <strong>jalon bloquant amont</strong>. Tant qu'elle n'est pas rédigée, validée par le Checker et scellée en v1.0 par le Pharmacien DT, <strong>${blocksCount} autre(s) section(s)</strong> du dossier restent en attente forcée.
+                Cette section constitue un <strong>prérequis majeur amont</strong>. Tant qu'elle n'est pas rédigée, visée par le contrôle qualité et scellée en v1.0 par le Pharmacien DT, <strong>${blocksCount} autre(s) section(s)</strong> du dossier restent en attente forcée.
             </div>
         </div>
 
