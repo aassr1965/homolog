@@ -38,9 +38,9 @@ gantt
     Moteur Gating DAG & Dépendances CTD (2.1b)       :done, p2_1b, after p2_1, 2d
     Smart Planning ANPP & Rétroplanning Inversé (2.1c):done, p2_1c, after p2_1b, 2d
     Moteur Édition & 28 États de Sortie BPF (2.2)    :done, p2_2, after p2_1c, 4d
-    Redevances, Devises & Settings du Tenant (2.3)   :active, p2_3, after p2_2, 3d
-    Moteur Variations ANPP & Impact Tree (2.4)       :p2_4, after p2_3, 4d
-    Espace Consultants & Extranet Fournisseur API (2.5):p2_5, after p2_4, 2d
+    Redevances, Devises & Settings du Tenant (2.3)   :done, p2_3, after p2_2, 3d
+    Moteur Variations ANPP & Impact Tree (2.4)       :done, p2_4, after p2_3, 4d
+    Espace Consultants & Extranet Fournisseur API (2.5):active, p2_5, after p2_4, 2d
     Régularisation DM Décret 20-324 (2.6)            :p2_6, after p2_5, 3d
     Sanad Corporate & Agréments MIPH Tabadol (2.7)   :p2_7, after p2_6, 4d
     Recherche Plein Texte FTS Bilingue FR/AR (2.8)   :p2_8, after p2_7, 3d
@@ -362,24 +362,24 @@ gantt
     - Export CSV officiel conforme pour les départements Comptabilité & DAF (`/api/v1/fees/analytics/export`).
   - **Qualification complète :** 100% de succès sur la suite automatisée `TestFeeAPI_Volet1A5_PreSubmissionAndCostConsolidation` (5 tests réussis) et validation visuelle live sur le Cockpit CTD.
 
-### Jalon 2.4 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
-- [ ] **Modélisation Préalable de l'Arbre de Décision (Conditions C1..Cn & Justificatifs J1..Jn) :**
+### Jalon 2.4 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01) — *[Terminé : Référentiel des 34 Rubriques, Escalade Dynamique, Grouping Art. 09, Change Impact Tree & ES-REG-04]*
+- [x] **Modélisation Préalable de l'Arbre de Décision (Conditions C1..Cn & Justificatifs J1..Jn) :**
   - Spécification exhaustive par rubrique de l'ensemble des conditions préalables et des justificatifs opposables avant implémentation du code.
   - Vérification contradictoire des sous-cas et de l'ordonnancement officiel de la nomenclature ANPP (ex: 7.c, 12.a-f).
-- [ ] **Implémentation du référentiel officiel algérien des variations :**
+- [x] **Implémentation du référentiel officiel algérien des variations :**
   - **Mmin (Modification Mineure) :** Impact minime ou nul.
   - **Mmod (Modification Modérée) :** Impact potentiel sur qualité, sécurité, efficacité.
   - **Mmaj (Modification Majeure) :** Répercussions significatives.
   *(Remplacement définitif de la nomenclature européenne Type IA/IB/II).*
-- [ ] **Catalogue interactif des 34 rubriques officielles de modifications :**
+- [x] **Catalogue interactif des 34 rubriques officielles de modifications :**
   - **Rubriques administratives (1 à 5) :** Dénomination commerciale PF (1), Dénomination SA/excipient/conditionnement (2), Code ATC OMS (3), Nom/adresse titulaire AMM/DPSA/fabricant/conditionneur/contrôleur (4), Suppression de sites (5).
   - **Rubriques CEP et préqualification API (6.a et 6.b) :** Fabricant approuvé ou nouveau fabricant (Mmin ou Mmod).
   - **Rubriques qualitatives Substance Active 3.2.S (7 à 16) :** Nouveau site/fabricant API (7 - Mmin/Mmod/Mmaj), Nouveau bloc/unité (8.a - Mmin), Procédé API (9 - mineur Mmod, important Mmaj), Taille de lot API (10 - Mmin/Mmod), Contrôles en cours API (11), Spécifications API (12.a-f), Procédures d'essai API (13.a-e), Conditionnement primaire SA (14), Durée de vie/recontrôle API (15), Conditions de stockage API (16).
   - **Rubriques qualitatives Produit Fini 3.2.P (17 à 34) :** Système d'aromatisation/coloration (17), Masse enrobage/capsules (18.a), Composition formes solides (19 - Mmod/Mmaj), Site de fabrication PF (20.a conditionnement secondaire Mmin, 20.b conditionnement primaire Mmin, 20.c fabrication conventionnelle Mmod), Site de contrôle PF (21.a - Mmin), Taille de lot PF (22 - x10 Mmin, >x10 Mmod), Procédé de fabrication PF (23 - Mmod), Contrôles en cours PF (24), Remplacement excipient risque EST par végétal/synthétique (25 - Mmin), Spécifications/méthodes excipient (26), Monographie pharmacopée PF (27 - Mmin), Spécifications PF (28), Procédures analytiques PF (29), Type de contenant primaire (30 - non stérile Mmod, stérile Mmaj), Composition emballage primaire (31), Durée de conservation PF (32 - Mmod), Durée après première ouverture/reconstitution (33 - Mmod), Conditions de stockage PF (34 - Mmod).
-- [ ] **Moteur d'évaluation des "Conditions à remplir" et Reclassement Automatique (Escalade) :**
+- [x] **Moteur d'évaluation des "Conditions à remplir" et Reclassement Automatique (Escalade) :**
   - Questionnaire guidé pour chaque modification sélectionnée vérifiant les critères techniques.
   - **Algorithme d'escalade :** Dès qu'une condition n'est pas satisfaite, le système reclasse immédiatement la modification (Mmin → Mmod ou Mmaj, et Mmod → Mmaj) et recalcule dynamiquement la liste des pièces justificatives obligatoires.
-- [ ] **Générateur du Dossier de Modification ANPP (Section 5.3 LD-DEPP07/V01) :**
+- [x] **Générateur du Dossier de Modification ANPP (Section 5.3 LD-DEPP07/V01) :**
   - Production automatique du **Tableau comparatif standardisé** (*État actuel approuvé vs Situation proposée*).
   - Production automatique du modèle officiel d'**Attestation formelle de non-modification des autres sections**.
   - Contrôle et agrégation des **12 pièces obligatoires exigées pour toute variation (Section 5.3 du CDC)** :
@@ -395,13 +395,14 @@ gantt
     10. Approbation de la modification dans le pays d'origine (produits importés).
     11. Autorisations des sites et certificats BPF/BPL en vigueur.
     12. Informations "produit" révisées (RCP, notice bilingue FR/AR, étiquetage et maquettes couleurs visées PDT).
-- [ ] **Module de Regroupement de Modifications (*Grouping* - Article 09 de l'arrêté du 07/11/2021) :**
+- [x] **Module de Regroupement de Modifications (*Grouping* - Article 09 de l'arrêté du 07/11/2021) :**
   - Création d'une soumission groupée pour un même produit combinant plusieurs modifications interdépendantes.
   - Calcul du niveau de criticité global du groupe (alignement sur la modification la plus sévère du groupe).
-- [ ] **Assistant Visuel d'Arborescence d'Impact Réglementaire (Change Impact Tree) :**
+- [x] **Assistant Visuel d'Arborescence d'Impact Réglementaire (Change Impact Tree) :**
   - Graphe interactif projetant instantanément toutes les sections CTD corollaires impactées par le choix d'une des 34 rubriques (ex. changement de site API → 3.2.S, 3.2.P, 1.H.8, RCP/notice).
   - Code visuel tri-couleur : Rouge (Impact direct), Orange (Impact indirect *ripple effect*), Vert (Sections préservées candidates à l'attestation de non-modification).
   - Alimentation automatique de la fiche d'impact technique et financier pour le Comité de Contrôle des Changements (EI-CHG-01).
+- [x] **Qualification & Recette :** 100% de tests unitaires et d'intégration validés (`variation_test.go`), recette visuelle sur navigateur en direct (`var01_impact_tree.png`, `var_escalation_alert.png`, `var_12_docs_modal.png`, `es04_a4_comparative_table.png`).
 
 ### Jalon 2.5 : Espace Sécurisé pour Consultants Externes & Extranet Fournisseur API (Partie Fermée ASMF)
 - [ ] **Cloisonnement Étanche des Consultants Externes :**
