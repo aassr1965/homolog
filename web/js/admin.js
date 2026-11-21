@@ -1112,9 +1112,28 @@ function openUserPermissionsModal(userId) {
     document.getElementById("perm-modal-user-id").value = userId;
     document.getElementById("perm-user-name").innerText = `${user.first_name} ${user.last_name} (${user.email})`;
 
+    const isSelf = window.currentUser && (window.currentUser.id === userId || window.currentUser.email === user.email);
+    const prohibitedForAdminLab = ['DOSSIER_VIEW', 'DOSSIER_CREATE', 'DOC_READ', 'DOC_DRAFT_MAKER', 'DOC_CHECK_REVIEW', 'DOC_APPROVE_PDT', 'SYS_MAINT'];
+    const isAdminLabUser = user.role === 'admin_laboratoire';
+
     const roleObj = adminRoles.find(r => r.id === user.role);
     document.getElementById("perm-user-role").innerText = `Rôle BPF : ${roleObj ? roleObj.name_fr : user.role}`;
     document.getElementById("perm-override-reason").value = "";
+
+    const submitBtn = modal.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        if (isSelf) {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.title = "Auto-attribution interdite par la PSSI / BPF";
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+            submitBtn.title = "";
+        }
+    }
 
     const rolePerms = new Set((roleObj ? roleObj.permissions : []) || []);
     const overridesMap = new Map();
@@ -1130,6 +1149,38 @@ function openUserPermissionsModal(userId) {
     const container = document.getElementById("perm-checklist-container");
     container.innerHTML = "";
 
+    if (isSelf) {
+        const selfBanner = document.createElement("div");
+        selfBanner.style.background = "rgba(239, 68, 68, 0.12)";
+        selfBanner.style.border = "1px solid #ef4444";
+        selfBanner.style.color = "#ef4444";
+        selfBanner.style.padding = "10px 12px";
+        selfBanner.style.borderRadius = "6px";
+        selfBanner.style.fontSize = "11px";
+        selfBanner.style.fontWeight = "700";
+        selfBanner.style.marginBottom = "10px";
+        selfBanner.style.display = "flex";
+        selfBanner.style.alignItems = "center";
+        selfBanner.style.gap = "8px";
+        selfBanner.innerHTML = `<span>🛡️</span> <span>Garde-Fou SoD (21 CFR Part 11) : Vous consultez vos propres permissions. L'auto-attribution ou modification de vos propres dérogations est strictement verrouillée.</span>`;
+        container.appendChild(selfBanner);
+    } else if (isAdminLabUser) {
+        const adminLabBanner = document.createElement("div");
+        adminLabBanner.style.background = "rgba(2, 132, 199, 0.08)";
+        adminLabBanner.style.border = "1px solid #0284c7";
+        adminLabBanner.style.color = "#0284c7";
+        adminLabBanner.style.padding = "8px 12px";
+        adminLabBanner.style.borderRadius = "6px";
+        adminLabBanner.style.fontSize = "11px";
+        adminLabBanner.style.fontWeight = "600";
+        adminLabBanner.style.marginBottom = "10px";
+        adminLabBanner.style.display = "flex";
+        adminLabBanner.style.alignItems = "center";
+        adminLabBanner.style.gap = "8px";
+        adminLabBanner.innerHTML = `<span>🔒</span> <span>Cloisonnement SoD Actif : Les permissions d'accès aux dossiers techniques CTD/DM, à la GED et au visa DT sont structurellement incompatibles avec le mandat d'Administrateur Laboratoire.</span>`;
+        container.appendChild(adminLabBanner);
+    }
+
     for (const [catName, permCodes] of Object.entries(categories)) {
         const catBox = document.createElement("div");
         catBox.style.background = "var(--bg-panel)";
@@ -1143,25 +1194,29 @@ function openUserPermissionsModal(userId) {
         permCodes.forEach(code => {
             const hasByRole = rolePerms.has(code);
             const overrideVal = overridesMap.has(code) ? overridesMap.get(code) : null;
+            const isProhibitedForThisUser = isAdminLabUser && prohibitedForAdminLab.includes(code);
 
             const meta = RBAC_PERM_METADATA[code] || { icon: "🔹", fullTitle: code, desc: "" };
 
             catHtml += `
-                <div style="background:var(--bg-surface); padding:8px; border-radius:4px; font-size:11px;">
+                <div style="background:var(--bg-surface); padding:8px; border-radius:4px; font-size:11px; ${isProhibitedForThisUser ? 'opacity:0.85; border-left:3px solid #ef4444;' : ''}">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
                         <div style="display:flex; align-items:center; gap:6px;">
                             <span style="font-size:13px;">${meta.icon}</span>
                             <span style="font-weight:700; color:var(--text-main);">${meta.fullTitle}</span>
                             <span style="font-family:monospace; font-size:9px; color:var(--text-dim); opacity:0.8;">(${code})</span>
+                            ${isProhibitedForThisUser ? `<span style="font-size:9px; background:rgba(239,68,68,0.1); color:#ef4444; padding:1px 4px; border-radius:3px; font-weight:700;">🔒 Incompatible SoD</span>` : ''}
                         </div>
                         <span style="font-size:10px; color:${hasByRole ? 'var(--accent-emerald)' : 'var(--text-dim)'}; font-weight:600;">
                             Rôle : ${hasByRole ? '✓ Inclus' : '✗ Non inclus'}
                         </span>
                     </div>
                     ${meta.desc ? `<div style="font-size:10px; color:var(--text-muted); margin-bottom:5px; line-height:1.3;">${meta.desc}</div>` : ''}
-                    <select class="perm-override-select" data-perm="${code}" style="width:100%; font-size:10px; padding:3px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:3px;">
+                    <select class="perm-override-select" data-perm="${code}" ${isSelf ? 'disabled' : ''} style="width:100%; font-size:10px; padding:3px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:3px; ${isSelf ? 'opacity:0.6; cursor:not-allowed;' : ''}">
                         <option value="default" ${overrideVal === null ? 'selected' : ''}>Droit par défaut du rôle (${hasByRole ? 'Autorisé' : 'Refusé'})</option>
-                        <option value="granted" ${overrideVal === true ? 'selected' : ''} style="color:var(--accent-blue); font-weight:700;">✓ Dérogation : Forcer Accordé (+)</option>
+                        <option value="granted" ${overrideVal === true ? 'selected' : ''} ${isProhibitedForThisUser ? 'disabled' : ''} style="${isProhibitedForThisUser ? 'color:var(--text-dim);' : 'color:var(--accent-blue); font-weight:700;'}">
+                            ${isProhibitedForThisUser ? '🔒 Dérogation Bloquée (Incompatible BPF SoD)' : '✓ Dérogation : Forcer Accordé (+)'}
+                        </option>
                         <option value="revoked" ${overrideVal === false ? 'selected' : ''} style="color:#ef4444; font-weight:700;">✗ Dérogation : Forcer Révoqué (-)</option>
                     </select>
                 </div>
