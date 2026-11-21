@@ -350,7 +350,17 @@ gantt
   - **Moteur de concordance financière & SoD :** Rapprochement automatique entre le montant payé et le barème légal ANPP en vigueur ; visa obligatoire par le Pharmacien DT / Responsable Réglementaire (interdit aux rôles non habilités).
   - **Scellement automatique de la section 1.A.4 :** Dès validation conforme, la section `1.A.4` de la checklist CTD passe à `valide_qualite` avec rattachement de la quittance et audit trail ALCOA+.
   - **Qualification par tests automatisés :** 100% de réussite sur la suite `TestFeeAPI_Volet1A4_VerificationAndFX` (5 tests réussis couvrant le rapprochement, le rejet SoD, l'obligation du change BA sur l'importé et la conformité finale).
-- [ ] Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an.
+- [x] **Suivi des frais de pré-soumission (1.A.5) et tableau de bord consolidé des coûts d'enregistrement par produit et par an :**
+  - **Migration 025 & Table Dédiée `anpp_pre_submissions` :** Persistance réglementaire de la référence d'accord ANPP, de la date de notification, du type de décision (favorable / réserves / défavorable), de la redevance (50 000 DZD), de la référence quittance Trésor, et double liaison GED (copie décision + quittance de versement).
+  - **Moteur d'éligibilité réglementaire (Décret 20-325 & Guide CTD 2025) :** Exigence obligatoire pour toute nouvelle soumission (`NI`, `NF`, `MI`, `MF`) ; non applicable (`NA`) pour les renouvellements quinquennaux (`RI`, `RF`).
+  - **Contrôle & Scellement de la section 1.A.5 :** Rapprochement documentaire avec visa électronique du Pharmacien Directeur Technique et passage automatique de l'item de checklist `1.A.5` en statut `valide_qualite`.
+  - **Tableau de Bord Consolidé Multi-Produits & Multi-Années :**
+    - 4 KPIs globaux de pilotage : Total Redevances Engagées, Total Acquitté & Justifié, Reste à Régulariser, Taux de Dossiers Soldés.
+    - Vue analytique 1 : Synthèse détaillée par produit et par dossier (Pré-soumission 1.A.5, Dépôt Initial BV1, Expertises Complémentaires BV2, Variations Post-AMM).
+    - Vue analytique 2 : Consolidation financière par exercice annuel.
+    - Vue analytique 3 : Répartition catégorielle avec barres de progression et pourcentages.
+    - Export CSV officiel conforme pour les départements Comptabilité & DAF (`/api/v1/fees/analytics/export`).
+  - **Qualification complète :** 100% de succès sur la suite automatisée `TestFeeAPI_Volet1A5_PreSubmissionAndCostConsolidation` (5 tests réussis) et validation visuelle live sur le Cockpit CTD.
 
 ### Jalon 2.4 : Moteur de Variations ANPP & Reclassement Automatique (Ligne Directrice LD-DEPP07/V01)
 - [ ] **Modélisation Préalable de l'Arbre de Décision (Conditions C1..Cn & Justificatifs J1..Jn) :**

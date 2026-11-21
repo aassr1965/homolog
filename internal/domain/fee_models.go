@@ -125,6 +125,108 @@ type Section1A4Summary struct {
 	BlockingIssues       []string         `json:"blocking_issues"`
 }
 
+// ANPPPreSubmission représente une décision et justificatifs de pré-soumission ANPP (Section 1.A.5)
+type ANPPPreSubmission struct {
+	ID                    string     `json:"id"`
+	OrganizationID        string     `json:"organization_id"`
+	DossierID             string     `json:"dossier_id"`
+	ANPPReference         string     `json:"anpp_reference"`
+	ANPPNotificationDate  time.Time  `json:"anpp_notification_date"`
+	DecisionType          string     `json:"decision_type"` // favorable, reserve, defavorable
+	FeeAmountDZD          float64    `json:"fee_amount_dzd"`
+	SlipReference         string     `json:"slip_reference"`
+	PaymentDate           time.Time  `json:"payment_date"`
+	ResponseDocumentID    *string    `json:"response_document_id,omitempty"`
+	ResponseDocumentTitle string     `json:"response_document_title,omitempty"`
+	PaymentDocumentID     *string    `json:"payment_document_id,omitempty"`
+	PaymentDocumentTitle  string     `json:"payment_document_title,omitempty"`
+	VerificationStatus    string     `json:"verification_status"` // conforme, non_conforme, pending
+	VerifiedBy            *string    `json:"verified_by,omitempty"`
+	VerifiedByName        string     `json:"verified_by_name,omitempty"`
+	VerifiedAt            time.Time  `json:"verified_at"`
+	VerificationNotes     string     `json:"verification_notes,omitempty"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
+}
+
+// VerifyPreSubmission1A5Request porte la demande d'enregistrement et de validation 1.A.5
+type VerifyPreSubmission1A5Request struct {
+	ANPPReference        string  `json:"anpp_reference"`
+	ANPPNotificationDate string  `json:"anpp_notification_date"` // YYYY-MM-DD
+	DecisionType         string  `json:"decision_type"`          // favorable, reserve, defavorable
+	FeeAmountDZD         float64 `json:"fee_amount_dzd"`
+	SlipReference        string  `json:"slip_reference"`
+	PaymentDate          string  `json:"payment_date"` // YYYY-MM-DD
+	ResponseDocumentID   *string `json:"response_document_id,omitempty"`
+	PaymentDocumentID    *string `json:"payment_document_id,omitempty"`
+	VerificationNotes    string  `json:"verification_notes,omitempty"`
+}
+
+// Section1A5Summary détaille la conformité de l'accord et des frais de pré-soumission
+type Section1A5Summary struct {
+	DossierID               string             `json:"dossier_id"`
+	DossierCode             string             `json:"dossier_code"`
+	ProcedureCode           string             `json:"procedure_code"` // NI, RI, MI, NF, RF, MF
+	IsPreSubmissionRequired bool               `json:"is_pre_submission_required"` // Vrai pour NI, NF, MI, MF ; Faux pour RI, RF
+	Section1A5Status        string             `json:"section_1a5_status"` // manquant, valide_qualite, non_applicable
+	PreSubmission           *ANPPPreSubmission `json:"pre_submission,omitempty"`
+	OverallCompliant        bool               `json:"overall_compliant"`
+	ComplianceChecklist     []string           `json:"compliance_checklist"`
+	BlockingIssues          []string           `json:"blocking_issues"`
+}
+
+// ProductCostSummary consolide les coûts pour un produit donné
+type ProductCostSummary struct {
+	ProductID         string  `json:"product_id"`
+	ProductName       string  `json:"product_name"`
+	ProductType       string  `json:"product_type"` // medicament, dispositif_medical
+	DossierID         string  `json:"dossier_id"`
+	DossierCode       string  `json:"dossier_code"`
+	ProcedureCode     string  `json:"procedure_code"`
+	PreSubmissionDZD  float64 `json:"pre_submission_dzd"`  // 1.A.5
+	InitialDepositDZD float64 `json:"initial_deposit_dzd"` // BV1 (1.A.4)
+	ComplementaryDZD  float64 `json:"complementary_dzd"`   // BV2
+	VariationsDZD     float64 `json:"variations_dzd"`
+	TotalCommittedDZD float64 `json:"total_committed_dzd"`
+	TotalPaidDZD      float64 `json:"total_paid_dzd"`
+	FinancialStatus   string  `json:"financial_status"` // acquitte, partiel, en_attente
+}
+
+// YearlyCostSummary consolide les coûts par exercice annuel
+type YearlyCostSummary struct {
+	Year              int     `json:"year"`
+	DossierCount      int     `json:"dossier_count"`
+	TotalEmittedDZD   float64 `json:"total_emitted_dzd"`
+	TotalPaidDZD      float64 `json:"total_paid_dzd"`
+	TotalPendingDZD   float64 `json:"total_pending_dzd"`
+	PreSubmissionDZD  float64 `json:"pre_submission_dzd"`
+	InitialDepositDZD float64 `json:"initial_deposit_dzd"`
+	ComplementaryDZD  float64 `json:"complementary_dzd"`
+}
+
+// CategoryCostSummary consolide les coûts par catégorie réglementaire
+type CategoryCostSummary struct {
+	Category   string  `json:"category"` // pre_submission, initial_deposit, complementary_lncm, variations, dm
+	LabelFR    string  `json:"label_fr"`
+	AmountDZD  float64 `json:"amount_dzd"`
+	Percentage float64 `json:"percentage"`
+}
+
+// CostConsolidationSummary est la synthèse complète du Cockpit Financier
+type CostConsolidationSummary struct {
+	OrganizationID      string                `json:"organization_id"`
+	OrganizationName    string                `json:"organization_name"`
+	TotalDossiers       int                   `json:"total_dossiers"`
+	TotalFeesEmittedDZD float64               `json:"total_fees_emitted_dzd"`
+	TotalFeesPaidDZD    float64               `json:"total_fees_paid_dzd"`
+	TotalFeesPendingDZD float64               `json:"total_fees_pending_dzd"`
+	FullySettledCount   int                   `json:"fully_settled_count"`
+	PendingSettledCount int                   `json:"pending_settled_count"`
+	ProductBreakdown    []ProductCostSummary  `json:"product_breakdown"`
+	YearlyBreakdown     []YearlyCostSummary   `json:"yearly_breakdown"`
+	CategoryBreakdown   []CategoryCostSummary `json:"category_breakdown"`
+}
+
 // CreateFeeScheduleRequest représente la demande de mise à jour ou création d'un barème
 type CreateFeeScheduleRequest struct {
 	Category       string  `json:"category"`
