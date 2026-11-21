@@ -45,7 +45,15 @@ type ANPPPaymentSlip struct {
 	DossierID            string     `json:"dossier_id"`
 	DossierCode          string     `json:"dossier_code,omitempty"`
 	ProductBrandName     string     `json:"product_brand_name,omitempty"`
+	ProductDCI           string     `json:"product_dci,omitempty"`
+	ProductDosage        string     `json:"product_dosage,omitempty"`
+	ProductForm          string     `json:"product_form,omitempty"`
+	ProductRoute         string     `json:"product_route,omitempty"`
+	ProcedureCode        string     `json:"procedure_code,omitempty"`
+	OriginType           string     `json:"origin_type,omitempty"`
 	EstablishmentName    string     `json:"establishment_name,omitempty"`
+	MIPHLicenseNumber    string     `json:"miph_license_number,omitempty"`
+	TechnicalDirectorName string    `json:"technical_director_name,omitempty"`
 	FeeScheduleID        string     `json:"fee_schedule_id"`
 	FeeScheduleReference string     `json:"fee_schedule_reference,omitempty"`
 	SlipType             string     `json:"slip_type"`   // BV1, BV2
