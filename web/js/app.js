@@ -330,6 +330,24 @@
                 showNotifyModal("Accès Refusé (Zero-Trust)", "Votre profil technique est assujetti aux règles Zero-Trust et ne dispose pas de l'habilitation <code>DOC_READ</code>.", "🚫", "Fermer");
                 return;
             }
+            // Garde-fou d'habilitation préventif côté UI (BPF / Need-to-Know)
+            if ((domain === 'ctd' || domain === 'dm' || domain === 'deficiencies' || domain === 'variations') && typeof hasPermission === 'function' && !hasPermission('DOSSIER_VIEW')) {
+                showNotifyModal(
+                    "Accès Cloisonné (BPF / Need-to-Know)",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-red); font-weight:700;">
+                            🔒 Confidentialité Pharmaceutique & Secret Industriel
+                        </div>
+                        <div style="font-size:11px; color:var(--text-main); line-height:1.5;">
+                            Conformément aux Bonnes Pratiques de Fabrication (BPF) et au principe du moindre privilège (<em>Need-to-Know</em>), l'accès aux dossiers techniques CTD et d'homologation des dispositifs médicaux requiert l'habilitation <code>DOSSIER_VIEW</code>.<br>
+                            Votre profil administratif est strictement cantonné à la gestion des collaborateurs, des barèmes et de la gouvernance de l'établissement.
+                        </div>
+                    </div>`,
+                    "🔒",
+                    "Compris"
+                );
+                return;
+            }
             // Cloisonnement strict pour Consultant Externe (CDC Section 7.2.2) : Seul l'univers CTD assigné est accessible
             if (typeof hasRole === 'function' && hasRole('consultant_externe', 'consultant_cro_externe') && domain !== 'ctd') {
                 showNotifyModal(

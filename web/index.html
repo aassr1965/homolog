@@ -374,7 +374,7 @@
                 <span class="act-label" id="lbl-act-var">Variations</span>
                 <span class="act-badge">12</span>
             </button>
-            <button class="act-btn" id="act-dm" data-perm="REF_VIEW" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
+            <button class="act-btn" id="act-dm" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
                 <span class="act-icon">💉</span>
                 <span class="act-label" id="lbl-act-dm">Dispositifs DM</span>
             </button>
@@ -408,13 +408,13 @@
         <div class="pane-tree" id="pane-tree">
             <!-- Sélecteur d'univers métier sur mobile (tiroir) -->
             <div class="mobile-domain-switcher" id="mobile-domain-switcher">
-                <button class="mob-dom-btn active" id="mob-act-ref" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique">🏢 Ref</button>
-                <button class="mob-dom-btn" id="mob-act-ctd" onclick="switchDomainModule('ctd')" title="Dossiers CTD">📋 CTD</button>
-                <button class="mob-dom-btn" id="mob-act-deficiencies" onclick="switchDomainModule('deficiencies')" title="Compléments ANPP">⏱️ Compléments</button>
-                <button class="mob-dom-btn" id="mob-act-variations" onclick="switchDomainModule('variations')" title="Variations Post-AMM">🔄 Variations</button>
-                <button class="mob-dom-btn" id="mob-act-dm" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">💉 DM</button>
-                <button class="mob-dom-btn" id="mob-act-ged" onclick="switchDomainModule('ged')" title="GED BPF">📁 GED</button>
-                <button class="mob-dom-btn" id="mob-act-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration Labo">⚙️ Admin</button>
+                <button class="mob-dom-btn active" id="mob-act-ref" data-perm="REF_VIEW" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique">🏢 Ref</button>
+                <button class="mob-dom-btn" id="mob-act-ctd" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('ctd')" title="Dossiers CTD">📋 CTD</button>
+                <button class="mob-dom-btn" id="mob-act-deficiencies" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('deficiencies')" title="Compléments ANPP">⏱️ Compléments</button>
+                <button class="mob-dom-btn" id="mob-act-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations Post-AMM">🔄 Variations</button>
+                <button class="mob-dom-btn" id="mob-act-dm" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">💉 DM</button>
+                <button class="mob-dom-btn" id="mob-act-ged" data-perm="DOC_READ" onclick="switchDomainModule('ged')" title="GED BPF">📁 GED</button>
+                <button class="mob-dom-btn" id="mob-act-admin" data-perm-any="USER_MANAGE, DOC_APPROVE_PDT" onclick="switchDomainModule('admin')" title="Administration Labo">⚙️ Admin</button>
                 <button class="mob-dom-btn" id="mob-act-sys" data-perm="SYS_MAINT" onclick="switchDomainModule('sys')" title="Cockpit IT" style="display:none;">🖥️ IT</button>
                 <button class="mob-dom-btn" id="mob-act-parapheur" data-perm="DOC_APPROVE_PDT" onclick="openParapheurModal()" title="Parapheur DT" style="display:none;">⚖️ DT</button>
             </div>
@@ -516,24 +516,24 @@
             <span class="mob-nav-icon">🏢</span>
             <span class="mob-nav-label">Réf</span>
         </button>
-        <button class="mob-nav-btn" id="mobnav-ctd" onclick="switchDomainModule('ctd')" title="Dossiers CTD">
+        <button class="mob-nav-btn" id="mobnav-ctd" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('ctd')" title="Dossiers CTD">
             <span class="mob-nav-icon">📋</span>
             <span class="mob-nav-label">CTD</span>
         </button>
-        <button class="mob-nav-btn" id="mobnav-variations" onclick="switchDomainModule('variations')" title="Variations Post-AMM">
+        <button class="mob-nav-btn" id="mobnav-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations Post-AMM">
             <span class="mob-nav-icon">🔄</span>
             <span class="mob-nav-label">Variations</span>
             <span class="mob-nav-badge">12</span>
         </button>
-        <button class="mob-nav-btn" id="mobnav-dm" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">
+        <button class="mob-nav-btn" id="mobnav-dm" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">
             <span class="mob-nav-icon">💉</span>
             <span class="mob-nav-label">DM</span>
         </button>
-        <button class="mob-nav-btn" id="mobnav-ged" onclick="switchDomainModule('ged')" title="GED BPF">
+        <button class="mob-nav-btn" id="mobnav-ged" data-perm="DOC_READ" onclick="switchDomainModule('ged')" title="GED BPF">
             <span class="mob-nav-icon">📁</span>
             <span class="mob-nav-label">GED</span>
         </button>
-        <button class="mob-nav-btn" id="mobnav-admin" data-perm="USER_MANAGE" onclick="switchDomainModule('admin')" title="Administration">
+        <button class="mob-nav-btn" id="mobnav-admin" data-perm-any="USER_MANAGE, DOC_APPROVE_PDT" onclick="switchDomainModule('admin')" title="Administration">
             <span class="mob-nav-icon">⚙️</span>
             <span class="mob-nav-label">Admin</span>
         </button>

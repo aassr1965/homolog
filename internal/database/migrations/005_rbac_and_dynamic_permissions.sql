@@ -70,7 +70,7 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO roles (id, name_fr, name_ar, description, is_system) VALUES
     ('super_admin_editeur', 'Super Administrateur Éditeur SaaS', 'المشرف العام لمنصة البرمجيات', 'Administration de la plateforme SaaS multi-tenant, maintenance globale et provisioning', TRUE),
     ('admin_systeme_local', 'Administrateur Système Local', 'مدير النظام المحلي', 'Administration technique locale, gestion des serveurs, backups et certificats TLS (Zero-Trust sur données santé)', TRUE),
-    ('admin_laboratoire', 'Administrateur Laboratoire', 'مسؤول إدارة المؤسسة الصيدلانية', 'Gestion des collaborateurs du laboratoire, attribution des profils, quotas et configuration des accès', TRUE),
+    ('admin_laboratoire', 'Administrateur Laboratoire', 'مسؤول إدارة المؤسسة الصيدلانية', 'Gestion des collaborateurs du laboratoire, attribution des profils, quotas et configuration des accès (Cloisonné Need-to-Know : sans accès aux dossiers techniques CTD/DM)', TRUE),
     ('responsable_affaires_reglementaires', 'Responsable Affaires Réglementaires (RA)', 'مسؤول الشؤون التنظيمية', 'Coordination réglementaire, montage des dossiers CTD/DM, contrôle qualité des pièces (Checker)', TRUE),
     ('directeur_technique', 'Pharmacien Directeur Technique (PDT)', 'الصيدلي المدير التقني', 'Responsable légal et ordinal titulaire de la décision ministérielle (1.A.7). Détenteur exclusif du visa légal (Approver)', TRUE),
     ('contributeur_qualite_bpf', 'Contributeur Qualité BPF', 'محرر ضمان ومراقبة الجودة', 'Assurance et Contrôle Qualité, rédaction et relecture des modules 3, procédures SOP et stabilités Zone IVb', TRUE),
@@ -104,7 +104,6 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 INSERT INTO role_permissions (role_id, permission_id) VALUES
     ('admin_laboratoire', 'USER_MANAGE'),
     ('admin_laboratoire', 'REF_VIEW'),
-    ('admin_laboratoire', 'DOSSIER_VIEW'),
     ('admin_laboratoire', 'AUDIT_VIEW');
 
 -- (4) Responsable Affaires Réglementaires (RA)

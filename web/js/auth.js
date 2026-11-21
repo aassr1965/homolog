@@ -575,10 +575,10 @@ const mockAuditTrail = [
                 targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'ged'));
             } else if (targetDomain === 'ged' && !hasPermission('DOC_READ')) {
                 targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
-            } else if ((targetDomain === 'ctd' || targetDomain === 'variations') && !hasPermission('DOSSIER_VIEW')) {
-                targetDomain = hasPermission('REF_VIEW') ? 'ref' : (hasPermission('DOC_READ') ? 'ged' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
-            } else if ((targetDomain === 'ref' || targetDomain === 'dm') && !hasPermission('REF_VIEW')) {
-                targetDomain = hasPermission('DOC_READ') ? 'ged' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'admin'));
+            } else if ((targetDomain === 'ctd' || targetDomain === 'variations' || targetDomain === 'dm' || targetDomain === 'deficiencies') && !hasPermission('DOSSIER_VIEW')) {
+                targetDomain = hasPermission('USER_MANAGE') ? 'admin' : (hasPermission('REF_VIEW') ? 'ref' : (hasPermission('SYS_MAINT') ? 'sys' : 'ref'));
+            } else if (targetDomain === 'ref' && !hasPermission('REF_VIEW')) {
+                targetDomain = hasPermission('USER_MANAGE') ? 'admin' : (hasPermission('DOSSIER_VIEW') ? 'ctd' : (hasPermission('SYS_MAINT') ? 'sys' : 'ged'));
             }
 
             switchDomainModule(targetDomain);
