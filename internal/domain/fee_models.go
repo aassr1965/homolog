@@ -67,19 +67,19 @@ type ANPPPaymentSlip struct {
 	UpdatedAt            time.Time  `json:"updated_at"`
 
 	// Volet 1.A.4 : Traçabilité quittance bancaire, conformité financière & Attestation Banque d'Algérie
-	Currency              string     `json:"currency"`                         // DZD, EUR, USD...
+	Currency              string     `json:"currency"` // DZD, EUR, USD...
 	CurrencyAmount        *float64   `json:"currency_amount,omitempty"`
-	BankName              string     `json:"bank_name,omitempty"`             // BNA, CPA, BEA...
-	PaymentMode           string     `json:"payment_mode"`                    // virement, cheque_certifie, versement_especes
-	BankReceiptRef        string     `json:"bank_receipt_ref,omitempty"`      // Réf avis de débit ou quittance
+	BankName              string     `json:"bank_name,omitempty"`        // BNA, CPA, BEA...
+	PaymentMode           string     `json:"payment_mode"`               // virement, cheque_certifie, versement_especes
+	BankReceiptRef        string     `json:"bank_receipt_ref,omitempty"` // Réf avis de débit ou quittance
 	BankReceiptDate       *time.Time `json:"bank_receipt_date,omitempty"`
 	RequiresFXAttestation bool       `json:"requires_fx_attestation"`         // Obligatoire pour importé si devises
 	FXRate                *float64   `json:"fx_rate,omitempty"`               // Taux officiel Banque d'Algérie
 	FXRateDate            *time.Time `json:"fx_rate_date,omitempty"`          // Date cours Banque d'Algérie
-	FXAttestationRef      string     `json:"fx_attestation_ref,omitempty"`   // N° attestation Banque d'Algérie
+	FXAttestationRef      string     `json:"fx_attestation_ref,omitempty"`    // N° attestation Banque d'Algérie
 	FXAttestationDocID    *string    `json:"fx_attestation_doc_id,omitempty"` // Scan GED attestation de cours
 	FXAttestationDocTitle string     `json:"fx_attestation_doc_title,omitempty"`
-	VerificationStatus    string     `json:"verification_status"`             // pending, conforme, non_conforme
+	VerificationStatus    string     `json:"verification_status"` // pending, conforme, non_conforme
 	VerifiedBy            *string    `json:"verified_by,omitempty"`
 	VerifiedByName        string     `json:"verified_by_name,omitempty"`
 	VerifiedAt            *time.Time `json:"verified_at,omitempty"`
