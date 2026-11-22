@@ -178,8 +178,8 @@ func (h *VariationHandler) CreateVariation(w http.ResponseWriter, r *http.Reques
 		Description:              payload.Description,
 		IsGrouping:               payload.IsGrouping,
 		GroupingJustification:    payload.GroupingJustification,
-		OverallClassification:   domain.ClassMmin,
-		NominalClassification:   domain.ClassMmin,
+		OverallClassification:    domain.ClassMmin,
+		NominalClassification:    domain.ClassMmin,
 		CurrentApprovedSituation: payload.CurrentApprovedSituation,
 		ProposedSituation:        payload.ProposedSituation,
 		TechnicalJustification:   payload.TechnicalJustification,
@@ -312,11 +312,11 @@ func (h *VariationHandler) AddVariationItem(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]interface{}{
-		"success":       true,
-		"item":          item,
-		"variation":     updatedVar,
-		"is_escalated":  item.IsEscalated,
-		"escalation":    item.EscalationReason,
+		"success":      true,
+		"item":         item,
+		"variation":    updatedVar,
+		"is_escalated": item.IsEscalated,
+		"escalation":   item.EscalationReason,
 	})
 }
 

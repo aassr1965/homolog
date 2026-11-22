@@ -39,40 +39,40 @@ type ANPPFeeSchedule struct {
 
 // ANPPPaymentSlip représente un bordereau de versement BV1 ou BV2 scellé pour le Trésor Public
 type ANPPPaymentSlip struct {
-	ID                   string     `json:"id"`
-	OrganizationID       string     `json:"organization_id"`
-	OrganizationName     string     `json:"organization_name,omitempty"`
-	DossierID            string     `json:"dossier_id"`
-	DossierCode          string     `json:"dossier_code,omitempty"`
-	ProductBrandName     string     `json:"product_brand_name,omitempty"`
-	ProductDCI           string     `json:"product_dci,omitempty"`
-	ProductDosage        string     `json:"product_dosage,omitempty"`
-	ProductForm          string     `json:"product_form,omitempty"`
-	ProductRoute         string     `json:"product_route,omitempty"`
-	ProcedureCode        string     `json:"procedure_code,omitempty"`
-	OriginType           string     `json:"origin_type,omitempty"`
-	EstablishmentName    string     `json:"establishment_name,omitempty"`
-	MIPHLicenseNumber    string     `json:"miph_license_number,omitempty"`
-	TechnicalDirectorName string    `json:"technical_director_name,omitempty"`
-	FeeScheduleID        string     `json:"fee_schedule_id"`
-	FeeScheduleReference string     `json:"fee_schedule_reference,omitempty"`
-	SlipType             string     `json:"slip_type"`   // BV1, BV2
-	SlipNumber           string     `json:"slip_number"` // BV1-2026-AMOX-001
-	PaymentPurpose       string     `json:"payment_purpose"`
-	AmountDZD            float64    `json:"amount_dzd"`
-	AmountWordsFR        string     `json:"amount_words_fr"`
-	AmountWordsAR        string     `json:"amount_words_ar"`
-	BankAccountRIB       string     `json:"bank_account_rib"`
-	Status               string     `json:"status"` // emis, paye, quittance_recue, annule
-	PaymentReference     string     `json:"payment_reference,omitempty"`
-	PaidAt               *time.Time `json:"paid_at,omitempty"`
-	ReceiptDocumentID    *string    `json:"receipt_document_id,omitempty"`
-	ReceiptDocumentTitle string     `json:"receipt_document_title,omitempty"`
-	GeneratedBy          *string    `json:"generated_by,omitempty"`
-	GeneratedByName      string     `json:"generated_by_name,omitempty"`
-	GeneratedAt          time.Time  `json:"generated_at"`
-	CreatedAt            time.Time  `json:"created_at"`
-	UpdatedAt            time.Time  `json:"updated_at"`
+	ID                    string     `json:"id"`
+	OrganizationID        string     `json:"organization_id"`
+	OrganizationName      string     `json:"organization_name,omitempty"`
+	DossierID             string     `json:"dossier_id"`
+	DossierCode           string     `json:"dossier_code,omitempty"`
+	ProductBrandName      string     `json:"product_brand_name,omitempty"`
+	ProductDCI            string     `json:"product_dci,omitempty"`
+	ProductDosage         string     `json:"product_dosage,omitempty"`
+	ProductForm           string     `json:"product_form,omitempty"`
+	ProductRoute          string     `json:"product_route,omitempty"`
+	ProcedureCode         string     `json:"procedure_code,omitempty"`
+	OriginType            string     `json:"origin_type,omitempty"`
+	EstablishmentName     string     `json:"establishment_name,omitempty"`
+	MIPHLicenseNumber     string     `json:"miph_license_number,omitempty"`
+	TechnicalDirectorName string     `json:"technical_director_name,omitempty"`
+	FeeScheduleID         string     `json:"fee_schedule_id"`
+	FeeScheduleReference  string     `json:"fee_schedule_reference,omitempty"`
+	SlipType              string     `json:"slip_type"`   // BV1, BV2
+	SlipNumber            string     `json:"slip_number"` // BV1-2026-AMOX-001
+	PaymentPurpose        string     `json:"payment_purpose"`
+	AmountDZD             float64    `json:"amount_dzd"`
+	AmountWordsFR         string     `json:"amount_words_fr"`
+	AmountWordsAR         string     `json:"amount_words_ar"`
+	BankAccountRIB        string     `json:"bank_account_rib"`
+	Status                string     `json:"status"` // emis, paye, quittance_recue, annule
+	PaymentReference      string     `json:"payment_reference,omitempty"`
+	PaidAt                *time.Time `json:"paid_at,omitempty"`
+	ReceiptDocumentID     *string    `json:"receipt_document_id,omitempty"`
+	ReceiptDocumentTitle  string     `json:"receipt_document_title,omitempty"`
+	GeneratedBy           *string    `json:"generated_by,omitempty"`
+	GeneratedByName       string     `json:"generated_by_name,omitempty"`
+	GeneratedAt           time.Time  `json:"generated_at"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 
 	// Volet 1.A.4 : Traçabilité quittance bancaire, conformité financière & Attestation Banque d'Algérie
 	Currency              string     `json:"currency"` // DZD, EUR, USD...
@@ -135,26 +135,26 @@ type Section1A4Summary struct {
 
 // ANPPPreSubmission représente une décision et justificatifs de pré-soumission ANPP (Section 1.A.5)
 type ANPPPreSubmission struct {
-	ID                    string     `json:"id"`
-	OrganizationID        string     `json:"organization_id"`
-	DossierID             string     `json:"dossier_id"`
-	ANPPReference         string     `json:"anpp_reference"`
-	ANPPNotificationDate  time.Time  `json:"anpp_notification_date"`
-	DecisionType          string     `json:"decision_type"` // favorable, reserve, defavorable
-	FeeAmountDZD          float64    `json:"fee_amount_dzd"`
-	SlipReference         string     `json:"slip_reference"`
-	PaymentDate           time.Time  `json:"payment_date"`
-	ResponseDocumentID    *string    `json:"response_document_id,omitempty"`
-	ResponseDocumentTitle string     `json:"response_document_title,omitempty"`
-	PaymentDocumentID     *string    `json:"payment_document_id,omitempty"`
-	PaymentDocumentTitle  string     `json:"payment_document_title,omitempty"`
-	VerificationStatus    string     `json:"verification_status"` // conforme, non_conforme, pending
-	VerifiedBy            *string    `json:"verified_by,omitempty"`
-	VerifiedByName        string     `json:"verified_by_name,omitempty"`
-	VerifiedAt            time.Time  `json:"verified_at"`
-	VerificationNotes     string     `json:"verification_notes,omitempty"`
-	CreatedAt             time.Time  `json:"created_at"`
-	UpdatedAt             time.Time  `json:"updated_at"`
+	ID                    string    `json:"id"`
+	OrganizationID        string    `json:"organization_id"`
+	DossierID             string    `json:"dossier_id"`
+	ANPPReference         string    `json:"anpp_reference"`
+	ANPPNotificationDate  time.Time `json:"anpp_notification_date"`
+	DecisionType          string    `json:"decision_type"` // favorable, reserve, defavorable
+	FeeAmountDZD          float64   `json:"fee_amount_dzd"`
+	SlipReference         string    `json:"slip_reference"`
+	PaymentDate           time.Time `json:"payment_date"`
+	ResponseDocumentID    *string   `json:"response_document_id,omitempty"`
+	ResponseDocumentTitle string    `json:"response_document_title,omitempty"`
+	PaymentDocumentID     *string   `json:"payment_document_id,omitempty"`
+	PaymentDocumentTitle  string    `json:"payment_document_title,omitempty"`
+	VerificationStatus    string    `json:"verification_status"` // conforme, non_conforme, pending
+	VerifiedBy            *string   `json:"verified_by,omitempty"`
+	VerifiedByName        string    `json:"verified_by_name,omitempty"`
+	VerifiedAt            time.Time `json:"verified_at"`
+	VerificationNotes     string    `json:"verification_notes,omitempty"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 // VerifyPreSubmission1A5Request porte la demande d'enregistrement et de validation 1.A.5
@@ -174,9 +174,9 @@ type VerifyPreSubmission1A5Request struct {
 type Section1A5Summary struct {
 	DossierID               string             `json:"dossier_id"`
 	DossierCode             string             `json:"dossier_code"`
-	ProcedureCode           string             `json:"procedure_code"` // NI, RI, MI, NF, RF, MF
+	ProcedureCode           string             `json:"procedure_code"`             // NI, RI, MI, NF, RF, MF
 	IsPreSubmissionRequired bool               `json:"is_pre_submission_required"` // Vrai pour NI, NF, MI, MF ; Faux pour RI, RF
-	Section1A5Status        string             `json:"section_1a5_status"` // manquant, valide_qualite, non_applicable
+	Section1A5Status        string             `json:"section_1a5_status"`         // manquant, valide_qualite, non_applicable
 	PreSubmission           *ANPPPreSubmission `json:"pre_submission,omitempty"`
 	OverallCompliant        bool               `json:"overall_compliant"`
 	ComplianceChecklist     []string           `json:"compliance_checklist"`

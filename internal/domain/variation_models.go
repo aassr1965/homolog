@@ -37,10 +37,10 @@ func (c VariationClassification) IsHigherThan(other VariationClassification) boo
 
 // Catégories des 34 Rubriques officielles (LD-DEPP07/V01)
 const (
-	CategoryAdministrative     = "ADMINISTRATIVE"         // Rubriques 1 à 5
-	CategoryCEPAPI             = "CEP_API"                // Rubriques 6.a & 6.b
-	CategorySubstanceActive32S = "SUBSTANCE_ACTIVE_32S"   // Rubriques 7 à 16
-	CategoryProduitFini32P     = "PRODUIT_FINI_32P"       // Rubriques 17 à 34
+	CategoryAdministrative     = "ADMINISTRATIVE"       // Rubriques 1 à 5
+	CategoryCEPAPI             = "CEP_API"              // Rubriques 6.a & 6.b
+	CategorySubstanceActive32S = "SUBSTANCE_ACTIVE_32S" // Rubriques 7 à 16
+	CategoryProduitFini32P     = "PRODUIT_FINI_32P"     // Rubriques 17 à 34
 )
 
 // ChangeImpactLevel qualifie le niveau d'impact CTD dans le Change Impact Tree
@@ -70,18 +70,18 @@ type VariationCondition struct {
 
 // RubriqueDefinition encapsule une rubrique officielle parmi les 34
 type RubriqueDefinition struct {
-	Code                       string               `json:"code"` // Ex: "1", "7.d.1", "19.a", "30.b"
-	Number                     int                  `json:"number"`
-	SubCode                    string               `json:"sub_code"`
-	Title                      string               `json:"title"`
-	Category                   string               `json:"category"`
-	CategoryLabel              string               `json:"category_label"`
+	Code                       string                  `json:"code"` // Ex: "1", "7.d.1", "19.a", "30.b"
+	Number                     int                     `json:"number"`
+	SubCode                    string                  `json:"sub_code"`
+	Title                      string                  `json:"title"`
+	Category                   string                  `json:"category"`
+	CategoryLabel              string                  `json:"category_label"`
 	DefaultClassification      VariationClassification `json:"default_classification"`
 	EscalatedClassification    VariationClassification `json:"escalated_classification"`
-	EscalationConditionSummary string               `json:"escalation_condition_summary"`
-	Conditions                 []VariationCondition `json:"conditions"`
-	RequiredDocuments          []string             `json:"required_documents"`
-	ImpactedSections           []CTDSectionImpact   `json:"impacted_sections"`
+	EscalationConditionSummary string                  `json:"escalation_condition_summary"`
+	Conditions                 []VariationCondition    `json:"conditions"`
+	RequiredDocuments          []string                `json:"required_documents"`
+	ImpactedSections           []CTDSectionImpact      `json:"impacted_sections"`
 }
 
 // VariationRequest représente une demande formelle de modification post-AMM
@@ -95,8 +95,8 @@ type VariationRequest struct {
 	Description              string                  `json:"description,omitempty"`
 	IsGrouping               bool                    `json:"is_grouping"`
 	GroupingJustification    string                  `json:"grouping_justification,omitempty"`
-	OverallClassification   VariationClassification `json:"overall_classification"`
-	NominalClassification   VariationClassification `json:"nominal_classification"`
+	OverallClassification    VariationClassification `json:"overall_classification"`
+	NominalClassification    VariationClassification `json:"nominal_classification"`
 	HasEscalation            bool                    `json:"has_escalation"`
 	EscalationSummary        string                  `json:"escalation_summary,omitempty"`
 	CurrentApprovedSituation string                  `json:"current_approved_situation"`
@@ -116,14 +116,14 @@ type VariationRequest struct {
 	UpdatedAt                time.Time               `json:"updated_at"`
 
 	// Relations enrichies
-	MedicineName             string                  `json:"medicine_name,omitempty"`
-	MedicineDCI              string                  `json:"medicine_dci,omitempty"`
-	MedicineDosage           string                  `json:"medicine_dosage,omitempty"`
-	MedicineForm             string                  `json:"medicine_form,omitempty"`
-	RegistrationNumber       string                  `json:"registration_number,omitempty"`
-	Items                    []VariationItem         `json:"items,omitempty"`
-	Documents                []VariationDocument     `json:"documents,omitempty"`
-	ChangeImpactTree         *ChangeImpactTree       `json:"change_impact_tree,omitempty"`
+	MedicineName       string              `json:"medicine_name,omitempty"`
+	MedicineDCI        string              `json:"medicine_dci,omitempty"`
+	MedicineDosage     string              `json:"medicine_dosage,omitempty"`
+	MedicineForm       string              `json:"medicine_form,omitempty"`
+	RegistrationNumber string              `json:"registration_number,omitempty"`
+	Items              []VariationItem     `json:"items,omitempty"`
+	Documents          []VariationDocument `json:"documents,omitempty"`
+	ChangeImpactTree   *ChangeImpactTree   `json:"change_impact_tree,omitempty"`
 }
 
 // VariationItem représente une rubrique sélectionnée dans la demande
@@ -133,7 +133,7 @@ type VariationItem struct {
 	RubriqueCode            string                  `json:"rubrique_code"`
 	RubriqueTitle           string                  `json:"rubrique_title"`
 	Category                string                  `json:"category"`
-	NominalClassification  VariationClassification `json:"nominal_classification"`
+	NominalClassification   VariationClassification `json:"nominal_classification"`
 	EffectiveClassification VariationClassification `json:"effective_classification"`
 	IsEscalated             bool                    `json:"is_escalated"`
 	EscalationReason        string                  `json:"escalation_reason,omitempty"`
@@ -169,10 +169,10 @@ type VariationDocument struct {
 
 // ChangeImpactTree consolide l'arborescence des impacts tri-couleur pour l'UI et le CoDir
 type ChangeImpactTree struct {
-	DirectRed       []CTDSectionImpact `json:"direct_red"`
-	RippleOrange    []CTDSectionImpact `json:"ripple_orange"`
-	PreservedGreen  []CTDSectionImpact `json:"preserved_green"`
-	Stats           map[string]int     `json:"stats"`
+	DirectRed      []CTDSectionImpact `json:"direct_red"`
+	RippleOrange   []CTDSectionImpact `json:"ripple_orange"`
+	PreservedGreen []CTDSectionImpact `json:"preserved_green"`
+	Stats          map[string]int     `json:"stats"`
 }
 
 // MasterRubriquesRegistry définit les 34 Rubriques officielles de l'ANPP (Ligne Directrice LD-DEPP07/V01)
@@ -181,14 +181,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 	// I. MODIFICATIONS ADMINISTRATIVES (Rubriques 1 à 5)
 	// =========================================================================
 	{
-		Code:                    "1",
-		Number:                  1,
-		SubCode:                 "1",
-		Title:                   "Changement dans la dénomination commerciale du produit fini",
-		Category:                CategoryAdministrative,
-		CategoryLabel:           "I. Modifications Administratives",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "1",
+		Number:                     1,
+		SubCode:                    "1",
+		Title:                      "Changement dans la dénomination commerciale du produit fini",
+		Category:                   CategoryAdministrative,
+		CategoryLabel:              "I. Modifications Administratives",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si risque de confusion phonétique ou visuelle avec un autre produit enregistré",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Absence de risque de confusion phonétique ou visuelle avec une spécialité existante", LegalRef: "LD-DEPP07 Section 5.4.1.1"},
@@ -203,14 +203,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "2",
-		Number:                  2,
-		SubCode:                 "2",
-		Title:                   "Changement dans la dénomination de la substance active, d'un excipient ou du conditionnement",
-		Category:                CategoryAdministrative,
-		CategoryLabel:           "I. Modifications Administratives",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "2",
+		Number:                     2,
+		SubCode:                    "2",
+		Title:                      "Changement dans la dénomination de la substance active, d'un excipient ou du conditionnement",
+		Category:                   CategoryAdministrative,
+		CategoryLabel:              "I. Modifications Administratives",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si altération de la spécification chimique ou de la monographie",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "L'entité chimique ou la spécification demeure strictement identique", LegalRef: "LD-DEPP07 Section 5.4.1.2"},
@@ -240,14 +240,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "4",
-		Number:                  4,
-		SubCode:                 "4",
-		Title:                   "Changement du nom et/ou adresse du titulaire AMM, fabricant API, PF ou sous-traitant",
-		Category:                CategoryAdministrative,
-		CategoryLabel:           "I. Modifications Administratives",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "4",
+		Number:                     4,
+		SubCode:                    "4",
+		Title:                      "Changement du nom et/ou adresse du titulaire AMM, fabricant API, PF ou sous-traitant",
+		Category:                   CategoryAdministrative,
+		CategoryLabel:              "I. Modifications Administratives",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si le site physique ou l'entité juridique sous-jacente change",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "L'entité juridique et le site physique de fabrication demeurent identiques (simple changement administratif d'adresse ou raison sociale)", LegalRef: "LD-DEPP07 Section 5.4.1.4"},
@@ -261,14 +261,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "5",
-		Number:                  5,
-		SubCode:                 "5",
-		Title:                   "Suppression d'un site de fabrication, contrôle, conditionnement ou stockage",
-		Category:                CategoryAdministrative,
-		CategoryLabel:           "I. Modifications Administratives",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "5",
+		Number:                     5,
+		SubCode:                    "5",
+		Title:                      "Suppression d'un site de fabrication, contrôle, conditionnement ou stockage",
+		Category:                   CategoryAdministrative,
+		CategoryLabel:              "I. Modifications Administratives",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si aucun site alternatif n'est préalablement approuvé dans le dossier",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Maintien d'au moins un site alternatif approuvé pour chaque opération concernée", LegalRef: "LD-DEPP07 Section 5.4.1.5"},
@@ -284,14 +284,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 	// II. MODIFICATIONS RELATIVES AU CEP OU PRÉQUALIFICATION API (Rubriques 6.a & 6.b)
 	// =========================================================================
 	{
-		Code:                    "6.a.1",
-		Number:                  6,
-		SubCode:                 "6.a.1",
-		Title:                   "Soumission d'un CEP nouveau ou mis à jour d'un fabricant déjà approuvé (Mise à jour sans impact)",
-		Category:                CategoryCEPAPI,
-		CategoryLabel:           "II. CEP & Préqualification API",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "6.a.1",
+		Number:                     6,
+		SubCode:                    "6.a.1",
+		Title:                      "Soumission d'un CEP nouveau ou mis à jour d'un fabricant déjà approuvé (Mise à jour sans impact)",
+		Category:                   CategoryCEPAPI,
+		CategoryLabel:              "II. CEP & Préqualification API",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si révision de la voie de synthèse, profil d'impuretés ou réessai",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Aucun changement dans la voie de synthèse ni le profil d'impuretés de la SA", LegalRef: "LD-DEPP07 Section 5.4.1.2"},
@@ -304,14 +304,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "6.b.1",
-		Number:                  6,
-		SubCode:                 "6.b.1",
-		Title:                   "Soumission d'un CEP provenant d'un nouveau fabricant d'API",
-		Category:                CategoryCEPAPI,
-		CategoryLabel:           "II. CEP & Préqualification API",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "6.b.1",
+		Number:                     6,
+		SubCode:                    "6.b.1",
+		Title:                      "Soumission d'un CEP provenant d'un nouveau fabricant d'API",
+		Category:                   CategoryCEPAPI,
+		CategoryLabel:              "II. CEP & Préqualification API",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si le nouveau fabricant n'a pas de CEP valide ou si des impuretés nouvelles sont détectées",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le CEP présenté est valide et délivré par l'EDQM sans réserve", LegalRef: "LD-DEPP07 Section 5.4.1.2"},
@@ -330,14 +330,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 	// III. MODIFICATIONS QUALITATIVES SUBSTANCE ACTIVE 3.2.S (Rubriques 7 à 16)
 	// =========================================================================
 	{
-		Code:                    "7.a.1",
-		Number:                  7,
-		SubCode:                 "7.a.1",
-		Title:                   "Remplacement ou ajout d'un site de contrôle analytique de la SA (méthodes pharmacopée)",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "7.a.1",
+		Number:                     7,
+		SubCode:                    "7.a.1",
+		Title:                      "Remplacement ou ajout d'un site de contrôle analytique de la SA (méthodes pharmacopée)",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si les méthodes d'essai ne sont pas validées ou sont non-pharmacopée",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le site dispose d'un certificat BPF valide pour le contrôle analytique", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -350,14 +350,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "7.b.1",
-		Number:                  7,
-		SubCode:                 "7.b.1",
-		Title:                   "Nouveau site pour la production du matériau de départ de la SA (Starting Material)",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "7.b.1",
+		Number:                     7,
+		SubCode:                    "7.b.1",
+		Title:                      "Nouveau site pour la production du matériau de départ de la SA (Starting Material)",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si changement des spécifications ou du profil d'impuretés du starting material",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Les spécifications d'acceptation du matériau de départ sont identiques ou resserrées", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -370,14 +370,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "7.d.1",
-		Number:                  7,
-		SubCode:                 "7.d.1",
-		Title:                   "Nouveau fabricant pour la production complète de la Substance Active (avec CEP ou ASMF)",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "7.d.1",
+		Number:                     7,
+		SubCode:                    "7.d.1",
+		Title:                      "Nouveau fabricant pour la production complète de la Substance Active (avec CEP ou ASMF)",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si absence de CEP ou changement substantiel de profil de pureté / impuretés génotoxiques",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "La voie de synthèse et les spécifications de libération sont équivalentes ou supérieures", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -393,14 +393,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "8.a",
-		Number:                  8,
-		SubCode:                 "8.a",
-		Title:                   "Ajout ou changement d'un bloc de fabrication ou unité de production sur un site API approuvé",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "8.a",
+		Number:                     8,
+		SubCode:                    "8.a",
+		Title:                      "Ajout ou changement d'un bloc de fabrication ou unité de production sur un site API approuvé",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si le nouveau bloc modifie la chaîne de confinement ou les contrôles d'ambiance",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le bloc est situé sur le site déjà approuvé et couvert par le certificat BPF", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -411,14 +411,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "9.a.1",
-		Number:                  9,
-		SubCode:                 "9.a.1",
-		Title:                   "Changement mineur dans le procédé de synthèse de la SA (sans altération du profil d'impuretés)",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "9.a.1",
+		Number:                     9,
+		SubCode:                    "9.a.1",
+		Title:                      "Changement mineur dans le procédé de synthèse de la SA (sans altération du profil d'impuretés)",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si altération du profil d'impuretés ou introduction d'un nouveau solvant toxique",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le profil de pureté énantiomérique et les impuretés restent dans les seuils approuvés", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -449,14 +449,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "10.a.1",
-		Number:                  10,
-		SubCode:                 "10.a.1",
-		Title:                   "Augmentation de la taille de lot de la SA (jusqu'à 10 fois la taille approuvée)",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "10.a.1",
+		Number:                     10,
+		SubCode:                    "10.a.1",
+		Title:                      "Augmentation de la taille de lot de la SA (jusqu'à 10 fois la taille approuvée)",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si changement d'équipement majeur ou plus de 10 fois",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "L'augmentation ne dépasse pas un facteur 10 par rapport au lot pilote approuvé", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -468,14 +468,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "10.c.1",
-		Number:                  10,
-		SubCode:                 "10.c.1",
-		Title:                   "Augmentation supérieure à 10 fois la taille de lot approuvée de la SA",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "10.c.1",
+		Number:                     10,
+		SubCode:                    "10.c.1",
+		Title:                      "Augmentation supérieure à 10 fois la taille de lot approuvée de la SA",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si déviation sur la cinétique ou validation de procédé non conforme",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Validation industrielle complète sur au moins 3 lots d'échelle commerciale", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -539,14 +539,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "13.b",
-		Number:                  13,
-		SubCode:                 "13.b",
-		Title:                   "Passage d'une méthode analytique interne à une méthode de Pharmacopée officielle reconnue pour la SA",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "13.b",
+		Number:                     13,
+		SubCode:                    "13.b",
+		Title:                      "Passage d'une méthode analytique interne à une méthode de Pharmacopée officielle reconnue pour la SA",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si la méthode pharmacopée nécessite une adaptation pour la matrice considérée",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "La monographie est applicable sans modification à la substance active considérée", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -557,14 +557,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "14.a",
-		Number:                  14,
-		SubCode:                 "14.a",
-		Title:                   "Changement de conditionnement primaire de la SA (matériau équivalent ou plus protecteur)",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "14.a",
+		Number:                     14,
+		SubCode:                    "14.a",
+		Title:                      "Changement de conditionnement primaire de la SA (matériau équivalent ou plus protecteur)",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si substance active liquide, stérile ou instable",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le matériau nouveau offre une protection barrière équivalente ou supérieure contre l'humidité et la lumière", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -575,14 +575,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "15.a",
-		Number:                  15,
-		SubCode:                 "15.a",
-		Title:                   "Réduction de la période de recontrôle ou durée de conservation de la SA",
-		Category:                CategorySubstanceActive32S,
-		CategoryLabel:           "III. Qualité Substance Active 3.2.S",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "15.a",
+		Number:                     15,
+		SubCode:                    "15.a",
+		Title:                      "Réduction de la période de recontrôle ou durée de conservation de la SA",
+		Category:                   CategorySubstanceActive32S,
+		CategoryLabel:              "III. Qualité Substance Active 3.2.S",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si causée par un profil d'instabilité inattendu en cours de stockage",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Les spécifications de conformité sont respectées sur la période raccourcie", LegalRef: "LD-DEPP07 Section 5.4.2.1"},
@@ -614,14 +614,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 	// IV. MODIFICATIONS QUALITATIVES PRODUIT FINI 3.2.P (Rubriques 17 à 34)
 	// =========================================================================
 	{
-		Code:                    "17.a",
-		Number:                  17,
-		SubCode:                 "17.a",
-		Title:                   "Système d'aromatisation ou coloration du PF (ajustement de teneur sans impact thérapeutique)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "17.a",
+		Number:                     17,
+		SubCode:                    "17.a",
+		Title:                      "Système d'aromatisation ou coloration du PF (ajustement de teneur sans impact thérapeutique)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si dissolution modifiée ou allergène potentiel ajouté",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le profil de dissolution in vitro est superposable (f2 >= 50)", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -634,14 +634,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "18.a",
-		Number:                  18,
-		SubCode:                 "18.a",
-		Title:                   "Masse d'enrobage ou capsules vides pour formes orales solides à libération immédiate",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "18.a",
+		Number:                     18,
+		SubCode:                    "18.a",
+		Title:                      "Masse d'enrobage ou capsules vides pour formes orales solides à libération immédiate",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si altération de la cinétique de dissolution",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "La formule de base du comprimé nu ou contenu reste inchangée", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -653,14 +653,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "19.a",
-		Number:                  19,
-		SubCode:                 "19.a",
-		Title:                   "Remplacement d'un excipient par un excipient comparable à concentration similaire (formes orales solides)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "19.a",
+		Number:                     19,
+		SubCode:                    "19.a",
+		Title:                      "Remplacement d'un excipient par un excipient comparable à concentration similaire (formes orales solides)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si l'excipient a un impact sur la biodisponibilité (ex: agent tensio-actif, liant critique) ou si f2 < 50",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "L'excipient remplaçant remplit la même fonction technologique avec spécifications équivalentes", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -676,14 +676,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "20.a",
-		Number:                  20,
-		SubCode:                 "20.a",
-		Title:                   "Nouveau site ou remplacement pour le conditionnement secondaire du produit fini",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "20.a",
+		Number:                     20,
+		SubCode:                    "20.a",
+		Title:                      "Nouveau site ou remplacement pour le conditionnement secondaire du produit fini",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si absence de certificat BPF valide pour le conditionnement secondaire",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le site dispose d'un certificat BPF en vigueur pour le conditionnement secondaire", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -695,14 +695,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "20.b",
-		Number:                  20,
-		SubCode:                 "20.b",
-		Title:                   "Nouveau site pour le conditionnement primaire du PF (formes solides orales non stériles)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "20.b",
+		Number:                     20,
+		SubCode:                    "20.b",
+		Title:                      "Nouveau site pour le conditionnement primaire du PF (formes solides orales non stériles)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si conditionnement stérile ou si matériau d'emballage primaire modifié",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Forme pharmaceutique non stérile", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -715,14 +715,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "20.c",
-		Number:                  20,
-		SubCode:                 "20.c",
-		Title:                   "Nouveau site de fabrication du Produit Fini (procédé conventionnel non complexe)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "20.c",
+		Number:                     20,
+		SubCode:                    "20.c",
+		Title:                      "Nouveau site de fabrication du Produit Fini (procédé conventionnel non complexe)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si procédé complexe (libération modifiée, stérile, biologique) ou absence de validation 3 lots",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le procédé de fabrication est conventionnel (mélange, compression, remplissage)", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -738,14 +738,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "21.a",
-		Number:                  21,
-		SubCode:                 "21.a",
-		Title:                   "Remplacement ou ajout d'un site de contrôle analytique du Produit Fini",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "21.a",
+		Number:                     21,
+		SubCode:                    "21.a",
+		Title:                      "Remplacement ou ajout d'un site de contrôle analytique du Produit Fini",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si transfert de méthode non validé ou méthode non pharmacopée",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le laboratoire d'analyse détient une autorisation d'établissement BPF valide", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -758,14 +758,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "22.a",
-		Number:                  22,
-		SubCode:                 "22.a",
-		Title:                   "Augmentation de la taille de lot du Produit Fini (jusqu'à 10 fois la taille approuvée)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "22.a",
+		Number:                     22,
+		SubCode:                    "22.a",
+		Title:                      "Augmentation de la taille de lot du Produit Fini (jusqu'à 10 fois la taille approuvée)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si changement d'équipement critique ou taille supérieure à 10 fois",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "L'augmentation est au maximum d'un facteur 10 par rapport à l'échelle enregistrée", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -777,14 +777,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "22.c",
-		Number:                  22,
-		SubCode:                 "22.c",
-		Title:                   "Augmentation supérieure à 10 fois la taille de lot du Produit Fini",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "22.c",
+		Number:                     22,
+		SubCode:                    "22.c",
+		Title:                      "Augmentation supérieure à 10 fois la taille de lot du Produit Fini",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si procédé complexe ou cinétique de séchage/granulation altérée",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Validation sur au moins 3 lots d'échelle industrielle complète", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -796,14 +796,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "23",
-		Number:                  23,
-		SubCode:                 "23",
-		Title:                   "Changement dans le procédé de fabrication du Produit Fini (sans changement de principe)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "23",
+		Number:                     23,
+		SubCode:                    "23",
+		Title:                      "Changement dans le procédé de fabrication du Produit Fini (sans changement de principe)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si changement fondamental de principe de procédé (ex: voie humide vers compression directe)",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le principe fondamental de fabrication reste identique", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -833,14 +833,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "25",
-		Number:                  25,
-		SubCode:                 "25",
-		Title:                   "Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "25",
+		Number:                     25,
+		SubCode:                    "25",
+		Title:                      "Remplacement d'un excipient à risque EST par un excipient d'origine végétale ou synthétique",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si altération des profils de libération ou dissolution",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "L'excipient remplaçant élimine tout risque d'encéphalopathie spongiforme transmissible", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -870,14 +870,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "27",
-		Number:                  27,
-		SubCode:                 "27",
-		Title:                   "Mise à jour des spécifications du Produit Fini suite à révision d'une monographie de Pharmacopée",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "27",
+		Number:                     27,
+		SubCode:                    "27",
+		Title:                      "Mise à jour des spécifications du Produit Fini suite à révision d'une monographie de Pharmacopée",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si la méthode adaptée diverge de la monographie officielle",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Alignement strict sur la dernière édition en vigueur de la pharmacopée reconnue", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -923,14 +923,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "30.a",
-		Number:                  30,
-		SubCode:                 "30.a",
-		Title:                   "Changement ou ajout de type de contenant primaire (formes pharmaceutiques non stériles)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "30.a",
+		Number:                     30,
+		SubCode:                    "30.a",
+		Title:                      "Changement ou ajout de type de contenant primaire (formes pharmaceutiques non stériles)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si contenant stérile ou si interaction contenant-contenu observée",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Forme non stérile", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -965,14 +965,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "31.a",
-		Number:                  31,
-		SubCode:                 "31.a",
-		Title:                   "Composition du conditionnement primaire (formes solides : blister vers autre blister équivalent)",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmin,
-		EscalatedClassification: ClassMmod,
+		Code:                       "31.a",
+		Number:                     31,
+		SubCode:                    "31.a",
+		Title:                      "Composition du conditionnement primaire (formes solides : blister vers autre blister équivalent)",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmin,
+		EscalatedClassification:    ClassMmod,
 		EscalationConditionSummary: "Si la perméabilité à l'humidité ou oxygène est accrue",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Le nouveau film blister présente une perméabilité à la vapeur d'eau équivalente ou inférieure (ex: PVC/PVDC)", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -983,14 +983,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "32.b",
-		Number:                  32,
-		SubCode:                 "32.b",
-		Title:                   "Extension de la durée de conservation du Produit Fini pour la vente",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "32.b",
+		Number:                     32,
+		SubCode:                    "32.b",
+		Title:                      "Extension de la durée de conservation du Produit Fini pour la vente",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si absence de données en temps réel complètes sous conditions Zone IVb (30°C / 75% HR)",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Données de stabilité en temps réel complètes couvrant la durée sollicitée sous conditions climatiques Zone IVb", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -1024,14 +1024,14 @@ var MasterRubriquesRegistry = []RubriqueDefinition{
 		},
 	},
 	{
-		Code:                    "34",
-		Number:                  34,
-		SubCode:                 "34",
-		Title:                   "Changement des conditions de stockage du Produit Fini ou en cours d'utilisation",
-		Category:                CategoryProduitFini32P,
-		CategoryLabel:           "IV. Qualité Produit Fini 3.2.P",
-		DefaultClassification:   ClassMmod,
-		EscalatedClassification: ClassMmaj,
+		Code:                       "34",
+		Number:                     34,
+		SubCode:                    "34",
+		Title:                      "Changement des conditions de stockage du Produit Fini ou en cours d'utilisation",
+		Category:                   CategoryProduitFini32P,
+		CategoryLabel:              "IV. Qualité Produit Fini 3.2.P",
+		DefaultClassification:      ClassMmod,
+		EscalatedClassification:    ClassMmaj,
 		EscalationConditionSummary: "Si passage à une condition plus contraignante (ex: température ambiante vers chaîne du froid)",
 		Conditions: []VariationCondition{
 			{ID: "C1", Description: "Rapport de stabilité Zone IVb démontrant la dégradation sous les anciennes conditions", LegalRef: "LD-DEPP07 Section 5.4.2.2"},
@@ -1206,10 +1206,10 @@ func GenerateChangeImpactTree(rubriqueCodes []string) ChangeImpactTree {
 		RippleOrange:   rippleList,
 		PreservedGreen: preservedList,
 		Stats: map[string]int{
-			"direct_red_count":       len(directList),
-			"ripple_orange_count":    len(rippleList),
-			"preserved_green_count":  len(preservedList),
-			"total_impacted_count":   len(directList) + len(rippleList),
+			"direct_red_count":      len(directList),
+			"ripple_orange_count":   len(rippleList),
+			"preserved_green_count": len(preservedList),
+			"total_impacted_count":  len(directList) + len(rippleList),
 		},
 	}
 }

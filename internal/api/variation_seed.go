@@ -51,13 +51,13 @@ func SeedInitialVariations(ctx context.Context, pool *pgxpool.Pool, orgSlug stri
 		Description:              "Ajout d'un nouveau site de fabrication pour la substance active Amoxicilline trihydratée avec optimisation du procédé de cristallisation.",
 		IsGrouping:               true,
 		GroupingJustification:    "Regroupement en vertu de l'article 09 de l'arrêté du 07/11/2021 : le changement de site de fabrication API entraîne corollairement une augmentation de la taille de lot de synthèse.",
-		OverallClassification:   domain.ClassMmaj,
-		NominalClassification:   domain.ClassMmod,
+		OverallClassification:    domain.ClassMmaj,
+		NominalClassification:    domain.ClassMmod,
 		HasEscalation:            true,
 		EscalationSummary:        "Reclassement automatique de la rubrique 7.d.1 de Mmod vers Mmaj en raison de données de stabilités Zone IVb 3 lots encore en cours.",
 		CurrentApprovedSituation: "Synthèse de la substance active sur le site historique approuvé (Site A, Hyderabad, Inde). Taille de lot pilote approuvée : 50 kg.",
-		ProposedSituation:         "Synthèse sur le nouveau site B (Gujarat, Inde) avec équipement automatisé et taille de lot industrielle de 250 kg (facteur x5).",
-		TechnicalJustification:    "Sécurisation de la chaîne d'approvisionnement nationale en API, diminution substantielle des solvants résiduels et conformité ICH Q11.",
+		ProposedSituation:        "Synthèse sur le nouveau site B (Gujarat, Inde) avec équipement automatisé et taille de lot industrielle de 250 kg (facteur x5).",
+		TechnicalJustification:   "Sécurisation de la chaîne d'approvisionnement nationale en API, diminution substantielle des solvants résiduels et conformité ICH Q11.",
 		NonModificationAttested:  true,
 		NonModificationDetails:   "Le Pharmacien Directeur Technique atteste qu'aucune autre section en dehors des modules 1.H.8, 1.M.S.1, 3.2.S.2 et 3.2.P.5 n'a été modifiée.",
 		FeeAmountDZD:             115000.00,
@@ -79,7 +79,7 @@ func SeedInitialVariations(ctx context.Context, pool *pgxpool.Pool, orgSlug stri
 			"C2": false, // Stabilités Zone IVb 3 lots non conclues -> ESCALADE Mmaj !
 			"C3": true,  // Certificat BPF valide
 		},
-		CurrentState: "Site historique approuvé A (Hyderabad, Inde)",
+		CurrentState:  "Site historique approuvé A (Hyderabad, Inde)",
 		ProposedState: "Nouveau site de synthèse B (Gujarat, Inde)",
 		Notes:         "Protocole de stabilité Zone IVb engagé à M3",
 	}
@@ -93,7 +93,7 @@ func SeedInitialVariations(ctx context.Context, pool *pgxpool.Pool, orgSlug stri
 			"C1": true, // Facteur <= 10
 			"C2": true, // Paramètres critiques constants
 		},
-		CurrentState: "Taille de lot SA : 50 kg",
+		CurrentState:  "Taille de lot SA : 50 kg",
 		ProposedState: "Taille de lot SA : 250 kg (facteur x5)",
 	}
 	_ = varRepo.AddVariationItem(ctx, &item2)
@@ -122,12 +122,12 @@ func SeedInitialVariations(ctx context.Context, pool *pgxpool.Pool, orgSlug stri
 		Title:                    "Mise à jour des spécifications PF selon dernière édition Pharmacopée Européenne",
 		Description:              "Alignement des méthodes de dissolution et d'impuretés organiques sur la 11ème édition de la Ph. Eur.",
 		IsGrouping:               false,
-		OverallClassification:   domain.ClassMmin,
-		NominalClassification:   domain.ClassMmin,
+		OverallClassification:    domain.ClassMmin,
+		NominalClassification:    domain.ClassMmin,
 		HasEscalation:            false,
 		CurrentApprovedSituation: "Spécifications analytiques selon la 10ème édition de la Pharmacopée Européenne.",
-		ProposedSituation:         "Alignement strict sur la 11ème édition révisée de la monographie officielle.",
-		TechnicalJustification:    "Conformité réglementaire obligatoire aux monographies actualisées de la Pharmacopée officielle reconnue en Algérie.",
+		ProposedSituation:        "Alignement strict sur la 11ème édition révisée de la monographie officielle.",
+		TechnicalJustification:   "Conformité réglementaire obligatoire aux monographies actualisées de la Pharmacopée officielle reconnue en Algérie.",
 		NonModificationAttested:  true,
 		FeeAmountDZD:             40000.00,
 		Status:                   "brouillon",
@@ -141,7 +141,7 @@ func SeedInitialVariations(ctx context.Context, pool *pgxpool.Pool, orgSlug stri
 			ConditionsEvaluated: map[string]bool{
 				"C1": true,
 			},
-			CurrentState: "Monographie Ph. Eur. 10.0",
+			CurrentState:  "Monographie Ph. Eur. 10.0",
 			ProposedState: "Monographie Ph. Eur. 11.4",
 		}
 		_ = varRepo.AddVariationItem(ctx, &item2A)

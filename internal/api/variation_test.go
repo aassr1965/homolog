@@ -254,7 +254,7 @@ func TestVariationAPI_FullLifecycle_EscalationAndGrouping(t *testing.T) {
 			"C2": false, // Stabilités Zone IVb 3 lots non conclues -> ESCALADE !
 			"C3": true,
 		},
-		"current_state": "Site A (Hyderabad, Inde)",
+		"current_state":  "Site A (Hyderabad, Inde)",
 		"proposed_state": "Site B (Gujarat, Inde)",
 		"notes":          "Stabilités Zone IVb en cours d'achèvement",
 	}
@@ -268,11 +268,11 @@ func TestVariationAPI_FullLifecycle_EscalationAndGrouping(t *testing.T) {
 	}
 
 	var respC struct {
-		Success     bool                  `json:"success"`
-		Item        domain.VariationItem  `json:"item"`
+		Success     bool                    `json:"success"`
+		Item        domain.VariationItem    `json:"item"`
 		Variation   domain.VariationRequest `json:"variation"`
-		IsEscalated bool                  `json:"is_escalated"`
-		Escalation  string                `json:"escalation"`
+		IsEscalated bool                    `json:"is_escalated"`
+		Escalation  string                  `json:"escalation"`
 	}
 	_ = json.Unmarshal(recC.Body.Bytes(), &respC)
 
@@ -298,7 +298,7 @@ func TestVariationAPI_FullLifecycle_EscalationAndGrouping(t *testing.T) {
 			"C1": true,
 			"C2": true,
 		},
-		"current_state": "Amoxicilline Sanad 500mg",
+		"current_state":  "Amoxicilline Sanad 500mg",
 		"proposed_state": "Amoxisanad 500mg",
 	}
 	bodyD, _ := json.Marshal(itemPayload2)
