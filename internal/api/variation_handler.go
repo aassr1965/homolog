@@ -631,6 +631,21 @@ func renderESREG04DynamicHTML(
 	feeFormatted := fmt.Sprintf("%.2f DZD", v.FeeAmountDZD)
 
 	body := fmt.Sprintf(`
+    <div class="no-print-toolbar">
+        <div><strong>Homolog Reporting BPF</strong> • ES-REG-04 Tableau Comparatif LD-DEPP07/V01</div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
+            <button type="button" class="btn btn-outline" onclick="if(window.parent && window.parent !== window && typeof window.parent.closeVariationReportModal === 'function'){ window.parent.closeVariationReportModal(); } else { window.close(); }">✕ Fermer</button>
+        </div>
+    </div>
+    <script>
+        if (window.parent && window.parent !== window) {
+            var tb = document.querySelector('.no-print-toolbar');
+            if (tb) tb.style.display = 'none';
+            var sh = document.querySelector('.sheet');
+            if (sh) sh.style.marginTop = '15px';
+        }
+    </script>
     <div class="sheet">
         %s
         %s
