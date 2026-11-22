@@ -21,14 +21,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
           # Modèle Gemini et clé Google AI Studio
-          config.model: "gemini/gemini-3.5-flash-lite"
-          config.fallback_models: '["gemini/gemini-3.8-flash"]'
-          config.custom_model_max_tokens: "200000"
-          config.max_model_tokens: "200000"
-          config.patch_extra_lines: "2"
-          config.ai_timeout: "360"
+          config.model: "gemini/gemini-2.5-flash"
+          config.fallback_models: '["gemini/gemini-1.5-flash", "gemini/gemini-1.5-pro"]'
+          config.custom_model_max_tokens: "1000000"
+          config.max_model_tokens: "1000000"
+          config.patch_extra_lines: "1"
+          config.ai_timeout: "600"
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           
+          # Optimisations pour gros volumes et grands fichiers (Large PRs)
+          pr_processing.ignore_file_extensions: '["sql", "json", "md", "png", "svg", "lock", "sum"]'
+          pr_description.inline_file_summary: "false"
+          pr_reviewer.num_code_suggestions: "4"
+          pr_reviewer.inline_code_comments: "false"
+          
+          # Gestion de la résilience réseau et retries sur Rate Limit (429)
+          LITELLM_NUM_RETRIES: "6"
+          LITELLM_RETRY_AFTER: "true"
+
           # Automations lors de l'ouverture d'une PR ou sur commande via issue_comment
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "true"
