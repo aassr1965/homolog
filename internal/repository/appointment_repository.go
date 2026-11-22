@@ -192,3 +192,14 @@ func (r *AppointmentRepository) UpdateAppointmentStatus(ctx context.Context, org
 
 	return r.GetAppointment(ctx, orgID, appID)
 }
+
+// LinkAppointmentToDossierReceipt met à jour deposit_receipt_ref sur le dossier si non renseigné
+func (r *AppointmentRepository) LinkAppointmentToDossierReceipt(ctx context.Context, dossierID, orgID uuid.UUID, slotRef string) error {
+	query := `
+		UPDATE dossiers
+		SET deposit_receipt_ref = $1, updated_at = NOW()
+		WHERE id = $2 AND organization_id = $3 AND (deposit_receipt_ref IS NULL OR deposit_receipt_ref = '')
+	`
+	_, err := r.pool.Exec(ctx, query, slotRef, dossierID, orgID)
+	return err
+}

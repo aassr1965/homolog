@@ -1169,6 +1169,10 @@
                         }
 
                         const tr = document.createElement("tr");
+                        const safeItemCode = (it.item_code || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+                        tr.id = `checklist-row-${safeItemCode}`;
+                        tr.setAttribute("data-item-code", it.item_code || '');
+                        tr.setAttribute("data-item-id", it.id);
                         if (it.id === selectedDossierItemId) tr.classList.add("selected");
                         if (isGatedBlocked) tr.classList.add("row-gating-blocked");
                         if (isBlockingPrereq) tr.classList.add("row-gating-blocking");
@@ -1348,6 +1352,10 @@
             document.querySelectorAll('#doc-tbody tr').forEach(tr => tr.classList.remove('selected'));
             if (typeof event !== 'undefined' && event && event.currentTarget) {
                 event.currentTarget.classList.add('selected');
+                if (window.innerWidth < 1400) togglePreviewPane(true);
+            } else {
+                const tr = document.querySelector(`#doc-tbody tr[data-item-id="${itemId}"]`);
+                if (tr) tr.classList.add('selected');
                 if (window.innerWidth < 1400) togglePreviewPane(true);
             }
 
@@ -2477,6 +2485,322 @@
             return healthMap[health] || healthMap['ON_TRACK'];
         }
 
+        function findChecklistItem(targetCode, milestoneCode, items) {
+            if (!items || items.length === 0) return null;
+            const isDM = items.some(it => (it.item_code || '').startsWith('DM.'));
+
+            // Normalisation robuste du code de jalon
+            const normM = (milestoneCode || '').toUpperCase().replace(/-/g, '_');
+
+            // 1. Dossier Dispositif Médical
+            if (isDM) {
+                if (targetCode && items.some(it => it.item_code === targetCode || (it.item_code || '').startsWith(targetCode))) {
+                    return items.find(it => it.item_code === targetCode || (it.item_code || '').startsWith(targetCode));
+                }
+                const dmMap = {
+                    'J_240_STABILITIES_ZONE_IVB': ['DM.S.2', 'DM.S.1', 'DM.T.1', 'DM.T.3'],
+                    'J-240_ZONE_IVB': ['DM.S.2', 'DM.S.1', 'DM.T.1', 'DM.T.3'],
+                    '3.2.P.8': ['DM.S.2', 'DM.S.1', 'DM.T.1', 'DM.T.3'],
+                    '3.2.S.7': ['DM.S.2', 'DM.S.1', 'DM.T.1'],
+                    '3.2.P': ['DM.S.2', 'DM.S.1', 'DM.T.1', 'DM.T.3'],
+                    '3.2.S': ['DM.S.2', 'DM.S.1', 'DM.T.1'],
+                    '1.P.9': ['DM.S.2', 'DM.S.1', 'DM.T.1'],
+                    'DM.S.2': ['DM.S.2', 'DM.S.1', 'DM.T.1'],
+                    'DM.S.1': ['DM.S.1', 'DM.S.2', 'DM.T.1'],
+                    'DM.T.1': ['DM.T.1', 'DM.T.2', 'DM.T.3'],
+                    'DM.T.2': ['DM.T.2', 'DM.T.1'],
+                    'DM.T.3': ['DM.T.3', 'DM.T.1', 'DM.Q.1'],
+                    'DM.T.4': ['DM.T.3', 'DM.T.1', 'DM.S.2'],
+                    'J_150_QOS_CHECKER_REVIEW': ['DM.Q.1', 'DM.Q.2', 'DM.Q.3', 'DM.T.3', 'DM.T.2'],
+                    'J-150_QOS_CHECKER': ['DM.Q.1', 'DM.Q.2', 'DM.Q.3', 'DM.T.3', 'DM.T.2'],
+                    '2.3': ['DM.Q.1', 'DM.Q.2'],
+                    '2.Overview': ['DM.Q.1', 'DM.Q.2', 'DM.T.3'],
+                    '3.2.P.3.5': ['DM.T.3', 'DM.Q.1'],
+                    '3.2.P.5': ['DM.T.3', 'DM.Q.1'],
+                    'DM.Q.1': ['DM.Q.1', 'DM.Q.2', 'DM.Q.3'],
+                    'DM.Q.2': ['DM.Q.2', 'DM.Q.1', 'DM.Q.3'],
+                    'DM.Q.3': ['DM.Q.3', 'DM.Q.1', 'DM.Q.2'],
+                    'J_60_ETASJIL_APPOINTMENT': ['DM.A.1', 'DM.A.2', 'DM.A.5'],
+                    'J-60_ETASJIL_RDV': ['DM.A.1', 'DM.A.2', 'DM.A.5'],
+                    '1.A.1': ['DM.A.1', 'DM.A.2'],
+                    '1.A.2': ['DM.A.2', 'DM.A.1'],
+                    'DM.A.1': ['DM.A.1', 'DM.A.2'],
+                    'DM.A.2': ['DM.A.2', 'DM.A.1'],
+                    'J_30_LEAFLET_AND_FEES': ['DM.I.1', 'DM.A.5', 'DM.I.2'],
+                    'J-30_LEAFLET_FEES': ['DM.I.1', 'DM.A.5', 'DM.I.2'],
+                    '1.P.1': ['DM.I.1'],
+                    '1.P.2.1': ['DM.I.1', 'DM.I.2'],
+                    '1.P.2.2': ['DM.I.1', 'DM.I.2'],
+                    '1.A.4': ['DM.A.5'],
+                    '1.P.4': ['DM.T.3'],
+                    'DM.I.1': ['DM.I.1', 'DM.I.2'],
+                    'DM.I.2': ['DM.I.2', 'DM.I.1'],
+                    'DM.A.5': ['DM.A.5', 'DM.A.1'],
+                    'J_15_PDT_VISA_PACKAGE_SEAL': ['DM.A.3', 'DM.A.1', 'DM.A.4'],
+                    'J-15_PDT_VISA_SEAL': ['DM.A.3', 'DM.A.1', 'DM.A.4'],
+                    '1.A.7': ['DM.A.3', 'DM.A.1'],
+                    '1.P.3': ['DM.T.3'],
+                    '1.P.8': ['DM.A.3'],
+                    'DM.A.3': ['DM.A.3', 'DM.A.1'],
+                    'DM.A.4': ['DM.A.4', 'DM.A.1'],
+                    'J_0_ANPP_DEPOSIT_DEADLINE': ['DM.A.1', 'DM.A.5', 'DM.A.3'],
+                    'J-0_ANPP_DEPOSIT': ['DM.A.1', 'DM.A.5', 'DM.A.3'],
+                    '1.A.3': ['DM.A.1']
+                };
+
+                let candidates = (targetCode && dmMap[targetCode]) || (milestoneCode && dmMap[milestoneCode]) || (normM && dmMap[normM]) || [];
+                if (candidates.length === 0 && normM) {
+                    if (normM.includes('240')) candidates = dmMap['J_240_STABILITIES_ZONE_IVB'];
+                    else if (normM.includes('150')) candidates = dmMap['J_150_QOS_CHECKER_REVIEW'];
+                    else if (normM.includes('60')) candidates = dmMap['J_60_ETASJIL_APPOINTMENT'];
+                    else if (normM.includes('30')) candidates = dmMap['J_30_LEAFLET_AND_FEES'];
+                    else if (normM.includes('15')) candidates = dmMap['J_15_PDT_VISA_PACKAGE_SEAL'];
+                    else if (normM.includes('_0') || normM.includes('-0')) candidates = dmMap['J_0_ANPP_DEPOSIT_DEADLINE'];
+                }
+
+                for (const c of candidates) {
+                    const found = items.find(it => it.item_code === c || (it.item_code || '').startsWith(c));
+                    if (found) return found;
+                }
+                // Si aucune correspondance DM n'a été trouvée dans le dictionnaire, chercher par affinité
+                if (normM.includes('240') || targetCode === '3.2.P' || targetCode === '1.P.9' || targetCode === '3.2.P.8') {
+                    const stabItem = items.find(it => it.item_code === 'DM.S.2' || it.item_code === 'DM.S.1' || it.item_code === 'DM.T.1' || (it.item_code || '').startsWith('DM.S'));
+                    if (stabItem) return stabItem;
+                }
+                return null;
+            }
+
+            // 2. Dossier Médicament (Pharma CTD)
+            // Étape 2.1 : Correspondance exacte
+            if (targetCode) {
+                let item = items.find(it => it.item_code === targetCode);
+                if (item) return item;
+
+                // Étape 2.2 : L'item commence par targetCode (ex: "1.P.1.1" pour targetCode "1.P.1")
+                item = items.find(it => (it.item_code || '').startsWith(targetCode));
+                if (item) return item;
+
+                // Étape 2.3 : targetCode commence par l'item (ex: "3.2.P.8" commence par "3.2.P", "3.2.S.7" commence par "3.2.S")
+                item = items.find(it => it.item_code && targetCode.startsWith(it.item_code));
+                if (item) return item;
+            }
+
+            // Étape 2.4 : Dictionnaire des équivalences CTD Algérie
+            const pharmaAliases = {
+                '3.2.P.8': ['3.2.P', '1.P.9', '3.2.S', '3.2.R'],
+                '3.2.S.7': ['3.2.S', '3.2.P'],
+                '3.2.P.5': ['3.2.P', '1.P.5', '1.P.4'],
+                '3.2.P.3.5': ['3.2.P.3.5', '3.2.P', '1.P.8'],
+                '2.3': ['2.Overview', '3.2.P', '3.2.S'],
+                '1.P.1': ['1.P.2.2', '1.P.2.1', '1.P.1.1', '1.P.1.2'],
+                '1.P.2': ['1.P.2.2', '1.P.2.1', '1.P.2.3'],
+                '1.P.2.1': ['1.P.2.1', '1.P.2.2', '1.P.1.1'],
+                '1.P.2.2': ['1.P.2.2', '1.P.2.1', '1.P.1.2'],
+                '1.P.8': ['1.P.8', '1.A.7', '3.2.P'],
+                '1.P.9': ['1.P.9', '3.2.P', '1.A.7'],
+                '1.A.1': ['1.A.1', '1.A.2', '1.A.3'],
+                '1.A.2': ['1.A.2', '1.A.1', '1.A.3'],
+                '1.A.3': ['1.A.3', '1.A.1', '1.A.2'],
+                '1.A.7': ['1.A.7', '1.A.3', '1.P.3'],
+                '1.P.3': ['1.P.3', '1.A.7']
+            };
+
+            if (targetCode && pharmaAliases[targetCode]) {
+                for (const alias of pharmaAliases[targetCode]) {
+                    const found = items.find(it => it.item_code === alias || (it.item_code || '').startsWith(alias) || alias.startsWith(it.item_code || ''));
+                    if (found) return found;
+                }
+            }
+
+            // Étape 2.5 : Résolution par code de jalon officiel
+            if (milestoneCode || normM) {
+                const milestonePharmaMap = {
+                    'J_240_STABILITIES_ZONE_IVB': ['3.2.P', '1.P.9', '3.2.S', '3.2.R'],
+                    'J-240_ZONE_IVB': ['3.2.P', '1.P.9', '3.2.S', '3.2.R'],
+                    'J_150_QOS_CHECKER_REVIEW': ['2.Overview', '3.2.P.3.5', '3.2.P', '3.2.R'],
+                    'J-150_QOS_CHECKER': ['2.Overview', '3.2.P.3.5', '3.2.P', '3.2.R'],
+                    'J_60_ETASJIL_APPOINTMENT': ['1.A.1', '1.A.2', '1.A.3'],
+                    'J-60_ETASJIL_RDV': ['1.A.1', '1.A.2', '1.A.3'],
+                    'J_30_LEAFLET_AND_FEES': ['1.P.2.2', '1.P.2.1', '1.A.4', '1.P.1.1', '1.P.4'],
+                    'J-30_LEAFLET_FEES': ['1.P.2.2', '1.P.2.1', '1.A.4', '1.P.1.1', '1.P.4'],
+                    'J_15_PDT_VISA_PACKAGE_SEAL': ['1.A.7', '1.A.3', '1.P.3', '1.P.8', '1.P.9'],
+                    'J-15_PDT_VISA_SEAL': ['1.A.7', '1.A.3', '1.P.3', '1.P.8', '1.P.9'],
+                    'J_0_ANPP_DEPOSIT_DEADLINE': ['1.A.3', '1.A.1', '1.A.2'],
+                    'J-0_ANPP_DEPOSIT': ['1.A.3', '1.A.1', '1.A.2']
+                };
+                let mCandidates = (milestoneCode && milestonePharmaMap[milestoneCode]) || (normM && milestonePharmaMap[normM]) || [];
+                if (mCandidates.length === 0 && normM) {
+                    if (normM.includes('240')) mCandidates = milestonePharmaMap['J_240_STABILITIES_ZONE_IVB'];
+                    else if (normM.includes('150')) mCandidates = milestonePharmaMap['J_150_QOS_CHECKER_REVIEW'];
+                    else if (normM.includes('60')) mCandidates = milestonePharmaMap['J_60_ETASJIL_APPOINTMENT'];
+                    else if (normM.includes('30')) mCandidates = milestonePharmaMap['J_30_LEAFLET_AND_FEES'];
+                    else if (normM.includes('15')) mCandidates = milestonePharmaMap['J_15_PDT_VISA_PACKAGE_SEAL'];
+                    else if (normM.includes('_0') || normM.includes('-0')) mCandidates = milestonePharmaMap['J_0_ANPP_DEPOSIT_DEADLINE'];
+                }
+                for (const mc of mCandidates) {
+                    const found = items.find(it => it.item_code === mc || (it.item_code || '').startsWith(mc) || mc.startsWith(it.item_code || ''));
+                    if (found) return found;
+                }
+            }
+
+            // Étape 2.6 : Repli par module
+            if (targetCode && targetCode.startsWith('3.')) {
+                const m3Item = items.find(it => it.module_number === 3);
+                if (m3Item) return m3Item;
+            }
+            if (targetCode && targetCode.startsWith('2.')) {
+                const m2Item = items.find(it => it.module_number === 2);
+                if (m2Item) return m2Item;
+            }
+            if (targetCode && targetCode.startsWith('1.')) {
+                const m1Item = items.find(it => it.module_number === 1);
+                if (m1Item) return m1Item;
+            }
+
+            return null;
+        }
+
+        function navigateToSmartPlanningMilestone(milestoneCodeOrId) {
+            if (!currentDossierSmartPlanning || !currentDossierSmartPlanning.milestones) return;
+            const m = currentDossierSmartPlanning.milestones.find(ms =>
+                ms.code === milestoneCodeOrId ||
+                ms.name_fr === milestoneCodeOrId ||
+                (ms.code && milestoneCodeOrId && milestoneCodeOrId.includes(ms.code))
+            );
+            if (!m) return;
+
+            // Approche Opérationnelle pour J-60 : Réservation Créneau RDV (E-TASJIL / rdvpp / rdvdm)
+            const isJ60 = m.code === 'J_60_ETASJIL_APPOINTMENT' ||
+                          m.code === 'J-60_ETASJIL_RDV' ||
+                          m.code === 'J-60_RDV_SLOT' ||
+                          m.day_offset === -60 ||
+                          (m.name_fr && m.name_fr.toLowerCase().includes('créneau'));
+
+            if (isJ60) {
+                closeModal('modal-smart-planning-timeline');
+                if (typeof openAppointmentsModal === 'function') {
+                    openAppointmentsModal(selectedDossierId, { fromSmartPlanning: true, prefill: true });
+                    showToast("📅 Jalon J-60 : Gestion du créneau officiel ANPP (rdvpp/rdvdm)", "info");
+                }
+                return;
+            }
+
+            const items = (currentDossierDetail && (currentDossierDetail.items || currentDossierDetail.checklist_data)) || [];
+            const targetItem = findChecklistItem(null, m.code, items);
+
+            if (targetItem) {
+                navigateToSmartPlanningItem(targetItem.item_code, m.name_fr, m.code);
+            } else {
+                const fallbackCode = (m.associated_item_codes && m.associated_item_codes[0]) || '';
+                navigateToSmartPlanningItem(fallbackCode, m.name_fr, m.code);
+            }
+        }
+
+        function navigateToSmartPlanningItem(targetCode, milestoneName, milestoneCode) {
+            if (!currentDossierDetail) return;
+            const items = currentDossierDetail.items || currentDossierDetail.checklist_data || [];
+            if (!items || items.length === 0) return;
+
+            // 1. Chercher l'item avec l'algorithme robuste de correspondance
+            let targetItem = findChecklistItem(targetCode, milestoneCode, items);
+
+            if (!targetItem) {
+                showToast(`Pièce "${targetCode || milestoneName || 'associée'}" non applicable à ce dossier.`, "warning");
+                return;
+            }
+
+            // 2. Si le modal Chronogramme Inversé est ouvert, le fermer
+            closeModal('modal-smart-planning-timeline');
+
+            // 3. Ajuster les filtres s'ils masquent l'item recherché
+            let needReRender = false;
+
+            // Vue Focus (Mon pôle, Mes actions...)
+            if (currentDossierViewMode !== 'all') {
+                currentDossierViewMode = 'all';
+                currentDossierViewModeManual = true;
+                document.querySelectorAll('.btn-focus-mode').forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-mode') === 'all');
+                });
+                needReRender = true;
+            }
+
+            // Filtre statut rapide (missing, attached...)
+            if (currentDossierStatusFilter !== 'all') {
+                currentDossierStatusFilter = 'all';
+                document.querySelectorAll('.pill-filter').forEach(p => p.classList.remove('active'));
+                const allPill = document.getElementById('pill-filter-all');
+                if (allPill) allPill.classList.add('active');
+                needReRender = true;
+            }
+
+            // Filtre de recherche textuelle
+            if (currentDossierSearchQuery) {
+                currentDossierSearchQuery = '';
+                const searchInput = document.getElementById('dossier-search-input');
+                if (searchInput) searchInput.value = '';
+                needReRender = true;
+            }
+
+            // Filtre par sous-module de l'arborescence
+            if (currentDossierSubModuleFilter !== 'all' && !(targetItem.item_code || '').startsWith(currentDossierSubModuleFilter)) {
+                currentDossierSubModuleFilter = 'all';
+                needReRender = true;
+            }
+
+            // Filtre par module CTD (1, 2, 3, 4, 5, 0)
+            if (currentDossierModuleFilter !== 'all' && Number(currentDossierModuleFilter) !== Number(targetItem.module_number)) {
+                currentDossierModuleFilter = targetItem.module_number;
+                document.querySelectorAll('.module-tab-btn').forEach(btn => {
+                    const oc = btn.getAttribute('onclick') || '';
+                    if (oc.includes(`filterDossierModule(${targetItem.module_number})`)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                renderDossiersTree();
+                needReRender = true;
+            }
+
+            // Déplier la section si elle est repliée
+            const sec = getItemSectionInfo(targetItem);
+            if (sec && collapsedSections.has(sec.key)) {
+                collapsedSections.delete(sec.key);
+                needReRender = true;
+            }
+
+            // Recalculer le tableau si un filtre a été réinitialisé ou section dépliée
+            if (needReRender) {
+                renderDossierTableRows(items);
+            }
+
+            // 4. Localiser la ligne du tableau
+            const safeCode = (targetItem.item_code || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+            let row = document.getElementById(`checklist-row-${safeCode}`) || document.querySelector(`#doc-tbody tr[data-item-id="${targetItem.id}"]`);
+
+            if (row) {
+                // Défilement fluide pour centrer la ligne dans la vue
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Sélectionner l'exigence et ouvrir son volet de détails/aperçu
+                selectDossierItem(targetItem.id);
+
+                // Effet visuel d'impulsion lumineuse (pulse)
+                row.classList.remove('row-highlight-pulse');
+                void row.offsetWidth; // Force reflow
+                row.classList.add('row-highlight-pulse');
+                setTimeout(() => {
+                    row.classList.remove('row-highlight-pulse');
+                }, 3200);
+
+                showToast(`🎯 Jalon ${milestoneName ? `"${milestoneName}" : ` : ''}sélection de ${targetItem.item_code}`, "info");
+            } else {
+                selectDossierItem(targetItem.id);
+                showToast(`Pièce ${targetItem.item_code} sélectionnée`, "info");
+            }
+        }
+
         function renderSmartPlanningBanner(sp) {
             if (!sp) return '';
 
@@ -2527,8 +2851,21 @@
                     ${(sp.milestones || []).map(m => {
                         const mColors = getSmartPlanningHealthStyles(m.health);
                         const mDate = m.target_date ? new Date(m.target_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' }) : '';
+                        const items = (currentDossierDetail && (currentDossierDetail.items || currentDossierDetail.checklist_data)) || [];
+                        const resolvedItem = findChecklistItem(null, m.code, items);
+                        const isJ60 = m.code === 'J_60_ETASJIL_APPOINTMENT' ||
+                                      m.code === 'J-60_ETASJIL_RDV' ||
+                                      m.code === 'J-60_RDV_SLOT' ||
+                                      m.day_offset === -60 ||
+                                      (m.name_fr && m.name_fr.toLowerCase().includes('créneau'));
+                        const displayActionCode = isJ60 ? 'RDV ANPP 📅' : (resolvedItem ? resolvedItem.item_code : ((m.associated_item_codes && m.associated_item_codes[0]) || ''));
+                        const cardTooltip = isJ60 
+                            ? `Cliquer pour gérer le créneau officiel ANPP (rdvpp/rdvdm) ou voir la pièce ${resolvedItem ? resolvedItem.item_code : '1.A.1'} : ${escapeHTML(m.name_fr)}`
+                            : `Cliquer pour défiler et sélectionner l'exigence (${displayActionCode}) : ${escapeHTML(m.name_fr)}`;
                         return `
-                            <div style="background:var(--bg-surface); border:1px solid ${m.health === 'FATAL_BLOCK' || m.health === 'CRITICAL_DELAY' ? mColors.border : 'var(--border-color)'}; border-radius:4px; padding:5px 7px; font-size:10px; display:flex; flex-direction:column; gap:2px; cursor:pointer;" onclick="showSmartPlanningTimelineModal()" title="${escapeHTML(m.name_fr)} : ${escapeHTML(m.explanation_fr)}">
+                            <div class="sp-milestone-card" style="background:var(--bg-surface); border:1px solid ${m.health === 'FATAL_BLOCK' || m.health === 'CRITICAL_DELAY' ? mColors.border : 'var(--border-color)'}; border-radius:4px; padding:5px 7px; font-size:10px; display:flex; flex-direction:column; gap:2px; cursor:pointer;" 
+                                 onclick="navigateToSmartPlanningMilestone('${escapeHTML(m.code || m.name_fr)}')" 
+                                 title="${cardTooltip}">
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span style="font-weight:800; color:${mColors.text};">${m.day_offset === 0 ? 'J-0 Dépôt' : `J${m.day_offset}`}</span>
                                     <span style="font-size:9px; font-weight:700; color:${mColors.text};">${m.is_completed ? '✅ Fait' : (m.days_remaining >= 0 ? `${m.days_remaining}j` : `+${Math.abs(m.days_remaining)}j`)}</span>
@@ -2536,9 +2873,9 @@
                                 <div style="font-weight:600; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHTML(m.name_fr)}">
                                     ${escapeHTML(m.name_fr)}
                                 </div>
-                                <div style="font-size:9px; color:var(--text-dim); display:flex; justify-content:space-between;">
+                                <div style="font-size:9px; color:var(--text-dim); display:flex; justify-content:space-between; align-items:center;">
                                     <span>📅 ${mDate}</span>
-                                    <span style="font-weight:700;">${escapeHTML(m.department_owner)}</span>
+                                    <span style="font-weight:700; color:var(--accent-blue);" title="Action correspondante dans la checklist">${displayActionCode ? `${displayActionCode} ➔` : escapeHTML(m.department_owner)}</span>
                                 </div>
                             </div>
                         `;
@@ -2653,12 +2990,23 @@
                                     </div>
 
                                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; font-size:10px; padding-top:4px; border-top:1px dashed var(--border-color);">
-                                        <span style="color:var(--text-dim);">
-                                            📅 Date limite : <strong>${mDateFormatted}</strong> • Pièces CTD : <code>${(m.associated_item_codes || []).join(', ')}</code>
-                                        </span>
-                                        <span style="color:var(--accent-blue); font-style:italic;">
-                                            ⚖️ ${escapeHTML(m.legal_reference)}
-                                        </span>
+                                        <div style="color:var(--text-dim); display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+                                            <span>📅 Date limite : <strong>${mDateFormatted}</strong></span>
+                                            <span>• Pièces CTD associées :</span>
+                                            ${(m.associated_item_codes || []).map(code => `
+                                                <button class="btn-pill" style="font-size:10px; padding:1.5px 7px; cursor:pointer; background:rgba(37,99,235,0.08); color:var(--accent-blue); border-color:rgba(37,99,235,0.3); font-weight:700;" onclick="navigateToSmartPlanningItem('${code}', '${escapeHTML(m.name_fr)}', '${escapeHTML(m.code || '')}')" title="Localiser et sélectionner la pièce ${code} dans la checklist">
+                                                    📍 ${code} ➔
+                                                </button>
+                                            `).join('')}
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <button class="btn-pill" style="font-size:10px; padding:2px 8px; cursor:pointer; background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="navigateToSmartPlanningMilestone('${escapeHTML(m.code || m.name_fr)}')" title="Localiser l'action ou gérer le créneau officiel">
+                                                ${(m.day_offset === -60 || (m.code && m.code.includes('60')) || (m.name_fr && m.name_fr.toLowerCase().includes('créneau'))) ? '📅 Gérer Créneau RDV ➔' : '🎯 Aller à l\'action ➔'}
+                                            </button>
+                                            <span style="color:var(--accent-blue); font-style:italic;">
+                                                ⚖️ ${escapeHTML(m.legal_reference)}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     ${m.alert_message ? `

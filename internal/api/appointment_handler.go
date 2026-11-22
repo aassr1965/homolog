@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -143,6 +144,10 @@ func (h *AppointmentHandler) CreateAppointment(w http.ResponseWriter, r *http.Re
 		log.Printf("[ERROR] CreateAppointment: %v", err)
 		writeJSONError(w, http.StatusInternalServerError, "Impossible de créer le rendez-vous ANPP")
 		return
+	}
+
+	if req.DossierID != nil && strings.TrimSpace(req.SlotReference) != "" {
+		_ = h.repo.LinkAppointmentToDossierReceipt(r.Context(), *req.DossierID, user.OrganizationID, strings.TrimSpace(req.SlotReference))
 	}
 
 	// Audit Trail BPF

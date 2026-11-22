@@ -90,7 +90,7 @@ var OfficialSmartPlanningTemplates = []MilestoneTemplate{
 		NameFR:          "Mise en stabilité Zone IVb en enceinte climatique (seuil légal M6)",
 		DayOffset:       -240,
 		DepartmentOwner: "RD",
-		AssociatedItems: []string{"3.2.P.8", "3.2.S.7"},
+		AssociatedItems: []string{"3.2.P", "1.P.9", "3.2.S"},
 		LegalReference:  "Guide CTD ANPP Juillet 2025 Module 3.2.P.8 & ICH Q1A(R2) Zone IVb",
 		ExplanationFR:   "Délai d'épreuve physique incompressible minimal de 6 mois (180j) à 30°C/75% HR avec 60 jours d'analyse avant dépôt.",
 	},
@@ -99,7 +99,7 @@ var OfficialSmartPlanningTemplates = []MilestoneTemplate{
 		NameFR:          "Clôture Synthèses Qualité (QOS 2.3) & Revue Checker AQ",
 		DayOffset:       -150,
 		DepartmentOwner: "QA",
-		AssociatedItems: []string{"2.3", "3.2.P.3.5", "3.2.P.5"},
+		AssociatedItems: []string{"2.Overview", "3.2.P.3.5", "3.2.P"},
 		LegalReference:  "Guide CTD ANPP Module 2.3 & Bonnes Pratiques de Fabrication (BPF)",
 		ExplanationFR:   "Agrégation et relecture indépendante par l'Assurance Qualité (Checker) de l'ensemble des synthèses chimiques et analytiques du Module 3.",
 	},
@@ -117,7 +117,7 @@ var OfficialSmartPlanningTemplates = []MilestoneTemplate{
 		NameFR:          "Double Visa Notice Bilingue FR/AR & Bordereaux BV1/BV2",
 		DayOffset:       -30,
 		DepartmentOwner: "RA",
-		AssociatedItems: []string{"1.P.1", "1.P.2.1", "1.P.2.2", "1.P.4"},
+		AssociatedItems: []string{"1.P.2.2", "1.P.2.1", "1.A.4"},
 		LegalReference:  "Décret exécutif n° 20-325 Art. 12 & Décret 21-82 (Redevances Trésor/BNA)",
 		ExplanationFR:   "Contrôle strict de parité bilingue français-arabe de la notice patient (1.P.2), validation du RCP (1.P.1) et liquidation des frais officiels d'enregistrement.",
 	},
@@ -135,7 +135,7 @@ var OfficialSmartPlanningTemplates = []MilestoneTemplate{
 		NameFR:          "Dépôt Légal Officiel ANPP (Guichet E-TASJIL / Physique)",
 		DayOffset:       0,
 		DepartmentOwner: "RA",
-		AssociatedItems: []string{"1.A.3"},
+		AssociatedItems: []string{"1.A.3", "1.A.1"},
 		LegalReference:  "Décret 20-325 Art. 12 (Délai légal impératif J-180 avant caducité AMM)",
 		ExplanationFR:   "Date butoir impérative d'enregistrement de la demande et délivrance du récépissé de dépôt officiel de l'ANPP.",
 	},
@@ -244,19 +244,57 @@ func EvaluateSmartPlanning(d *Dossier, items []ChecklistItem, now time.Time) *Sm
 			}
 		}
 
+		isDM := d.ProductType == ProductTypeMedicalDevice || d.ProcedureCode == ProcedureDM
+		nameFR := tmpl.NameFR
+		assocItems := tmpl.AssociatedItems
+		legalRef := tmpl.LegalReference
+		explanationFR := tmpl.ExplanationFR
+
+		if isDM {
+			switch tmpl.Code {
+			case MilestoneJ240StabilitiesZoneIVb:
+				nameFR = "Stabilité, Vieillissement accéléré & Barrière stérile (ISO 11607)"
+				assocItems = []string{"DM.S.2", "DM.S.1", "DM.T.1"}
+				legalRef = "Décret exécutif n° 20-324 & Norme ISO 11607 (Maintien de barrière stérile)"
+				explanationFR = "Essais de vieillissement accéléré et maintien de l'intégrité de la barrière stérile (durée de conservation)."
+			case MilestoneJ150QOSCheckerReview:
+				nameFR = "Système Qualité ISO 13485 & Revue Conformité CE / DDM"
+				assocItems = []string{"DM.Q.1", "DM.Q.2", "DM.T.3"}
+				legalRef = "Norme ISO 13485:2016 & Arrêté du 10 mai 2021 (DDM)"
+				explanationFR = "Revue indépendante du Système de Management de la Qualité et des spécifications techniques du DM."
+			case MilestoneJ60ETasjilAppointment:
+				assocItems = []string{"DM.A.1", "DM.A.2"}
+			case MilestoneJ30LeafletAndFees:
+				nameFR = "Notice Bilingue FR/AR (DM.I.1) & Quittance Redevances (DM.A.5)"
+				assocItems = []string{"DM.I.1", "DM.A.5", "DM.I.2"}
+				legalRef = "Décret 20-324 Art. 19 & Décret 21-82 (Redevances DDM)"
+				explanationFR = "Vérification des mentions obligatoires bilingues de la notice d'utilisation et paiement des redevances d'homologation."
+			case MilestoneJ15PDTVisaPackageSeal:
+				nameFR = "Visa Légal Pharmacien DT (DM.A.3) & Scellement Dossier Technique"
+				assocItems = []string{"DM.A.3", "DM.A.1"}
+				legalRef = "Décret 20-324 Art. 14 (Responsabilité légale du Pharmacien Directeur Technique)"
+				explanationFR = "Visa officiel du Pharmacien DT et scellement du dossier technique d'homologation."
+			case MilestoneJ0ANPPDepositDeadline:
+				nameFR = "Dépôt Légal Homologation DDM / ANPP"
+				assocItems = []string{"DM.A.1"}
+				legalRef = "Décret exécutif n° 20-324 (Dépôt officiel auprès de la DDM / ANPP)"
+				explanationFR = "Dépôt réglementaire du formulaire et pièces auprès de la Direction des Dispositifs Médicaux."
+			}
+		}
+
 		ms := SmartPlanningMilestone{
 			Code:                tmpl.Code,
-			NameFR:              tmpl.NameFR,
+			NameFR:              nameFR,
 			DayOffset:           tmpl.DayOffset,
 			TargetDate:          milestoneDate,
 			DaysRemaining:       daysRemaining,
 			Health:              health,
 			IsCompleted:         isCompleted,
 			CompletionNote:      completionNote,
-			AssociatedItemCodes: tmpl.AssociatedItems,
+			AssociatedItemCodes: assocItems,
 			DepartmentOwner:     tmpl.DepartmentOwner,
-			LegalReference:      tmpl.LegalReference,
-			ExplanationFR:       tmpl.ExplanationFR,
+			LegalReference:      legalRef,
+			ExplanationFR:       explanationFR,
 			AlertMessage:        alertMsg,
 		}
 
@@ -490,10 +528,16 @@ func checkMilestoneCompletion(code SmartPlanningMilestoneCode, d *Dossier, items
 		if d.ProductType == ProductTypeMedicalDevice || d.ProcedureCode == ProcedureDM {
 			return true, "Non applicable aux Dispositifs Médicaux"
 		}
-		// Stabilités 3.2.P.8 au moins en revue ou scellées
-		it, exists := itemsByCode["3.2.P.8"]
+		// Stabilités 3.2.P ou 1.P.9 ou 3.2.P.8 au moins en revue ou scellées
+		it, exists := itemsByCode["3.2.P"]
+		if !exists {
+			it, exists = itemsByCode["1.P.9"]
+		}
+		if !exists {
+			it, exists = itemsByCode["3.2.P.8"]
+		}
 		if exists && isWorkflowStatusAtLeast(it.WorkflowStatus, WorkflowStatusUnderReview) {
-			return true, fmt.Sprintf("Stabilités 3.2.P.8 au statut '%s'", it.WorkflowStatus)
+			return true, fmt.Sprintf("Stabilités %s au statut '%s'", it.ItemCode, it.WorkflowStatus)
 		}
 		return false, ""
 
@@ -501,10 +545,16 @@ func checkMilestoneCompletion(code SmartPlanningMilestoneCode, d *Dossier, items
 		if d.ProductType == ProductTypeMedicalDevice || d.ProcedureCode == ProcedureDM {
 			return true, "Non applicable aux Dispositifs Médicaux"
 		}
-		// QOS 2.3 au moins en revue Checker
-		it, exists := itemsByCode["2.3"]
+		// QOS 2.Overview ou 2.3 ou 3.2.P.3.5 au moins en revue Checker
+		it, exists := itemsByCode["2.Overview"]
+		if !exists {
+			it, exists = itemsByCode["2.3"]
+		}
+		if !exists {
+			it, exists = itemsByCode["3.2.P.3.5"]
+		}
 		if exists && isWorkflowStatusAtLeast(it.WorkflowStatus, WorkflowStatusUnderReview) {
-			return true, fmt.Sprintf("QOS 2.3 au statut '%s'", it.WorkflowStatus)
+			return true, fmt.Sprintf("QOS %s au statut '%s'", it.ItemCode, it.WorkflowStatus)
 		}
 		return false, ""
 
@@ -573,6 +623,30 @@ func CalculateSmartDueDates(analysis *SmartPlanningAnalysis, items []ChecklistIt
 	for _, it := range items {
 		code := it.ItemCode
 
+		// Cas 1 : Dispositifs Médicaux (Nomenclature DM)
+		if strings.HasPrefix(code, "DM.") {
+			if strings.HasPrefix(code, "DM.S") {
+				// Stérilisation et Stabilité Barrière Stérile (ISO 11607) -> J-240
+				dueDates[code] = dateJ240
+			} else if strings.HasPrefix(code, "DM.Q") || strings.HasPrefix(code, "DM.T") || strings.HasPrefix(code, "DM.C") {
+				// Qualité ISO 13485, Spécifications techniques & Clinique -> J-150
+				dueDates[code] = dateJ150
+			} else if code == "DM.A.3" {
+				// Visa Légal Pharmacien DT -> J-15
+				dueDates[code] = dateJ15
+			} else if code == "DM.A.5" || strings.HasPrefix(code, "DM.I") {
+				// Notices bilingues & Quittance redevances -> J-30
+				dueDates[code] = dateJ30
+			} else if strings.HasPrefix(code, "DM.A") {
+				// Demande & Agréments administratifs -> J-60
+				dueDates[code] = dateJ60
+			} else {
+				dueDates[code] = dateJ30
+			}
+			continue
+		}
+
+		// Cas 2 : Médicaments CTD
 		// Règle 1 : Module 3 Qualité (Stabilités, Méthodes, Spécifications) -> Échéance J-240
 		if strings.HasPrefix(code, "3.") || strings.HasPrefix(code, "5.") {
 			dueDates[code] = dateJ240
