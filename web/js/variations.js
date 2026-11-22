@@ -680,9 +680,69 @@ async function submitSealVariationDT(event) {
 }
 
 // ============================================================================
-// 6. IMPRESSION TABLEAU COMPARATIF ES-REG-04
+// 6. VISIONNEUSE IN-APP & IMPRESSION TABLEAU COMPARATIF ES-REG-04
 // ============================================================================
 
+let activeVariationReportUrl = null;
+
+function openComparativeTableModal(varID) {
+    if (!varID) return;
+    activeVariationReportUrl = `/api/v1/variations/${varID}/comparative-table`;
+    
+    const iframe = document.getElementById("variation-report-iframe");
+    if (iframe) {
+        iframe.src = activeVariationReportUrl;
+    }
+    
+    const subTitle = document.getElementById("variation-report-subtitle");
+    if (subTitle) {
+        subTitle.textContent = `Ligne Directrice ANPP LD-DEPP07/V01 • Document Opposable A4 (300+ DPI)`;
+    }
+    
+    if (typeof openModal === 'function') {
+        openModal("modal-variation-report-viewer");
+    } else {
+        const el = document.getElementById("modal-variation-report-viewer");
+        if (el) {
+            el.classList.add("open");
+            el.style.display = "flex";
+        }
+    }
+}
+
+// Alias de compatibilité pour tous les boutons existants
 function printComparativeTable(varID) {
-    window.open(`/api/v1/variations/${varID}/comparative-table`, '_blank');
+    openComparativeTableModal(varID);
+}
+
+function printActiveVariationReport() {
+    const iframe = document.getElementById("variation-report-iframe");
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+    } else if (activeVariationReportUrl) {
+        window.open(activeVariationReportUrl, '_blank');
+    }
+}
+
+function openActiveVariationReportInNewTab() {
+    if (activeVariationReportUrl) {
+        window.open(activeVariationReportUrl, '_blank');
+    }
+}
+
+function closeVariationReportModal() {
+    if (typeof closeModal === 'function') {
+        closeModal("modal-variation-report-viewer");
+    } else {
+        const el = document.getElementById("modal-variation-report-viewer");
+        if (el) {
+            el.classList.remove("open");
+            el.style.display = "none";
+        }
+    }
+    const iframe = document.getElementById("variation-report-iframe");
+    if (iframe) {
+        iframe.src = "about:blank";
+    }
 }

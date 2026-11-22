@@ -4253,6 +4253,37 @@
         </div>
     </div>
 
+    <!-- Modale de Visualisation & Impression Haute Fidélité de l'État ES-REG-04 (CDC BPF / ANPP) -->
+    <div class="modal-overlay" id="modal-variation-report-viewer" onclick="if(event.target === this) closeVariationReportModal()">
+        <div class="modal modal-xl" style="width:1040px; max-width:min(1040px, calc(100vw - 24px)); height:94vh; display:flex; flex-direction:column; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:10px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; border-bottom:1px solid var(--border-color); background:var(--bg-sub); flex-shrink:0;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">📜</span>
+                    <div>
+                        <div class="modal-title" style="font-weight:800; font-size:13.5px; color:var(--text-main);">
+                            ES-REG-04 • Tableau Comparatif Standardisé des Modifications Post-AMM
+                        </div>
+                        <div style="font-size:10.5px; color:var(--text-dim);" id="variation-report-subtitle">
+                            Ligne Directrice ANPP LD-DEPP07/V01 • Document Opposable A4 (300+ DPI)
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="btn-pill" style="background:#0284c7; color:white; border:none; font-weight:700; font-size:11.5px; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="printActiveVariationReport()">
+                        🖨️ Imprimer / Export PDF (A4 300 DPI)
+                    </button>
+                    <button type="button" class="btn-pill" style="background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-color); font-weight:600; font-size:11px; padding:6px 12px; display:inline-flex; align-items:center; gap:5px; cursor:pointer;" onclick="openActiveVariationReportInNewTab()" title="Ouvrir dans un onglet dédié plein écran">
+                        ↗ Nouvel Onglet
+                    </button>
+                    <button type="button" class="close-btn" onclick="closeVariationReportModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-dim); margin-left:8px;" title="Fermer la prévisualisation">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" style="flex:1; padding:0; background:#475569; display:flex; justify-content:center; align-items:stretch; overflow:hidden;">
+                <iframe id="variation-report-iframe" style="width:100%; height:100%; border:none; background:#ffffff;" title="Prévisualisation ES-REG-04"></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.18.2"></script>
     <script src="/js/auth.js?v=2026.11.18.2"></script>
