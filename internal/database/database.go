@@ -85,6 +85,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/026_anpp_variations_engine.sql",
 		"migrations/027_dm_homologation_and_regularization.sql",
 		"migrations/028_dm_post_homologation_modifications.sql",
+		"migrations/029_optimize_query_and_foreign_key_indexes.sql",
 	}
 
 	for _, file := range migrationFiles {
