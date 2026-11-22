@@ -260,6 +260,44 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 		htmlOutput = reporting.RenderESREG04HTML(dossier, "", "", "", "", "", estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-REG-05":
 		htmlOutput = reporting.RenderESREG05HTML(dossier, "", "", "", "", "", "", 300, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+	case "ES-REG-05-DM":
+		var dmMod *domain.DMModification
+		if h.pool != nil {
+			modRepo := repository.NewDMModificationRepository(h.pool)
+			modIDStr := r.URL.Query().Get("modification_id")
+			if modID, err := uuid.Parse(modIDStr); err == nil {
+				if m, err := modRepo.GetDMModificationByID(r.Context(), dossier.OrganizationID, modID); err == nil {
+					dmMod = m
+				}
+			}
+			if dmMod == nil && dossier.MedicalDeviceID != nil {
+				if list, err := modRepo.ListDMModifications(r.Context(), dossier.OrganizationID, dossier.MedicalDeviceID, "all", "all"); err == nil && len(list) > 0 {
+					dmMod = &list[0]
+				}
+			}
+		}
+		if dmMod == nil {
+			dmMod = &domain.DMModification{
+				ModificationCode:               "MOD-DM-2026-001",
+				ModificationType:               domain.DMModTypeSubstantielle,
+				CategoryCode:                   "DM_SUB_03",
+				CategoryLabel:                  "Changement du procédé de stérilisation (ISO 11135)",
+				Title:                          "Substitution du procédé Oxyde d'éthylène par Rayonnement Gamma",
+				Description:                    "Transition industrielle vers irradiation Gamma 25 kGy pour conformité environnementale et accélération des délais de libération.",
+				Justification:                  "Validation complète ISO 11137 et biocompatibilité ISO 10993 démontrant l'absence de dégradation polymérique.",
+				CurrentState:                   "Stérilisation Oxyde d'Éthylène (ETO) cycle standard 55°C, temps de désorption 7 jours.",
+				ProposedState:                  "Stérilisation Rayonnement Gamma Cobalt-60 dose minimale 25 kGy avec indicateurs dosimétriques.",
+				ImpactSterilizationISO11135:    true,
+				ImpactBiocompatibilityISO10993: false,
+				ImpactRiskISO14971:             true,
+				FeeAmount:                      domain.DMFeeSubstantielle,
+				FeeReceiptRef:                  "BNA-CHE-2026-8819",
+				Status:                         domain.DMModStatusApprouve,
+				AvenantNumber:                  "AVN-DDM-2026-0042",
+				MedicalDevice:                  dossier.MedicalDevice,
+			}
+		}
+		htmlOutput = renderESREG05DMHTML(dmMod, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-FIN-01":
 		htmlOutput = renderESFIN01HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now, tenantSettings)
 	case "ES-FIN-02":

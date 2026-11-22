@@ -84,6 +84,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/025_volet_1a5_presubmission_and_cost_consolidation.sql",
 		"migrations/026_anpp_variations_engine.sql",
 		"migrations/027_dm_homologation_and_regularization.sql",
+		"migrations/028_dm_post_homologation_modifications.sql",
 	}
 
 	for _, file := range migrationFiles {
