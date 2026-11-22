@@ -372,10 +372,10 @@
                 <span class="act-label" id="lbl-act-def">Compléments</span>
                 <span class="act-badge" id="badge-deficiencies" style="display:none; background:var(--accent-red); color:white;">0</span>
             </button>
-            <button class="act-btn" id="act-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (12 Items ANPP)">
+            <button class="act-btn" id="act-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations & Modifications Post-AMM (LD-DEPP07/V01)">
                 <span class="act-icon">🔄</span>
                 <span class="act-label" id="lbl-act-var">Variations</span>
-                <span class="act-badge">12</span>
+                <span class="act-badge" id="badge-variations-count" style="display:none; background:var(--accent-blue); color:white;">0</span>
             </button>
             <button class="act-btn" id="act-dm" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('dm')" title="Homologation Dispositifs Médicaux (Décret 20-324 & Arrêté 10/05/2021)">
                 <span class="act-icon">💉</span>
@@ -523,10 +523,10 @@
             <span class="mob-nav-icon">📋</span>
             <span class="mob-nav-label">CTD</span>
         </button>
-        <button class="mob-nav-btn" id="mobnav-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations Post-AMM">
+        <button class="mob-nav-btn" id="mobnav-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations Post-AMM (LD-DEPP07/V01)">
             <span class="mob-nav-icon">🔄</span>
             <span class="mob-nav-label">Variations</span>
-            <span class="mob-nav-badge">12</span>
+            <span class="mob-nav-badge" id="mob-badge-variations-count" style="display:none; background:var(--accent-blue); color:white;">0</span>
         </button>
         <button class="mob-nav-btn" id="mobnav-dm" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('dm')" title="Dispositifs Médicaux">
             <span class="mob-nav-icon">💉</span>

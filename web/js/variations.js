@@ -15,6 +15,40 @@ let currentSelectedRubriqueDef = null;
 // 1. CHARGEMENT ET AFFICHAGE DES VARIATIONS
 // ============================================================================
 
+function updateVariationsBadgeCount(count) {
+    const badge = document.getElementById("badge-variations-count");
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = "inline-block";
+        } else {
+            badge.style.display = "none";
+        }
+    }
+    const mobBadge = document.getElementById("mob-badge-variations-count");
+    if (mobBadge) {
+        if (count > 0) {
+            mobBadge.textContent = count;
+            mobBadge.style.display = "inline-block";
+        } else {
+            mobBadge.style.display = "none";
+        }
+    }
+}
+
+async function refreshVariationsBadgeCount() {
+    try {
+        const resp = await fetch('/api/v1/variations');
+        if (resp.ok) {
+            const data = await resp.json();
+            const list = data.variations || [];
+            updateVariationsBadgeCount(list.length);
+        }
+    } catch (e) {
+        console.warn("Échec actualisation badge variations", e);
+    }
+}
+
 async function renderVariationsTable() {
     if (window.innerWidth < 768 && typeof toggleMobileTree === 'function') {
         toggleMobileTree(false);
@@ -43,6 +77,7 @@ async function renderVariationsTable() {
         if (!resp.ok) throw new Error("Erreur HTTP " + resp.status);
         const data = await resp.json();
         currentVariationsList = data.variations || [];
+        updateVariationsBadgeCount(currentVariationsList.length);
 
         if (currentVariationsList.length === 0) {
             tbody.innerHTML = `
@@ -745,4 +780,11 @@ function closeVariationReportModal() {
     if (iframe) {
         iframe.src = "about:blank";
     }
+}
+
+// Auto-chargement du badge au démarrage
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { setTimeout(refreshVariationsBadgeCount, 300); });
+} else {
+    setTimeout(refreshVariationsBadgeCount, 300);
 }
