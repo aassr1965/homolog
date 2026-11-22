@@ -1124,7 +1124,6 @@ func (h *FeeHandler) GetPaymentSlipPrintHTML(w http.ResponseWriter, r *http.Requ
 	w.Write([]byte(html))
 }
 
-
 // VerifyPaymentSlip1A4 applique le contrôle officiel 1.A.4 sur un bordereau (quittance, concordance, change BA)
 func (h *FeeHandler) VerifyPaymentSlip1A4(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
@@ -1336,12 +1335,12 @@ func (h *FeeHandler) VerifyPreSubmission1A5(w http.ResponseWriter, r *http.Reque
 			EntityType:     "anpp_pre_submissions",
 			EntityID:       preSub.ID,
 			Details: map[string]any{
-				"dossier_id":           dossierID,
-				"anpp_reference":       req.ANPPReference,
-				"decision_type":        preSub.DecisionType,
-				"fee_amount_dzd":       preSub.FeeAmountDZD,
-				"slip_reference":       preSub.SlipReference,
-				"verification_status":  preSub.VerificationStatus,
+				"dossier_id":          dossierID,
+				"anpp_reference":      req.ANPPReference,
+				"decision_type":       preSub.DecisionType,
+				"fee_amount_dzd":      preSub.FeeAmountDZD,
+				"slip_reference":      preSub.SlipReference,
+				"verification_status": preSub.VerificationStatus,
 			},
 		})
 	}
