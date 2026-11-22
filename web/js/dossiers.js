@@ -577,102 +577,278 @@
             }
         }
 
-        async function selectDossier(id) {
+        // Cache mémoire session pour bascule instantanée (0ms) entre dossiers
+        const dossierDetailCache = new Map();
+
+        function invalidateDossierCache(id) {
+            if (id) {
+                dossierDetailCache.delete(id);
+            } else {
+                dossierDetailCache.clear();
+            }
+        }
+        window.invalidateDossierCache = invalidateDossierCache;
+
+        function updateTreeSelection(selectedId) {
+            document.querySelectorAll('.tree-dossier-root').forEach(el => {
+                const isCurrent = el.id === `tree-dossier-${selectedId}`;
+                el.classList.toggle('selected', isCurrent);
+                if (isCurrent) {
+                    el.classList.add('expanded');
+                    const arrow = el.querySelector('.tree-dossier-code span[onclick*="toggleDossierTreeItem"]');
+                    if (arrow && arrow.innerText.includes('▶')) arrow.innerText = '▼';
+                }
+            });
+        }
+
+        function updateTreeBranchCounts(dossier) {
+            if (!dossier) return;
+            const root = document.getElementById(`tree-dossier-${dossier.id}`);
+            if (!root) return;
+            const branches = root.querySelector('.tree-dossier-branches');
+            if (branches) {
+                branches.innerHTML = renderTreeBranchesForDossier(dossier);
+            }
+        }
+
+        function updateDossierBreadcrumbs(dossier) {
+            if (!dossier) return;
+            const bcRoot = document.getElementById("bc-root");
+            if (bcRoot) bcRoot.innerText = "DOSSIERS_ANPP";
+            const bcSec = document.getElementById("bc-sec");
+            if (bcSec) bcSec.innerText = dossier.procedure_code || "PROC";
+            const bcProd = document.getElementById("bc-prod");
+            if (bcProd) bcProd.innerText = dossier.dossier_code;
+            
+            let prodTitle = "Produit";
+            if (dossier.medicine) {
+                prodTitle = dossier.medicine.brand_name_fr;
+            } else if (dossier.medical_device) {
+                prodTitle = dossier.medical_device.commercial_name_fr;
+            }
+            const bcMod = document.getElementById("bc-mod");
+            if (bcMod) bcMod.innerText = prodTitle;
+        }
+
+        function updateToolbarKPIs(dossier) {
+            if (!dossier) return;
+            const kpiEl = document.getElementById("kpi-dossier-completeness");
+            if (kpiEl) {
+                kpiEl.innerText = `${dossier.completeness_percent}%`;
+                kpiEl.style.color = dossier.completeness_percent === 100 ? 'var(--accent-emerald)' : 'var(--accent-blue)';
+            }
+
+            const btnSignPDT = document.getElementById("tb-btn-sign-pdt");
+            if (btnSignPDT) {
+                if (dossier.pdt_signed_at) {
+                    btnSignPDT.innerHTML = "✅ Visa PDT Apposé";
+                    btnSignPDT.style.background = "rgba(16,185,129,0.15)";
+                    btnSignPDT.style.color = "var(--accent-emerald)";
+                    btnSignPDT.style.borderColor = "rgba(16,185,129,0.4)";
+                    btnSignPDT.disabled = true;
+                } else if (dossier.completeness_percent === 100) {
+                    btnSignPDT.innerHTML = "✍️ Apposer Visa PDT (100%)";
+                    btnSignPDT.style.background = "var(--accent-emerald)";
+                    btnSignPDT.style.color = "white";
+                    btnSignPDT.style.border = "none";
+                    btnSignPDT.disabled = false;
+                } else {
+                    btnSignPDT.innerHTML = "✍️ Visa PDT (Incomplet)";
+                    btnSignPDT.style.background = "transparent";
+                    btnSignPDT.style.color = "var(--text-muted)";
+                    btnSignPDT.disabled = false;
+                }
+            }
+        }
+
+        function renderGatingSummaryHTML(summary) {
+            if (!summary) return '';
+            return `
+                <div style="margin-top:8px; background:linear-gradient(135deg, rgba(37,99,235,0.08), rgba(126,34,206,0.08)); border:1px solid rgba(37,99,235,0.25); border-radius:6px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-size:14px;">🧭</span>
+                        <span style="font-size:11px; font-weight:800; color:var(--text-main); text-transform:uppercase; letter-spacing:0.5px;">Chemin Critique CTD :</span>
+                        <span style="background:var(--accent-blue); color:white; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:12px;">Phase ${summary.active_phase} / 5</span>
+                        <span style="font-size:12px; font-weight:700; color:var(--text-main);">${escapeHTML(summary.active_phase_name)}</span>
+                    </div>
+                    <div>
+                        ${summary.blocked_count === 0 ? `
+                            <span class="status-tag status-ok" style="font-size:10px; padding:2px 8px;">✅ Aucun verrou bloquant</span>
+                        ` : `
+                            <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #f87171; font-weight:700; cursor:pointer;" onclick="showDossierGatingSummaryModal()">
+                                🔒 ${summary.blocked_count} Section(s) Verrouillée(s) (Consulter)
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPaymentSlipsSectionHTML(dossierId) {
+            if (typeof currentDossierPaymentSlips === 'undefined' || !currentDossierPaymentSlips || currentDossierPaymentSlips.length === 0) {
+                return '';
+            }
+            const dId = dossierId || selectedDossierId || '';
+            return `
+                <div style="margin-top:8px; background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:8px 10px;">
+                    <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--text-dim); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>💰 Bordereaux de Redevances Légales ANPP (${currentDossierPaymentSlips.length})</span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn-pill" style="font-size:10px; padding:2px 8px;" onclick="openGenerateFeeSlipModal('${dId}')">➕ Émettre Bordereau</button>
+                            <button class="btn-pill" style="font-size:10px; padding:2px 8px; background:rgba(37,99,235,0.1); color:var(--accent-blue); border:1px solid rgba(37,99,235,0.3); font-weight:700;" onclick="openCostAnalyticsDashboardModal()">📊 Coûts Consolidés</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        ${currentDossierPaymentSlips.map(s => `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:4px; padding:6px 10px; font-size:11px;">
+                                <div>
+                                    <span class="badge" style="background:var(--accent-blue); color:white; font-weight:700; margin-right:6px;">${s.slip_type}</span>
+                                    <strong style="color:var(--text-main); font-family:monospace;">${escapeHTML(s.slip_number)}</strong>
+                                    <span style="color:var(--text-dim); margin:0 6px;">|</span>
+                                    <strong style="color:var(--accent-emerald);">${typeof formatDZD === 'function' ? formatDZD(s.amount_dzd) : s.amount_dzd + ' DZD'}</strong>
+                                    ${s.payment_reference ? `<span style="margin-left:8px; font-size:10px; color:#10b981;">(Quittance : ${escapeHTML(s.payment_reference)})</span>` : ''}
+                                </div>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <span class="badge" style="background:${s.verification_status === 'conforme' ? 'rgba(16,185,129,0.15)' : (s.status === 'paye' || s.status === 'quittance_recue' ? 'rgba(59,130,246,0.15)' : 'rgba(234,179,8,0.15)')}; color:${s.verification_status === 'conforme' ? '#10b981' : (s.status === 'paye' || s.status === 'quittance_recue' ? '#2563eb' : '#b45309')}; font-size:10px;">
+                                        ${s.verification_status === 'conforme' ? '✅ 1.A.4 Conforme (Visé DT)' : (s.status === 'paye' || s.status === 'quittance_recue' ? '🏛️ Quittance Enregistrée' : '⏳ Émis (En attente)')}
+                                    </span>
+                                    <button class="btn-pill" style="font-size:10px; padding:2px 6px;" onclick="openPrintSlipWindow('${s.id}')">🖨️ Imprimer</button>
+                                    <button class="btn-pill" style="font-size:10px; padding:2px 6px; background:${s.verification_status === 'conforme' ? 'var(--accent-purple)' : '#10b981'}; color:white; border:none;" onclick="openRecordSlipPaymentModal('${s.id}', '${s.slip_number}', ${s.amount_dzd}, '${dId}')">${s.verification_status === 'conforme' ? '🔍 Consulter 1.A.4' : '🏛️ Contrôle 1.A.4'}</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateDossierGatingWidget() {
+            const el = document.getElementById("dossier-gating-container");
+            if (el) {
+                el.innerHTML = currentDossierGatingSummary ? renderGatingSummaryHTML(currentDossierGatingSummary) : '';
+            }
+            applyGatingAnnotationsToTable();
+        }
+
+        function updateDossierSmartPlanningWidget() {
+            const el = document.getElementById("dossier-smart-planning-container");
+            if (el) {
+                el.innerHTML = currentDossierSmartPlanning ? renderSmartPlanningBanner(currentDossierSmartPlanning) : '';
+            }
+        }
+
+        function updateDossierPaymentsWidget(dossierId) {
+            const el = document.getElementById("dossier-payments-container");
+            if (el) {
+                el.innerHTML = renderPaymentSlipsSectionHTML(dossierId);
+            }
+        }
+
+        function applyGatingAnnotationsToTable() {
+            if (!currentDossierGatingSummary) return;
+            const blockedMap = new Set((currentDossierGatingSummary.blocked_items || []).map(b => b.target_item_code));
+            const blockingMap = new Map((currentDossierGatingSummary.blocking_prereqs || []).map(p => [p.item_code, p]));
+
+            document.querySelectorAll('#doc-tbody tr[data-item-code]').forEach(tr => {
+                const code = tr.getAttribute('data-item-code');
+                if (blockedMap.has(code)) {
+                    tr.classList.add('row-gating-blocked');
+                } else {
+                    tr.classList.remove('row-gating-blocked');
+                }
+                if (blockingMap.has(code)) {
+                    tr.classList.add('row-gating-blocking');
+                } else {
+                    tr.classList.remove('row-gating-blocking');
+                }
+            });
+        }
+
+        async function selectDossier(id, forceReload = false) {
+            if (!id) return;
             selectedDossierId = id;
             currentDossierViewModeManual = false;
             expandedDossierTreeIds.add(id);
-            renderDossiersTree();
+
+            // Mise à jour visuelle instantanée de la sélection dans la barre latérale sans repeindre tout le DOM
+            updateTreeSelection(id);
 
             if (window.innerWidth < 768) {
                 toggleMobileTree(false);
             }
 
+            // 1. VÉRIFICATION DU CACHE SESSION POUR RENDU INSTANTANÉ (0 ms)
+            const cached = !forceReload ? dossierDetailCache.get(id) : null;
+            if (cached) {
+                currentDossierDetail = cached.detail;
+                currentDossierGatingSummary = cached.gating;
+                currentDossierSmartPlanning = cached.smartPlanning;
+                currentDossierPaymentSlips = cached.paymentSlips || [];
+
+                updateDossierBreadcrumbs(currentDossierDetail);
+                updateToolbarKPIs(currentDossierDetail);
+                renderDossierCenterView(currentDossierDetail);
+                updateTreeBranchCounts(currentDossierDetail);
+
+                // Si le cache a moins de 60 secondes, inutile de refaire des requêtes
+                if (Date.now() - cached.timestamp < 60000) {
+                    return;
+                }
+            }
+
+            // 2. RETOUR VISUEL IMMÉDIAT SUR LE PANNEAU CENTRAL
+            const tableContainer = document.querySelector('.table-container');
+            if (!cached && tableContainer) {
+                tableContainer.style.opacity = '0.65';
+                tableContainer.style.transition = 'opacity 0.12s ease';
+            }
+
             try {
+                // 3. APPEL PRINCIPAL UNIQUE POUR LE DOSSIER ET SES ITEMS
                 const res = await fetch(`/api/v1/dossiers/${id}`);
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 currentDossierDetail = await res.json();
-                
-                // Mettre à jour fil d'ariane
-                document.getElementById("bc-root").innerText = "DOSSIERS_ANPP";
-                document.getElementById("bc-sec").innerText = currentDossierDetail.procedure_code || "PROC";
-                document.getElementById("bc-prod").innerText = currentDossierDetail.dossier_code;
-                
-                let prodTitle = "Produit";
-                if (currentDossierDetail.medicine) {
-                    prodTitle = currentDossierDetail.medicine.brand_name_fr;
-                } else if (currentDossierDetail.medical_device) {
-                    prodTitle = currentDossierDetail.medical_device.commercial_name_fr;
-                }
-                document.getElementById("bc-mod").innerText = prodTitle;
 
-                // Chargement des bordereaux de redevances ANPP
-                if (typeof loadDossierPaymentSlips === 'function') {
-                    await loadDossierPaymentSlips(id);
+                // RENDU IMMÉDIAT DU PANNEAU CENTRAL DÈS CET UNIQUE APPEL REÇU !
+                if (tableContainer) {
+                    tableContainer.style.opacity = '1';
                 }
-
-                // Chargement du statut Gating & Chemin Critique DAG (Jalon 2.1b)
-                try {
-                    const gatingRes = await fetch(`/api/v1/dossiers/${id}/gating-summary`);
-                    if (gatingRes.ok) {
-                        const gatingData = await gatingRes.json();
-                        currentDossierGatingSummary = gatingData.summary || null;
-                    } else {
-                        currentDossierGatingSummary = null;
-                    }
-                } catch(e) {
-                    console.warn("Échec chargement gating summary:", e);
-                    currentDossierGatingSummary = null;
-                }
-
-                // Chargement du Smart Planning & Rétroplanning Inversé (CDC Section 7.4.3.6)
-                try {
-                    const spRes = await fetch(`/api/v1/dossiers/${id}/smart-planning`);
-                    if (spRes.ok) {
-                        const spData = await spRes.json();
-                        currentDossierSmartPlanning = spData.planning || null;
-                    } else {
-                        currentDossierSmartPlanning = null;
-                    }
-                } catch(e) {
-                    console.warn("Échec chargement smart planning:", e);
-                    currentDossierSmartPlanning = null;
-                }
-
-                // KPI toolbar
-                const kpiEl = document.getElementById("kpi-dossier-completeness");
-                if (kpiEl) {
-                    kpiEl.innerText = `${currentDossierDetail.completeness_percent}%`;
-                    kpiEl.style.color = currentDossierDetail.completeness_percent === 100 ? 'var(--accent-emerald)' : 'var(--accent-blue)';
-                }
-
-                // Ajustement des boutons de la toolbar
-                const btnSignPDT = document.getElementById("tb-btn-sign-pdt");
-                if (btnSignPDT) {
-                    if (currentDossierDetail.pdt_signed_at) {
-                        btnSignPDT.innerHTML = "✅ Visa PDT Apposé";
-                        btnSignPDT.style.background = "rgba(16,185,129,0.15)";
-                        btnSignPDT.style.color = "var(--accent-emerald)";
-                        btnSignPDT.style.borderColor = "rgba(16,185,129,0.4)";
-                        btnSignPDT.disabled = true;
-                    } else if (currentDossierDetail.completeness_percent === 100) {
-                        btnSignPDT.innerHTML = "✍️ Apposer Visa PDT (100%)";
-                        btnSignPDT.style.background = "var(--accent-emerald)";
-                        btnSignPDT.style.color = "white";
-                        btnSignPDT.style.border = "none";
-                        btnSignPDT.disabled = false;
-                    } else {
-                        btnSignPDT.innerHTML = "✍️ Visa PDT (Incomplet)";
-                        btnSignPDT.style.background = "transparent";
-                        btnSignPDT.style.color = "var(--text-muted)";
-                        btnSignPDT.disabled = false;
-                    }
-                }
-
-                // Mettre à jour l'arbre avec les compteurs réels
-                renderDossiersTree();
+                updateDossierBreadcrumbs(currentDossierDetail);
+                updateToolbarKPIs(currentDossierDetail);
                 renderDossierCenterView(currentDossierDetail);
+                updateTreeBranchCounts(currentDossierDetail);
+
+                // 4. CHARGEMENT EN PARALLÈLE STRICT DES WIDGETS COMPLÉMENTAIRES (Non bloquant pour le tableau)
+                const [gatingResult, spResult, slipsResult] = await Promise.allSettled([
+                    fetch(`/api/v1/dossiers/${id}/gating-summary`).then(r => r.ok ? r.json() : null),
+                    fetch(`/api/v1/dossiers/${id}/smart-planning`).then(r => r.ok ? r.json() : null),
+                    (typeof loadDossierPaymentSlips === 'function' ? loadDossierPaymentSlips(id) : Promise.resolve([]))
+                ]);
+
+                if (gatingResult.status === 'fulfilled' && gatingResult.value) {
+                    currentDossierGatingSummary = gatingResult.value.summary || null;
+                    updateDossierGatingWidget();
+                }
+                if (spResult.status === 'fulfilled' && spResult.value) {
+                    currentDossierSmartPlanning = spResult.value.planning || null;
+                    updateDossierSmartPlanningWidget();
+                }
+                if (slipsResult.status === 'fulfilled') {
+                    updateDossierPaymentsWidget(id);
+                }
+
+                // Enregistrement dans le cache session
+                dossierDetailCache.set(id, {
+                    detail: currentDossierDetail,
+                    gating: currentDossierGatingSummary,
+                    smartPlanning: currentDossierSmartPlanning,
+                    paymentSlips: currentDossierPaymentSlips,
+                    timestamp: Date.now()
+                });
+
             } catch(e) {
                 console.error("selectDossier error:", e);
+                if (tableContainer) tableContainer.style.opacity = '1';
             }
         }
 
@@ -892,28 +1068,14 @@
                     </div>
 
                     <!-- Chemin Critique & Déverrouillage Conditionnel (Gating DAG 5 Phases - Jalon 2.1b) -->
-                    ${currentDossierGatingSummary ? `
-                        <div style="margin-top:8px; background:linear-gradient(135deg, rgba(37,99,235,0.08), rgba(126,34,206,0.08)); border:1px solid rgba(37,99,235,0.25); border-radius:6px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                                <span style="font-size:14px;">🧭</span>
-                                <span style="font-size:11px; font-weight:800; color:var(--text-main); text-transform:uppercase; letter-spacing:0.5px;">Chemin Critique CTD :</span>
-                                <span style="background:var(--accent-blue); color:white; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:12px;">Phase ${currentDossierGatingSummary.active_phase} / 5</span>
-                                <span style="font-size:12px; font-weight:700; color:var(--text-main);">${escapeHTML(currentDossierGatingSummary.active_phase_name)}</span>
-                            </div>
-                            <div>
-                                ${currentDossierGatingSummary.blocked_count === 0 ? `
-                                    <span class="status-tag status-ok" style="font-size:10px; padding:2px 8px;">✅ Aucun verrou bloquant</span>
-                                ` : `
-                                    <button class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid #f87171; font-weight:700; cursor:pointer;" onclick="showDossierGatingSummaryModal()">
-                                        🔒 ${currentDossierGatingSummary.blocked_count} Section(s) Verrouillée(s) (Consulter)
-                                    </button>
-                                `}
-                            </div>
-                        </div>
-                    ` : ''}
+                    <div id="dossier-gating-container">
+                        ${currentDossierGatingSummary ? renderGatingSummaryHTML(currentDossierGatingSummary) : ''}
+                    </div>
 
                     <!-- Rétroplanning Dynamique Inversé & Smart Planning ANPP (CDC Section 7.4.3.6) -->
-                    ${currentDossierSmartPlanning ? renderSmartPlanningBanner(currentDossierSmartPlanning) : ''}
+                    <div id="dossier-smart-planning-container">
+                        ${currentDossierSmartPlanning ? renderSmartPlanningBanner(currentDossierSmartPlanning) : ''}
+                    </div>
 
                     ${dossier.pdt_signed_at ? `
                         <div style="margin-top:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center; font-size:11px;">
@@ -962,37 +1124,9 @@
                     </div>
 
                     <!-- Bordereaux de Versement des Redevances ANPP -->
-                    ${(typeof currentDossierPaymentSlips !== 'undefined' && currentDossierPaymentSlips && currentDossierPaymentSlips.length > 0) ? `
-                        <div style="margin-top:8px; background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; padding:8px 10px;">
-                            <div style="font-size:10.5px; text-transform:uppercase; font-weight:700; color:var(--text-dim); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
-                                <span>💰 Bordereaux de Redevances Légales ANPP (${currentDossierPaymentSlips.length})</span>
-                                <div style="display:flex; gap:6px;">
-                                    <button class="btn-pill" style="font-size:10px; padding:2px 8px;" onclick="openGenerateFeeSlipModal('${dossier.id}')">➕ Émettre Bordereau</button>
-                                    <button class="btn-pill" style="font-size:10px; padding:2px 8px; background:rgba(37,99,235,0.1); color:var(--accent-blue); border:1px solid rgba(37,99,235,0.3); font-weight:700;" onclick="openCostAnalyticsDashboardModal()">📊 Coûts Consolidés</button>
-                                </div>
-                            </div>
-                            <div style="display:flex; flex-direction:column; gap:6px;">
-                                ${currentDossierPaymentSlips.map(s => `
-                                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); border:1px solid var(--border-color); border-radius:4px; padding:6px 10px; font-size:11px;">
-                                        <div>
-                                            <span class="badge" style="background:var(--accent-blue); color:white; font-weight:700; margin-right:6px;">${s.slip_type}</span>
-                                            <strong style="color:var(--text-main); font-family:monospace;">${escapeHTML(s.slip_number)}</strong>
-                                            <span style="color:var(--text-dim); margin:0 6px;">|</span>
-                                            <strong style="color:var(--accent-emerald);">${typeof formatDZD === 'function' ? formatDZD(s.amount_dzd) : s.amount_dzd + ' DZD'}</strong>
-                                            ${s.payment_reference ? `<span style="margin-left:8px; font-size:10px; color:#10b981;">(Quittance : ${escapeHTML(s.payment_reference)})</span>` : ''}
-                                        </div>
-                                        <div style="display:flex; gap:6px; align-items:center;">
-                                            <span class="badge" style="background:${s.verification_status === 'conforme' ? 'rgba(16,185,129,0.15)' : (s.status === 'paye' || s.status === 'quittance_recue' ? 'rgba(59,130,246,0.15)' : 'rgba(234,179,8,0.15)')}; color:${s.verification_status === 'conforme' ? '#10b981' : (s.status === 'paye' || s.status === 'quittance_recue' ? '#2563eb' : '#b45309')}; font-size:10px;">
-                                                ${s.verification_status === 'conforme' ? '✅ 1.A.4 Conforme (Visé DT)' : (s.status === 'paye' || s.status === 'quittance_recue' ? '🏛️ Quittance Enregistrée' : '⏳ Émis (En attente)')}
-                                            </span>
-                                            <button class="btn-pill" style="font-size:10px; padding:2px 6px;" onclick="openPrintSlipWindow('${s.id}')">🖨️ Imprimer</button>
-                                            <button class="btn-pill" style="font-size:10px; padding:2px 6px; background:${s.verification_status === 'conforme' ? 'var(--accent-purple)' : '#10b981'}; color:white; border:none;" onclick="openRecordSlipPaymentModal('${s.id}', '${s.slip_number}', ${s.amount_dzd}, '${currentDossierDetail.id}')">${s.verification_status === 'conforme' ? '🔍 Consulter 1.A.4' : '🏛️ Contrôle 1.A.4'}</button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
+                    <div id="dossier-payments-container">
+                        ${renderPaymentSlipsSectionHTML(dossier.id)}
+                    </div>
                 </div>
             `;
 
@@ -2076,7 +2210,8 @@
                 }
 
                 closeModal('modal-attach-ged');
-                await selectDossier(selectedDossierId);
+                invalidateDossierCache(selectedDossierId);
+                await selectDossier(selectedDossierId, true);
                 renderDossiersTree();
             } catch(e) {
                 showNotifyModal("Échec de Rattachement", e.message, "⚠️");
@@ -2098,7 +2233,8 @@
                     throw new Error(err.error || "Détachement impossible");
                 }
 
-                await selectDossier(selectedDossierId);
+                invalidateDossierCache(selectedDossierId);
+                await selectDossier(selectedDossierId, true);
                 renderDossiersTree();
             } catch(e) {
                 showNotifyModal("Échec de Détachement", e.message, "⚠️");
@@ -2179,7 +2315,8 @@
                     "✅"
                 );
 
-                await selectDossier(selectedDossierId);
+                invalidateDossierCache(selectedDossierId);
+                await selectDossier(selectedDossierId, true);
                 await loadDossiers();
             } catch(e) {
                 showNotifyModal("Échec du Visa PDT", e.message, "⚠️");
@@ -2238,7 +2375,8 @@
                     "🏛️"
                 );
 
-                await selectDossier(selectedDossierId);
+                invalidateDossierCache(selectedDossierId);
+                await selectDossier(selectedDossierId, true);
                 await loadDossiers();
             } catch(e) {
                 showNotifyModal("Erreur Enregistrement Dépôt", e.message, "⚠️");
@@ -3081,7 +3219,8 @@
 
                 closeModal('modal-smart-planning-config');
                 showNotifyModal("Rétroplanning Mis à Jour", "La date cible et la base de jours ouvrables ont été enregistrées avec succès.", "✅");
-                await selectDossier(selectedDossierId);
+                invalidateDossierCache(selectedDossierId);
+                await selectDossier(selectedDossierId, true);
             } catch(e) {
                 showNotifyModal("Erreur Configuration", e.message, "⚠️");
             }
@@ -3103,7 +3242,8 @@
 
                 const formatted = new Date(dateStr).toLocaleDateString('fr-FR');
                 showNotifyModal("Date Cible Recalée", `La date butoir de dépôt a été recalée avec succès au ${formatted} sur la base des jours ouvrables incompressibles.`, "🎯");
-                await selectDossier(selectedDossierId);
+                invalidateDossierCache(selectedDossierId);
+                await selectDossier(selectedDossierId, true);
             } catch(e) {
                 showNotifyModal("Erreur", e.message, "⚠️");
             }
@@ -3128,7 +3268,8 @@
 
                 const data = await res.json();
                 showNotifyModal("Échéances Synchronisées", data.message || "Toutes les sections ont été alignées sur le chemin critique.", "⚡");
-                await selectDossier(selectedDossierId);
+                invalidateDossierCache(selectedDossierId);
+                await selectDossier(selectedDossierId, true);
             } catch(e) {
                 showNotifyModal("Erreur Synchronisation", e.message, "⚠️");
             }

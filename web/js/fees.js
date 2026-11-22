@@ -110,8 +110,9 @@ async function executeGenerateFeeSlip(e) {
         openPrintSlipWindow(slip.id);
 
         // Rafraîchir la vue du dossier
+        if (typeof invalidateDossierCache === 'function') invalidateDossierCache(dossierId);
         if (typeof selectDossier === 'function') {
-            selectDossier(dossierId);
+            selectDossier(dossierId, true);
         }
     } catch (err) {
         alert("Erreur lors de la génération du bordereau: " + err.message);
@@ -291,7 +292,8 @@ async function executeVerifySlip1A4(e) {
         }
 
         if (dossierId && typeof selectDossier === 'function') {
-            selectDossier(dossierId);
+            if (typeof invalidateDossierCache === 'function') invalidateDossierCache(dossierId);
+            selectDossier(dossierId, true);
         }
     } catch (err) {
         alert("Erreur lors de la vérification 1.A.4: " + err.message);
@@ -604,7 +606,8 @@ async function executeVerifyPreSubmission1A5(e) {
         }
 
         if (dossierId && typeof selectDossier === 'function') {
-            selectDossier(dossierId);
+            if (typeof invalidateDossierCache === 'function') invalidateDossierCache(dossierId);
+            selectDossier(dossierId, true);
         }
     } catch (err) {
         alert("Erreur lors de la validation 1.A.5: " + err.message);
