@@ -467,7 +467,7 @@ func (r *VariationRepository) SignAndSealVariationDT(ctx context.Context, variat
 	now := time.Now().UTC()
 	query := `
 		UPDATE anpp_variation_requests SET
-			status = 'pret_visa_dt',
+			status = 'scelle_dt',
 			dt_verified_by = $1,
 			dt_verified_at = $2,
 			dt_signature_seal = $3,

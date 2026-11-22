@@ -131,12 +131,16 @@ async function renderVariationsTable() {
 
             // Statut BPF
             let statusBadge = `<span class="status-tag status-draft">Brouillon</span>`;
-            if (v.status === 'pret_visa_dt') {
+            if (v.status === 'scelle_dt' || v.status === 'vise_dt' || v.dt_signature_seal) {
+                statusBadge = `<span class="status-tag" style="background:#059669; color:white; font-weight:700;">✔ Scellé DT</span>`;
+            } else if (v.status === 'pret_visa_dt') {
                 statusBadge = `<span class="status-tag status-rev" style="background:#7e22ce; color:white; font-weight:700;">Prêt Visa DT</span>`;
             } else if (v.status === 'soumis_anpp') {
                 statusBadge = `<span class="status-tag status-ok" style="background:#0284c7; color:white; font-weight:700;">Déposé ANPP</span>`;
             } else if (v.status === 'approuve') {
                 statusBadge = `<span class="status-tag status-ok">Approuvé ANPP</span>`;
+            } else if (v.status === 'rejete') {
+                statusBadge = `<span class="status-tag" style="background:#dc2626; color:white; font-weight:700;">Rejeté ANPP</span>`;
             }
 
             const feeFormatted = new Intl.NumberFormat('fr-DZ', { minimumFractionDigits: 2 }).format(v.fee_amount_dzd || 0) + " DZD";
