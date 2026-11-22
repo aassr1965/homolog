@@ -97,9 +97,9 @@ function renderDeficienciesDashboardView(data) {
     currentDashboardLetters = letters;
 
     let html = `
-        <div style="padding:16px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; height:100%;">
+        <div class="deficiencies-dashboard-container" style="padding:16px; display:flex; flex-direction:column; gap:16px; min-height:100%; height:auto; box-sizing:border-box;">
             <!-- En-tête réglementaire et KPI cards -->
-            <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+            <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:8px; padding:14px; flex-shrink:0;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                     <div>
                         <div style="font-size:15px; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:8px;">
@@ -110,7 +110,7 @@ function renderDeficienciesDashboardView(data) {
                             Traçabilité ALCOA+ des notifications officielles de l'ANPP, décomposition par question/module et visa légal Pharmacien Directeur Technique (1.A.7).
                         </div>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; padding:6px 14px; font-size:11.5px;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
                         <button class="btn-pill" onclick="loadDeficienciesDashboard()" title="Actualiser les compteurs">🔄 Actualiser</button>
                     </div>
@@ -145,8 +145,8 @@ function renderDeficienciesDashboardView(data) {
             </div>
 
             <!-- Tableau des Lettres Actives -->
-            <div style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">
-                <div style="padding:10px 14px; background:var(--bg-surface); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <div class="deficiencies-table-wrapper" style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:8px; overflow:hidden; flex-shrink:0;">
+                <div style="padding:10px 14px; background:var(--bg-surface); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                     <span style="font-weight:700; font-size:12px; color:var(--text-main);">📋 Notifications Officielles de Compléments en Instance (${letters.length})</span>
                     <button class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; font-weight:700; border:none; padding:4px 12px;" onclick="openNewDeficiencyLetterModal()">➕ Nouvelle Notification ANPP</button>
                 </div>
@@ -154,7 +154,7 @@ function renderDeficienciesDashboardView(data) {
 
     if (letters.length === 0) {
         html += `
-            <div style="padding:40px; text-align:center; color:var(--text-muted);">
+            <div style="padding:40px; text-align:center; color:var(--text-muted); flex-shrink:0;">
                 <div style="font-size:32px; margin-bottom:8px;">🎉</div>
                 <div style="font-weight:600; font-size:13px; color:var(--text-main);">Aucun complément ANPP en instance</div>
                 <div style="font-size:11px; margin-top:4px; margin-bottom:16px;">Tous les dossiers d'enregistrement sont à jour ou en attente d'évaluation initiale.</div>
@@ -163,9 +163,9 @@ function renderDeficienciesDashboardView(data) {
         `;
     } else {
         html += `
-            <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
-                    <thead>
+            <div class="deficiencies-scroll-x" style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%;">
+                <table class="deficiencies-table" style="width:100%; min-width:760px; border-collapse:collapse; font-size:11.5px; text-align:left;">
+                    <thead class="deficiencies-thead">
                         <tr style="background:var(--bg-sub); border-bottom:1px solid var(--border-color); color:var(--text-dim); font-size:10.5px; text-transform:uppercase;">
                             <th style="padding:8px 12px;">Réf. Notification ANPP</th>
                             <th style="padding:8px 12px;">Dossier &amp; Produit</th>
@@ -177,7 +177,7 @@ function renderDeficienciesDashboardView(data) {
                             <th style="padding:8px 12px; text-align:right;">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="deficiencies-tbody">
         `;
 
         letters.forEach((l, idx) => {
