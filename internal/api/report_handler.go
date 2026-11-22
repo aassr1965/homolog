@@ -248,7 +248,14 @@ func (h *ReportHandler) GenerateDossierReport(w http.ResponseWriter, r *http.Req
 	case "ES-REG-03":
 		htmlOutput = reporting.RenderESREG03HTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-REG-03-DM":
-		htmlOutput = renderESREG03DMHTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
+		var dmEval *domain.DMRecevabiliteEvaluation
+		if h.pool != nil {
+			dmRepo := repository.NewDMRepository(h.pool)
+			if ev, err := dmRepo.GetRecevabiliteEvaluation(r.Context(), dossier.OrganizationID, dossier.ID); err == nil {
+				dmEval = ev
+			}
+		}
+		htmlOutput = renderESREG03DMHTML(dossier, estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now, dmEval)
 	case "ES-REG-04":
 		htmlOutput = reporting.RenderESREG04HTML(dossier, "", "", "", "", "", estName, estAgreement, estAddress, pdtName, pdtDecision, watermark, reportSHA256, qrURL, now)
 	case "ES-REG-05":

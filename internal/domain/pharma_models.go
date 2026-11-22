@@ -274,6 +274,25 @@ type MedicalDevice struct {
 	CIFPrice         *float64 `json:"cif_price,omitempty"`
 	CIFCurrency      string   `json:"cif_currency,omitempty"`
 
+	// Volet Technique Homologation Approfondie (Arrêté du 10 mai 2021 - 6 sections)
+	CompositionDetails            string `json:"composition_details,omitempty"`
+	HasLatex                      bool   `json:"has_latex"`
+	HasPhthalates                 bool   `json:"has_phthalates"`
+	HasActivePharma               bool   `json:"has_active_pharma"`
+	HasBiologicalOrigin           bool   `json:"has_biological_origin"`
+	HasCMRSubstances              bool   `json:"has_cmr_substances"`
+	RiskManagementISO14971Ref     string `json:"risk_management_iso14971_ref,omitempty"`
+	RiskManagementStatus          string `json:"risk_management_status,omitempty"`
+	BiocompatibilityISO10993Ref   string `json:"biocompatibility_iso10993_ref,omitempty"`
+	BiocompatibilityStatus        string `json:"biocompatibility_status,omitempty"`
+	ClinicalEvalISO14155Ref       string `json:"clinical_eval_iso14155_ref,omitempty"`
+	ClinicalEvalStatus            string `json:"clinical_eval_status,omitempty"`
+	SterilizationValidationRef    string `json:"sterilization_validation_ref,omitempty"`
+	PackagingStabilityISO11607Ref string `json:"packaging_stability_iso11607_ref,omitempty"`
+	SampleBatchPF                 string `json:"sample_batch_pf,omitempty"`
+	SampleBatchMP                 string `json:"sample_batch_mp,omitempty"`
+	SampleUnitsCount              int    `json:"sample_units_count,omitempty"`
+
 	// Références Réglementaires ANPP
 	HomologationDecisionNumber string     `json:"homologation_decision_number,omitempty"`
 	HomologationDate           *time.Time `json:"homologation_date,omitempty"`

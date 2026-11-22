@@ -449,7 +449,7 @@
                 </div>
             </div>
 
-            <div class="table-container">
+            <div class="table-container" id="table-container">
                 <table id="doc-table">
                     <thead id="table-head">
                         <tr>
@@ -4284,6 +4284,492 @@
         </div>
     </div>
 
+
+    <!-- ========================================================================= -->
+    <!-- MODALES JALON 2.6 : HOMOLOGATION DM 6 SECTIONS & RECEVABILITE 13 POINTS   -->
+    <!-- ========================================================================= -->
+
+    <!-- Modale 1 : Fiche Technique Approfondie en 6 Sections (Arrêté du 10 Mai 2021) -->
+    <div class="modal-overlay" id="modal-dm-homologation" onclick="if(event.target === this) closeModal('modal-dm-homologation')">
+        <div class="modal-card" style="max-width:880px; width:100%; max-height:92vh; display:flex; flex-direction:column; border-radius:10px; box-shadow:0 20px 40px rgba(0,0,0,0.3); background:var(--bg-panel); border:1px solid var(--border-color); overflow:hidden;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--border-color); background:rgba(2,132,199,0.08); flex-shrink:0;">
+                <div>
+                    <span style="font-size:10px; font-weight:800; color:#0284c7; text-transform:uppercase;">Direction des Dispositifs Médicaux (DDM) • Arrêté du 10 Mai 2021</span>
+                    <div class="modal-title" style="font-weight:900; font-size:14.5px; color:var(--text-main); margin-top:2px;">
+                        🩺 Dossier Technique d'Homologation DM — 6 Sections Complètes
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-dm-homologation')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-dim);">✕</button>
+            </div>
+            <form id="form-dm-homologation" onsubmit="saveDMHomologationForm(event)" style="display:flex; flex-direction:column; overflow:hidden; flex:1;">
+                <input type="hidden" id="dm-edit-id">
+                <div class="modal-body" style="padding:18px 22px; overflow-y:auto; flex:1; font-size:12px; display:flex; flex-direction:column; gap:16px;">
+                    
+                    <!-- Section 1 : Identification & Classification -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+                        <div style="font-weight:800; font-size:12.5px; color:var(--accent-blue); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                            <span>🏷️</span> Section 1 : Identification &amp; Classification Réglementaire (Décret 20-324)
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Nom Commercial (Français) :</label>
+                                <input type="text" id="dm-edit-name-fr" required style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Nom Commercial (Arabe) :</label>
+                                <input type="text" id="dm-edit-name-ar" dir="rtl" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; font-family:'Traditional Arabic', Tahoma;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Référence Catalogue Fabricant :</label>
+                                <input type="text" id="dm-edit-ref" required style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Nomenclature Internationale (GMDN / EMDN) :</label>
+                                <input type="text" id="dm-edit-gmdn" placeholder="Ex: 34978 (Cathéter intraveineux)" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Classe de Risque Réglementaire :</label>
+                                <select id="dm-edit-class" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                                    <option value="I">Classe I (Non invasif, risque faible)</option>
+                                    <option value="IIa">Classe IIa (Invasif temporaire, risque potentiel modéré)</option>
+                                    <option value="IIb">Classe IIb (Invasif long terme, risque élevé)</option>
+                                    <option value="III">Classe III (Critique, implantable cardiovasculaire/cérébral)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Règle de Classification (Décret 20-324 Annexe I) :</label>
+                                <input type="text" id="dm-edit-rule" placeholder="Ex: Règle 2 (Dispositif invasif chirurgical à court terme)" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                        </div>
+                        <div style="margin-top:10px;">
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Destination Clinique &amp; Utilisation Prévue (Notice) :</label>
+                            <input type="text" id="dm-edit-intended-use" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                    </div>
+
+                    <!-- Section 2 : Stérilité, Emballage & Stabilité -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+                        <div style="font-weight:800; font-size:12.5px; color:#059669; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                            <span>🧪</span> Section 2 : Stérilité, Conditionnement &amp; Maintien de Barrière (ISO 11607)
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:16px;">
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="dm-edit-is-sterile" />
+                                    <strong>Dispositif Stérile</strong>
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="dm-edit-is-single-use" checked />
+                                    <strong>Usage Unique</strong>
+                                </label>
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Procédé de Stérilisation :</label>
+                                <input type="text" id="dm-edit-steril-method" placeholder="Ex: Oxyde d'éthylène (ETO) ou Rayonnement Gamma" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Réf. Dossier Validation Stérilisation (ISO 11135 / 11137) :</label>
+                                <input type="text" id="dm-edit-steril-val" placeholder="Ex: VAL-STERIL-ISO11135-2024" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Réf. Étude Vieillissement &amp; Barrière Stérile (ISO 11607) :</label>
+                                <input type="text" id="dm-edit-pack-stab" placeholder="Ex: STAB-ISO11607-36M-2025" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3 : Matières Premières, Formulation & Sécurité Biologique -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+                        <div style="font-weight:800; font-size:12.5px; color:#d97706; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                            <span>🧬</span> Section 3 : Composition Détaillée, Matières Premières &amp; Dépistage BPF
+                        </div>
+                        <div style="margin-bottom:10px;">
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Formulation / Matières Premières en Contact Patient :</label>
+                            <textarea id="dm-edit-composition" rows="2" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical;"></textarea>
+                        </div>
+                        <div style="background:rgba(217,119,6,0.06); border:1px dashed #d97706; border-radius:6px; padding:10px;">
+                            <div style="font-weight:700; font-size:11px; color:#b45309; margin-bottom:6px;">Déclarations Spécifiques &amp; Substances d'Origine Biologique / CMR (Arrêté 10/05/2021) :</div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="dm-edit-has-latex" />
+                                    <span>Contient du <strong>Latex naturel</strong></span>
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="dm-edit-has-phthalates" />
+                                    <span>Contient des <strong>Phtalates (DEHP)</strong></span>
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="dm-edit-has-active-pharma" />
+                                    <span>Incorpore une <strong>Substance Médicamenteuse</strong></span>
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="dm-edit-has-biological" />
+                                    <span>Origine <strong>Biologique (Tissu Animal/Humain)</strong></span>
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                    <input type="checkbox" id="dm-edit-has-cmr" />
+                                    <span>Substances <strong>CMR 1A/1B</strong></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4 : Gestion des Risques & Évaluation Préclinique / Clinique -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+                        <div style="font-weight:800; font-size:12.5px; color:#7e22ce; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                            <span>🛡️</span> Section 4 : Maîtrise des Risques &amp; Dossiers Normatifs ISO
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Gestion Risques (ISO 14971) :</label>
+                                <input type="text" id="dm-edit-iso14971" placeholder="Ex: PGR-ISO14971-2025" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Biocompatibilité (ISO 10993) :</label>
+                                <input type="text" id="dm-edit-iso10993" placeholder="Ex: BIO-ISO10993-GLP-2025" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Éval. Clinique (ISO 14155) :</label>
+                                <input type="text" id="dm-edit-iso14155" placeholder="Ex: CER-ISO14155-2025" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5 : Échantillons & Contrôle LNCM -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+                        <div style="font-weight:800; font-size:12.5px; color:#2563eb; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                            <span>📦</span> Section 5 : Traçabilité des Lots &amp; Échantillons LNCM (Arrêté Art. 04)
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">N° Lot Échantillon Produit Fini :</label>
+                                <input type="text" id="dm-edit-batch-pf" placeholder="Ex: LOT-PF-2026-DM01" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">N° Lot Matière Première :</label>
+                                <input type="text" id="dm-edit-batch-mp" placeholder="Ex: LOT-MP-PUR-098" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                            <div>
+                                <label style="display:block; font-weight:700; margin-bottom:4px;">Quantité Déposée au LNCM :</label>
+                                <input type="number" id="dm-edit-sample-count" min="1" value="3" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer" style="padding:14px 20px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:10px; background:var(--bg-sub); flex-shrink:0;">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-dm-homologation')">Annuler</button>
+                    <button type="submit" class="btn-pill" style="background:#0284c7; color:white; border:none; font-weight:700;">💾 Enregistrer la Fiche 6 Sections</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale 2 : Grille de Recevabilité en 13 Points & Sceau PDT (Arrêté du 10 Mai 2021) -->
+    <div class="modal-overlay" id="modal-dm-recevabilite" onclick="if(event.target === this) closeModal('modal-dm-recevabilite')">
+        <div class="modal-card" style="max-width:920px; width:100%; max-height:92vh; display:flex; flex-direction:column; border-radius:10px; box-shadow:0 20px 40px rgba(0,0,0,0.3); background:var(--bg-panel); border:1px solid var(--border-color); overflow:hidden;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--border-color); background:rgba(5,150,105,0.08); flex-shrink:0;">
+                <div>
+                    <span style="font-size:10px; font-weight:800; color:#059669; text-transform:uppercase;">Récépissé Officiel de Dépôt (ES-REG-03-DM) • Arrêté du 10 Mai 2021 (Art. 05 & 06)</span>
+                    <div class="modal-title" style="font-weight:900; font-size:14.5px; color:var(--text-main); margin-top:2px;">
+                        📑 Évaluation de Recevabilité Réglementaire en 13 Points &amp; Visa Pharmacien DT
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-dm-recevabilite')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-dim);">✕</button>
+            </div>
+            <form onsubmit="saveDMRecevabiliteForm(event)" style="display:flex; flex-direction:column; overflow:hidden; flex:1;">
+                <input type="hidden" id="dm-rec-dossier-id">
+                <div class="modal-body" style="padding:18px 22px; overflow-y:auto; flex:1; font-size:12px; display:flex; flex-direction:column; gap:14px;">
+                    
+                    <!-- En-tête Dossier & Décision live -->
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:8px; padding:12px; display:grid; grid-template-columns:1fr 1fr 140px 180px; gap:12px; align-items:center;">
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">N° d'Ordre Dépôt DDM :</label>
+                            <input type="text" id="dm-rec-order-number" style="width:100%; box-sizing:border-box; padding:6px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; font-weight:700;" />
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Agent Évaluateur DDM / ANPP :</label>
+                            <input type="text" id="dm-rec-agent" style="width:100%; box-sizing:border-box; padding:6px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Exemplaires Num. :</label>
+                            <input type="number" id="dm-rec-copies" min="1" value="4" style="width:100%; box-sizing:border-box; padding:6px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                        <div style="text-align:center; padding:6px; background:var(--bg-app); border-radius:6px; border:1px solid var(--border-color);">
+                            <div style="font-size:10px; color:var(--text-muted); margin-bottom:3px;">Statut de Recevabilité :</div>
+                            <span id="dm-rec-score-badge" style="display:inline-block; padding:3px 8px; border-radius:10px; font-size:11px; font-weight:800; background:#059669; color:white;">13 / 13 Conformes</span>
+                            <div id="dm-rec-decision-text" style="font-size:10.5px; font-weight:800; color:#059669; margin-top:2px;">RECEVABLE</div>
+                        </div>
+                    </div>
+
+                    <!-- Grille des 13 points réglementaires -->
+                    <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">
+                        <table class="dense-table" style="width:100%; font-size:11.5px; margin:0;">
+                            <thead style="background:var(--bg-sub);">
+                                <tr>
+                                    <th style="width:45px; text-align:center;">N°</th>
+                                    <th>Exigence Réglementaire (Arrêté du 10 Mai 2021)</th>
+                                    <th style="width:190px; text-align:center;">Évaluation de Conformité</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">1</td>
+                                    <td>Demande d'homologation selon le modèle officiel ANPP (Formulaire ES-REG-02-DM)</td>
+                                    <td>
+                                        <select id="dm-rec-item-1" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">2</td>
+                                    <td>Statuts de la société et agrément d'établissement de fabrication/importation de DM délivré par le MIPH</td>
+                                    <td>
+                                        <select id="dm-rec-item-2" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">3</td>
+                                    <td>Décision ministérielle d'agrément du Pharmacien Directeur Technique et engagement solennel (1.A.7)</td>
+                                    <td>
+                                        <select id="dm-rec-item-3" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">4</td>
+                                    <td>Preuve de paiement de la redevance légale (Quittance BNA Chéraga 00100622030000064395 - Ord. 21-07 Art. 31)</td>
+                                    <td>
+                                        <select id="dm-rec-item-4" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">5</td>
+                                    <td>Certificat de conformité du système qualité ISO 13485 en cours de validité du site fabricant légal</td>
+                                    <td>
+                                        <select id="dm-rec-item-5" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">6</td>
+                                    <td>Déclaration de conformité CE ou certificat de commercialisation de l'autorité compétente du pays d'origine</td>
+                                    <td>
+                                        <select id="dm-rec-item-6" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">7</td>
+                                    <td>Dossier technique détaillé : description, composition qualitative et quantitative, plans et spécifications</td>
+                                    <td>
+                                        <select id="dm-rec-item-7" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">8</td>
+                                    <td>Rapport d'analyse et de gestion des risques conforme à la norme ISO 14971</td>
+                                    <td>
+                                        <select id="dm-rec-item-8" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">9</td>
+                                    <td>Dossier d'évaluation biologique et rapports d'essais de biocompatibilité (ISO 10993)</td>
+                                    <td>
+                                        <select id="dm-rec-item-9" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">10</td>
+                                    <td>Rapport d'évaluation clinique ou données d'investigation clinique conformes à la norme ISO 14155</td>
+                                    <td>
+                                        <select id="dm-rec-item-10" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">11</td>
+                                    <td>Validation du procédé de stérilisation et études de barrière stérile / vieillissement (ISO 11607)</td>
+                                    <td>
+                                        <select id="dm-rec-item-11" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">12</td>
+                                    <td>Maquettes d'étiquetage primaire et secondaire avec mention bilingue Arabe / Français et notice d'emploi</td>
+                                    <td>
+                                        <select id="dm-rec-item-12" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center; font-weight:700;">13</td>
+                                    <td>Échantillons conformes et attestations de libération de lots pour expertise au LNCM</td>
+                                    <td>
+                                        <select id="dm-rec-item-13" onchange="updateRecevabiliteScoreUI()" style="width:100%; padding:4px 8px; font-size:11px;">
+                                            <option value="conforme">Conforme (C)</option>
+                                            <option value="avec_reserve">Avec Réserve (R)</option>
+                                            <option value="non_conforme">Non Conforme (NC)</option>
+                                            <option value="non_applicable">Non Applicable (NA)</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Réserves & Observations -->
+                    <div>
+                        <label style="display:block; font-weight:700; margin-bottom:4px;">Observations Réglementaires &amp; Réserves Éventuelles :</label>
+                        <textarea id="dm-rec-reserves" rows="2" placeholder="Précisez les réserves éventuelles ou mentions particulières..." style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical;"></textarea>
+                    </div>
+
+                    <!-- Sceau Électronique PDT (21 CFR Part 11) -->
+                    <div id="dm-rec-seal-zone"></div>
+
+                </div>
+                <div class="modal-footer" style="padding:14px 20px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:var(--bg-sub); flex-shrink:0;">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-dm-recevabilite')">Fermer</button>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn-pill" id="btn-seal-dm-rec" onclick="sealDMRecevabiliteDT()" style="background:#7e22ce; color:white; border:none; font-weight:700;">✍️ Visa PDT &amp; Scellement (21 CFR Part 11)</button>
+                        <button type="submit" class="btn-pill" style="background:#059669; color:white; border:none; font-weight:700;">💾 Enregistrer la Grille</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale 3 : Déclaration Dérogatoire DM Non Homologué (Mesures Transitoires) -->
+    <div class="modal-overlay" id="modal-dm-regularization-new" onclick="if(event.target === this) closeModal('modal-dm-regularization-new')">
+        <div class="modal-card" style="max-width:620px; width:100%; border-radius:10px; box-shadow:0 20px 40px rgba(0,0,0,0.3); background:var(--bg-panel); border:1px solid var(--border-color);">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--border-color); background:rgba(217,119,6,0.08);">
+                <div>
+                    <span style="font-size:10px; font-weight:800; color:#d97706; text-transform:uppercase;">Mesures Transitoires Réglementaires • Décret exécutif 20-324</span>
+                    <div class="modal-title" style="font-weight:900; font-size:14px; color:var(--text-main); margin-top:2px;">
+                        ⏱️ Inscription d'un DM Transitoire Non Homologué
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-dm-regularization-new')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-dim);">✕</button>
+            </div>
+            <form onsubmit="submitNewDMRegularization(event)">
+                <div class="modal-body" style="padding:18px 20px; font-size:12px; display:flex; flex-direction:column; gap:12px;">
+                    <div style="background:rgba(217,119,6,0.06); border:1px dashed #d97706; border-radius:6px; padding:10px; font-size:11px; color:#b45309;">
+                        ⚠️ Ce formulaire permet la déclaration des DM déjà sur le marché algérien sans décision d'homologation préalable, sous couvert d'une autorisation dérogatoire et sous compte à rebours légal d'opposabilité.
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:700; margin-bottom:4px;">Dispositif Médical Référencé :</label>
+                        <select id="new-dm-reg-device-id" required style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        </select>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Code Interne Suivi :</label>
+                            <input type="text" id="new-dm-reg-code" required style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">N° Dérogation Ministérielle :</label>
+                            <input type="text" id="new-dm-reg-derogation" placeholder="Ex: DEROG-MIPH-2023-889" required style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:700; margin-bottom:4px;">Statut d'Avancement du Dossier :</label>
+                        <select id="new-dm-reg-status" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            <option value="EN_COURS">En Cours de Constitution du Dossier DDM</option>
+                            <option value="SOUMIS_DDM">Dossier Déposé à l'ANPP (En Instruction)</option>
+                            <option value="REGULARISE">Régularisé &amp; Homologation Obtenue</option>
+                            <option value="RETIRE">Retiré du Marché National</option>
+                        </select>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Volume Trimestriel Importé :</label>
+                            <input type="number" id="new-dm-reg-vol-imp" value="50000" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Volume Trimestriel Distribué :</label>
+                            <input type="number" id="new-dm-reg-vol-dist" value="48000" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Part Hôpital Public (%) :</label>
+                            <input type="number" id="new-dm-reg-hosp-share" value="75" min="0" max="100" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Part Réseau Officine (%) :</label>
+                            <input type="number" id="new-dm-reg-ret-share" value="25" min="0" max="100" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;" />
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-weight:700; margin-bottom:4px;">Justification Sanitaire &amp; Observations :</label>
+                        <textarea id="new-dm-reg-obs" rows="2" placeholder="Ex: Dispositif indispensable en oncologie pédiatrique pour éviter la rupture d'approvisionnement des CHU." style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:14px 20px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:10px; background:var(--bg-sub);">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-dm-regularization-new')">Annuler</button>
+                    <button type="submit" class="btn-pill" style="background:#d97706; color:white; border:none; font-weight:700;">💾 Inscrire au Registre Transitoire</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.18.2"></script>
     <script src="/js/auth.js?v=2026.11.18.2"></script>
@@ -4291,6 +4777,7 @@
     <script src="/js/system_admin.js?v=2026.11.17.5"></script>
     <script src="/js/referential.js?v=2026.11.17.5"></script>
     <script src="/js/variations.js?v=2026.11.17.5"></script>
+    <script src="/js/dm.js?v=2026.11.22.1"></script>
     <script src="/js/ged.js?v=2026.11.17.11"></script>
     <script src="/js/dossiers.js?v=2026.11.18.12"></script>
     <script src="/js/workflow.js?v=2026.11.18.11"></script>

@@ -67,6 +67,7 @@ func main() {
 	var workflowHandler *api.WorkflowHandler
 	var reportHandler *api.ReportHandler
 	var variationHandler *api.VariationHandler
+	var dmHandler *api.DMHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -96,6 +97,9 @@ func main() {
 
 		// Initialisation des Variations Post-AMM & Grouping (Jalon 2.4 - LD-DEPP07/V01)
 		api.SeedInitialVariations(ctx, db.Pool, cfg.OnPremOrgSlug)
+
+		// Initialisation de l'Homologation & Régularisation des Dispositifs Médicaux (Jalon 2.6 - Décret 20-324)
+		api.SeedInitialDMData(ctx, db.Pool, cfg.OnPremOrgSlug)
 
 		// Initialisation de la Veille Réglementaire & Séances ANPP (Jalon 1.7 Phase 4)
 		api.SeedInitialRegulatoryWatchAndAppointments(ctx, db.Pool, cfg.OnPremOrgSlug)
@@ -140,6 +144,9 @@ func main() {
 
 		varRepo := repository.NewVariationRepository(db.Pool)
 		variationHandler = api.NewVariationHandler(varRepo, dossierRepo, auditService)
+
+		dmRepo := repository.NewDMRepository(db.Pool)
+		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService)
 
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
@@ -602,6 +609,25 @@ func main() {
 
 				// Tableau comparatif standardisé ES-REG-04 (haute fidélité A4)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/variations/{id}/comparative-table", variationHandler.GetComparativeTableHTML)
+			}
+
+			// Dispositifs Médicaux : Homologation 6 sections, Recevabilité 13 points & Régularisation (Jalon 2.6 - Décret 20-324 / Arrêté 10 mai 2021)
+			if dmHandler != nil {
+				// 6 Sections techniques d'homologation
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices/{id}/homologation", dmHandler.GetMedicalDeviceHomologation)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/medical-devices/{id}/homologation", dmHandler.UpdateMedicalDeviceHomologation)
+
+				// Grille de recevabilité en 13 points (ES-REG-03-DM)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/dm-recevabilite", dmHandler.GetRecevabiliteEvaluation)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview, domain.PermDocApprovePDT)).Put("/api/v1/dossiers/{id}/dm-recevabilite", dmHandler.UpdateRecevabiliteEvaluation)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dossiers/{id}/dm-recevabilite/seal", dmHandler.SealRecevabiliteEvaluation)
+
+				// Mesures transitoires & Régularisation des DM non homologués
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-regularizations", dmHandler.ListDMRegularizations)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-regularizations/stats", dmHandler.GetDMRegularizationStats)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/dm-regularizations", dmHandler.CreateDMRegularization)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/dm-regularizations/{id}", dmHandler.UpdateDMRegularization)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-regularizations/export/canevas", dmHandler.ExportDMCanevas)
 			}
 		})
 	}

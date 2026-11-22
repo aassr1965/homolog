@@ -404,6 +404,7 @@ func renderESREG03DMHTML(
 	watermark domain.WatermarkStatus,
 	sha256Hash, qrURL string,
 	generatedAt time.Time,
+	eval *domain.DMRecevabiliteEvaluation,
 ) string {
 	dmName := "Dispositif Médical"
 	dmRef := "DM-REF-001"
@@ -435,6 +436,69 @@ func renderESREG03DMHTML(
 	hashShort := sha256Hash
 	if len(hashShort) > 24 {
 		hashShort = hashShort[:24]
+	}
+
+	// Valeurs par défaut si eval non fournie
+	orderNumber := "ANPP/DDM/REC/2026/0148"
+	agentName := "Dr. Amel Bouzid (Sous-Direction de l'Homologation DDM)"
+	score := 13
+	decisionConclusion := `Le dossier est déclaré <strong>COMPLET ET RECEVABLE</strong> pour enregistrement et transmission à la commission d'évaluation technique et scientifique sous le N° d'ordre : <strong>ANPP/DDM/REC/2026/0148</strong>.`
+	badgeFunc := func(st string) string {
+		switch strings.ToLower(strings.TrimSpace(st)) {
+		case "conforme":
+			return `<span class="badge-ok">✓ CONFORME</span>`
+		case "avec_reserve":
+			return `<span class="badge-warn" style="background:#fef3c7; color:#92400e; font-weight:800; padding:2px 6px; border-radius:3px; font-size:7pt;">⚠️ AVEC RÉSERVE</span>`
+		default:
+			return `<span class="badge-err" style="background:#fee2e2; color:#b91c1c; font-weight:800; padding:2px 6px; border-radius:3px; font-size:7pt;">✗ NON CONFORME</span>`
+		}
+	}
+
+	b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13 := badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), badgeFunc("conforme"), `<span class="badge-ok">✓ 04 REÇUS</span>`
+	sealHTML := ""
+
+	if eval != nil {
+		if eval.DepositOrderNumber != "" {
+			orderNumber = eval.DepositOrderNumber
+		}
+		if eval.ANPPAgentName != "" {
+			agentName = eval.ANPPAgentName
+		}
+		score = eval.ConformityScore
+		b1 = badgeFunc(eval.Item1Status)
+		b2 = badgeFunc(eval.Item2Status)
+		b3 = badgeFunc(eval.Item3Status)
+		b4 = badgeFunc(eval.Item4Status)
+		b5 = badgeFunc(eval.Item5Status)
+		b6 = badgeFunc(eval.Item6Status)
+		b7 = badgeFunc(eval.Item7Status)
+		b8 = badgeFunc(eval.Item8Status)
+		b9 = badgeFunc(eval.Item9Status)
+		b10 = badgeFunc(eval.Item10Status)
+		b11 = badgeFunc(eval.Item11Status)
+		b12 = badgeFunc(eval.Item12Status)
+		if eval.Item13Status == "conforme" {
+			b13 = fmt.Sprintf(`<span class="badge-ok">✓ %02d REÇUS</span>`, eval.ElectronicCopiesCount)
+		} else {
+			b13 = badgeFunc(eval.Item13Status)
+		}
+
+		if eval.Decision == domain.RecevabiliteDecisionComplet {
+			decisionConclusion = fmt.Sprintf(`Le dossier est déclaré <strong>COMPLET ET RECEVABLE</strong> (%d/13 points conformes) pour enregistrement et transmission à la commission d'évaluation technique et scientifique sous le N° d'ordre : <strong>%s</strong>.`, score, orderNumber)
+		} else if eval.Decision == domain.RecevabiliteDecisionReserves {
+			resNote := eval.ReservesNotes
+			if resNote == "" {
+				resNote = "Compléments documentaires requis sous délai réglementaire de 30 jours."
+			}
+			decisionConclusion = fmt.Sprintf(`Le dossier est déclaré <strong>RECEVABLE AVEC RÉSERVES</strong> (%d/13 points conformes). Motif: %s — Enregistré sous le N° d'ordre : <strong>%s</strong>.`, score, resNote, orderNumber)
+		} else {
+			decisionConclusion = fmt.Sprintf(`Le dossier est déclaré <strong>IRRECEVABLE</strong> (%d/13 points conformes). Pièces non conformes. Enregistré sous le N° d'ordre : <strong>%s</strong>.`, score, orderNumber)
+		}
+
+		if eval.PDTSignatureSeal != "" {
+			sealHTML = fmt.Sprintf(`<div style="margin-top:6px; font-family:monospace; font-size:6.5pt; color:#047857; font-weight:bold;">✔ Sceau 21 CFR Part 11: %s<br/>Signé électroniquement le %s</div>`,
+				eval.PDTSignatureSeal, eval.PDTSignedAt.Format("02/01/2006 15:04 UTC"))
+		}
 	}
 
 	return fmt.Sprintf(`<!DOCTYPE html>
@@ -556,79 +620,79 @@ func renderESREG03DMHTML(
                     <tr>
                         <td style="text-align:center; font-weight:700;">1</td>
                         <td>Lettre de demande d'homologation en 02 exemplaires + descriptif technique détaillé</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Lettre officielle signée PDT</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">2</td>
                         <td>Formulaire officiel de demande d'homologation dûment renseigné et signé</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Formulaire 6 sections (ES-REG-02-DM)</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">3</td>
                         <td>Agrément d'ouverture MIPH (fabricant/exploitant) + contrat technique d'exploitation</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Agrément %s</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">4</td>
                         <td>Justification paiement droits (Compte BNA Chéraga 00100622030000064395 - 300 000 DA)</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>BV DM & Quittance bancaire</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">5</td>
                         <td>Certificat de Libre Vente (CLV / FSC) légalisé / apostillé du pays d'origine</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>CLV délivré par autorité sanitaire</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">6</td>
                         <td>Certificat CE de conformité délivré par Organisme Notifié + Déclaration CE fabricant</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Certificat CE en cours de validité</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">7</td>
                         <td>Certifications BPF/GMP, ISO 13485 et ISO 9001 du site fabricant PF (Validation LCQ)</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Certificats ISO 13485 & Décision LCQ</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">8</td>
                         <td>Certifications qualité BPF / ISO 13485 / ISO 9001 des matières premières</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>CoA et certificats biomatériaux</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">9</td>
                         <td>Description du système de matériovigilance et Plan de Gestion des Risques (PGR)</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>SOP Matériovigilance & PGR</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">10</td>
                         <td>Partie III : Stabilité, procédés de fabrication et validation de la stérilisation</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Rapport stérilisation ISO 11135</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">11</td>
                         <td>Partie IV : Performance, gestion des risques (ISO 14971) et biocompatibilité (ISO 10993)</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Rapports BPL ISO 10993-1/5/10</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">12</td>
                         <td>Partie V : Rapport de l'évaluation clinique ou investigation clinique (ISO 14155)</td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ CONFORME</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>Rapport CER conforme ISO 14155</td>
                     </tr>
                     <tr>
                         <td style="text-align:center; font-weight:700;">13</td>
                         <td><strong>Exemplaires électroniques : 04 exemplaires complets sur supports scellés</strong></td>
-                        <td style="text-align:center;"><span class="badge-ok">✓ 04 REÇUS</span></td>
+                        <td style="text-align:center;">%s</td>
                         <td>04 clés USB scellées SHA-256</td>
                     </tr>
                 </tbody>
@@ -640,7 +704,7 @@ func renderESREG03DMHTML(
             <div class="recepisse-title">3. Décision de Recevabilité Formelle (Direction des Dispositifs Médicaux ANPP)</div>
             <div style="font-size:8pt; color:#065f46; line-height:1.4;">
                 Le dossier technique et administratif déposé au guichet d'accueil de la Direction des Dispositifs Médicaux de l'ANPP a été examiné conformément à la grille réglementaire en 13 points. <br/>
-                <strong>CONCLUSION :</strong> Le dossier est déclaré <strong>COMPLET ET RECEVABLE</strong> pour enregistrement et transmission à la commission d'évaluation technique et scientifique sous le N° d'ordre : <strong>ANPP/DDM/REC/2026/0148</strong>.
+                <strong>CONCLUSION :</strong> %s
             </div>
         </div>
 
@@ -653,6 +717,7 @@ func renderESREG03DMHTML(
                     <div>
                         <strong>%s</strong><br/>
                         <span style="font-size:6.5pt;">Décision MIPH N° %s<br/>Date & Cachet du Laboratoire</span>
+                        %s
                     </div>
                 </div>
             </div>
@@ -661,7 +726,7 @@ func renderESREG03DMHTML(
                 <div style="font-size:7pt; color:#475569;">Chargé de Réception des Dossiers DM</div>
                 <div class="sign-space">
                     <div>
-                        <strong>Agent Récepteur DDM / ANPP</strong><br/>
+                        <strong>%s</strong><br/>
                         <span style="font-size:6.5pt;">Cachet Humide du Bureau d'Ordre<br/>Reçu le %s</span>
                     </div>
                 </div>
@@ -682,8 +747,11 @@ func renderESREG03DMHTML(
 		dmName,
 		dmRef,
 		dmClass, dmRule,
-		estAgreement,
+		b1, b2, b3, estAgreement, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13,
+		decisionConclusion,
 		pdtName, pdtDecision,
+		sealHTML,
+		agentName,
 		generatedAt.Format("02/01/2006"),
 		reporting.RenderLegalFooter("ES-REG-03-DM", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
 	)
