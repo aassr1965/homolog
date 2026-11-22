@@ -462,7 +462,15 @@
                 document.getElementById("bc-mod").innerText = "12 Items Réglementaires";
                 renderVariationsTable();
             } else if (domain === 'dm') {
-                loadRefSection('devices');
+                document.getElementById("bc-root").innerText = "DISPOSITIFS_MÉDICAUX";
+                document.getElementById("bc-sec").innerText = "Décret_20-324";
+                document.getElementById("bc-prod").innerText = "Homologation & Régularisation";
+                document.getElementById("bc-mod").innerText = "Arrêté du 10 Mai 2021";
+                if (typeof initDMDashboard === 'function') {
+                    initDMDashboard();
+                } else {
+                    loadRefSection('devices');
+                }
             } else if (domain === 'ged') {
                 document.getElementById("bc-root").innerText = "COFFRE-FORT";
                 document.getElementById("bc-sec").innerText = "GED_BPF";
@@ -550,15 +558,19 @@
                     </div>
                 `;
             } else if (domain === 'dm') {
-                tb.innerHTML = `
-                    <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="document.getElementById('modal-new-dm').classList.add('open')">➕ Nouveau DM</button>
-                    <button class="btn-pill" onclick="loadRefSection('devices')">🔄 Actualiser</button>
-                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
-                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
-                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
-                        Cadre : <strong>Arrêté du 10 Mai 2021</strong>
-                    </div>
-                `;
+                if (typeof updateDMToolbar === 'function') {
+                    updateDMToolbar();
+                } else {
+                    tb.innerHTML = `
+                        <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="document.getElementById('modal-new-dm').classList.add('open')">➕ Nouveau DM</button>
+                        <button class="btn-pill" onclick="loadRefSection('devices')">🔄 Actualiser</button>
+                        <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                        <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                        <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
+                            Cadre : <strong>Arrêté du 10 Mai 2021</strong>
+                        </div>
+                    `;
+                }
             } else if (domain === 'ged') {
                 tb.innerHTML = `
                     <button class="btn-pill" data-perm="DOC_DRAFT_MAKER" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewGEDDocModal()">➕ Déposer Document</button>
@@ -672,15 +684,26 @@
                     </div>
                 `;
             } else if (domain === 'dm') {
+                const isReg = typeof currentDMTab !== 'undefined' && currentDMTab === 'regularization';
                 container.innerHTML = `
-                    <div class="tree-node selected" onclick="loadRefSection('devices')">
-                        <span class="chevron">💉</span>
-                        <span>Tous les Dispositifs Homologués</span>
-                        <span class="count-badge ok">Décret 20-324</span>
+                    <div class="tree-node ${!isReg ? 'selected' : ''}" onclick="switchDMTab('homologation')">
+                        <span class="chevron">🩺</span>
+                        <span>Portefeuille DM (6 Sections)</span>
+                        <span class="count-badge ok">Arrêté 10 Mai</span>
                     </div>
-                    <div class="tree-node" style="padding-left:24px;" onclick="loadRefSection('devices')"><span>📁 Classe I (Non invasifs)</span></div>
-                    <div class="tree-node selected" style="padding-left:24px;" onclick="loadRefSection('devices')"><span>📁 Classe IIa (Seringues, Canules)</span></div>
-                    <div class="tree-node" style="padding-left:24px;" onclick="loadRefSection('devices')"><span>📁 Classe IIb & III (Implants)</span></div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="filterDMClass('all')"><span>📁 Tous les DM</span></div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="filterDMClass('I')"><span>📁 Classe I (Non invasifs)</span></div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="filterDMClass('IIa')"><span>📁 Classe IIa (Seringues, Cathéters)</span></div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="filterDMClass('IIb')"><span>📁 Classe IIb & III (Implants)</span></div>
+
+                    <div class="tree-node ${isReg ? 'selected' : ''}" style="margin-top:8px;" onclick="switchDMTab('regularization')">
+                        <span class="chevron">⏱️</span>
+                        <span>Mesures Transitoires (Dérogatoires)</span>
+                        <span class="count-badge req">J-22</span>
+                    </div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="filterDMRegStatus('all')"><span>📑 Tous les DM Transitoires</span></div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="filterDMRegStatus('EN_COURS')"><span>⏳ En Cours de Régularisation</span></div>
+                    <div class="tree-node" style="padding-left:24px;" onclick="filterDMRegStatus('REGULARISE')"><span>✅ Régularisés & Homologués</span></div>
                 `;
             } else if (domain === 'ged') {
                 renderGEDTree();

@@ -156,12 +156,12 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 	queryDossier := `
 		SELECT
 			d.id, d.organization_id, d.medicine_id, d.medical_device_id, d.product_type,
-			d.dossier_code, d.procedure_code, d.internal_reference, d.anpp_official_reference,
+			COALESCE(d.dossier_code, ''), COALESCE(d.procedure_code, 'NI'), d.internal_reference, COALESCE(d.anpp_official_reference, ''),
 			d.anpp_deposit_date, d.anpp_decision_date, d.anpp_validity_end_date,
-			d.target_deposit_date, COALESCE(d.working_days_per_week, 5), d.tracking_number, d.deposit_receipt_ref, d.deposit_receipt_date,
-			d.submission_notes, d.status, d.responsible_id, d.completeness_percent,
-			d.is_locked_for_deposit, d.locked_by_dt_id, d.locked_at,
-			d.pdt_signed_at, d.pdt_signed_by, d.pdt_signature_seal, d.pdt_signature_role,
+			d.target_deposit_date, COALESCE(d.working_days_per_week, 5), COALESCE(d.tracking_number, ''), COALESCE(d.deposit_receipt_ref, ''), d.deposit_receipt_date,
+			COALESCE(d.submission_notes, ''), d.status, d.responsible_id, COALESCE(d.completeness_percent, 0),
+			COALESCE(d.is_locked_for_deposit, false), d.locked_by_dt_id, d.locked_at,
+			d.pdt_signed_at, d.pdt_signed_by, COALESCE(d.pdt_signature_seal, ''), COALESCE(d.pdt_signature_role, ''),
 			d.created_at, d.updated_at
 		FROM dossiers d
 		WHERE d.id = $1 AND d.organization_id = $2
@@ -221,7 +221,14 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 			       COALESCE(iso_13485_certificate_number, ''), COALESCE(clv_fsc_number, ''),
 			       COALESCE(clv_issuing_authority, ''), COALESCE(sterilization_method, ''),
 			       COALESCE(gmdn_code, ''), COALESCE(economic_file_type, 'pcsu'),
-			       status, created_at, updated_at
+			       status, created_at, updated_at,
+			       COALESCE(composition_details, ''), COALESCE(has_latex, false), COALESCE(has_phthalates, false),
+			       COALESCE(has_active_pharma, false), COALESCE(has_biological_origin, false), COALESCE(has_cmr_substances, false),
+			       COALESCE(risk_management_iso14971_ref, ''), COALESCE(risk_management_status, 'conforme'),
+			       COALESCE(biocompatibility_iso10993_ref, ''), COALESCE(biocompatibility_status, 'conforme'),
+			       COALESCE(clinical_eval_iso14155_ref, ''), COALESCE(clinical_eval_status, 'conforme'),
+			       COALESCE(sterilization_validation_ref, ''), COALESCE(packaging_stability_iso11607_ref, ''),
+			       COALESCE(sample_batch_pf, ''), COALESCE(sample_batch_mp, ''), COALESCE(sample_units_count, 3)
 			FROM medical_devices
 			WHERE id = $1
 		`
@@ -237,6 +244,13 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 			&dm.CLVIssuingAuthority, &dm.SterilizationMethod,
 			&dm.GMDNCode, &dm.EconomicFileType,
 			&dm.Status, &dm.CreatedAt, &dm.UpdatedAt,
+			&dm.CompositionDetails, &dm.HasLatex, &dm.HasPhthalates,
+			&dm.HasActivePharma, &dm.HasBiologicalOrigin, &dm.HasCMRSubstances,
+			&dm.RiskManagementISO14971Ref, &dm.RiskManagementStatus,
+			&dm.BiocompatibilityISO10993Ref, &dm.BiocompatibilityStatus,
+			&dm.ClinicalEvalISO14155Ref, &dm.ClinicalEvalStatus,
+			&dm.SterilizationValidationRef, &dm.PackagingStabilityISO11607Ref,
+			&dm.SampleBatchPF, &dm.SampleBatchMP, &dm.SampleUnitsCount,
 		)
 		if err == nil {
 			d.MedicalDevice = &dm
@@ -360,12 +374,12 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 	baseQuery := `
 		SELECT
 			d.id, d.organization_id, d.medicine_id, d.medical_device_id, d.product_type,
-			d.dossier_code, d.procedure_code, d.internal_reference, d.anpp_official_reference,
+			COALESCE(d.dossier_code, ''), COALESCE(d.procedure_code, 'NI'), d.internal_reference, COALESCE(d.anpp_official_reference, ''),
 			d.anpp_deposit_date, d.anpp_decision_date, d.anpp_validity_end_date,
-			d.target_deposit_date, COALESCE(d.working_days_per_week, 5), d.tracking_number, d.deposit_receipt_ref, d.deposit_receipt_date,
-			d.submission_notes, d.status, d.responsible_id, d.completeness_percent,
-			d.is_locked_for_deposit, d.locked_by_dt_id, d.locked_at,
-			d.pdt_signed_at, d.pdt_signed_by, d.pdt_signature_seal, d.pdt_signature_role,
+			d.target_deposit_date, COALESCE(d.working_days_per_week, 5), COALESCE(d.tracking_number, ''), COALESCE(d.deposit_receipt_ref, ''), d.deposit_receipt_date,
+			COALESCE(d.submission_notes, ''), d.status, d.responsible_id, COALESCE(d.completeness_percent, 0),
+			COALESCE(d.is_locked_for_deposit, false), d.locked_by_dt_id, d.locked_at,
+			d.pdt_signed_at, d.pdt_signed_by, COALESCE(d.pdt_signature_seal, ''), COALESCE(d.pdt_signature_role, ''),
 			d.created_at, d.updated_at,
 			m.brand_name_fr, m.dci_fr, m.dosage_fr,
 			dm.commercial_name_fr, dm.dm_class
