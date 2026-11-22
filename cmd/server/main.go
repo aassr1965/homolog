@@ -100,7 +100,7 @@ func main() {
 		api.SeedInitialVariations(ctx, db.Pool, cfg.OnPremOrgSlug)
 
 		// Initialisation de l'Homologation & Régularisation des Dispositifs Médicaux (Jalon 2.6 - Décret 20-324)
-		api.SeedInitialDMData(ctx, db.Pool, cfg.OnPremOrgSlug)
+		api.SeedInitialDMData(ctx, db.Pool, storageProvider, cfg.OnPremOrgSlug)
 
 		// Initialisation de la Veille Réglementaire & Séances ANPP (Jalon 1.7 Phase 4)
 		api.SeedInitialRegulatoryWatchAndAppointments(ctx, db.Pool, cfg.OnPremOrgSlug)
