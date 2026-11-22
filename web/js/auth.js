@@ -598,6 +598,9 @@ const mockAuditTrail = [
             if (typeof refreshParapheurBadge === 'function') {
                 refreshParapheurBadge();
             }
+            if (typeof refreshVariationsBadgeCount === 'function') {
+                refreshVariationsBadgeCount();
+            }
         }
 
         function toggleUserDropdown(e) {
