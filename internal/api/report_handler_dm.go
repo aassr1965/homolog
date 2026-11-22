@@ -756,3 +756,325 @@ func renderESREG03DMHTML(
 		reporting.RenderLegalFooter("ES-REG-03-DM", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
 	)
 }
+
+// renderESREG05DMHTML génère l'Avenant Officiel à la Décision d'Homologation d'un Dispositif Médical
+// Conforme au Décret exécutif n° 20-324 du 22 novembre 2020 (Articles 22 à 25)
+func renderESREG05DMHTML(
+	mod *domain.DMModification,
+	estName, estAgreement, estAddress, pdtName, pdtDecision string,
+	watermark domain.WatermarkStatus,
+	sha256Hash, qrURL string,
+	generatedAt time.Time,
+) string {
+	wmClass := ""
+	wmText := "OFFICIEL — VALIDÉ"
+	if watermark == domain.WatermarkDraft {
+		wmClass = "draft"
+		wmText = "BROUILLON — NON OPPOSABLE"
+	}
+
+	dmName := "Dispositif Médical"
+	dmRef := "DM-REF"
+	dmClass := "IIa"
+	homologDec := "DÉC-MIPH-DM-2024-XXXX"
+	homologDate := "15/06/2024"
+
+	if mod.MedicalDevice != nil {
+		if mod.MedicalDevice.CommercialNameFR != "" {
+			dmName = mod.MedicalDevice.CommercialNameFR
+		}
+		if mod.MedicalDevice.ManufacturerReference != "" {
+			dmRef = mod.MedicalDevice.ManufacturerReference
+		}
+		if mod.MedicalDevice.DMClass != "" {
+			dmClass = mod.MedicalDevice.DMClass
+		}
+		if mod.MedicalDevice.HomologationDecisionNumber != "" {
+			homologDec = mod.MedicalDevice.HomologationDecisionNumber
+		}
+		if mod.MedicalDevice.HomologationDate != nil {
+			homologDate = mod.MedicalDevice.HomologationDate.Format("02/01/2006")
+		}
+	}
+
+	typeBadge := `<span style="background:#0f3b60; color:white; padding:3px 8px; border-radius:3px; font-weight:bold; font-size:8.5pt;">MODIFICATION SUBSTANTIELLE (Art. 23 - Avenant)</span>`
+	if mod.ModificationType == domain.DMModTypeNonSubstantielle {
+		typeBadge = `<span style="background:#059669; color:white; padding:3px 8px; border-radius:3px; font-weight:bold; font-size:8.5pt;">MODIFICATION NON SUBSTANTIELLE (Art. 24 - Déclaration)</span>`
+	}
+
+	isoImpact := func(flag bool, label string) string {
+		if flag {
+			return fmt.Sprintf(`<span style="display:inline-block; margin:2px; padding:2px 6px; background:#fee2e2; border:1px solid #ef4444; border-radius:3px; color:#991b1b; font-size:7.5pt; font-weight:700;">⚠️ %s (Impacté)</span>`, label)
+		}
+		return fmt.Sprintf(`<span style="display:inline-block; margin:2px; padding:2px 6px; background:#f0fdf4; border:1px solid #86efac; border-radius:3px; color:#166534; font-size:7.5pt;">✓ %s (Non impacté)</span>`, label)
+	}
+
+	sealBox := `<div style="color:#6b7280; font-style:italic;">En attente de visa Pharmacien DT</div>`
+	if mod.PDTSignatureSeal != "" {
+		sealDateStr := ""
+		if mod.PDTSignedAt != nil {
+			sealDateStr = mod.PDTSignedAt.Format("02/01/2006 à 15:04")
+		}
+		sealBox = fmt.Sprintf(`
+			<div style="background:#f0fdf4; border:1px solid #059669; border-radius:4px; padding:8px; font-size:8pt; color:#065f46;">
+				<div style="font-weight:bold; margin-bottom:2px;">🔏 Visa Électronique Apposé (21 CFR Part 11)</div>
+				<div>Pharmacien DT : <strong>%s</strong> (Décision MIPH: %s)</div>
+				<div>Empreinte SHA-256 : <code style="font-size:7.5pt;">%s</code></div>
+				<div style="font-size:7pt; color:#047857; margin-top:2px;">Signé le : %s</div>
+			</div>
+		`, pdtName, pdtDecision, mod.PDTSignatureSeal, sealDateStr)
+	}
+
+	avenantNumber := mod.AvenantNumber
+	if avenantNumber == "" {
+		avenantNumber = "AVN-DDM-PROV-" + strings.TrimPrefix(mod.ModificationCode, "MOD-DM-")
+	}
+
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ES-REG-05-DM • Avenant Décision d'Homologation Dispositif Médical</title>
+    <style>
+        @page { size: A4 portrait; margin: 0; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; color: #0f172a; background-color: #f1f5f9; margin: 0; padding: 24px 0; font-size: 8.5pt; line-height: 1.4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .no-print-toolbar { position: fixed; top: 0; left: 0; right: 0; height: 52px; background: #091e36; color: #ffffff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 13px; }
+        .no-print-toolbar .btn { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; border: none; text-decoration: none; }
+        .btn-primary { background: #0284c7; color: #ffffff; }
+        .btn-outline { background: rgba(255,255,255,0.12); color: #f8fafc; border: 1px solid rgba(255,255,255,0.25); }
+        .sheet { width: 210mm; min-height: 297mm; margin: 48px auto 24px auto; background: #ffffff; box-shadow: 0 8px 30px rgba(15,23,42,0.12); padding: 14mm 16mm; position: relative; overflow: hidden; }
+        @media print { body { background: #ffffff; padding: 0; margin: 0; } .no-print-toolbar { display: none !important; } .sheet { width: 100%%; margin: 0; padding: 12mm 15mm; box-shadow: none; border-radius: 0; } }
+        .watermark { position: absolute; top: 48%%; left: 50%%; transform: translate(-50%%, -50%%) rotate(-35deg); font-size: 46pt; font-weight: 900; letter-spacing: 5px; color: rgba(4,120,87,0.06); pointer-events: none; user-select: none; z-index: 1; white-space: nowrap; text-transform: uppercase; }
+        .watermark.draft { color: rgba(100,116,139,0.08); }
+        .header-table { width: 100%%; border-collapse: collapse; margin-bottom: 10px; border-bottom: 2px solid #091e36; padding-bottom: 6px; }
+        .section-box { border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 9px; overflow: hidden; }
+        .section-title { background: #f1f5f9; padding: 4px 10px; font-weight: bold; font-size: 8.5pt; color: #0f3b60; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; }
+        .section-body { padding: 8px 10px; font-size: 8pt; }
+        table.dense-table { width: 100%%; border-collapse: collapse; margin-top: 3px; }
+        table.dense-table th, table.dense-table td { border: 1px solid #cbd5e1; padding: 4px 6px; font-size: 7.5pt; }
+        table.dense-table th { background: #f8fafc; text-align: left; font-weight: bold; }
+        .footer-legal { margin-top: 12px; padding-top: 6px; border-top: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: space-between; font-size: 6.8pt; color: #64748b; page-break-inside: avoid; }
+    </style>
+</head>
+<body>
+    <div class="no-print-toolbar">
+        <div><strong>Homolog Reporting BPF</strong> • ES-REG-05-DM Avenant Décision d'Homologation DM (Décret 20-324 Art. 22-25)</div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer / Export PDF (A4 300 DPI)</button>
+            <button type="button" class="btn btn-outline" onclick="if(window.parent && window.parent !== window && typeof window.parent.closeModal === 'function'){ window.parent.closeModal('modal-dossier-reports'); } else { window.close(); }">✕ Fermer</button>
+        </div>
+    </div>
+    <script>
+        if (window.parent && window.parent !== window) {
+            var tb = document.querySelector('.no-print-toolbar');
+            if (tb) tb.style.display = 'none';
+            var sh = document.querySelector('.sheet');
+            if (sh) sh.style.marginTop = '15px';
+        }
+    </script>
+    <div class="sheet">
+        <div class="watermark %s">%s</div>
+        <table class="header-table">
+            <tr>
+                <td style="width:55px; vertical-align:middle;">
+                    <svg width="44" height="44" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="46" stroke="#091e36" stroke-width="4" fill="#f8fafc"/>
+                        <path d="M50 15v70M30 35h40M30 65h40M40 50h20" stroke="#047857" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                </td>
+                <td style="vertical-align:middle; padding-left:10px;">
+                    <div style="font-size:6.8pt; font-weight:700; color:#64748b; text-transform:uppercase;">RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</div>
+                    <div style="font-size:7.8pt; font-weight:800; color:#091e36;">MINISTÈRE DE L'INDUSTRIE ET DE LA PRODUCTION PHARMACEUTIQUE • ANPP</div>
+                    <div style="font-size:7pt; color:#047857; font-weight:700;">Direction des Dispositifs Médicaux (DDM) • Sous-Direction de l'Homologation</div>
+                </td>
+                <td style="text-align:right; vertical-align:middle;">
+                    <div style="font-size:6.8pt; color:#64748b;">RÉFÉRENCE OFFICIELLE</div>
+                    <div style="font-size:9pt; font-weight:800; color:#091e36;">ES-REG-05-DM</div>
+                    <div style="font-size:6.8pt; color:#047857; font-weight:700;">Décret exécutif n° 20-324</div>
+                </td>
+            </tr>
+        </table>
+
+        <div style="text-align:center; margin: 10px 0 12px 0;">
+            <div style="font-size: 13pt; font-weight: 900; color: #0f3b60; text-transform: uppercase; letter-spacing: 0.5px;">
+                AVENANT À LA DÉCISION D'HOMOLOGATION DE DISPOSITIF MÉDICAL
+            </div>
+            <div style="font-size: 9pt; font-weight: bold; color: #059669; margin-top: 2px;">
+                ACTE OFFICIEL RÉGLEMENTAIRE N° %s • ES-REG-05-DM
+            </div>
+            <div style="font-size: 7.5pt; color: #64748b; margin-top: 1px;">
+                Décret exécutif n° 20-324 du 22 novembre 2020 (Articles 22 à 25) • Arrêté du 10 mai 2021
+            </div>
+        </div>
+
+        <!-- Section 1 : Identification Établissement & DM -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>SECTION 1 : ÉTABLISSEMENT DEMANDEUR &amp; DISPOSITIF MÉDICAL HOMOLOGUÉ</span>
+                <span>Réf. Dossier : %s</span>
+            </div>
+            <div class="section-body">
+                <table style="width:100%%; font-size:8pt; border:none;">
+                    <tr>
+                        <td style="width:50%%; vertical-align:top;">
+                            <strong>Établissement Pharmaceutique :</strong> %s<br/>
+                            <strong>Agrément MIPH :</strong> %s<br/>
+                            <strong>Adresse Siège / Site :</strong> %s<br/>
+                            <strong>Pharmacien Directeur Technique :</strong> %s (Mandat 1.A.7)
+                        </td>
+                        <td style="width:50%%; vertical-align:top; border-left:1px solid #e2e8f0; padding-left:10px;">
+                            <strong>Dispositif Médical :</strong> %s<br/>
+                            <strong>Référence Catalogue :</strong> %s • <strong>Classe :</strong> %s<br/>
+                            <strong>Décision d'Homologation Initiale :</strong> <code>%s</code><br/>
+                            <strong>Date d'Homologation Initiale :</strong> %s
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2 : Caractéristiques de la Modification Post-Homologation -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>SECTION 2 : CARACTÉRISATION DU CHANGEMENT (ARTICLES 22 À 25 DÉCRET 20-324)</span>
+                <span>Code : %s</span>
+            </div>
+            <div class="section-body">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <div><strong>Type de Modification :</strong> %s</div>
+                    <div><strong>Catégorie :</strong> <code>%s</code></div>
+                </div>
+                <div style="margin-bottom:4px;"><strong>Intitulé de l'Objet :</strong> %s</div>
+                <div style="margin-bottom:4px; font-size:7.5pt; color:#475569;"><strong>Description Détaillée :</strong> %s</div>
+                <div style="font-size:7.5pt; color:#475569;"><strong>Justification Technico-Réglementaire :</strong> %s</div>
+            </div>
+        </div>
+
+        <!-- Section 3 : Tableau Comparatif Avant / Après -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>SECTION 3 : SITUATION COMPARATIVE DES SPÉCIFICATIONS DU DISPOSITIF MÉDICAL</span>
+                <span>Change Control BPF / ISO 13485</span>
+            </div>
+            <div class="section-body" style="padding:0;">
+                <table class="dense-table" style="margin:0; border:none;">
+                    <thead>
+                        <tr>
+                            <th style="width:50%%; background:#fef2f2; color:#991b1b;">SITUATION HOMOLOGUÉE ACTUELLE (AVANT CHANGEMENT)</th>
+                            <th style="width:50%%; background:#f0fdf4; color:#166534;">SITUATION MODIFIÉE PROPOSÉE (APRÈS CHANGEMENT)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="vertical-align:top; padding:8px; line-height:1.4;">%s</td>
+                            <td style="vertical-align:top; padding:8px; line-height:1.4;">%s</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 4 : Matrice d'Impact Normatif ISO -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>SECTION 4 : ÉVALUATION D'IMPACT SUR LES NORMES PILIERS DU DOSSIER TECHNIQUE</span>
+                <span>Arrêté du 10 Mai 2021</span>
+            </div>
+            <div class="section-body">
+                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px;">
+                    %s %s %s %s %s %s
+                </div>
+                <div style="font-size:7.5pt; color:#64748b; line-height:1.3;">
+                    Les études justificatives, rapports d'essais en laboratoire accrédité GLP et revues de dossiers de risques correspondants sont dûment archivés dans le coffre-fort documentaire BPF / ALCOA+ de l'établissement.
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5 : Droits Réglementaires & Quittance BNA -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>SECTION 5 : REDEVANCE RÉGLEMENTAIRE (ORDONNANCE N° 21-07 ART. 31)</span>
+                <span>Quittance BNA Chéraga</span>
+            </div>
+            <div class="section-body">
+                <table style="width:100%%; font-size:8pt; border:none;">
+                    <tr>
+                        <td style="width:60%%;">
+                            Compte d'affectation spéciale ANPP : <strong>BNA Agence Chéraga 622</strong><br/>
+                            RIB officiel : <code>00100622030000064395</code> • Clé BNA : <code>95</code>
+                        </td>
+                        <td style="width:40%%; text-align:right;">
+                            Montant de la Redevance : <strong style="font-size:9.5pt; color:#0f3b60;">%.2f DZD</strong><br/>
+                            N° Quittance : <code>%s</code>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 6 & 7 : Signatures, Visa PDT et Décision DDM -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+            <div class="section-box">
+                <div class="section-title">
+                    <span>SECTION 6 : ENGAGEMENT DU PHARMACIEN DT</span>
+                </div>
+                <div class="section-body">
+                    <p style="font-size:7pt; line-height:1.3; color:#475569; margin-top:0;">
+                        J'atteste sur l'honneur avoir vérifié la maîtrise des changements (ISO 13485) et certifie que les données techniques soumises à l'ANPP sont véridiques et conformes au Décret 20-324.
+                    </p>
+                    %s
+                </div>
+            </div>
+            <div class="section-box">
+                <div class="section-title">
+                    <span>SECTION 7 : DÉCISION DE L'ANPP (DDM)</span>
+                </div>
+                <div class="section-body" style="text-align:center;">
+                    <div style="font-size:9pt; font-weight:bold; color:#059669; margin-top:4px;">
+                        AVENANT VALIDÉ &amp; ENREGISTRÉ AU REGISTRE NATIONAL
+                    </div>
+                    <div style="font-size:8pt; color:#1e293b; margin-top:2px;">
+                        N° Avenant : <strong>%s</strong>
+                    </div>
+                    <div style="font-size:7.5pt; color:#64748b; margin-top:2px;">
+                        Date d'effet : %s • Sous-Direction de l'Homologation DDM
+                    </div>
+                    <div style="margin-top:12px; border-top:1px dashed #cbd5e1; padding-top:6px; font-size:7pt; color:#64748b;">
+                        Cachet &amp; Visa du Directeur des Dispositifs Médicaux
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        %s
+    </div>
+</body>
+</html>`,
+		wmClass, wmText,
+		avenantNumber,
+		mod.ModificationCode,
+		estName, estAgreement, estAddress, pdtName,
+		dmName, dmRef, dmClass, homologDec, homologDate,
+		mod.ModificationCode,
+		typeBadge,
+		mod.CategoryCode,
+		mod.Title,
+		mod.Description,
+		mod.Justification,
+		mod.CurrentState,
+		mod.ProposedState,
+		isoImpact(mod.ImpactRiskISO14971, "ISO 14971 Risques"),
+		isoImpact(mod.ImpactBiocompatibilityISO10993, "ISO 10993 Biocompatibilité"),
+		isoImpact(mod.ImpactSterilizationISO11135, "ISO 11135 Stérilisation"),
+		isoImpact(mod.ImpactPackagingISO11607, "ISO 11607 Barrière"),
+		isoImpact(mod.ImpactClinicalISO14155, "ISO 14155 Clinique"),
+		isoImpact(mod.ImpactQualityISO13485, "ISO 13485 Qualité"),
+		mod.FeeAmount,
+		mod.FeeReceiptRef,
+		sealBox,
+		avenantNumber,
+		generatedAt.Format("02/01/2006"),
+		reporting.RenderLegalFooter("ES-REG-05-DM", watermark, sha256Hash, qrURL, 1, 1, generatedAt),
+	)
+}

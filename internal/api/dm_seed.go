@@ -138,146 +138,223 @@ func SeedInitialDMData(ctx context.Context, pool *pgxpool.Pool, orgSlug string) 
 	// Vérifier si des enregistrements existent déjà
 	var regCount int
 	_ = pool.QueryRow(ctx, `SELECT COUNT(*) FROM dm_regularizations WHERE organization_id = $1`, orgID).Scan(&regCount)
-	if regCount > 0 {
-		log.Println("[DM Seed] Mesures transitoires DM déjà initialisées.")
-		return
-	}
+	if regCount == 0 {
+		// Créer un second DM pour avoir plusieurs cas représentatifs
+		var syringeID uuid.UUID
+		err = pool.QueryRow(ctx, `
+			SELECT id FROM medical_devices 
+			WHERE organization_id = $1 AND (commercial_name_fr ILIKE '%Seringue%' OR manufacturer_reference ILIKE '%SYR%')
+			LIMIT 1
+		`, orgID).Scan(&syringeID)
 
-	// Créer un second DM pour avoir plusieurs cas représentatifs
-	var syringeID uuid.UUID
-	err = pool.QueryRow(ctx, `
-		SELECT id FROM medical_devices 
-		WHERE organization_id = $1 AND (commercial_name_fr ILIKE '%Seringue%' OR manufacturer_reference ILIKE '%SYR%')
-		LIMIT 1
-	`, orgID).Scan(&syringeID)
+		if err != nil {
+			// Insérer le DM Seringue
+			syringeID = uuid.New()
+			insertSyringeQuery := `
+				INSERT INTO medical_devices (
+					id, organization_id, commercial_name_fr, commercial_name_ar,
+					manufacturer_reference, dm_class, classification_rule, is_sterile, sterilization_method,
+					is_single_use, intended_use_fr, gmdn_code, origin_type,
+					composition_details, has_latex, has_phthalates, has_active_pharma, has_biological_origin, has_cmr_substances,
+					risk_management_iso14971_ref, risk_management_status,
+					biocompatibility_iso10993_ref, biocompatibility_status,
+					clinical_eval_iso14155_ref, clinical_eval_status,
+					sterilization_validation_ref, packaging_stability_iso11607_ref,
+					sample_batch_pf, sample_batch_mp, sample_units_count,
+					status, created_at, updated_at
+				) VALUES (
+					$1, $2, 'Seringue 3 pièces stérile 5ml Luer-Lock', 'محقنة معقمة 5 مل ثلاث قطع ذات استعمال وحيد',
+					'SYR-5ML-LL-01', 'IIa', 'Règle 2 (Dispositif médical invasif chirurgical)', TRUE, 'Rayonnement Gamma (25 kGy)',
+					TRUE, 'Administration et prélèvement parentéral de solutés et médicaments.', '47017', 'fabrication_locale',
+					'Corps en Polypropylène (PP) médical transparent 75%, Piston en Polyéthylène haute densité (PEHD) 20%, Joint d''étanchéité élastomère sans latex 5%',
+					FALSE, FALSE, FALSE, FALSE, FALSE,
+					'PGR-SYR-2025-V02', 'conforme',
+					'BIO-SYR-ISO10993-2025', 'conforme',
+					'CER-SYR-CLIN-2025', 'conforme',
+					'VAL-STERIL-ISO11137-GAMMA', 'STAB-TYVEK-60M',
+					'LOT-SYR-2026-B1', 'LOT-PP-MED-44', 3,
+					'en_cours', NOW(), NOW()
+				)
+			`
+			_, _ = pool.Exec(ctx, insertSyringeQuery, syringeID, orgID)
+		}
 
-	if err != nil {
-		// Insérer le DM Seringue
-		syringeID = uuid.New()
-		insertSyringeQuery := `
-			INSERT INTO medical_devices (
-				id, organization_id, commercial_name_fr, commercial_name_ar,
-				manufacturer_reference, dm_class, classification_rule, is_sterile, sterilization_method,
-				is_single_use, intended_use_fr, gmdn_code, origin_type,
-				composition_details, has_latex, has_phthalates, has_active_pharma, has_biological_origin, has_cmr_substances,
-				risk_management_iso14971_ref, risk_management_status,
-				biocompatibility_iso10993_ref, biocompatibility_status,
-				clinical_eval_iso14155_ref, clinical_eval_status,
-				sterilization_validation_ref, packaging_stability_iso11607_ref,
-				sample_batch_pf, sample_batch_mp, sample_units_count,
-				status, created_at, updated_at
-			) VALUES (
-				$1, $2, 'Seringue 3 pièces stérile 5ml Luer-Lock', 'محقنة معقمة 5 مل ثلاث قطع ذات استعمال وحيد',
-				'SYR-5ML-LL-01', 'IIa', 'Règle 2 (Dispositif médical invasif chirurgical)', TRUE, 'Rayonnement Gamma (25 kGy)',
-				TRUE, 'Administration et prélèvement parentéral de solutés et médicaments.', '47017', 'fabrication_locale',
-				'Corps en Polypropylène (PP) médical transparent 75%, Piston en Polyéthylène haute densité (PEHD) 20%, Joint d''étanchéité élastomère sans latex 5%',
-				FALSE, FALSE, FALSE, FALSE, FALSE,
-				'PGR-SYR-2025-V02', 'conforme',
-				'BIO-SYR-ISO10993-2025', 'conforme',
-				'CER-SYR-CLIN-2025', 'conforme',
-				'VAL-STERIL-ISO11137-GAMMA', 'STAB-TYVEK-60M',
-				'LOT-SYR-2026-B1', 'LOT-PP-MED-44', 3,
-				'en_cours', NOW(), NOW()
+		// Insérer les 3 cas de suivi de régularisation transitoire
+		regs := []struct {
+			code        string
+			deviceID    uuid.UUID
+			derogNum    string
+			marketSub   time.Duration
+			status      string
+			ddmAck      string
+			depositSub  time.Duration
+			deadlineAdd time.Duration
+			imported    float64
+			distrib     float64
+			hospShare   int
+			retShare    int
+			obs         string
+		}{
+			{
+				code:        "REG-DM-2026-001",
+				deviceID:    catheterID,
+				derogNum:    "DEROG-MIPH-2024-8841",
+				marketSub:   -18 * 30 * 24 * time.Hour, // 18 mois avant
+				status:      "commercialise_derogatoire",
+				ddmAck:      "ACCUSE-DDM-PROV-4412",
+				depositSub:  -15 * 24 * time.Hour,
+				deadlineAdd: 22 * 24 * time.Hour, // J-22 (Critique !)
+				imported:    45000.00,
+				distrib:     42800.00,
+				hospShare:   80,
+				retShare:    20,
+				obs:         "Dispositif sous dérogation ministérielle 2024 en cours d'audit technique d'urgence avant échéance J-22.",
+			},
+			{
+				code:        "REG-DM-2026-002",
+				deviceID:    syringeID,
+				derogNum:    "DEROG-MIPH-2024-9102",
+				marketSub:   -12 * 30 * 24 * time.Hour,
+				status:      "dossier_depose_ddm",
+				ddmAck:      "ANPP/DDM/REC/2026/0092",
+				depositSub:  -30 * 24 * time.Hour,
+				deadlineAdd: 52 * 24 * time.Hour, // J-52 (Urgent !)
+				imported:    120000.00,
+				distrib:     115000.00,
+				hospShare:   60,
+				retShare:    40,
+				obs:         "Dossier technique 6 sections déposé au guichet DDM le 22/10/2026 sous récépissé officiel.",
+			},
+			{
+				code:        "REG-DM-2026-003",
+				deviceID:    catheterID,
+				derogNum:    "DEROG-MIPH-2023-7115",
+				marketSub:   -24 * 30 * 24 * time.Hour,
+				status:      "en_instruction",
+				ddmAck:      "ANPP/DDM/INST/2026/0034",
+				depositSub:  -60 * 24 * time.Hour,
+				deadlineAdd: 84 * 24 * time.Hour, // J-84 (Alerte !)
+				imported:    30000.00,
+				distrib:     29400.00,
+				hospShare:   75,
+				retShare:    25,
+				obs:         "Commission technique d'évaluation en cours d'examen du rapport de biocompatibilité ISO 10993.",
+			},
+		}
+
+		for _, reg := range regs {
+			initDate := time.Now().Add(reg.marketSub)
+			depDate := time.Now().Add(reg.depositSub)
+			deadline := time.Now().Add(reg.deadlineAdd)
+
+			insertRegQuery := `
+				INSERT INTO dm_regularizations (
+					id, organization_id, medical_device_id, regularization_code,
+					derogation_number, initial_market_date, status,
+					ddm_acknowledgement_number, ddm_deposit_date, legal_deadline,
+					quarterly_volume_imported, quarterly_volume_distributed,
+					hospital_distribution_share, retail_distribution_share,
+					last_declaration_date, observations, created_at, updated_at
+				) VALUES (
+					gen_random_uuid(), $1, $2, $3,
+					$4, $5, $6,
+					$7, $8, $9,
+					$10, $11,
+					$12, $13,
+					CURRENT_DATE, $14, NOW(), NOW()
+				)
+				ON CONFLICT (regularization_code) DO NOTHING
+			`
+			_, _ = pool.Exec(ctx, insertRegQuery,
+				orgID, reg.deviceID, reg.code,
+				reg.derogNum, initDate, reg.status,
+				reg.ddmAck, depDate, deadline,
+				reg.imported, reg.distrib,
+				reg.hospShare, reg.retShare,
+				reg.obs,
 			)
-		`
-		_, _ = pool.Exec(ctx, insertSyringeQuery, syringeID, orgID)
+		}
 	}
 
-	// Insérer les 3 cas de suivi de régularisation transitoire
-	regs := []struct {
-		code        string
-		deviceID    uuid.UUID
-		derogNum    string
-		marketSub   time.Duration
-		status      string
-		ddmAck      string
-		depositSub  time.Duration
-		deadlineAdd time.Duration
-		imported    float64
-		distrib     float64
-		hospShare   int
-		retShare    int
-		obs         string
-	}{
-		{
-			code:        "REG-DM-2026-001",
-			deviceID:    catheterID,
-			derogNum:    "DEROG-MIPH-2024-8841",
-			marketSub:   -18 * 30 * 24 * time.Hour, // 18 mois avant
-			status:      "commercialise_derogatoire",
-			ddmAck:      "ACCUSE-DDM-PROV-4412",
-			depositSub:  -15 * 24 * time.Hour,
-			deadlineAdd: 22 * 24 * time.Hour, // J-22 (Critique !)
-			imported:    45000.00,
-			distrib:     42800.00,
-			hospShare:   80,
-			retShare:    20,
-			obs:         "Dispositif sous dérogation ministérielle 2024 en cours d'audit technique d'urgence avant échéance J-22.",
-		},
-		{
-			code:        "REG-DM-2026-002",
-			deviceID:    syringeID,
-			derogNum:    "DEROG-MIPH-2024-9102",
-			marketSub:   -12 * 30 * 24 * time.Hour,
-			status:      "dossier_depose_ddm",
-			ddmAck:      "ANPP/DDM/REC/2026/0092",
-			depositSub:  -30 * 24 * time.Hour,
-			deadlineAdd: 52 * 24 * time.Hour, // J-52 (Urgent !)
-			imported:    120000.00,
-			distrib:     115000.00,
-			hospShare:   60,
-			retShare:    40,
-			obs:         "Dossier technique 6 sections déposé au guichet DDM le 22/10/2026 sous récépissé officiel.",
-		},
-		{
-			code:        "REG-DM-2026-003",
-			deviceID:    catheterID,
-			derogNum:    "DEROG-MIPH-2023-7115",
-			marketSub:   -24 * 30 * 24 * time.Hour,
-			status:      "en_instruction",
-			ddmAck:      "ANPP/DDM/INST/2026/0034",
-			depositSub:  -60 * 24 * time.Hour,
-			deadlineAdd: 84 * 24 * time.Hour, // J-84 (Alerte !)
-			imported:    30000.00,
-			distrib:     29400.00,
-			hospShare:   75,
-			retShare:    25,
-			obs:         "Commission technique d'évaluation en cours d'examen du rapport de biocompatibilité ISO 10993.",
-		},
-	}
-
-	for _, reg := range regs {
-		initDate := time.Now().Add(reg.marketSub)
-		depDate := time.Now().Add(reg.depositSub)
-		deadline := time.Now().Add(reg.deadlineAdd)
-
-		insertRegQuery := `
-			INSERT INTO dm_regularizations (
-				id, organization_id, medical_device_id, regularization_code,
-				derogation_number, initial_market_date, status,
-				ddm_acknowledgement_number, ddm_deposit_date, legal_deadline,
-				quarterly_volume_imported, quarterly_volume_distributed,
-				hospital_distribution_share, retail_distribution_share,
-				last_declaration_date, observations, created_at, updated_at
+	// 5. Seeder les modifications post-homologation (Décret 20-324 Articles 22 à 25)
+	var modCount int
+	_ = pool.QueryRow(ctx, `SELECT COUNT(*) FROM dm_modifications WHERE organization_id = $1`, orgID).Scan(&modCount)
+	if modCount == 0 {
+		insertModQuery := `
+			INSERT INTO dm_modifications (
+				id, organization_id, medical_device_id, dossier_id,
+				modification_code, modification_type, category_code, category_label,
+				title, description, justification, current_state, proposed_state,
+				impact_risk_iso14971, impact_biocompatibility_iso10993, impact_sterilization_iso11135,
+				impact_packaging_iso11607, impact_clinical_iso14155, impact_quality_iso13485,
+				fee_amount, fee_receipt_ref, fee_payment_date,
+				status, anpp_submission_date, anpp_decision_date,
+				avenant_number, avenant_date, decision_notes,
+				pdt_signed_at, pdt_signature_seal, pdt_signature_notes,
+				created_at, updated_at
 			) VALUES (
 				gen_random_uuid(), $1, $2, $3,
-				$4, $5, $6,
-				$7, $8, $9,
-				$10, $11,
-				$12, $13,
-				CURRENT_DATE, $14, NOW(), NOW()
+				$4, $5, $6, $7,
+				$8, $9, $10, $11, $12,
+				$13, $14, $15,
+				$16, $17, $18,
+				$19, $20, CURRENT_DATE - INTERVAL '15 days',
+				$21, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '3 days',
+				$22, CURRENT_DATE - INTERVAL '3 days', $23,
+				NOW() - INTERVAL '14 days', $24, $25,
+				NOW() - INTERVAL '20 days', NOW()
 			)
-			ON CONFLICT (regularization_code) DO NOTHING
+			ON CONFLICT (organization_id, modification_code) DO NOTHING
 		`
-		_, _ = pool.Exec(ctx, insertRegQuery,
-			orgID, reg.deviceID, reg.code,
-			reg.derogNum, initDate, reg.status,
-			reg.ddmAck, depDate, deadline,
-			reg.imported, reg.distrib,
-			reg.hospShare, reg.retShare,
-			reg.obs,
+
+		// Mod 1 : Substantielle approuvée avec Avenant (Stérilisation Gamma)
+		_, _ = pool.Exec(ctx, insertModQuery,
+			orgID, catheterID, dossierID,
+			"MOD-DM-2026-001", "SUBSTANTIELLE", "DM_SUB_03", "Changement du procédé ou cycle de stérilisation (ISO 11135 / ISO 11137)",
+			"Substitution du procédé Oxyde d'éthylène par Rayonnement Gamma 25 kGy",
+			"Transition industrielle vers irradiation Gamma Cobalt-60 pour conformité environnementale et accélération des délais de libération.",
+			"Rapports de validation ISO 11137 et biocompatibilité ISO 10993 démontrant la non-altération physico-chimique du polyuréthane.",
+			"Stérilisation Oxyde d'Éthylène (ETO) cycle standard 55°C, temps de désorption 7 jours en chambre ventilée.",
+			"Stérilisation Rayonnement Gamma Cobalt-60 dose minimale certifiée 25 kGy avec dosimètres radiochromiques.",
+			true, false, true, false, false, true,
+			45000.00, "BNA-CHE-2026-8819",
+			"approuve_avenant",
+			"AVN-DDM-2026-0042", "Avenant accordé après revue favorable de la Sous-Direction de l'Homologation DDM.",
+			"DM-AVN-SEAL-8f4b238719ac6e5d", "Attestation de validation dosimétrique certifiée conforme BPF.",
+		)
+
+		// Mod 2 : Substantielle en instruction (Matière première Polyuréthane sans DEHP)
+		_, _ = pool.Exec(ctx, insertModQuery,
+			orgID, catheterID, dossierID,
+			"MOD-DM-2026-002", "SUBSTANTIELLE", "DM_SUB_02", "Modification de la composition des matières premières en contact direct patient (ISO 10993)",
+			"Remplacement du plastifiant de la gaine polyuréthane par un grade médical sans phtalate",
+			"Élimination des résidus plastifiants DEHP au profit d'un polymère TPU aliphatic biocompatible conforme REACH/BPF.",
+			"Exigence de sécurité toxicologique renforcée pour les patients soumis à perfusion prolongée.",
+			"Gaine canuleuse en PUR plastifié au DEHP (teneur inférieure à 0.1% m/m).",
+			"Gaine canuleuse en TPU aliphatique médical 100% exempt de phtalates et métaux lourds.",
+			true, true, false, false, true, false,
+			45000.00, "BNA-CHE-2026-9041",
+			"en_instruction",
+			"", "Dossier en cours d'évaluation toxicologique au LNCM.",
+			"DM-AVN-SEAL-1c9983726ab450fe", "Dossier GLP ISO 10993 annexé sous référence BIO-2026-TPU.",
+		)
+
+		// Mod 3 : Non-substantielle approuvée (Mise à jour notice bilingue)
+		_, _ = pool.Exec(ctx, insertModQuery,
+			orgID, catheterID, dossierID,
+			"MOD-DM-2026-003", "NON_SUBSTANTIELLE", "DM_MIN_03", "Mise à jour mineure de l'étiquetage ou notice d'utilisation bilingue",
+			"Actualisation des pictogrammes d'utilisation et ajout des mentions arabes de précaution",
+			"Conformité avec les recommandations DDM sur la lisibilité des instructions de pose chez l'adulte.",
+			"Amélioration de l'ergonomie d'utilisation et réduction du risque d'erreur d'insertion.",
+			"Notice d'emploi version V02 bilingue français/arabe standard.",
+			"Notice d'emploi enrichie version V03 avec schéma pas-à-pas et mentions de sécurité renforcées.",
+			false, false, false, false, false, false,
+			15000.00, "BNA-CHE-2026-9214",
+			"approuve_avenant",
+			"AVN-DDM-NOTIF-2026-018", "Déclaration prise d'acte par la DDM, mise à jour enregistrée au registre.",
+			"DM-AVN-SEAL-77a0bc451f893d12", "Notice d'emploi révisée validée par le Pharmacien DT.",
 		)
 	}
 
-	log.Println("[DM Seed] Initialisation des données DM Homologation & Régularisation terminée avec succès.")
+	log.Println("[DM Seed] Initialisation des données DM Homologation, Régularisation & Modifications terminée avec succès.")
 }

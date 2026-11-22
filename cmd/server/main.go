@@ -68,6 +68,7 @@ func main() {
 	var reportHandler *api.ReportHandler
 	var variationHandler *api.VariationHandler
 	var dmHandler *api.DMHandler
+	var dmModHandler *api.DMModificationHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -147,6 +148,9 @@ func main() {
 
 		dmRepo := repository.NewDMRepository(db.Pool)
 		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService)
+
+		dmModRepo := repository.NewDMModificationRepository(db.Pool)
+		dmModHandler = api.NewDMModificationHandler(dmModRepo, dmRepo, auditService)
 
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
@@ -628,6 +632,18 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/dm-regularizations", dmHandler.CreateDMRegularization)
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/dm-regularizations/{id}", dmHandler.UpdateDMRegularization)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-regularizations/export/canevas", dmHandler.ExportDMCanevas)
+			}
+
+			if dmModHandler != nil {
+				// Modifications Post-Homologation des DM (Décret 20-324 Articles 22 à 25)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-modifications", dmModHandler.ListModifications)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-modifications/stats", dmModHandler.GetStats)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-modifications/categories", dmModHandler.GetCategories)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-modifications/{id}", dmModHandler.GetModification)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/dm-modifications", dmModHandler.CreateModification)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/dm-modifications/{id}", dmModHandler.UpdateModification)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dm-modifications/{id}/seal", dmModHandler.SealModification)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dm-modifications/{id}/avenant", dmModHandler.IssueAvenant)
 			}
 		})
 	}

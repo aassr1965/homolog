@@ -4770,6 +4770,119 @@
         </div>
     </div>
 
+    <!-- Modale 4 : Nouvelle Modification Post-Homologation DM (Décret 20-324 Art. 22-25) -->
+    <div class="modal-overlay" id="modal-dm-modification-new" onclick="if(event.target === this) closeModal('modal-dm-modification-new')">
+        <div class="modal-card" style="max-width:760px; width:100%; border-radius:10px; box-shadow:0 20px 40px rgba(0,0,0,0.3); background:var(--bg-panel); border:1px solid var(--border-color); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--border-color); background:rgba(2,132,199,0.08);">
+                <div>
+                    <span style="font-size:10px; font-weight:800; color:var(--accent-blue); text-transform:uppercase;">Modifications Post-Homologation DM • Décret exécutif n° 20-324</span>
+                    <div class="modal-title" style="font-weight:900; font-size:14px; color:var(--text-main); margin-top:2px;">
+                        🔄 Déclaration &amp; Demande de Modification Post-Homologation (Avenant DDM)
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeModal('modal-dm-modification-new')" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-dim);">✕</button>
+            </div>
+            <form onsubmit="submitNewDMModification(event)" style="display:flex; flex-direction:column; overflow:hidden;">
+                <div class="modal-body" style="padding:18px 20px; font-size:12px; display:flex; flex-direction:column; gap:12px; overflow-y:auto;">
+                    <div style="background:rgba(2,132,199,0.06); border:1px dashed var(--accent-blue); border-radius:6px; padding:10px; font-size:11px; color:#0369a1; line-height:1.4;">
+                        <strong>ℹ️ Cadre Réglementaire :</strong> Article 23 : Toute modification substantielle affectant la conception, les performances, les matières ou la stérilisation requiert l'accord préalable de l'ANPP et donne lieu à un Avenant officiel (ES-REG-05-DM). Redevance : <strong>45 000 DZD</strong> (Ord. 21-07). Article 24 : Les modifications non substantielles font l'objet d'une déclaration préalable (Redevance : <strong>15 000 DZD</strong>).
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Dispositif Médical Homologué Rattaché : *</label>
+                            <select id="new-dm-mod-device-id" required style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;"></select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Code Modification :</label>
+                            <input type="text" id="new-dm-mod-code" readonly style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-surface); color:var(--text-muted); border:1px solid var(--border-color); border-radius:4px; font-family:monospace; font-weight:bold;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Type Réglementaire : *</label>
+                            <select id="new-dm-mod-type" onchange="onDMModTypeChange()" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">
+                                <option value="SUBSTANTIELLE">Modification Substantielle (Art. 23 - Avenant Requis • 45 000 DZD)</option>
+                                <option value="NON_SUBSTANTIELLE">Modification Non-Substantielle (Art. 24 - Déclaration • 15 000 DZD)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Catégorie &amp; Nature du Changement : *</label>
+                            <select id="new-dm-mod-category" onchange="onDMModCategoryChange()" required style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;"></select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display:block; font-weight:700; margin-bottom:4px;">Intitulé Synthétique de la Modification : *</label>
+                        <input type="text" id="new-dm-mod-title" required placeholder="Ex: Remplacement du plastifiant DEHP par un polymère TPU aliphatique médical" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Description Détaillée : *</label>
+                            <textarea id="new-dm-mod-desc" rows="2" required placeholder="Description exhaustive de la modification physique, chimique ou documentaire..." style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical;"></textarea>
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Justification Technico-Réglementaire : *</label>
+                            <textarea id="new-dm-mod-justif" rows="2" required placeholder="Motifs sanitaires, ergonomiques ou de conformité aux normes..." style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical;"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px; color:#b45309;">Situation Actuelle (Avant Modification) :</label>
+                            <textarea id="new-dm-mod-curr" rows="2" placeholder="État initial des spécifications, matières ou mentions..." style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical;"></textarea>
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px; color:#059669;">Situation Proposée (Après Modification) :</label>
+                            <textarea id="new-dm-mod-prop" rows="2" placeholder="Nouvel état après validation de l'Avenant..." style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; resize:vertical;"></textarea>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display:block; font-weight:700; margin-bottom:6px;">Impact sur les Normes Piliers ISO du Dossier Technique :</label>
+                        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; background:var(--bg-app); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="new-dm-mod-iso14971"> ISO 14971 (Gestion Risques)
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="new-dm-mod-iso10993"> ISO 10993 (Biocompatibilité)
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="new-dm-mod-iso11135"> ISO 11135/11137 (Stérilisation)
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="new-dm-mod-iso11607"> ISO 11607 (Barrière Stérile)
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="new-dm-mod-iso14155"> ISO 14155 (Évaluation Clinique)
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" id="new-dm-mod-iso13485"> ISO 13485 (Système Qualité)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">Redevance Réglementaire (Ord. 21-07 Art. 31) :</label>
+                            <input type="text" id="new-dm-mod-fee" readonly value="45 000.00 DZD" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-surface); color:#091e36; border:1px solid var(--border-color); border-radius:4px; font-weight:800;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:700; margin-bottom:4px;">N° Quittance BNA (Agence Chéraga 622) : *</label>
+                            <input type="text" id="new-dm-mod-receipt" required placeholder="Ex: BNA-CHE-2026-9844" style="width:100%; box-sizing:border-box; padding:7px 10px; font-size:12px; background:var(--bg-app); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; font-family:monospace;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:14px 20px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:10px; background:var(--bg-sub);">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-dm-modification-new')">Annuler</button>
+                    <button type="submit" class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;">💾 Soumettre la Demande de Modification</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
     <script src="/js/app.js?v=2026.11.18.2"></script>
     <script src="/js/auth.js?v=2026.11.18.2"></script>
