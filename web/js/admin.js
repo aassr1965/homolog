@@ -11,8 +11,8 @@ let selectedAdminUserIndex = 0;
 
 // Métadonnées exhaustives et descriptives pour les 14 permissions unitaires (CDC Section 7.1)
 const RBAC_PERM_METADATA = {
-    "REF_VIEW": { icon: "🏢", label: "Voir Réf.", fullTitle: "Consulter Référentiel", desc: "Consultation du Référentiel MIPH, Établissements, Sites et Produits", cat: "ref", isLast: false },
-    "REF_EDIT": { icon: "✏️", label: "Édit Réf.", fullTitle: "Éditer Référentiel", desc: "Modification et création de Produits, Établissements et Sites", cat: "ref", isLast: true },
+    "REF_VIEW": { icon: "🏢", label: "Voir Réf.", fullTitle: "Consulter Référentiel & Agréments", desc: "Consultation du Référentiel MIPH, Établissements, Demandes d'Agréments Corporate (Décret 21-82) et Titres", cat: "ref", isLast: false },
+    "REF_EDIT": { icon: "✏️", label: "Édit Réf.", fullTitle: "Éditer Référentiel & Agréments", desc: "Création/mise à jour d'Établissements, Demandes d'Agréments MIPH, soumission Tabadol et octroi d'Arrêtés", cat: "ref", isLast: true },
 
     "DOSSIER_VIEW": { icon: "📁", label: "Voir CTD", fullTitle: "Consulter Dossiers", desc: "Consultation des dossiers d'enregistrement CTD et homologation DM", cat: "dossier", isLast: false },
     "DOSSIER_EDIT": { icon: "📝", label: "Rédig CTD", fullTitle: "Rédiger Dossiers", desc: "Édition, composition des modules CTD et rattachement des pièces", cat: "dossier", isLast: false },
@@ -334,7 +334,7 @@ function renderAdminUserPreview(user) {
     const initials = (((user.first_name || 'U').charAt(0)) + ((user.last_name || 'L').charAt(0))).toUpperCase();
 
     const categories = [
-        { name: "🏢 Référentiel MIPH", perms: ["REF_VIEW", "REF_EDIT"] },
+        { name: "🏢 Référentiel & Agréments Corporate", perms: ["REF_VIEW", "REF_EDIT"] },
         { name: "📋 Dossiers CTD & Soumission", perms: ["DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT", "VARIATION_MANAGE"] },
         { name: "📄 Coffre-Fort GED & Visa", perms: ["DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "EXPORT_LEGAL"] },
         { name: "🔒 Sécurité & Administration", perms: ["AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"] }
@@ -478,7 +478,7 @@ function renderAdminMatrixTable() {
                 <div style="font-size: 10px; color: var(--text-dim); font-weight: normal; margin-top:2px;">10 profils pharmaceutiques habilités</div>
             </th>
             <th colspan="2" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(3, 105, 161, 0.12); color: #0284c7; padding: 6px 4px; border-right: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;">
-                🏢 Référentiel MIPH
+                🏢 Référentiel &amp; Corporate MIPH
             </th>
             <th colspan="4" style="text-align: center; font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.12); color: #059669; padding: 6px 4px; border-right: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;">
                 📋 Dossiers CTD & Soumission ANPP
@@ -572,7 +572,7 @@ function renderRolePreview(role, permsList) {
     const permPct = Math.round((permCount / 14) * 100);
 
     const categories = [
-        { name: "🏢 Référentiel MIPH", perms: ["REF_VIEW", "REF_EDIT"] },
+        { name: "🏢 Référentiel & Agréments Corporate", perms: ["REF_VIEW", "REF_EDIT"] },
         { name: "📋 Dossiers CTD & Soumission", perms: ["DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT", "VARIATION_MANAGE"] },
         { name: "📄 Coffre-Fort GED & Visa", perms: ["DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "EXPORT_LEGAL"] },
         { name: "🔒 Sécurité & Administration", perms: ["AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"] }
@@ -1140,7 +1140,7 @@ function openUserPermissionsModal(userId) {
     (user.overrides || []).forEach(o => overridesMap.set(o.permission_id, o.granted));
 
     const categories = {
-        "Référentiel": ["REF_VIEW", "REF_EDIT"],
+        "Référentiel & Agréments Corporate (MIPH Décret 21-82)": ["REF_VIEW", "REF_EDIT"],
         "Dossiers ANPP (CTD)": ["DOSSIER_VIEW", "DOSSIER_EDIT", "DOSSIER_SUBMIT", "VARIATION_MANAGE"],
         "Coffre-Fort GED & Approbation": ["DOC_READ", "DOC_WRITE", "DOC_REVIEW", "DOC_APPROVE_PDT", "EXPORT_LEGAL"],
         "Système & Audit": ["AUDIT_VIEW", "USER_MANAGE", "SYS_MAINT"]

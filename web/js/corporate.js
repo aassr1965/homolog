@@ -11,6 +11,30 @@ let currentCorporateFilter = 'ALL'; // ALL, FABRICATION, IMPORTATION, DISTRIBUTI
 let currentCorporatePreviewTab = 'checklist';
 
 // ============================================================================
+// CONTRÔLE D'ACCÈS RBAC CORPORATE (DÉCRET 21-82 & ALCOA+)
+// ============================================================================
+
+function canEditCorporate() {
+    return typeof hasPermission === 'function' ? hasPermission('REF_EDIT') : true;
+}
+
+function canSignCorporatePDT() {
+    return typeof hasPermission === 'function' ? hasPermission('DOC_APPROVE_PDT') : false;
+}
+
+function canAttachCorporateDoc() {
+    return typeof hasAnyPermission === 'function' ? hasAnyPermission('DOC_DRAFT_MAKER', 'DOC_CHECK_REVIEW', 'REF_EDIT') : true;
+}
+
+function isCorporateAuditor() {
+    return typeof hasRole === 'function' && hasRole('auditeur_inspecteur');
+}
+
+function canManageUserPrivileges() {
+    return typeof hasPermission === 'function' ? hasPermission('USER_MANAGE') : false;
+}
+
+// ============================================================================
 // 1. BADGES & COMPTEURS
 // ============================================================================
 
@@ -47,12 +71,27 @@ function renderCorporateTree() {
     const container = document.getElementById("tree-root");
     if (!container) return;
 
+    let createBtnHtml = '';
+    if (canEditCorporate()) {
+        createBtnHtml = `
+            <div style="padding: 10px 10px 6px;">
+                <button class="btn-pill" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:700; height:32px; border-radius:6px; cursor:pointer;" onclick="openNewCorporateAppModal()" title="Initier une nouvelle demande d'agrément d'établissement pharmaceutique (Décret 21-82)">
+                    ➕ Nouvelle Demande MIPH
+                </button>
+            </div>
+        `;
+    } else if (isCorporateAuditor()) {
+        createBtnHtml = `
+            <div style="padding: 10px 10px 6px;">
+                <div style="width:100%; font-size:10px; font-weight:700; color:var(--text-dim); text-align:center; padding:6px; background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid var(--border-color);">
+                    👁️ Mode Consultation Auditeur
+                </div>
+            </div>
+        `;
+    }
+
     container.innerHTML = `
-        <div style="padding: 10px 10px 6px;">
-            <button class="btn-pill" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:700; height:32px; border-radius:6px; cursor:pointer;" onclick="openNewCorporateAppModal()" title="Initier une nouvelle demande d'agrément d'établissement pharmaceutique (Décret 21-82)">
-                ➕ Nouvelle Demande MIPH
-            </button>
-        </div>
+        ${createBtnHtml}
         <div class="tree-node ${currentCorporateFilter === 'ALL' ? 'selected' : ''}" onclick="selectCorporateFilter('ALL')">
             <span class="chevron">📁</span>
             <span>Toutes les Demandes MIPH</span>
@@ -110,12 +149,19 @@ function selectCorporateFilter(filter) {
 function renderCorporateToolbar() {
     const tb = document.getElementById("main-toolbar");
     if (!tb) return;
+    const canEdit = canEditCorporate();
+    const canManagePrivs = canManageUserPrivileges();
+
+    let newBtn = canEdit ? `<button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700; cursor:pointer;" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕ Nouvelle Demande</button>` : '';
+    let privBtn = canManagePrivs ? `<button class="btn-table-icon" onclick="switchDomainModule('admin'); loadAdminSection('matrix');" title="Configurer les Privilèges &amp; Habilitations SoD (Console Admin)">🔐</button>` : '';
+
     tb.innerHTML = `
-        <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700; cursor:pointer;" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕ Nouvelle Demande</button>
+        ${newBtn}
         <button class="btn-table-icon" onclick="selectCorporateFilter('ALL')" title="Toutes les Demandes MIPH">📁</button>
         <button class="btn-table-icon" onclick="selectCorporateFilter('LICENSES')" title="Registre des Agréments Ministériels Actifs">📜</button>
         <button class="btn-table-icon" onclick="renderCorporateView()" title="Actualiser la liste">🔄</button>
         <button class="btn-table-icon" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+        ${privBtn}
         <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
         <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
             Passerelle Tabadol : <strong style="color:var(--accent-emerald);">Connectée &amp; Sécurisée</strong>
@@ -474,15 +520,20 @@ async function viewCorporateChecklist(appId) {
         // Barre d'outils contextuelle avec bouton de retour
         const tb = document.getElementById("main-toolbar");
         if (tb) {
+            const canEdit = canEditCorporate();
+            const canAttach = canAttachCorporateDoc() && !isCorporateAuditor();
+            const canManagePrivs = canManageUserPrivileges();
+
             tb.innerHTML = `
                 <button class="btn-table-icon" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">←</button>
-                <button class="btn-table-icon" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕</button>
-                <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '')" title="Téléverser directement un nouveau document">📤</button>
-                <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>
+                ${canEdit ? `<button class="btn-table-icon" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕</button>` : ''}
+                ${canAttach ? `<button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '')" title="Téléverser directement un nouveau document">📤</button>` : ''}
+                ${canAttach ? `<button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>` : ''}
                 <button class="btn-table-icon" onclick="toggleAllCorporateSections()" title="Tout déplier / Tout replier les volets réglementaires">📑</button>
                 <button class="btn-table-icon" onclick="openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
                 <button class="btn-table-icon" onclick="downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
                 <button class="btn-table-icon" onclick="viewCorporateChecklist('${app.id}')" title="Actualiser la liste">🔄</button>
+                ${canManagePrivs ? `<button class="btn-table-icon" onclick="switchDomainModule('admin'); loadAdminSection('matrix');" title="Configurer les Privilèges &amp; Habilitations SoD (Console Admin)">🔐</button>` : ''}
                 <button class="btn-table-icon" onclick="togglePreviewPane()" title="Volet d'aperçu latéral (Alt+P)">👁️</button>
                 <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
                     Complétude Dossier : <strong style="color:var(--accent-emerald);">${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length} pièces rattachées)</strong>
@@ -589,16 +640,22 @@ async function viewCorporateChecklist(appId) {
 
                 // Info GED rattaché
                 let docInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Aucune pièce rattachée</span>`;
-                let actionBtn = `
-                    <div style="display:inline-flex; gap:4px; align-items:center; justify-content:center;">
-                        <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser directement un nouveau document">
-                            📤
-                        </button>
-                        <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document existant du coffre-fort GED">
-                            📎
-                        </button>
-                    </div>
-                `;
+                const canAttach = canAttachCorporateDoc() && !isCorporateAuditor();
+
+                let actionBtn = `<span style="font-size:10px; color:var(--text-dim); font-style:italic;" title="Mode consultation (dépôt non autorisé pour votre profil)">Lecture seule</span>`;
+
+                if (canAttach) {
+                    actionBtn = `
+                        <div style="display:inline-flex; gap:4px; align-items:center; justify-content:center;">
+                            <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser directement un nouveau document">
+                                📤
+                            </button>
+                            <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document existant du coffre-fort GED">
+                                📎
+                            </button>
+                        </div>
+                    `;
+                }
 
                 if (it.ged_document_id) {
                     docInfo = `
@@ -611,14 +668,22 @@ async function viewCorporateChecklist(appId) {
                             </span>
                         </div>
                     `;
-                    actionBtn = `
-                        <div style="display:inline-flex; gap:4px; align-items:center; justify-content:center;">
-                            <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
-                            <button class="btn-table-icon" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document / remplacer">📤</button>
-                            <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer par un autre document GED existant">🔄</button>
-                            <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
-                        </div>
-                    `;
+                    if (canAttach) {
+                        actionBtn = `
+                            <div style="display:inline-flex; gap:4px; align-items:center; justify-content:center;">
+                                <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
+                                <button class="btn-table-icon" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document / remplacer">📤</button>
+                                <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer par un autre document GED existant">🔄</button>
+                                <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
+                            </div>
+                        `;
+                    } else {
+                        actionBtn = `
+                            <div style="display:inline-flex; gap:4px; align-items:center; justify-content:center;">
+                                <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
+                            </div>
+                        `;
+                    }
                 }
 
                 tr.innerHTML = `
@@ -863,6 +928,8 @@ function renderChecklistTabHtml(app) {
         return `<div style="text-align:center; padding:20px; color:var(--text-dim);">Aucune exigence configurée pour ce type d'établissement.</div>`;
     }
 
+    const canAttach = canAttachCorporateDoc() && !isCorporateAuditor();
+
     // Regrouper par volet réglementaire Décret 21-82
     const sections = {};
     items.forEach(it => {
@@ -929,6 +996,13 @@ function renderChecklistTabHtml(app) {
             // Statut de rattachement GED
             let gedInfo = '';
             if (it.ged_document_id) {
+                let docActions = `<button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>`;
+                if (canAttach) {
+                    docActions += `
+                        <button class="btn-table-icon" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document / remplacer">📤</button>
+                        <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
+                    `;
+                }
                 gedInfo = `
                     <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
                         <span class="badge-icon-status" style="width:20px; height:20px; font-size:11px; background:rgba(5,150,105,0.12); border:1px solid rgba(5,150,105,0.3); flex-shrink:0;" title="Statut GED : Document rattaché">✅</span>
@@ -936,19 +1010,14 @@ function renderChecklistTabHtml(app) {
                             ${escapeHtml(it.document_name || 'Document GED')}
                         </a>
                         <div style="margin-left:auto; display:inline-flex; gap:4px; align-items:center;">
-                            <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
-                            <button class="btn-table-icon" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document / remplacer">📤</button>
-                            <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
+                            ${docActions}
                         </div>
                     </div>
                 `;
             } else {
-                gedInfo = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
-                        <span style="display:inline-flex; align-items:center; gap:5px; font-size:10px; color:var(--text-dim); font-style:italic;">
-                            <span class="badge-icon-status" style="width:20px; height:20px; font-size:11px; background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3); flex-shrink:0;" title="Statut GED : Document manquant">⚠️</span>
-                            Aucune pièce rattachée
-                        </span>
+                let unattachAction = `<span style="font-size:10px; color:var(--text-dim); font-style:italic;">Lecture seule</span>`;
+                if (canAttach) {
+                    unattachAction = `
                         <div style="display:inline-flex; gap:4px; align-items:center;">
                             <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document">
                                 📤
@@ -957,6 +1026,15 @@ function renderChecklistTabHtml(app) {
                                 📎
                             </button>
                         </div>
+                    `;
+                }
+                gedInfo = `
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
+                        <span style="display:inline-flex; align-items:center; gap:5px; font-size:10px; color:var(--text-dim); font-style:italic;">
+                            <span class="badge-icon-status" style="width:20px; height:20px; font-size:11px; background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3); flex-shrink:0;" title="Statut GED : Document manquant">⚠️</span>
+                            Aucune pièce rattachée
+                        </span>
+                        ${unattachAction}
                     </div>
                 `;
             }
@@ -990,20 +1068,25 @@ function renderChecklistTabHtml(app) {
 // ----------------------------------------------------------------------------
 function renderEFormTabHtml(app) {
     const fd = app.form_data || {};
+    const canEdit = canEditCorporate();
+    const roAttr = canEdit ? '' : 'disabled';
     return `
         <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
-            <div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">
-                📋 Formulaire Déclaratif e-Form (Décret 21-82 / Tabadol)
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">
+                <div style="font-size:12px; font-weight:700; color:var(--text-main);">
+                    📋 Formulaire Déclaratif e-Form (Décret 21-82 / Tabadol)
+                </div>
+                ${!canEdit ? '<span style="font-size:10px; color:var(--text-muted); background:var(--bg-input); padding:2px 8px; border-radius:12px; border:1px solid var(--border-color);">👁️ Lecture seule (REF_VIEW)</span>' : ''}
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:11px;">
                 <div>
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">Raison Sociale / Dénomination :</label>
-                    <input type="text" id="ef-corp-name" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.company_name || app.title || '')}">
+                    <input type="text" id="ef-corp-name" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.company_name || app.title || '')}" ${roAttr}>
                 </div>
                 <div>
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">Forme Juridique :</label>
-                    <select id="ef-corp-status" class="input-base" style="width:100%; font-size:11px; padding:6px;">
+                    <select id="ef-corp-status" class="input-base" style="width:100%; font-size:11px; padding:6px;" ${roAttr}>
                         <option value="SARL" ${fd.legal_status === 'SARL' ? 'selected' : ''}>SARL</option>
                         <option value="SPA" ${fd.legal_status === 'SPA' ? 'selected' : ''}>SPA</option>
                         <option value="EURL" ${fd.legal_status === 'EURL' ? 'selected' : ''}>EURL</option>
@@ -1012,39 +1095,47 @@ function renderEFormTabHtml(app) {
                 </div>
                 <div>
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">Capital Social (DZD) :</label>
-                    <input type="number" id="ef-corp-capital" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.capital_dzd || '50000000')}">
+                    <input type="number" id="ef-corp-capital" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.capital_dzd || '50000000')}" ${roAttr}>
                 </div>
                 <div>
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">N° Registre de Commerce (RC) :</label>
-                    <input type="text" id="ef-corp-rc" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.rc_number || '')}">
+                    <input type="text" id="ef-corp-rc" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.rc_number || '')}" ${roAttr}>
                 </div>
                 <div style="grid-column: span 2;">
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">Adresse du Siège Social :</label>
-                    <input type="text" id="ef-corp-headquarters" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.headquarters_address || '')}">
+                    <input type="text" id="ef-corp-headquarters" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.headquarters_address || '')}" ${roAttr}>
                 </div>
                 <div style="grid-column: span 2;">
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">Adresse du Site Opérationnel / Usine :</label>
-                    <input type="text" id="ef-corp-site" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.site_address || '')}">
+                    <input type="text" id="ef-corp-site" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.site_address || '')}" ${roAttr}>
                 </div>
                 <div>
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">Pharmacien Directeur Technique (PDT) :</label>
-                    <input type="text" id="ef-corp-pdt" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.pdt_name || 'Dr. Pharmacien DT')}">
+                    <input type="text" id="ef-corp-pdt" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.pdt_name || 'Dr. Pharmacien DT')}" ${roAttr}>
                 </div>
                 <div>
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">N° Décision Nominative PDT (MIPH) :</label>
-                    <input type="text" id="ef-corp-pdt-dec" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.pdt_decision_ref || '')}">
+                    <input type="text" id="ef-corp-pdt-dec" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(fd.pdt_decision_ref || '')}" ${roAttr}>
                 </div>
                 <div style="grid-column: span 2;">
                     <label style="display:block; color:var(--text-dim); margin-bottom:3px;">Lignes de Fabrication / Gammes Revendiquées :</label>
-                    <textarea id="ef-corp-lines" class="input-base" rows="2" style="width:100%; font-size:11px; padding:6px;">${escapeHtml(fd.manufacturing_lines || 'Formes solides orales (comprimés, gélules), injectables stériles')}</textarea>
+                    <textarea id="ef-corp-lines" class="input-base" rows="2" style="width:100%; font-size:11px; padding:6px;" ${roAttr}>${escapeHtml(fd.manufacturing_lines || 'Formes solides orales (comprimés, gélules), injectables stériles')}</textarea>
                 </div>
             </div>
 
-            <div style="margin-top:14px; text-align:right;">
-                <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 14px; font-weight:700;" onclick="saveCorporateEForm('${app.id}')">
-                    💾 Sauvegarder les Déclarations
-                </button>
-            </div>
+            ${canEdit ? `
+                <div style="margin-top:14px; text-align:right;">
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:6px 14px; font-weight:700;" onclick="saveCorporateEForm('${app.id}')">
+                        💾 Sauvegarder les Déclarations
+                    </button>
+                </div>
+            ` : `
+                <div style="margin-top:14px; text-align:right;">
+                    <button class="btn-pill" disabled style="opacity:0.5; cursor:not-allowed; background:var(--bg-input); color:var(--text-dim); border:1px solid var(--border-color); padding:6px 14px;" title="Privilège REF_EDIT requis pour enregistrer">
+                        🔒 Modification non autorisée
+                    </button>
+                </div>
+            `}
         </div>
     `;
 }
@@ -1055,22 +1146,31 @@ function renderEFormTabHtml(app) {
 function renderTabadolTabHtml(app) {
     const isPdtSigned = !!app.pdt_signed_at;
     const isSubmitted = !!app.tabadol_submitted_at;
+    const canSignPDT = canSignCorporatePDT();
+    const canEdit = canEditCorporate();
 
-    let pdtSealHtml = `
-        <div style="background:rgba(239,68,68,0.06); border:1px dashed var(--accent-red); border-radius:6px; padding:10px; margin-bottom:12px;">
-            <div style="font-weight:700; color:var(--accent-red); font-size:11px; margin-bottom:4px;">
-                ⚠️ Visa du Pharmacien Directeur Technique requis
+    let pdtSealHtml = '';
+    if (!isPdtSigned) {
+        pdtSealHtml = `
+            <div style="background:rgba(239,68,68,0.06); border:1px dashed var(--accent-red); border-radius:6px; padding:10px; margin-bottom:12px;">
+                <div style="font-weight:700; color:var(--accent-red); font-size:11px; margin-bottom:4px;">
+                    ⚠️ Visa du Pharmacien Directeur Technique requis
+                </div>
+                <div style="font-size:10px; color:var(--text-dim); line-height:1.4; margin-bottom:8px;">
+                    Conformément à l'Article 18 du Décret exécutif n° 21-82, le dossier d'agrément doit être obligatoirement certifié conforme par le Pharmacien DT avant toute télésoumission sur la plateforme Tabadol.
+                </div>
+                ${canSignPDT ? `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-size:10px; font-weight:700; padding:5px 12px; border-radius:4px;" onclick="openCorporatePDTSignModal('${app.id}')" title="Apposer le visa électronique PDT (21 CFR Part 11)">
+                        ⚖️ Apposer le Visa Électronique PDT (21 CFR Part 11)
+                    </button>
+                ` : `
+                    <button class="btn-pill" disabled style="background:var(--bg-input); color:var(--text-dim); border:1px solid var(--border-color); opacity:0.6; cursor:not-allowed; font-size:10px; font-weight:700; padding:5px 12px; border-radius:4px;" title="Privilège DOC_APPROVE_PDT requis (Pharmacien Directeur Technique exclusivement)">
+                        🔒 Visa Réservé au Pharmacien Directeur Technique
+                    </button>
+                `}
             </div>
-            <div style="font-size:10px; color:var(--text-dim); line-height:1.4; margin-bottom:8px;">
-                Conformément à l'Article 18 du Décret exécutif n° 21-82, le dossier d'agrément doit être obligatoirement certifié conforme par le Pharmacien DT avant toute télésoumission sur la plateforme Tabadol.
-            </div>
-            <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-size:10px; font-weight:700; padding:5px 12px; border-radius:4px;" onclick="openCorporatePDTSignModal('${app.id}')" title="Apposer le visa électronique PDT (21 CFR Part 11)">
-                ⚖️ Apposer le Visa Électronique PDT (21 CFR Part 11)
-            </button>
-        </div>
-    `;
-
-    if (isPdtSigned) {
+        `;
+    } else {
         pdtSealHtml = `
             <div style="background:rgba(16,185,129,0.06); border:1px solid var(--accent-emerald); border-radius:6px; padding:10px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1088,13 +1188,31 @@ function renderTabadolTabHtml(app) {
 
     let tabadolActionHtml = '';
     if (!isSubmitted) {
-        tabadolActionHtml = `
-            <div style="margin-top:12px;">
-                <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; padding:8px 14px; font-weight:700; width:100%; border-radius:4px;" onclick="openTabadolSubmitModal('${app.id}')" title="Télésoumettre à la Plateforme Tabadol MIPH">
-                    🚀 Télésoumettre à la Plateforme Tabadol MIPH
-                </button>
-            </div>
-        `;
+        if (!isPdtSigned) {
+            tabadolActionHtml = `
+                <div style="margin-top:12px;">
+                    <button class="btn-pill" disabled style="background:var(--bg-input); color:var(--text-dim); border:1px solid var(--border-color); opacity:0.6; cursor:not-allowed; padding:8px 14px; font-weight:700; width:100%; border-radius:4px;" title="Le visa électronique du Pharmacien Directeur Technique (PDT) est obligatoire avant télésoumission">
+                        🔒 Télésoumission Tabadol (En attente du Visa PDT)
+                    </button>
+                </div>
+            `;
+        } else if (!canEdit) {
+            tabadolActionHtml = `
+                <div style="margin-top:12px;">
+                    <button class="btn-pill" disabled style="background:var(--bg-input); color:var(--text-dim); border:1px solid var(--border-color); opacity:0.6; cursor:not-allowed; padding:8px 14px; font-weight:700; width:100%; border-radius:4px;" title="Privilège REF_EDIT requis pour télésoumettre à Tabadol">
+                        🔒 Télésoumission Tabadol (Privilège REF_EDIT Requis)
+                    </button>
+                </div>
+            `;
+        } else {
+            tabadolActionHtml = `
+                <div style="margin-top:12px;">
+                    <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; padding:8px 14px; font-weight:700; width:100%; border-radius:4px;" onclick="openTabadolSubmitModal('${app.id}')" title="Télésoumettre à la Plateforme Tabadol MIPH">
+                        🚀 Télésoumettre à la Plateforme Tabadol MIPH
+                    </button>
+                </div>
+            `;
+        }
     } else {
         tabadolActionHtml = `
             <div style="background:rgba(2,132,199,0.08); border:1px solid var(--accent-blue); border-radius:6px; padding:10px; margin-top:12px;">
@@ -1137,12 +1255,18 @@ function renderTabadolTabHtml(app) {
 // D. Rendu Sous-onglet Récépissé & Arrêté MIPH
 // ----------------------------------------------------------------------------
 function renderMIPHTabHtml(app) {
+    const canEdit = canEditCorporate();
+    const roAttr = canEdit ? '' : 'disabled';
+
     return `
         <div style="display:flex; flex-direction:column; gap:12px;">
             <!-- Récépissé Bureau d'Ordre -->
             <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
-                <div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:8px;">
-                    📥 Récépissé de Dépôt Physique (Bureau d'Ordre MIPH)
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-size:12px; font-weight:700; color:var(--text-main);">
+                        📥 Récépissé de Dépôt Physique (Bureau d'Ordre MIPH)
+                    </div>
+                    ${!canEdit ? '<span style="font-size:10px; color:var(--text-muted); background:var(--bg-input); padding:2px 8px; border-radius:12px; border:1px solid var(--border-color);">👁️ Lecture seule</span>' : ''}
                 </div>
                 <div style="font-size:10px; color:var(--text-dim); margin-bottom:10px;">
                     L'accusé de réception physique confirme le dépôt officiel du dossier technique relié au Ministère.
@@ -1150,24 +1274,33 @@ function renderMIPHTabHtml(app) {
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px;">
                     <div>
                         <label style="display:block; color:var(--text-dim); margin-bottom:2px;">N° Récépissé BO :</label>
-                        <input type="text" id="miph-receipt-ref" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.miph_receipt_ref || '')}" placeholder="REC-MIPH-BO-2026-XXXX">
+                        <input type="text" id="miph-receipt-ref" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.miph_receipt_ref || '')}" placeholder="REC-MIPH-BO-2026-XXXX" ${roAttr}>
                     </div>
                     <div>
                         <label style="display:block; color:var(--text-dim); margin-bottom:2px;">Date de Dépôt :</label>
-                        <input type="date" id="miph-receipt-date" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.miph_receipt_date || '')}">
+                        <input type="date" id="miph-receipt-date" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.miph_receipt_date || '')}" ${roAttr}>
                     </div>
                 </div>
                 <div style="margin-top:10px; text-align:right;">
-                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-size:11px; padding:5px 12px; font-weight:700;" onclick="saveCorporateReceipt('${app.id}')">
-                        💾 Enregistrer Récépissé BO
-                    </button>
+                    ${canEdit ? `
+                        <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-size:11px; padding:5px 12px; font-weight:700;" onclick="saveCorporateReceipt('${app.id}')">
+                            💾 Enregistrer Récépissé BO
+                        </button>
+                    ` : `
+                        <button class="btn-pill" disabled style="background:var(--bg-input); color:var(--text-dim); border:1px solid var(--border-color); opacity:0.6; cursor:not-allowed; font-size:11px; padding:5px 12px;" title="Privilège REF_EDIT requis pour enregistrer">
+                            🔒 Enregistrement non autorisé
+                        </button>
+                    `}
                 </div>
             </div>
 
             <!-- Décision Ministérielle & Arrêté d'Agrément -->
             <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
-                <div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:8px;">
-                    📜 Décision Ministérielle &amp; Arrêté d'Agrément (Décret 21-82)
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-size:12px; font-weight:700; color:var(--text-main);">
+                        📜 Décision Ministérielle &amp; Arrêté d'Agrément (Décret 21-82)
+                    </div>
+                    ${!canEdit ? '<span style="font-size:10px; color:var(--text-muted); background:var(--bg-input); padding:2px 8px; border-radius:12px; border:1px solid var(--border-color);">👁️ Lecture seule</span>' : ''}
                 </div>
                 <div style="font-size:10px; color:var(--text-dim); margin-bottom:10px;">
                     À l'issue de l'inspection de conformité, enregistrez l'arrêté ministériel pour activer l'agrément et inscrire le titre dans le registre avec compte à rebours quinquennal.
@@ -1175,17 +1308,23 @@ function renderMIPHTabHtml(app) {
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px;">
                     <div>
                         <label style="display:block; color:var(--text-dim); margin-bottom:2px;">N° Arrêté d'Agrément MIPH :</label>
-                        <input type="text" id="miph-decision-ref" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.decision_ref || '')}" placeholder="ARR-MIPH-AGR-2026-XXX">
+                        <input type="text" id="miph-decision-ref" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.decision_ref || '')}" placeholder="ARR-MIPH-AGR-2026-XXX" ${roAttr}>
                     </div>
                     <div>
                         <label style="display:block; color:var(--text-dim); margin-bottom:2px;">Date d'Octroi Ministériel :</label>
-                        <input type="date" id="miph-decision-date" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.decision_date || '')}">
+                        <input type="date" id="miph-decision-date" class="input-base" style="width:100%; font-size:11px; padding:6px;" value="${escapeHtml(app.decision_date || '')}" ${roAttr}>
                     </div>
                 </div>
                 <div style="margin-top:10px; text-align:right;">
-                    <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-size:11px; padding:5px 12px; font-weight:700;" onclick="saveCorporateLicense('${app.id}')">
-                        🏆 Délivrer &amp; Inscrire l'Agrément au Registre
-                    </button>
+                    ${canEdit ? `
+                        <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-size:11px; padding:5px 12px; font-weight:700;" onclick="saveCorporateLicense('${app.id}')">
+                            🏆 Délivrer &amp; Inscrire l'Agrément au Registre
+                        </button>
+                    ` : `
+                        <button class="btn-pill" disabled style="background:var(--bg-input); color:var(--text-dim); border:1px solid var(--border-color); opacity:0.6; cursor:not-allowed; font-size:11px; padding:5px 12px;" title="Privilège REF_EDIT requis pour délivrer l'agrément">
+                            🔒 Octroi non autorisé
+                        </button>
+                    `}
                 </div>
             </div>
         </div>
@@ -1198,6 +1337,10 @@ function renderMIPHTabHtml(app) {
 
 // A. Sauvegarde du formulaire e-Form
 async function saveCorporateEForm(appId) {
+    if (!canEditCorporate()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis (REF_EDIT) pour modifier les déclarations e-Form.", "🔒", "Fermer");
+        return;
+    }
     const payload = {
         title: document.getElementById("ef-corp-name") ? document.getElementById("ef-corp-name").value : "",
         form_data: {
@@ -1232,6 +1375,10 @@ async function saveCorporateEForm(appId) {
 
 // B. Enregistrement Récépissé Bureau d'Ordre
 async function saveCorporateReceipt(appId) {
+    if (!canEditCorporate()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis (REF_EDIT) pour enregistrer le récépissé.", "🔒", "Fermer");
+        return;
+    }
     const ref = document.getElementById("miph-receipt-ref") ? document.getElementById("miph-receipt-ref").value.trim() : "";
     const date = document.getElementById("miph-receipt-date") ? document.getElementById("miph-receipt-date").value : "";
 
@@ -1259,6 +1406,10 @@ async function saveCorporateReceipt(appId) {
 
 // C. Octroi de l'Arrêté Ministériel d'Agrément
 async function saveCorporateLicense(appId) {
+    if (!canEditCorporate()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis (REF_EDIT) pour délivrer l'agrément.", "🔒", "Fermer");
+        return;
+    }
     const ref = document.getElementById("miph-decision-ref") ? document.getElementById("miph-decision-ref").value.trim() : "";
     const date = document.getElementById("miph-decision-date") ? document.getElementById("miph-decision-date").value : "";
 
@@ -1291,6 +1442,10 @@ function downloadTabadolPackage(appId) {
 
 // E. Détachement d'un document GED
 async function detachGEDDocumentFromItem(appId, itemId) {
+    if (!canAttachCorporateDoc()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis pour détacher un document.", "🔒", "Fermer");
+        return;
+    }
     if (!confirm("Détacher cette pièce GED de l'exigence réglementaire ?")) return;
     try {
         const resp = await fetch(`/api/v1/corporate/applications/${appId}/items/${itemId}/detach`, {
@@ -1452,6 +1607,10 @@ async function openTabadolAuditModal(appId) {
 
 // Modal Visa PDT
 function openCorporatePDTSignModal(appId) {
+    if (!canSignCorporatePDT()) {
+        showNotifyModal("Accès Refusé", "Le visa électronique est strictement réservé au Pharmacien Directeur Technique (privilège DOC_APPROVE_PDT).", "⚖️", "Fermer");
+        return;
+    }
     let modal = document.getElementById("modal-corporate-pdt-sign");
     if (!modal) {
         modal = document.createElement("div");
@@ -1490,6 +1649,10 @@ function openCorporatePDTSignModal(appId) {
 }
 
 async function submitCorporatePDTSign(appId) {
+    if (!canSignCorporatePDT()) {
+        showNotifyModal("Accès Refusé", "Le visa électronique est strictement réservé au Pharmacien Directeur Technique (privilège DOC_APPROVE_PDT).", "⚖️", "Fermer");
+        return;
+    }
     const stmt = document.getElementById("corp-pdt-statement") ? document.getElementById("corp-pdt-statement").value : "";
     try {
         const resp = await fetch(`/api/v1/corporate/applications/${appId}/pdt-sign`, {
@@ -1512,6 +1675,10 @@ async function submitCorporatePDTSign(appId) {
 
 // Modal Télésoumission Tabadol
 function openTabadolSubmitModal(appId) {
+    if (!canEditCorporate()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis (REF_EDIT) pour télésoumettre sur Tabadol.", "🔒", "Fermer");
+        return;
+    }
     let modal = document.getElementById("modal-corporate-tabadol-submit");
     if (!modal) {
         modal = document.createElement("div");
@@ -1557,6 +1724,10 @@ function openTabadolSubmitModal(appId) {
 }
 
 async function submitCorporateTabadol(appId) {
+    if (!canEditCorporate()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis (REF_EDIT) pour télésoumettre sur Tabadol.", "🔒", "Fermer");
+        return;
+    }
     const ref = document.getElementById("corp-tbd-ref") ? document.getElementById("corp-tbd-ref").value.trim() : "";
     const notes = document.getElementById("corp-tbd-notes") ? document.getElementById("corp-tbd-notes").value : "";
 
@@ -1587,14 +1758,26 @@ let corporateSelectedUploadFile = null;
 let corporateAllGEDDocs = [];
 
 function openCorporateUploadModal(appId, itemId) {
+    if (!canAttachCorporateDoc()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis pour téléverser ou rattacher des documents.", "🔒", "Fermer");
+        return;
+    }
     openCorporateDocModal(appId, itemId, 'upload');
 }
 
 function openGEDPickerForCorporateItem(appId, itemId) {
+    if (!canAttachCorporateDoc()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis pour téléverser ou rattacher des documents.", "🔒", "Fermer");
+        return;
+    }
     openCorporateDocModal(appId, itemId, 'pick');
 }
 
 async function openCorporateDocModal(appId, itemId, activeTab = 'upload') {
+    if (!canAttachCorporateDoc()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis pour téléverser ou rattacher des documents.", "🔒", "Fermer");
+        return;
+    }
     selectedCorporateAppID = appId;
     let modal = document.getElementById("modal-corporate-ged-picker");
     if (!modal) {
@@ -1973,6 +2156,10 @@ function filterCorporateGEDPicker(query) {
 }
 
 async function submitCorporateDirectUpload(appId) {
+    if (!canAttachCorporateDoc()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis pour téléverser des documents.", "🔒", "Fermer");
+        return;
+    }
     const fileInput = document.getElementById('corp-file-input');
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
         showNotifyModal("Fichier manquant", "Veuillez sélectionner un fichier à téléverser.", "⚠️", "Fermer");
@@ -2060,6 +2247,10 @@ async function submitCorporateDirectUpload(appId) {
 }
 
 async function attachGEDToCorporateItem(appId, itemId, gedDocId) {
+    if (!canAttachCorporateDoc()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis pour rattacher des documents.", "🔒", "Fermer");
+        return;
+    }
     if (!itemId) {
         itemId = getCorporateCurrentTargetItemId();
     }
@@ -2087,6 +2278,10 @@ async function attachGEDToCorporateItem(appId, itemId, gedDocId) {
 
 // Modal Nouvelle Demande d'Agrément
 async function openNewCorporateAppModal() {
+    if (!canEditCorporate()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis (REF_EDIT) pour créer une demande d'agrément.", "🔒", "Fermer");
+        return;
+    }
     let modal = document.getElementById("modal-corporate-create");
     if (!modal) {
         modal = document.createElement("div");
@@ -2169,6 +2364,10 @@ async function openNewCorporateAppModal() {
 }
 
 async function submitNewCorporateApp() {
+    if (!canEditCorporate()) {
+        showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis (REF_EDIT) pour créer une demande d'agrément.", "🔒", "Fermer");
+        return;
+    }
     const cat = document.getElementById("new-corp-category").value;
     const nature = document.getElementById("new-corp-nature").value;
     const title = document.getElementById("new-corp-title").value.trim();
