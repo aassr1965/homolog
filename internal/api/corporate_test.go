@@ -139,7 +139,7 @@ func TestCorporateAPI_FullWorkflow(t *testing.T) {
 	}
 
 	var resp struct {
-		Success     bool                       `json:"success"`
+		Success     bool                        `json:"success"`
 		Application domain.CorporateApplication `json:"application"`
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {

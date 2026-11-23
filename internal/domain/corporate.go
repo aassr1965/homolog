@@ -50,32 +50,32 @@ const (
 
 // CorporateApplication représente une demande d'agrément ministériel ou décision d'exercice
 type CorporateApplication struct {
-	ID                   uuid.UUID              `json:"id"`
-	OrganizationID       uuid.UUID              `json:"organization_id"`
-	EstablishmentID      *uuid.UUID             `json:"establishment_id,omitempty"`
-	Category             EstablishmentCategory  `json:"category"`
-	Nature               ApplicationNature      `json:"nature"`
-	ApplicationNumber    string                 `json:"application_number"`
-	InternalReference    string                 `json:"internal_reference,omitempty"`
-	Title                string                 `json:"title"`
-	Status               ApplicationStatus      `json:"status"`
-	FormType             string                 `json:"form_type"`
-	FormData             map[string]interface{} `json:"form_data"`
-	CompletenessPercent  float64                `json:"completeness_percent"`
-	PDTSignedBy          *uuid.UUID             `json:"pdt_signed_by,omitempty"`
-	PDTSignedAt          *time.Time             `json:"pdt_signed_at,omitempty"`
-	PDTSignatureSeal     string                 `json:"pdt_signature_seal,omitempty"`
-	TabadolSubmissionRef string                 `json:"tabadol_submission_ref,omitempty"`
-	TabadolSubmittedAt   *time.Time             `json:"tabadol_submitted_at,omitempty"`
-	TabadolSubmissionNotes string               `json:"tabadol_submission_notes,omitempty"`
-	MIPHReceiptRef       string                 `json:"miph_receipt_ref,omitempty"`
-	MIPHReceiptDate      *string                `json:"miph_receipt_date,omitempty"`
-	DecisionRef          string                 `json:"decision_ref,omitempty"`
-	DecisionDate         *string                `json:"decision_date,omitempty"`
-	LicenseExpiryDate    *string                `json:"license_expiry_date,omitempty"`
-	CreatedBy            *uuid.UUID             `json:"created_by,omitempty"`
-	CreatedAt            time.Time              `json:"created_at"`
-	UpdatedAt            time.Time              `json:"updated_at"`
+	ID                     uuid.UUID              `json:"id"`
+	OrganizationID         uuid.UUID              `json:"organization_id"`
+	EstablishmentID        *uuid.UUID             `json:"establishment_id,omitempty"`
+	Category               EstablishmentCategory  `json:"category"`
+	Nature                 ApplicationNature      `json:"nature"`
+	ApplicationNumber      string                 `json:"application_number"`
+	InternalReference      string                 `json:"internal_reference,omitempty"`
+	Title                  string                 `json:"title"`
+	Status                 ApplicationStatus      `json:"status"`
+	FormType               string                 `json:"form_type"`
+	FormData               map[string]interface{} `json:"form_data"`
+	CompletenessPercent    float64                `json:"completeness_percent"`
+	PDTSignedBy            *uuid.UUID             `json:"pdt_signed_by,omitempty"`
+	PDTSignedAt            *time.Time             `json:"pdt_signed_at,omitempty"`
+	PDTSignatureSeal       string                 `json:"pdt_signature_seal,omitempty"`
+	TabadolSubmissionRef   string                 `json:"tabadol_submission_ref,omitempty"`
+	TabadolSubmittedAt     *time.Time             `json:"tabadol_submitted_at,omitempty"`
+	TabadolSubmissionNotes string                 `json:"tabadol_submission_notes,omitempty"`
+	MIPHReceiptRef         string                 `json:"miph_receipt_ref,omitempty"`
+	MIPHReceiptDate        *string                `json:"miph_receipt_date,omitempty"`
+	DecisionRef            string                 `json:"decision_ref,omitempty"`
+	DecisionDate           *string                `json:"decision_date,omitempty"`
+	LicenseExpiryDate      *string                `json:"license_expiry_date,omitempty"`
+	CreatedBy              *uuid.UUID             `json:"created_by,omitempty"`
+	CreatedAt              time.Time              `json:"created_at"`
+	UpdatedAt              time.Time              `json:"updated_at"`
 
 	// Champs enrichis
 	EstablishmentName string                   `json:"establishment_name,omitempty"`
