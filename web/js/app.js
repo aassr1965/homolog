@@ -337,6 +337,13 @@
         var currentRefSection = 'establishments';
 
         function switchDomainModule(domain) {
+            // Contrôle d'expiration de session réglementaire (BPF 15 min / 21 CFR Part 11)
+            if (typeof isSessionTimedOut === 'function' && isSessionTimedOut()) {
+                if (typeof showSessionTimeoutModal === 'function') {
+                    showSessionTimeoutModal('navigation');
+                }
+                return;
+            }
             // Contrôle d'habilitation préventif côté UI (CDC 7.2.2)
             if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE') && !hasPermission('DOC_APPROVE_PDT')) {
                 showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas des permissions requises (<code>USER_MANAGE</code> ou <code>DOC_APPROVE_PDT</code>) pour accéder aux Paramètres et à la Console d'Administration.", "🚫", "Fermer");
@@ -1216,6 +1223,13 @@
 
 
         function goToLocation(targetKey) {
+            // Contrôle d'expiration de session réglementaire (BPF 15 min / 21 CFR Part 11)
+            if (typeof isSessionTimedOut === 'function' && isSessionTimedOut()) {
+                if (typeof showSessionTimeoutModal === 'function') {
+                    showSessionTimeoutModal('navigation');
+                }
+                return;
+            }
             if (targetKey && targetKey.startsWith("ctd-para-")) {
                 const modNum = parseInt(targetKey.replace("ctd-para-", ""), 10) || 1;
                 if (typeof openDossierModule === 'function') {

@@ -763,6 +763,52 @@
         </div>
     </div>
 
+    <!-- Modal Avertissement Déconnexion Automatique Réglementaire (BPF / 21 CFR Part 11) -->
+    <div class="modal-overlay" id="modal-session-timeout" style="z-index: 999999; display: none;">
+        <div class="modal" style="max-width: 530px; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);">
+            <div class="modal-header" style="background: rgba(239, 68, 68, 0.08); border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px;">⏱️</span>
+                    <span style="font-weight:700; color:var(--text-main); font-size:13px;" id="session-timeout-modal-title">Session Verrouillée — Délai Réglementaire BPF</span>
+                </div>
+                <span style="font-size:9.5px; background:rgba(239, 68, 68, 0.15); color:var(--accent-red); padding:2px 8px; border-radius:10px; font-weight:700;">21 CFR PART 11</span>
+            </div>
+            <div class="modal-body" style="font-size:12px; line-height:1.5; padding: 18px 20px;">
+                <div style="background:rgba(239, 68, 68, 0.06); border:1px solid rgba(239, 68, 68, 0.25); border-radius:8px; padding:12px 14px; margin-bottom:14px;">
+                    <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:var(--accent-red); font-size:12px; margin-bottom:6px;">
+                        <span>⚠️</span>
+                        <span id="session-timeout-headline">Déconnexion automatique après inactivité</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-main); line-height:1.5;" id="session-timeout-detail">
+                        Conformément aux normes des <strong>Bonnes Pratiques de Fabrication (BPF)</strong>, au <strong>Décret exécutif n° 21-82</strong> et aux exigences <strong>FDA 21 CFR Part 11 / ALCOA+</strong>, votre session a été automatiquement verrouillée après <strong>15 minutes d'inactivité</strong> afin de garantir la stricte confidentialité et l'intégrité des dossiers pharmaceutiques.
+                    </div>
+                </div>
+                <div style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; margin-bottom:14px; font-size:11px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:var(--text-dim);">Collaborateur :</span>
+                        <strong style="color:var(--text-main);" id="session-timeout-user-name">-</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:var(--text-dim);">Compte Nominatif :</span>
+                        <span style="font-family:var(--font-mono); color:var(--text-main);" id="session-timeout-user-email">-</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="color:var(--text-dim);">Motif Réglementaire :</span>
+                        <span style="color:var(--accent-amber); font-weight:600;">Dépassement du délai de carence (15 min BPF)</span>
+                    </div>
+                </div>
+                <div style="font-size:11px; color:var(--text-dim); line-height:1.4;">
+                    Pour continuer vos travaux réglementaires, veuillez cliquer ci-dessous pour retourner à l'écran d'authentification et vous reconnecter avec vos identifiants sécurisés.
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:12px 20px; background:var(--bg-card); border-top:1px solid var(--border-color); display:flex; justify-content:flex-end;">
+                <button class="btn-pill" id="btn-session-timeout-redirect" style="background:var(--accent-blue); color:white; border:none; padding:8px 18px; font-size:12px; font-weight:700; border-radius:6px; cursor:pointer;" onclick="closeSessionTimeoutModalAndRedirect()">
+                    🔐 Accéder à l'Écran d'Authentification ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Nouvel Établissement Pharmaceutique -->
     <div class="modal-overlay" id="modal-new-est" onclick="if(event.target === this) closeModal('modal-new-est')">
         <div class="modal modal-lg">
@@ -4907,8 +4953,8 @@
     </div>
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.18.2"></script>
-    <script src="/js/auth.js?v=2026.11.18.2"></script>
+    <script src="/js/app.js?v=2026.11.23.3"></script>
+    <script src="/js/auth.js?v=2026.11.23.3"></script>
     <script src="/js/admin.js?v=2026.11.20.1"></script>
     <script src="/js/system_admin.js?v=2026.11.17.5"></script>
     <script src="/js/referential.js?v=2026.11.17.5"></script>

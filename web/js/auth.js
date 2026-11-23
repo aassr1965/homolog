@@ -28,6 +28,110 @@ const mockAuditTrail = [
         window.getCurrentUser = function() { return currentUser; };
         window.currentUser = null;
 
+        // ============================================================================
+        // DÉLAI RÉGLEMENTAIRE D'INACTIVITÉ (BPF / 21 CFR PART 11 - 15 MINUTES)
+        // ============================================================================
+        const REGULATORY_IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes BPF
+        let isSessionExpiredState = false;
+        let userActivityDebounceTimer = null;
+
+        function isSessionTimedOut() {
+            if (isSessionExpiredState) return true;
+            if (!currentUser && localStorage.getItem('sanad_auth_active') !== 'true') return false;
+            const lastAct = parseInt(localStorage.getItem('sanad_last_activity') || '0', 10);
+            if (lastAct > 0 && (Date.now() - lastAct >= REGULATORY_IDLE_TIMEOUT_MS)) {
+                isSessionExpiredState = true;
+                return true;
+            }
+            return false;
+        }
+        window.isSessionTimedOut = isSessionTimedOut;
+
+        function updateLastActivityTimestamp() {
+            const now = Date.now();
+            localStorage.setItem('sanad_last_activity', now.toString());
+        }
+
+        function initActivityListeners() {
+            const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+            activityEvents.forEach(evt => {
+                window.addEventListener(evt, () => {
+                    if (!currentUser) return;
+                    const lastAct = parseInt(localStorage.getItem('sanad_last_activity') || '0', 10);
+                    const now = Date.now();
+
+                    // Si le délai réglementaire a été dépassé
+                    if (lastAct > 0 && (now - lastAct >= REGULATORY_IDLE_TIMEOUT_MS)) {
+                        isSessionExpiredState = true;
+                        showSessionTimeoutModal('navigation');
+                        return;
+                    }
+
+                    // Rafraîchir le timestamp d'activité locale (temporisé à 5s)
+                    if (!userActivityDebounceTimer) {
+                        userActivityDebounceTimer = setTimeout(() => {
+                            updateLastActivityTimestamp();
+                            userActivityDebounceTimer = null;
+                        }, 5000);
+                    }
+                }, { passive: true });
+            });
+        }
+
+        // Intercepteur global de navigation / interaction au clic (Capture phase)
+        document.addEventListener('click', function(e) {
+            const screenApp = document.getElementById('screen-app');
+            if (screenApp && screenApp.style.display !== 'none') {
+                if (isSessionTimedOut()) {
+                    const timeoutModal = document.getElementById('modal-session-timeout');
+                    if (timeoutModal && timeoutModal.contains(e.target)) {
+                        return; // Laisser passer le clic sur le bouton de redirection
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showSessionTimeoutModal('navigation');
+                }
+            }
+        }, true);
+
+        // Intercepteur global des appels API pour capturer les 401 SESSION_IDLE / SESSION_EXPIRED
+        (function setupFetchInterceptor() {
+            const originalFetch = window.fetch;
+            window.fetch = async function(...args) {
+                const response = await originalFetch.apply(this, args);
+                if (response.status === 401) {
+                    const url = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+                    if (!url.includes('/api/v1/auth/login') && !url.includes('/api/v1/setup/')) {
+                        let isTimeout = false;
+                        let errReason = '';
+                        try {
+                            const cloned = response.clone();
+                            const data = await cloned.json();
+                            if (data.code === 'SESSION_IDLE' || data.code === 'SESSION_EXPIRED' || (data.error && data.error.includes('15 min'))) {
+                                isTimeout = true;
+                                errReason = data.error;
+                            }
+                        } catch (_) {}
+
+                        const wasActive = localStorage.getItem('sanad_auth_active') === 'true';
+                        if (isTimeout || wasActive) {
+                            showSessionTimeoutModal('api_401', errReason);
+                        }
+                    }
+                }
+                return response;
+            };
+        })();
+
+        // Vérification périodique d'inactivité
+        setInterval(() => {
+            if (currentUser && isSessionTimedOut()) {
+                isSessionExpiredState = true;
+            }
+        }, 10000);
+
+        initActivityListeners();
+
         // Sas d'Accès Partenaire Confidentiel (Private Preview Gate)
         function showGateView(data) {
             const screenGate = document.getElementById("screen-gate");
@@ -176,9 +280,37 @@ const mockAuditTrail = [
                         const pitchBtn = document.getElementById("btn-pitch-commercial");
                         if (pitchBtn) pitchBtn.style.display = "none";
                     }
+                    localStorage.setItem('sanad_auth_active', 'true');
+                    localStorage.setItem('sanad_last_activity', Date.now().toString());
+                    localStorage.removeItem('sanad_voluntary_logout');
+                    if (currentUser && currentUser.email) {
+                        localStorage.setItem('sanad_user_email', currentUser.email);
+                        localStorage.setItem('sanad_user_name', `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim());
+                    }
+                    isSessionExpiredState = false;
                     showAppView(currentUser, currentOrg);
                 } else {
-                    showLoginView();
+                    const wasActive = localStorage.getItem('sanad_auth_active') === 'true';
+                    const voluntary = localStorage.getItem('sanad_voluntary_logout') === 'true';
+                    let isTimeout = false;
+                    let timeoutMsg = '';
+                    if (res.status === 401) {
+                        try {
+                            const errData = await res.json();
+                            if (errData.code === 'SESSION_IDLE' || errData.code === 'SESSION_EXPIRED' || (errData.error && errData.error.includes('15 min'))) {
+                                isTimeout = true;
+                                timeoutMsg = errData.error;
+                            }
+                        } catch (_) {}
+                    }
+                    const lastAct = parseInt(localStorage.getItem('sanad_last_activity') || '0', 10);
+                    const now = Date.now();
+                    if (wasActive && !voluntary && (isTimeout || (lastAct > 0 && (now - lastAct >= REGULATORY_IDLE_TIMEOUT_MS)))) {
+                        showLoginView();
+                        showSessionTimeoutModal('refresh', timeoutMsg);
+                    } else {
+                        showLoginView();
+                    }
                 }
             } catch (e) {
                 showLoginView();
@@ -294,15 +426,83 @@ const mockAuditTrail = [
             }
         }
 
+        function showSessionTimeoutModal(triggerType, customMessage) {
+            isSessionExpiredState = true;
+            let modal = document.getElementById("modal-session-timeout");
+            if (!modal) return;
+
+            const savedName = (currentUser ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() : '') || localStorage.getItem("sanad_user_name") || "Collaborateur Habilité";
+            const savedEmail = (currentUser && currentUser.email) || localStorage.getItem("sanad_user_email") || "Session Nominative BPF";
+
+            const nameEl = document.getElementById("session-timeout-user-name");
+            const emailEl = document.getElementById("session-timeout-user-email");
+            if (nameEl) nameEl.innerText = savedName;
+            if (emailEl) emailEl.innerText = savedEmail;
+
+            const detailEl = document.getElementById("session-timeout-detail");
+            if (detailEl) {
+                if (customMessage) {
+                    detailEl.innerHTML = `Conformément aux normes des <strong>Bonnes Pratiques de Fabrication (BPF)</strong>, au <strong>Décret exécutif n° 21-82</strong> et aux exigences <strong>FDA 21 CFR Part 11 / ALCOA+</strong>, votre session a été automatiquement verrouillée.<br><br><strong>Motif Réglementaire :</strong> ${escapeHtml(customMessage)}`;
+                } else {
+                    detailEl.innerHTML = `Conformément aux normes des <strong>Bonnes Pratiques de Fabrication (BPF)</strong>, au <strong>Décret exécutif n° 21-82</strong> et aux exigences <strong>FDA 21 CFR Part 11 / ALCOA+</strong>, votre session a été automatiquement verrouillée après <strong>15 minutes d'inactivité</strong> afin de garantir la stricte confidentialité et l'intégrité des dossiers pharmaceutiques.`;
+                }
+            }
+
+            modal.classList.add("open");
+            modal.style.display = "flex";
+        }
+        window.showSessionTimeoutModal = showSessionTimeoutModal;
+
+        function closeSessionTimeoutModalAndRedirect() {
+            const modal = document.getElementById("modal-session-timeout");
+            if (modal) {
+                modal.classList.remove("open");
+                modal.style.display = "none";
+            }
+
+            const savedEmail = (currentUser && currentUser.email) || localStorage.getItem("sanad_user_email");
+
+            currentUser = null;
+            currentOrg = null;
+            isSessionExpiredState = false;
+            localStorage.removeItem("sanad_auth_active");
+            localStorage.removeItem("sanad_last_activity");
+
+            showLoginView();
+
+            const errBox = document.getElementById("login-error");
+            if (errBox) {
+                errBox.innerText = isArabic ?
+                    "انتهت صلاحية الجلسة لعدم النشاط (15 دقيقة BPF). يرجى إعادة تسجيل الدخول." :
+                    "Session verrouillée après 15 minutes d'inactivité (Règle BPF / 21 CFR Part 11). Veuillez vous reconnecter.";
+                errBox.style.display = "block";
+            }
+
+            const emailInput = document.getElementById("login-email");
+            const pwdInput = document.getElementById("login-password");
+            if (savedEmail && emailInput) {
+                emailInput.value = savedEmail;
+                if (pwdInput) {
+                    pwdInput.value = "";
+                    setTimeout(() => pwdInput.focus(), 150);
+                }
+            } else if (emailInput) {
+                setTimeout(() => emailInput.focus(), 150);
+            }
+        }
+        window.closeSessionTimeoutModalAndRedirect = closeSessionTimeoutModalAndRedirect;
+
+        // Outil de simulation pour tester immédiatement la déconnexion automatique réglementaire
+        window.testSessionTimeout = function() {
+            localStorage.setItem('sanad_last_activity', (Date.now() - 16 * 60 * 1000).toString());
+            isSessionExpiredState = true;
+            showSessionTimeoutModal('test');
+        };
+
         function handleAuthExpired(message) {
             currentUser = null;
             currentOrg = null;
-            showLoginView();
-            const errBox = document.getElementById("login-error");
-            if (errBox) {
-                errBox.innerText = message || (isArabic ? "انتهت صلاحية الجلسة لعدم النشاط (15 دقيقة BPF). يرجى إعادة تسجيل الدخول." : "Session verrouillée après 15 minutes d'inactivité (Règle BPF / 21 CFR Part 11). Veuillez vous reconnecter.");
-                errBox.style.display = "block";
-            }
+            showSessionTimeoutModal('inactivity', message);
         }
 
         // Helper functions pour le contrôle d'accès RBAC
@@ -389,6 +589,14 @@ const mockAuditTrail = [
                 if (res.ok) {
                     currentUser = data.user;
                     currentOrg = data.organization;
+                    localStorage.setItem('sanad_auth_active', 'true');
+                    localStorage.setItem('sanad_last_activity', Date.now().toString());
+                    localStorage.removeItem('sanad_voluntary_logout');
+                    if (data.user && data.user.email) {
+                        localStorage.setItem('sanad_user_email', data.user.email);
+                        localStorage.setItem('sanad_user_name', `${data.user.first_name || ''} ${data.user.last_name || ''}`.trim());
+                    }
+                    isSessionExpiredState = false;
                     showAppView(currentUser, currentOrg);
                     
                     showNotifyModal(
@@ -648,6 +856,14 @@ const mockAuditTrail = [
                         const pitchBtn = document.getElementById("btn-pitch-commercial");
                         if (pitchBtn) pitchBtn.style.display = "none";
                     }
+                    localStorage.setItem('sanad_auth_active', 'true');
+                    localStorage.setItem('sanad_last_activity', Date.now().toString());
+                    localStorage.removeItem('sanad_voluntary_logout');
+                    if (data.user && data.user.email) {
+                        localStorage.setItem('sanad_user_email', data.user.email);
+                        localStorage.setItem('sanad_user_name', `${data.user.first_name || ''} ${data.user.last_name || ''}`.trim());
+                    }
+                    isSessionExpiredState = false;
                     showAppView(data.user, data.organization);
                     btn.disabled = false;
                     btn.innerText = "Se connecter au cockpit ➔";
@@ -685,6 +901,10 @@ const mockAuditTrail = [
             } catch (e) {}
             currentUser = null;
             currentOrg = null;
+            isSessionExpiredState = false;
+            localStorage.removeItem('sanad_auth_active');
+            localStorage.removeItem('sanad_last_activity');
+            localStorage.setItem('sanad_voluntary_logout', 'true');
             showLoginView();
         }
 
