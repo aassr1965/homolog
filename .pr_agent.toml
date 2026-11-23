@@ -1,7 +1,7 @@
 [config]
-max_model_tokens = 200000
-custom_model_max_tokens = 200000
-patch_extra_lines = 2
+max_model_tokens = 32000
+custom_model_max_tokens = 32000
+patch_extra_lines = 1
 ai_timeout = 360
 
 [ignore]
@@ -14,7 +14,7 @@ glob = [
 
 [pr_reviewer]
 enable_review_labels_security = true
-num_code_suggestions = 4
+num_code_suggestions = 2
 
 [pr_description]
 publish_labels = true
