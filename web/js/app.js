@@ -529,11 +529,11 @@
                 `;
             } else if (domain === 'corporate') {
                 tb.innerHTML = `
-                    <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕ Nouvelle Demande</button>
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕ Nouvelle Demande</button>
                     <button class="btn-table-icon" onclick="selectCorporateFilter('ALL')" title="Toutes les Demandes MIPH">📁</button>
                     <button class="btn-table-icon" onclick="selectCorporateFilter('LICENSES')" title="Registre des Agréments Ministériels Actifs">📜</button>
                     <button class="btn-table-icon" onclick="renderCorporateView()" title="Actualiser la liste">🔄</button>
-                    <button class="btn-table-icon" data-perm="AUDIT_VIEW" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+                    <button class="btn-table-icon" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
                     <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
                         Passerelle Tabadol : <strong style="color:var(--accent-emerald);">Connectée &amp; Sécurisée</strong>

@@ -47,6 +47,11 @@ function renderCorporateTree() {
     if (!container) return;
 
     container.innerHTML = `
+        <div style="padding: 10px 10px 6px;">
+            <button class="btn-pill" style="width:100%; background:var(--accent-blue); color:white; border:none; justify-content:center; font-weight:700; height:32px; border-radius:6px; cursor:pointer;" onclick="openNewCorporateAppModal()" title="Initier une nouvelle demande d'agrément d'établissement pharmaceutique (Décret 21-82)">
+                ➕ Nouvelle Demande MIPH
+            </button>
+        </div>
         <div class="tree-node ${currentCorporateFilter === 'ALL' ? 'selected' : ''}" onclick="selectCorporateFilter('ALL')">
             <span class="chevron">📁</span>
             <span>Toutes les Demandes MIPH</span>
@@ -101,8 +106,25 @@ function selectCorporateFilter(filter) {
 // 3. VUE PRINCIPALE CORPORATE (TABLEAU APPLICATIONS OU REGISTRE AGRÉMENTS)
 // ============================================================================
 
+function renderCorporateToolbar() {
+    const tb = document.getElementById("main-toolbar");
+    if (!tb) return;
+    tb.innerHTML = `
+        <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700; cursor:pointer;" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕ Nouvelle Demande</button>
+        <button class="btn-table-icon" onclick="selectCorporateFilter('ALL')" title="Toutes les Demandes MIPH">📁</button>
+        <button class="btn-table-icon" onclick="selectCorporateFilter('LICENSES')" title="Registre des Agréments Ministériels Actifs">📜</button>
+        <button class="btn-table-icon" onclick="renderCorporateView()" title="Actualiser la liste">🔄</button>
+        <button class="btn-table-icon" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+        <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
+        <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
+            Passerelle Tabadol : <strong style="color:var(--accent-emerald);">Connectée &amp; Sécurisée</strong>
+        </div>
+    `;
+}
+
 async function renderCorporateView(filter) {
     if (filter) currentCorporateFilter = filter;
+    renderCorporateToolbar();
 
     const thead = document.getElementById("table-head");
     const tbody = document.getElementById("doc-tbody");
@@ -313,6 +335,7 @@ async function viewCorporateChecklist(appId) {
         if (tb) {
             tb.innerHTML = `
                 <button class="btn-table-icon" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">←</button>
+                <button class="btn-table-icon" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕</button>
                 <button class="btn-table-icon btn-table-icon-primary" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>
                 <button class="btn-table-icon" onclick="openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
                 <button class="btn-table-icon" onclick="downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
@@ -424,6 +447,7 @@ async function viewCorporateChecklist(appId) {
 // ============================================================================
 
 async function renderCorporateLicensesTable() {
+    renderCorporateToolbar();
     const thead = document.getElementById("table-head");
     const tbody = document.getElementById("doc-tbody");
     if (!tbody || !thead) return;
