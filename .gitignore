@@ -17,6 +17,9 @@ cookies*.txt
 .env
 .env.local
 
+# Documentation confidentielle et stratégique
+docs/
+
 # Fichiers système et éditeurs
 .DS_Store
 Thumbs.db
