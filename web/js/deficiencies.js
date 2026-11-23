@@ -23,6 +23,7 @@ var currentDeficiencyFilter = window.currentDeficiencyFilter || 'all';
 
 // Chargement et affichage du tableau de bord global des compléments
 async function loadDeficienciesDashboard(filter) {
+    if (typeof currentDomain !== 'undefined' && currentDomain !== 'deficiencies') return;
     if (filter) currentDeficiencyFilter = filter;
 
     const bcMod = document.getElementById("bc-mod");
@@ -52,6 +53,7 @@ async function loadDeficienciesDashboard(filter) {
             throw new Error(`Erreur HTTP ${resp.status}`);
         }
         const data = await resp.json();
+        if (typeof currentDomain !== 'undefined' && currentDomain !== 'deficiencies') return;
         activeDeficienciesDashboard = data;
         renderDeficienciesDashboardView(data);
         updateDeficiencyBadgeCount(data);
@@ -110,6 +112,7 @@ function getUrgencyBadgeHTML(days, urgencyBadge) {
 
 // Rendu HTML du Cockpit Principal Studio de Compléments ANPP
 function renderDeficienciesDashboardView(data) {
+    if (typeof currentDomain !== 'undefined' && currentDomain !== 'deficiencies') return;
     const tableHead = document.getElementById("table-head");
     const centerView = document.querySelector(".table-container") || document.getElementById("table-container");
     if (!centerView) return;

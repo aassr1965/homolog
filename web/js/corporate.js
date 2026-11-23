@@ -170,6 +170,7 @@ function renderCorporateToolbar() {
 }
 
 async function renderCorporateView(filter) {
+    if (typeof currentDomain !== 'undefined' && currentDomain !== 'corporate') return;
     if (filter) currentCorporateFilter = filter;
     renderCorporateToolbar();
 
@@ -220,6 +221,7 @@ async function renderCorporateView(filter) {
         const resp = await fetch(url);
         if (!resp.ok) throw new Error("Erreur HTTP " + resp.status);
         const data = await resp.json();
+        if (typeof currentDomain !== 'undefined' && currentDomain !== 'corporate') return;
         currentCorporateApplications = data.applications || [];
         updateCorporateBadgeCount(currentCorporateApplications.length);
 

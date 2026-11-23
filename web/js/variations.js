@@ -52,6 +52,7 @@ async function refreshVariationsBadgeCount() {
 var currentVariationsFilter = window.currentVariationsFilter || 'all';
 
 async function renderVariationsTable(filter) {
+    if (typeof currentDomain !== 'undefined' && currentDomain !== 'variations') return;
     if (filter) currentVariationsFilter = filter;
     if (typeof resetStandardTableContainer === 'function') {
         resetStandardTableContainer();
@@ -97,6 +98,7 @@ async function renderVariationsTable(filter) {
         const resp = await fetch('/api/v1/variations');
         if (!resp.ok) throw new Error("Erreur HTTP " + resp.status);
         const data = await resp.json();
+        if (typeof currentDomain !== 'undefined' && currentDomain !== 'variations') return;
         currentVariationsList = data.variations || [];
         updateVariationsBadgeCount(currentVariationsList.length);
 

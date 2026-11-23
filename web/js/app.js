@@ -336,7 +336,7 @@
         let currentDomain = 'ref';
         var currentRefSection = 'establishments';
 
-        function resetStandardTableContainer() {
+        function resetStandardTableContainer(force = false) {
             const container = document.getElementById("table-container") || document.querySelector('.table-container');
             if (!container) return;
             const table = document.getElementById("doc-table");
@@ -349,9 +349,10 @@
                                  container.querySelector('.deficiencies-dashboard-container') ||
                                  container.querySelector('.table-quick-filter-bar') ||
                                  container.querySelector('.kpi-gauge-bar') ||
+                                 container.querySelector('.tabs-bar') ||
                                  container.children.length !== 1 ||
                                  (container.firstElementChild && container.firstElementChild.id !== 'doc-table');
-            if (!table || !tbody || !thead || hasParasites) {
+            if (force || !table || !tbody || !thead || hasParasites) {
                 container.innerHTML = `
                     <table id="doc-table">
                         <thead id="table-head"></thead>
@@ -419,6 +420,9 @@
             }
 
             currentDomain = domain;
+            if (domain !== 'ctd' && domain !== 'deficiencies') {
+                resetStandardTableContainer(true);
+            }
             
             // Mise à jour de l'état actif dans l'Activity Bar
             document.querySelectorAll('.act-btn').forEach(b => b.classList.remove('active'));

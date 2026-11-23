@@ -155,6 +155,7 @@
         }
 
         async function loadDossiers(procFilter = '') {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             currentDossierFilterProc = procFilter;
             const treeRoot = document.getElementById("tree-root");
             if (treeRoot && currentDomain === 'ctd') {
@@ -166,12 +167,14 @@
 
             try {
                 const res = await fetch(url);
+                if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
                 if (res.status === 401) {
                     handleAuthExpired();
                     return;
                 }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
+                if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
                 let fetchedDossiers = data.dossiers || [];
 
                 if (procFilter === '' || allDossiersCache.length === 0) {
@@ -205,16 +208,18 @@
                         selectedDossierId = currentDossiers[0].id;
                     }
                     expandedDossierTreeIds.add(selectedDossierId);
+                    if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
                     renderDossiersTree();
                     await selectDossier(selectedDossierId);
                 } else {
                     selectedDossierId = null;
                     currentDossierDetail = null;
+                    if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
                     renderDossiersTree();
                     renderEmptyDossierView();
                 }
             } catch (err) {
-                if (treeRoot) {
+                if (treeRoot && currentDomain === 'ctd') {
                     treeRoot.innerHTML = `<div style="padding:20px; text-align:center; color:var(--accent-red); font-size:12px;">Erreur de chargement : ${err.message}</div>`;
                 }
             }
@@ -231,6 +236,7 @@
         }
 
         function renderDossiersTree() {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             const container = document.getElementById("tree-root");
             if (!container) return;
 
@@ -612,7 +618,7 @@
         }
 
         function updateDossierBreadcrumbs(dossier) {
-            if (!dossier) return;
+            if (!dossier || (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd')) return;
             const bcRoot = document.getElementById("bc-root");
             if (bcRoot) bcRoot.innerText = "DOSSIERS_ANPP";
             const bcSec = document.getElementById("bc-sec");
@@ -631,7 +637,7 @@
         }
 
         function updateToolbarKPIs(dossier) {
-            if (!dossier) return;
+            if (!dossier || (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd')) return;
             const kpiEl = document.getElementById("kpi-dossier-completeness");
             if (kpiEl) {
                 kpiEl.innerText = `${dossier.completeness_percent}%`;
@@ -723,6 +729,7 @@
         }
 
         function updateDossierGatingWidget() {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             const el = document.getElementById("dossier-gating-container");
             if (el) {
                 el.innerHTML = currentDossierGatingSummary ? renderGatingSummaryHTML(currentDossierGatingSummary) : '';
@@ -731,6 +738,7 @@
         }
 
         function updateDossierSmartPlanningWidget() {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             const el = document.getElementById("dossier-smart-planning-container");
             if (el) {
                 el.innerHTML = currentDossierSmartPlanning ? renderSmartPlanningBanner(currentDossierSmartPlanning) : '';
@@ -738,6 +746,7 @@
         }
 
         function updateDossierPaymentsWidget(dossierId) {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             const el = document.getElementById("dossier-payments-container");
             if (el) {
                 el.innerHTML = renderPaymentSlipsSectionHTML(dossierId);
@@ -745,6 +754,7 @@
         }
 
         function applyGatingAnnotationsToTable() {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             if (!currentDossierGatingSummary) return;
             const blockedMap = new Set((currentDossierGatingSummary.blocked_items || []).map(b => b.target_item_code));
             const blockingMap = new Map((currentDossierGatingSummary.blocking_prereqs || []).map(p => [p.item_code, p]));
@@ -765,7 +775,7 @@
         }
 
         async function selectDossier(id, forceReload = false) {
-            if (!id) return;
+            if (!id || (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd')) return;
             selectedDossierId = id;
             currentDossierViewModeManual = false;
             expandedDossierTreeIds.add(id);
@@ -780,6 +790,7 @@
             // 1. VÉRIFICATION DU CACHE SESSION POUR RENDU INSTANTANÉ (0 ms)
             const cached = !forceReload ? dossierDetailCache.get(id) : null;
             if (cached) {
+                if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
                 currentDossierDetail = cached.detail;
                 currentDossierGatingSummary = cached.gating;
                 currentDossierSmartPlanning = cached.smartPlanning;
@@ -809,6 +820,8 @@
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 currentDossierDetail = await res.json();
 
+                if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
+
                 // RENDU IMMÉDIAT DU PANNEAU CENTRAL DÈS CET UNIQUE APPEL REÇU !
                 if (tableContainer) {
                     tableContainer.style.opacity = '1';
@@ -824,6 +837,8 @@
                     fetch(`/api/v1/dossiers/${id}/smart-planning`).then(r => r.ok ? r.json() : null),
                     (typeof loadDossierPaymentSlips === 'function' ? loadDossierPaymentSlips(id) : Promise.resolve([]))
                 ]);
+
+                if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
 
                 if (gatingResult.status === 'fulfilled' && gatingResult.value) {
                     currentDossierGatingSummary = gatingResult.value.summary || null;
@@ -901,6 +916,7 @@
         }
 
         function renderDossierCenterView(dossier) {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             const tableContainer = document.querySelector('.table-container');
             if (!tableContainer) return;
 
@@ -2384,6 +2400,7 @@
         }
 
         function renderEmptyDossierView() {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ctd') return;
             const tableContainer = document.querySelector('.table-container');
             if (tableContainer) {
                 tableContainer.innerHTML = `

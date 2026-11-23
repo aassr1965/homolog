@@ -7,6 +7,7 @@ var currentRefSection = window.currentRefSection || 'establishments';
         let selectedRefIndex = 0;
 
         async function loadRefSection(section) {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ref') return;
             currentRefSection = section || currentRefSection || 'establishments';
             resetStandardTableContainer();
 
@@ -39,12 +40,14 @@ var currentRefSection = window.currentRefSection || 'establishments';
 
             try {
                 const res = await fetch(url);
+                if (typeof currentDomain !== 'undefined' && currentDomain !== 'ref') return;
                 if (res.status === 401) {
                     if (typeof handleAuthExpired === 'function') handleAuthExpired();
                     return;
                 }
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
+                if (typeof currentDomain !== 'undefined' && currentDomain !== 'ref') return;
                 currentRefList = (data.items || data.establishments || data.sites || data.medicines || data.devices || []);
                 selectedRefIndex = 0;
                 renderRefTable(currentRefSection, currentRefList);
@@ -58,8 +61,11 @@ var currentRefSection = window.currentRefSection || 'establishments';
         }
 
         function renderRefTable(section, items) {
+            if (typeof currentDomain !== 'undefined' && currentDomain !== 'ref') return;
+            resetStandardTableContainer();
             const thead = document.getElementById("table-head");
             const tbody = document.getElementById("doc-tbody");
+            if (!tbody || !thead) return;
             tbody.innerHTML = "";
 
             if (section === 'establishments') {
