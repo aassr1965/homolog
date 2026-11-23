@@ -174,11 +174,7 @@ async function renderCorporateView(filter) {
             if (app.id === selectedCorporateAppID) tr.classList.add("selected");
             tr.onclick = (e) => {
                 if (e.target.closest('button')) return;
-                selectedCorporateAppID = app.id;
-                document.querySelectorAll('#doc-tbody tr').forEach(row => row.classList.remove('selected'));
-                tr.classList.add('selected');
-                renderCorporateAppPreview(app.id);
-                if (window.innerWidth < 1400 && typeof togglePreviewPane === 'function') togglePreviewPane(true);
+                viewCorporateChecklist(app.id);
             };
 
             // Badge Statut
@@ -252,10 +248,10 @@ async function renderCorporateView(filter) {
                 <td>${compHtml}</td>
                 <td class="col-hide-sm">${tabadolHtml}</td>
                 <td style="text-align:center;">
-                    <div style="display:inline-flex; gap:4px;">
-                        <button class="btn-table-action" onclick="event.stopPropagation(); openTabadolAuditModal('${app.id}')" title="Audit de Conformité Tabadol">🔍 Audit</button>
-                        <button class="btn-table-action" onclick="event.stopPropagation(); downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦 ZIP</button>
-                        <button class="btn-table-action" onclick="event.stopPropagation(); selectCorporateApp('${app.id}')" title="Consulter le dossier">👁️</button>
+                    <div style="display:inline-flex; gap:4px; align-items:center;">
+                        <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-size:10px; font-weight:700; padding:4px 8px;" onclick="event.stopPropagation(); viewCorporateChecklist('${app.id}')" title="Afficher la liste des documents réglementaires à joindre">📋 Pièces (${(app.checklist_items || []).length || 12})</button>
+                        <button class="btn-table-action" onclick="event.stopPropagation(); openTabadolAuditModal('${app.id}')" title="Audit de Conformité Tabadol">🔍</button>
+                        <button class="btn-table-action" onclick="event.stopPropagation(); downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
                     </div>
                 </td>
             `;
@@ -277,10 +273,147 @@ async function renderCorporateView(filter) {
 }
 
 function selectCorporateApp(appId) {
+    viewCorporateChecklist(appId);
+}
+
+// ============================================================================
+// 3.B VUE CHECKLIST DES DOCUMENTS RÉGLEMENTAIRES À JOINDRE (DÉCRET 21-82)
+// ============================================================================
+
+async function viewCorporateChecklist(appId) {
     selectedCorporateAppID = appId;
-    document.querySelectorAll('#doc-tbody tr').forEach(row => row.classList.remove('selected'));
-    renderCorporateAppPreview(appId);
-    if (typeof togglePreviewPane === 'function') togglePreviewPane(true);
+    const thead = document.getElementById("table-head");
+    const tbody = document.getElementById("doc-tbody");
+    if (!tbody || !thead) return;
+
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);"><span class="spin">⏳</span> Chargement de la liste des documents réglementaires Décret 21-82...</td></tr>`;
+
+    try {
+        const resp = await fetch('/api/v1/corporate/applications/' + appId);
+        if (!resp.ok) throw new Error("Erreur HTTP " + resp.status);
+        const data = await resp.json();
+        const app = data.application;
+        if (!app) throw new Error("Dossier introuvable");
+
+        const items = app.checklist_items || [];
+        const pct = app.completeness_percent || 0;
+
+        // Mise à jour de la barre de titre / fil d'Ariane
+        const rootEl = document.getElementById("bc-root");
+        const secEl = document.getElementById("bc-sec");
+        const prodEl = document.getElementById("bc-prod");
+        const modEl = document.getElementById("bc-mod");
+        if (rootEl) rootEl.innerText = "SANAD_CORPORATE";
+        if (secEl) secEl.innerText = "MIPH_Décret_21-82";
+        if (prodEl) prodEl.innerText = app.title;
+        if (modEl) modEl.innerText = `Pièces à joindre (${items.length})`;
+
+        // Barre d'outils contextuelle avec bouton de retour
+        const tb = document.getElementById("main-toolbar");
+        if (tb) {
+            tb.innerHTML = `
+                <button class="btn-pill" style="background:var(--bg-input); border:1px solid var(--border-color); font-weight:700;" onclick="renderCorporateView('ALL')">← Retour aux Demandes</button>
+                <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openGEDPickerForCorporateItem('${app.id}', '')">📎 Rattacher Pièce GED</button>
+                <button class="btn-pill" style="background:#7c3aed; color:white; border:none; font-weight:700;" onclick="openTabadolAuditModal('${app.id}')">🔍 Audit Tabadol</button>
+                <button class="btn-pill" onclick="downloadTabadolPackage('${app.id}')">📦 Télécharger Archive (.zip)</button>
+                <button class="btn-pill" onclick="viewCorporateChecklist('${app.id}')">🔄 Actualiser</button>
+                <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
+                    Complétude Dossier : <strong style="color:var(--accent-emerald);">${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length} pièces rattachées)</strong>
+                </div>
+            `;
+        }
+
+        // En-tête du tableau des documents à joindre
+        thead.innerHTML = `
+            <tr>
+                <th style="width: 105px;">Statut GED</th>
+                <th style="width: 110px;">Code Exigence</th>
+                <th>Intitulé du Document à joindre au Dossier MIPH</th>
+                <th>Section Réglementaire</th>
+                <th style="width: 140px;">Niveau d'Exigence</th>
+                <th>Document du Coffre-fort GED</th>
+                <th style="width: 170px; text-align:center;">Action Pièce</th>
+            </tr>
+        `;
+
+        if (items.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">
+                        Aucune pièce requise configurée pour cette démarche.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = "";
+        items.forEach((it) => {
+            const tr = document.createElement("tr");
+
+            // Statut
+            let stBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:10px;">⚠️ Manquant</span>`;
+            if (it.ged_document_id) {
+                stBadge = `<span class="status-tag status-ok" style="background:#059669; color:white; font-size:10px; font-weight:700;">✅ Rattaché</span>`;
+            }
+
+            // Criticité
+            let reqBadge = `<span class="status-tag" style="background:#64748b; color:white; font-size:9px;">[S] Standard</span>`;
+            if (it.requirement_level === 'ELIMINATOIRE') {
+                reqBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:9px; font-weight:800;">[E] Éliminatoire Tabadol</span>`;
+            } else if (it.requirement_level === 'COMPLEMENT') {
+                reqBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white; font-size:9px; font-weight:700;">[C] Complément</span>`;
+            } else if (it.requirement_level === 'FACULTATIF') {
+                reqBadge = `<span class="status-tag" style="background:#0284c7; color:white; font-size:9px;">[F] Facultatif</span>`;
+            }
+
+            // Info GED rattaché
+            let docInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Aucune pièce rattachée</span>`;
+            let actionBtn = `
+                <button class="btn-pill" style="font-size:10px; padding:3px 10px; border:1px solid var(--accent-blue); color:var(--accent-blue); background:none; font-weight:700;" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')">
+                    📎 Rattacher Pièce GED
+                </button>
+            `;
+
+            if (it.ged_document_id) {
+                docInfo = `
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <span style="font-weight:700; color:var(--text-main); font-size:11px;">📄 ${escapeHtml(it.document_name || 'Document GED')}</span>
+                        <span style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono);">
+                            Réf: ${escapeHtml(it.document_code || '-')} • SHA-256: ${escapeHtml(it.file_sha256 ? it.file_sha256.substring(0, 16) + '...' : '-')}
+                        </span>
+                    </div>
+                `;
+                actionBtn = `
+                    <div style="display:inline-flex; gap:4px;">
+                        <button class="btn-table-action" style="color:var(--accent-blue);" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer la pièce">🔄 Remplacer</button>
+                        <button class="btn-table-action" style="color:var(--accent-red);" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher">❌ Détacher</button>
+                    </div>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td>${stBadge}</td>
+                <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--accent-blue); font-size:11px;">${escapeHtml(it.item_code)}</span></td>
+                <td>
+                    <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(it.title)}</div>
+                </td>
+                <td><span style="font-size:11px; color:var(--text-dim); font-weight:600;">${escapeHtml(it.section)}</span></td>
+                <td>${reqBadge}</td>
+                <td>${docInfo}</td>
+                <td style="text-align:center;">${actionBtn}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+        // Met également à jour le volet d'aperçu latéral
+        renderCorporateAppPreview(appId);
+
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--accent-red);">❌ Erreur: ${escapeHtml(e.message)}</td></tr>`;
+    }
 }
 
 // ============================================================================
@@ -900,8 +1033,7 @@ async function detachGEDDocumentFromItem(appId, itemId) {
             method: 'POST'
         });
         if (!resp.ok) throw new Error("Échec du détachement");
-        renderCorporateAppPreview(appId);
-        renderCorporateView();
+        viewCorporateChecklist(appId);
     } catch (e) {
         showNotifyModal("Erreur", e.message, "❌", "Fermer");
     }
@@ -1252,8 +1384,7 @@ async function attachGEDToCorporateItem(appId, itemId, gedDocId) {
         }
         closeCorporateModal('modal-corporate-ged-picker');
         showNotifyModal("Pièce Rattachée", "Le document GED a été associé à l'exigence réglementaire avec succès.", "✅", "Fermer");
-        renderCorporateAppPreview(appId);
-        renderCorporateView();
+        viewCorporateChecklist(appId);
     } catch (e) {
         showNotifyModal("Erreur", e.message, "❌", "Fermer");
     }
@@ -1380,7 +1511,7 @@ async function submitNewCorporateApp() {
         closeCorporateModal('modal-corporate-create');
         showNotifyModal("Demande Créée", `La demande d'agrément a été initialisée avec sa checklist réglementaire Décret 21-82 (${(data.application.checklist_items || []).length} exigences).`, "✅", "Fermer");
         selectedCorporateAppID = data.application.id;
-        renderCorporateView();
+        viewCorporateChecklist(data.application.id);
     } catch (e) {
         showNotifyModal("Erreur", e.message, "❌", "Fermer");
     }

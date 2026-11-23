@@ -23,12 +23,16 @@ type ApplicationNature string
 const (
 	NaturePrealableRealisation ApplicationNature = "PREALABLE_REALISATION"
 	NatureOuvertureInitiale    ApplicationNature = "OUVERTURE_INITIALE"
+	NatureAgrementInitial      ApplicationNature = "AGREMENT_INITIAL"
 	NatureSousTraitance        ApplicationNature = "SOUS_TRAITANCE"
 	NatureExercicePDT          ApplicationNature = "EXERCICE_PDT"
 	NatureExerciceAssistant    ApplicationNature = "EXERCICE_ASSISTANT"
 	NatureRenouvellement       ApplicationNature = "RENOUVELLEMENT"
 	NatureModifSubstantielle   ApplicationNature = "MODIF_SUBSTANTIELLE"
+	NatureModificationSubst    ApplicationNature = "MODIFICATION_SUBSTANTIELLE"
 	NatureModifNonSubst        ApplicationNature = "MODIF_NON_SUBSTANTIELLE"
+	NatureExtensionLignes      ApplicationNature = "EXTENSION_LIGNES"
+	NatureTransfertSite        ApplicationNature = "TRANSFERT_SITE"
 )
 
 // ApplicationStatus représente le statut du dossier d'agrément
@@ -171,45 +175,57 @@ func GenerateCorporateChecklist(category EstablishmentCategory, nature Applicati
 			add("FAB.PR.07", "Liste des formes galéniques envisagées et procédés de fabrication prévisionnels", "ORGANISATION_BPF", "E", true, "")
 			add("FAB.PR.08", "Étude technico-économique et plan de financement validé", "ADMINISTRATIF", "E", true, "")
 
-		case NatureOuvertureInitiale:
-			add("FAB.OUV.01", "Dossier administratif, registre de commerce, statuts et assurances RC professionnelle", "ADMINISTRATIF", "E", true, "")
-			add("FAB.OUV.02", "Plans finaux as-built certifiés conformes", "TECHNIQUE_LOCAUX", "E", true, "")
-			add("FAB.OUV.03", "Rapport de qualification des systèmes de traitement d'air CVC/HVAC (surpressions, filtration HEPA)", "TECHNIQUE_LOCAUX", "E", true, "")
-			add("FAB.OUV.04", "Rapport de qualification des boucles d'eau purifiée et d'eau PPI (Ph. Eur.)", "TECHNIQUE_LOCAUX", "E", true, "")
-			add("FAB.OUV.05", "Rapports de Qualification d'Installation (QI) et Opérationnelle (QO) des équipements", "TECHNIQUE_LOCAUX", "E", true, "")
-			add("FAB.OUV.06", "Organigramme BPF nominatif et plan de formation continue du personnel", "ORGANISATION_BPF", "E", true, "")
-			add("FAB.OUV.07", "Manuel Qualité (PQS) et procédures opératoires maîtresses de libération et d'hygiène", "ORGANISATION_BPF", "E", true, "")
-			add("FAB.OUV.08", "Dossier d'agrément nominatif du Pharmacien Directeur Technique (Article 16 Décret 21-82)", "PHARMACIEN_DT", "E", true, "")
+		case NatureOuvertureInitiale, NatureAgrementInitial:
+			add("FAB.OUV.01", "Dossier administratif : statuts de la société, registre du commerce (code fabrication) et extrait de rôle fiscal", "ADMINISTRATIF", "E", true, "")
+			add("FAB.OUV.02", "Titre de propriété foncière notarié ou contrat de bail notarié d'une durée minimale de 10 ans enregistré", "ADMINISTRATIF", "E", true, "")
+			add("FAB.OUV.03", "Plans d'aménagement finaux as-built certifiés conformes (plans de masse, coupes et zonage ISO 5 à 8)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.04", "Schémas et synoptiques des flux matières, articles de conditionnement, personnels et déchets (absence de flux croisés)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.05", "Rapport de qualification des systèmes de traitement d'air CVC/HVAC (surpressions en cascade et filtration HEPA H14)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.06", "Rapports de qualification et de validation des boucles d'eau purifiée et d'eau PPI (Pharmacopée Européenne)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.07", "Dossiers de Qualification QI/QO/QP des équipements majeurs de production et de conditionnement", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.08", "Manuel du Système de Gestion de la Qualité Pharmaceutique (PQS) et procédures maîtresses de libération des lots", "ORGANISATION_BPF", "E", true, "")
+			add("FAB.OUV.09", "Organigramme BPF nominatif garantissant l'indépendance du Contrôle Qualité vis-à-vis de la Production", "ORGANISATION_BPF", "E", true, "")
+			add("FAB.OUV.10", "Dossier d'agrément nominatif du Pharmacien Directeur Technique avec diplôme d'État et inscription Ordre (Art. 16 Décret 21-82)", "PHARMACIEN_DT", "E", true, "")
+			add("FAB.OUV.11", "Contrats de travail exclusifs à temps plein du Pharmacien DT et des pharmaciens assistants", "PHARMACIEN_DT", "E", true, "")
+			add("FAB.OUV.12", "Police d'assurance en responsabilité civile professionnelle couvrant les risques industriels et d'exploitation", "ADMINISTRATIF", "E", true, "")
 
-		case NatureSousTraitance:
-			add("FAB.ST.01", "Contrat de sous-traitance et de façon BPF opposable définissant les obligations respectives", "ADMINISTRATIF", "E", true, "")
-			add("FAB.ST.02", "Partage des responsabilités de contrôle analytique et de libération exclusive par le PDT", "ORGANISATION_BPF", "E", true, "")
-			add("FAB.ST.03", "Rapport d'audit qualité contradictoire des installations du façonnier", "ORGANISATION_BPF", "E", true, "")
-			add("FAB.ST.04", "Certificats de conformité BPF en vigueur des installations du fabricant tiers", "ORGANISATION_BPF", "E", true, "")
+		case NatureRenouvellement:
+			add("FAB.REN.01", "Rapport d'activité quinquennal de production et état récapitulatif des spécialités fabriquées", "ADMINISTRATIF", "E", true, "")
+			add("FAB.REN.02", "Bilan périodique d'assurance qualité et revues annuelles de la qualité des produits (PQR)", "ORGANISATION_BPF", "E", true, "")
+			add("FAB.REN.03", "Rapports de requalification périodique des utilités critiques (HVAC/CVC, boucles d'eau PPI et vapeur propre)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.REN.04", "Attestations de régularité fiscale et parafiscale (CNAS/CASNOS) en cours de validité", "ADMINISTRATIF", "E", true, "")
+			add("FAB.REN.05", "Dossier d'exercice à jour du Pharmacien Directeur Technique et attestations d'inscription à l'Ordre", "PHARMACIEN_DT", "E", true, "")
 
-		case NatureExercicePDT:
-			add("PDT.01", "Diplôme d'État de Docteur en Pharmacie ou équivalent légalement reconnu", "PHARMACIEN_DT", "E", true, "")
-			add("PDT.02", "Attestation d'inscription au Conseil National de l'Ordre des Pharmaciens (Section B) < 3 mois", "PHARMACIEN_DT", "E", true, "")
-			add("PDT.03", "Justificatif d'expérience professionnelle 3 ou 5 ans en fabrication/contrôle (attestations CNAS)", "PHARMACIEN_DT", "E", true, "")
-			add("PDT.04", "Contrat de travail à durée indéterminée (CDI) exclusif à temps plein pour les fonctions de DT", "PHARMACIEN_DT", "E", true, "")
-			add("PDT.05", "Extrait de casier judiciaire (Bulletin n° 3) datant de moins de 3 mois", "PHARMACIEN_DT", "E", true, "")
-			add("PDT.06", "Certificat médical d'aptitude physique et mentale", "PHARMACIEN_DT", "E", true, "")
-			add("PDT.07", "Déclaration sur l'honneur de non-cumul et engagement de respect des règles déontologiques et BPF", "PHARMACIEN_DT", "E", true, "")
-
-		case NatureExerciceAssistant:
-			add("AST.01", "Diplôme de pharmacien reconnu", "PHARMACIEN_DT", "E", true, "")
-			add("AST.02", "Attestation d'inscription à l'Ordre National des Pharmaciens", "PHARMACIEN_DT", "E", true, "")
-			add("AST.03", "Contrat de travail sous l'autorité directe du Pharmacien Directeur Technique", "PHARMACIEN_DT", "E", true, "")
-			add("AST.04", "Fiche de poste et désignation précise du champ d'activité délégué", "PHARMACIEN_DT", "E", true, "")
-
-		case NatureModifSubstantielle:
+		case NatureModifSubstantielle, NatureModificationSubst:
 			add("MOD.SUB.01", "Rapport technico-réglementaire motivant la modification substantielle (Arrêté 22/09/2025)", "MODIFICATIONS", "E", true, "")
 			add("MOD.SUB.02", "Plans comparatifs certifiés de l'état approuvé vs état modifié", "MODIFICATIONS", "E", true, "")
 			add("MOD.SUB.03", "Rapports de requalification des utilités et locaux impactés (CVC/eau PPI)", "MODIFICATIONS", "E", true, "")
 			add("MOD.SUB.04", "Analyse de risques BPF et plan de contrôle de changement (ICH Q9 / Q10)", "MODIFICATIONS", "E", true, "")
 
+		case NatureExtensionLignes:
+			add("FAB.EXT.01", "Dossier descriptif des nouvelles formes galéniques ou lignes de production additionnelles", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.EXT.02", "Plans de zonage et d'implantation des nouveaux équipements", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.EXT.03", "Protocoles et rapports de qualification QI/QO/QP des nouvelles lignes", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.EXT.04", "Mise à jour de l'organigramme technique et effectifs pharmaciens dédiés", "ORGANISATION_BPF", "E", true, "")
+
+		case NatureTransfertSite:
+			add("FAB.TRS.01", "Motifs du transfert et copie des actes notariés du nouveau site industriel", "ADMINISTRATIF", "E", true, "")
+			add("FAB.TRS.02", "Dossier technique complet des nouveaux locaux et installations", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.TRS.03", "Plan de transfert et de validation des procédés sur le nouveau site", "ORGANISATION_BPF", "E", true, "")
+
 		default:
-			add("FAB.GEN.01", "Dossier réglementaire d'information et fiches descriptives d'exploitation", "ADMINISTRATIF", "E", true, "")
+			add("FAB.OUV.01", "Dossier administratif : statuts de la société, registre du commerce (code fabrication) et extrait de rôle fiscal", "ADMINISTRATIF", "E", true, "")
+			add("FAB.OUV.02", "Titre de propriété foncière notarié ou contrat de bail notarié d'une durée minimale de 10 ans enregistré", "ADMINISTRATIF", "E", true, "")
+			add("FAB.OUV.03", "Plans d'aménagement finaux as-built certifiés conformes (plans de masse, coupes et zonage ISO 5 à 8)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.04", "Schémas et synoptiques des flux matières, articles de conditionnement, personnels et déchets (absence de flux croisés)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.05", "Rapport de qualification des systèmes de traitement d'air CVC/HVAC (surpressions en cascade et filtration HEPA H14)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.06", "Rapports de qualification et de validation des boucles d'eau purifiée et d'eau PPI (Pharmacopée Européenne)", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.07", "Dossiers de Qualification QI/QO/QP des équipements majeurs de production et de conditionnement", "TECHNIQUE_LOCAUX", "E", true, "")
+			add("FAB.OUV.08", "Manuel du Système de Gestion de la Qualité Pharmaceutique (PQS) et procédures maîtresses de libération des lots", "ORGANISATION_BPF", "E", true, "")
+			add("FAB.OUV.09", "Organigramme BPF nominatif garantissant l'indépendance du Contrôle Qualité vis-à-vis de la Production", "ORGANISATION_BPF", "E", true, "")
+			add("FAB.OUV.10", "Dossier d'agrément nominatif du Pharmacien Directeur Technique avec diplôme d'État et inscription Ordre (Art. 16 Décret 21-82)", "PHARMACIEN_DT", "E", true, "")
+			add("FAB.OUV.11", "Contrats de travail exclusifs à temps plein du Pharmacien DT et des pharmaciens assistants", "PHARMACIEN_DT", "E", true, "")
+			add("FAB.OUV.12", "Police d'assurance en responsabilité civile professionnelle couvrant les risques industriels et d'exploitation", "ADMINISTRATIF", "E", true, "")
 		}
 
 	case CategoryImportation:
