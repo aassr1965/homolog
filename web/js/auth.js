@@ -3,12 +3,12 @@
 // ============================================================================
 
 const mockAuditTrail = [
-            { ts: "10/11/2026 15:42:01", code: "AUTH_LOGIN", label: "Connexion 2FA", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Session 192.168.1.45 (TOTP vérifié)", sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "VALIDÉ" },
-            { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
-            { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
-            { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
-            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle sanad_20261110.sanad", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
-            { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
+            { ts: "10/11/2026 15:42:01", code: "AUTH_LOGIN", label: "Connexion 2FA", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Session 192.168.1.45 (TOTP vérifié)", ipAddress: "192.168.1.45", sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "VALIDÉ" },
+            { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", ipAddress: "192.168.1.45", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
+            { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", ipAddress: "192.168.1.45", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
+            { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", ipAddress: "192.168.1.108", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
+            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle sanad_20261110.sanad", ipAddress: "127.0.0.1", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
+            { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", ipAddress: "192.168.1.45", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
         ];
 
 
@@ -980,6 +980,7 @@ const mockAuditTrail = [
                 user: "Dr. Amine K.",
                 role: "Pharmacien DT",
                 target: (doc ? doc.name : "Document") + " (Visa DT)",
+                ipAddress: "192.168.1.45",
                 sha: auditHash,
                 status: "SCELLÉ 21 CFR"
             });
@@ -1152,9 +1153,100 @@ const mockAuditTrail = [
             container.innerHTML = html;
         }
 
+        let currentAuditTab = 'all';
+        let currentAuditLogs = [];
+        let selectedAuditIndex = -1;
+
+        function getActionCategory(action) {
+            if (!action) return 'security';
+            const a = String(action).toUpperCase();
+            if (a.includes('SIGN') || a.includes('VISA') || a.includes('SEAL') || a.includes('APPROVE_DT')) {
+                return 'signatures';
+            }
+            if (a.startsWith('AUTH_') || a.includes('LOGIN') || a.includes('LOGOUT') || a.includes('MFA') || a.includes('PASSWORD') || a.includes('USER_') || a.includes('PERMISSION') || a.includes('ROLE') || a.includes('SESSION')) {
+                return 'security';
+            }
+            if (a.includes('CORPORATE') || a.includes('TABADOL') || a.includes('AGREMENT') || a.includes('LICENSE') || a.includes('RECEPISE_BO')) {
+                return 'corporate';
+            }
+            if (a.includes('VARIATION') || a.includes('DEFICIENCY') || a.includes('POST_AMM') || a.includes('COMPLEMENT')) {
+                return 'variations';
+            }
+            if (a.includes('DOSSIER') || a.includes('CTD') || a.includes('GATING') || a.includes('SMART_PLANNING') || a.includes('CHECKLIST') || a.includes('DEPOSIT')) {
+                return 'ctd';
+            }
+            if (a.includes('CAS_') || a.includes('FILE_') || a.includes('SYS_') || a.includes('HEALTH') || a.includes('STORAGE') || a.includes('PSSI') || a.includes('BACKUP')) {
+                return 'system';
+            }
+            return 'security';
+        }
+
+        function getActionFriendlyLabel(action) {
+            const labels = {
+                'DOC_SIGN_DT': 'Signature Cryptographique Pharmacien DT (1.A.7)',
+                'VISA_PDT_VALIDE': 'Visa Officiel PDT Apposé',
+                'AUTH_LOGIN': 'Authentification Réussie (Session TLS)',
+                'AUTH_LOGOUT': 'Déconnexion Sécurisée',
+                'AUTH_GATE_UNLOCK': 'Déverrouillage Sas Partenaire VIP',
+                'USER_CREATE': 'Création Compte Collaborateur',
+                'USER_ROLE_UPDATE': 'Modification Habilitation RBAC',
+                'USER_PWD_RESET': 'Réinitialisation Mot de Passe',
+                'USER_TOTP_RESET': 'Révocation Secret MFA/TOTP',
+                'DOSSIER_CREATE': 'Initialisation Dossier CTD ANPP',
+                'DOSSIER_STATUS_CHANGE': 'Transition Statut Réglementaire',
+                'DOSSIER_ATTACH': 'Rattachement Document BPF au CTD',
+                'DOSSIER_DETACH': 'Détachement Document du CTD',
+                'SMART_PLANNING_TARGET': 'Fixation Échéance Cible Dépôt',
+                'CORPORATE_APP_CREATE': 'Initiation Demande Agrément Décret 21-82',
+                'TABADOL_SUBMIT': 'Télétransmission sur Portail Tabadol MIPH',
+                'RECEPISE_BO_DELIVRE': 'Enregistrement Récépissé Bureau Ordre MIPH',
+                'LICENSE_OCTROYEE': 'Octroi Arrêté Ministériel Agrément',
+                'VARIATION_SUBMIT': 'Dépôt Demande de Variation (LD-DEPP07)',
+                'DEFICIENCY_TASK_VALIDATE': 'Visa Réponse Notification ANPP',
+                'CAS_STORE': 'Stockage Immuable Fichier CAS (SHA-256)',
+                'SYS_BACKUP': 'Sauvegarde Cryptographique Immuable'
+            };
+            return labels[action] || String(action).replace(/_/g, ' ');
+        }
+
+        function switchAuditTab(tab) {
+            currentAuditTab = tab || 'all';
+            document.querySelectorAll('#audit-tabs-bar .audit-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === currentAuditTab);
+            });
+            const tabLabels = {
+                'all': 'Tous les événements',
+                'security': 'Sécurité & Accès',
+                'signatures': 'Visas & Signatures DT (21 CFR Part 11)',
+                'ctd': 'Dossiers CTD & Gating ANPP',
+                'corporate': 'Agréments MIPH & Tabadol (Décret 21-82)',
+                'variations': 'Variations & Compléments',
+                'system': 'Coffre-fort CAS & Système'
+            };
+            const lbl = document.getElementById('audit-active-tab-label');
+            if (lbl) lbl.innerText = tabLabels[currentAuditTab] || currentAuditTab;
+            filterAuditTable();
+        }
+        window.switchAuditTab = switchAuditTab;
+
         async function openAuditModal() {
             closeAddressBar();
             closeAllModals();
+
+            const auditDialog = document.getElementById("modal-audit-dialog");
+            if (auditDialog && !auditDialog.classList.contains('modal-fullscreen')) {
+                auditDialog.style.position = '';
+                auditDialog.style.left = '';
+                auditDialog.style.top = '';
+                auditDialog.style.margin = 'auto';
+            }
+
+            // Initialisation de la modale redimensionnable et déplaçable (façon fenêtre OS)
+            if (typeof initModalWindowResizer === 'function') {
+                setTimeout(() => {
+                    initModalWindowResizer('modal-audit-dialog', 'modal-audit-header', { minWidth: 540, minHeight: 420 });
+                }, 40);
+            }
 
             // Rechargement en direct depuis la base de données PostgreSQL
             try {
@@ -1163,18 +1255,28 @@ const mockAuditTrail = [
                     const data = await res.json();
                     if (data.logs && data.logs.length > 0) {
                         mockAuditTrail.length = 0;
-                        data.logs.forEach(l => {
+                        currentAuditLogs = data.logs.map(l => {
                             const d = new Date(l.created_at);
-                            mockAuditTrail.push({
+                            const item = {
+                                id: l.id,
+                                rawTs: l.created_at,
                                 ts: d.toLocaleDateString('fr-FR') + " " + d.toLocaleTimeString('fr-FR'),
                                 code: l.action,
-                                label: l.action === 'DOC_SIGN_DT' ? 'Signature DT' : (l.action === 'AUTH_LOGIN' ? 'Connexion' : 'Audit Trail'),
+                                label: getActionFriendlyLabel(l.action),
+                                category: getActionCategory(l.action),
                                 user: l.user_email ? l.user_email.split('@')[0] : 'Système',
-                                role: l.user_role === 'directeur_technique' ? 'Pharmacien DT' : l.user_role,
-                                target: l.entity_id,
-                                sha: l.sha256_hash,
+                                userEmail: l.user_email || 'system@homolog.dz',
+                                role: l.user_role === 'directeur_technique' ? 'Pharmacien DT' : (l.user_role || 'Système'),
+                                entityType: l.entity_type || 'N/A',
+                                target: l.entity_id || '-',
+                                sha: l.sha256_hash || '',
+                                details: l.details || '{}',
+                                ipAddress: l.ip_address || '127.0.0.1',
+                                userAgent: l.user_agent || navigator.userAgent,
                                 status: 'SCELLÉ SQL'
-                            });
+                            };
+                            mockAuditTrail.push(item);
+                            return item;
                         });
                     }
                 }
@@ -1182,59 +1284,315 @@ const mockAuditTrail = [
                 console.warn("Lecture API audit:", e);
             }
 
-            renderAuditTable();
+            if (currentAuditLogs.length === 0 && mockAuditTrail.length > 0) {
+                currentAuditLogs = mockAuditTrail.map((m, idx) => ({
+                    id: idx + 1,
+                    rawTs: new Date().toISOString(),
+                    ts: m.ts,
+                    code: m.code,
+                    label: m.label || getActionFriendlyLabel(m.code),
+                    category: getActionCategory(m.code),
+                    user: m.user,
+                    userEmail: `${m.user.toLowerCase().replace(/[^a-z0-9]/g, '')}@pharma-cdmo.dz`,
+                    role: m.role,
+                    entityType: 'document',
+                    target: m.target,
+                    sha: m.sha,
+                    details: JSON.stringify({ entity: m.target, action: m.code, operator: m.user }, null, 2),
+                    ipAddress: m.ipAddress || '192.168.1.45',
+                    userAgent: navigator.userAgent,
+                    status: m.status || 'SCELLÉ SQL'
+                }));
+            }
+
+            updateAuditTabCounts();
+            selectedAuditIndex = currentAuditLogs.length > 0 ? 0 : -1;
+            filterAuditTable();
+
             document.getElementById("modal-audit").classList.add("open");
         }
 
-        function renderAuditTable(list = mockAuditTrail) {
+        function updateAuditTabCounts() {
+            const counts = { all: currentAuditLogs.length, security: 0, signatures: 0, ctd: 0, corporate: 0, variations: 0, system: 0 };
+            currentAuditLogs.forEach(l => {
+                const cat = l.category || getActionCategory(l.code);
+                if (counts[cat] !== undefined) counts[cat]++;
+            });
+            Object.keys(counts).forEach(k => {
+                const el = document.getElementById(`tab-cnt-${k}`);
+                if (el) el.textContent = counts[k];
+            });
+        }
+
+        let filteredAuditList = [];
+
+        function renderAuditTable(list = currentAuditLogs) {
+            filteredAuditList = list;
             const tbody = document.getElementById("audit-table-body");
             if (!tbody) return;
             tbody.innerHTML = "";
-            list.forEach(item => {
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:36px; color:var(--text-muted);"><div style="font-size:24px; margin-bottom:8px;">🛡️</div>Aucun événement trouvé pour ce filtre ou cet onglet.</td></tr>`;
+                renderAuditInspector(null);
+                const badge = document.getElementById("audit-count-badge");
+                if (badge) badge.innerText = "0 événement scellé";
+                return;
+            }
+
+            list.forEach((item, idx) => {
                 const tr = document.createElement("tr");
-                tr.className = "audit-row";
+                tr.className = "audit-row" + (idx === selectedAuditIndex ? " selected" : "");
+                tr.onclick = () => selectAuditRow(idx, item);
+
+                // Catégorie badge color
+                let tagColor = 'var(--accent-blue)';
+                if (item.category === 'signatures') tagColor = 'var(--accent-emerald)';
+                else if (item.category === 'security') tagColor = '#7c3aed';
+                else if (item.category === 'corporate') tagColor = '#d97706';
+                else if (item.category === 'variations') tagColor = '#ea580c';
+                else if (item.category === 'system') tagColor = '#64748b';
+
                 tr.innerHTML = `
-                    <td style="padding:6px 10px; font-family:monospace; color:var(--text-muted);">${item.ts}</td>
-                    <td style="padding:6px 10px;"><span style="background:var(--badge-bg); color:var(--accent-blue); padding:1px 6px; border-radius:3px; font-weight:600; font-size:10px;">${item.code}</span> <small style="color:var(--text-dim);">${item.label}</small></td>
-                    <td style="padding:6px 10px; font-weight:600;">${item.user} <span style="color:var(--text-dim); font-weight:normal;">(${item.role})</span></td>
-                    <td style="padding:6px 10px; color:var(--text-main);">${item.target}</td>
-                    <td style="padding:6px 10px; font-family:monospace; font-size:10px; color:var(--text-dim);" title="${item.sha}">${item.sha.substring(0, 16)}...</td>
-                    <td style="padding:6px 10px;"><span style="color:var(--accent-emerald); font-weight:700; font-size:10px;">${item.status}</span></td>
+                    <td style="padding:6px 10px; font-family:monospace; font-size:10.5px; color:var(--text-muted);">${escapeHTML(item.ts)}</td>
+                    <td style="padding:6px 10px;">
+                        <span style="background:rgba(2,132,199,0.08); border:1px solid ${tagColor}; color:${tagColor}; padding:1px 6px; border-radius:3px; font-weight:700; font-size:10px;">${escapeHTML(item.code)}</span> 
+                        <div style="color:var(--text-main); font-weight:600; font-size:10.5px; margin-top:2px;">${escapeHTML(item.label)}</div>
+                    </td>
+                    <td style="padding:6px 10px;">
+                        <span style="font-weight:600; color:var(--text-main);">${escapeHTML(item.user)}</span>
+                        <div style="color:var(--text-dim); font-size:10px;">${escapeHTML(item.role)}</div>
+                    </td>
+                    <td style="padding:6px 10px; font-family:monospace; font-size:10.5px; color:var(--accent-blue); white-space:nowrap;">
+                        ${escapeHTML(item.ipAddress || '127.0.0.1')}
+                    </td>
+                    <td style="padding:6px 10px; color:var(--text-main); font-size:11px;" title="${escapeHTML(item.target)}">${escapeHTML(item.target)}</td>
+                    <td style="padding:6px 10px; font-family:monospace; font-size:10px; color:var(--text-dim);" title="${escapeHTML(item.sha)}">
+                        ${escapeHTML(item.sha ? item.sha.substring(0, 16) + '...' : '-')}
+                    </td>
+                    <td style="padding:6px 10px; text-align:center;">
+                        <span style="color:var(--accent-emerald); background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); padding:2px 6px; border-radius:4px; font-weight:700; font-size:9.5px;">${escapeHTML(item.status || 'SCELLÉ SQL')}</span>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+
             const badge = document.getElementById("audit-count-badge");
             if (badge) badge.innerText = `${list.length} événement(s) scellé(s)`;
+
+            if (selectedAuditIndex >= 0 && selectedAuditIndex < list.length) {
+                renderAuditInspector(list[selectedAuditIndex]);
+            } else if (list.length > 0) {
+                selectedAuditIndex = 0;
+                renderAuditInspector(list[0]);
+            } else {
+                renderAuditInspector(null);
+            }
         }
+
+        function selectAuditRow(idx, item) {
+            selectedAuditIndex = idx;
+            document.querySelectorAll('#audit-table-body tr').forEach((r, i) => {
+                r.classList.toggle('selected', i === idx);
+            });
+            renderAuditInspector(item);
+        }
+
+        function renderAuditInspector(item) {
+            const container = document.getElementById("audit-inspector-content");
+            const headerId = document.getElementById("inspector-event-id");
+            if (!container) return;
+
+            if (!item) {
+                if (headerId) headerId.textContent = "#--";
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px 10px; color:var(--text-muted);">
+                        🛡️ Sélectionnez un événement dans l'audit trail pour inspecter son intégrité et ses métadonnées.
+                    </div>
+                `;
+                return;
+            }
+
+            if (headerId) headerId.textContent = `#${item.id || item.code}`;
+
+            // Tentative de parsing propre du JSON details
+            let formattedJSON = item.details || '{}';
+            try {
+                if (typeof item.details === 'string') {
+                    const parsed = JSON.parse(item.details);
+                    formattedJSON = JSON.stringify(parsed, null, 2);
+                } else {
+                    formattedJSON = JSON.stringify(item.details, null, 2);
+                }
+            } catch (_) {}
+
+            container.innerHTML = `
+                <div class="audit-inspector-card">
+                    <div class="audit-inspector-label">Événement &amp; Règle BPF</div>
+                    <div style="font-weight:700; font-size:12px; color:var(--accent-blue);">${escapeHTML(item.code)}</div>
+                    <div style="color:var(--text-main); font-size:11px; margin-top:2px;">${escapeHTML(item.label)}</div>
+                </div>
+
+                <div class="audit-inspector-card">
+                    <div class="audit-inspector-label">Horodatage Strict (UTC &amp; Local)</div>
+                    <div class="audit-inspector-value" style="font-family:monospace;">${escapeHTML(item.ts)}</div>
+                    <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">Norme ISO : ${escapeHTML(item.rawTs || item.ts)}</div>
+                </div>
+
+                <div class="audit-inspector-card">
+                    <div class="audit-inspector-label">Opérateur / Acteur</div>
+                    <div style="font-weight:600; color:var(--text-main);">${escapeHTML(item.user)}</div>
+                    <div style="font-size:10.5px; color:var(--text-dim);">${escapeHTML(item.userEmail)}</div>
+                    <div style="margin-top:3px;"><span class="count-badge ok">${escapeHTML(item.role)}</span></div>
+                </div>
+
+                <div class="audit-inspector-card">
+                    <div class="audit-inspector-label">Cible &amp; Périmètre Réglementaire</div>
+                    <div class="audit-inspector-value"><strong>Type :</strong> ${escapeHTML(item.entityType || 'Entité')}</div>
+                    <div class="audit-inspector-value" style="font-family:monospace; margin-top:2px;"><strong>Cible :</strong> ${escapeHTML(item.target)}</div>
+                </div>
+
+                <div class="audit-inspector-card" style="background:rgba(2,132,199,0.04); border-color:rgba(2,132,199,0.25);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span class="audit-inspector-label" style="color:var(--accent-blue);">Empreinte SHA-256 Scellée</span>
+                        <button type="button" class="btn-pill" onclick="copyAuditHash('${escapeHTML(item.sha)}')" style="font-size:9.5px; padding:1px 6px; height:20px;" title="Copier l'empreinte complète dans le presse-papier">📋 Copier</button>
+                    </div>
+                    <div style="font-family:monospace; font-size:9.5px; word-break:break-all; line-height:1.4; color:var(--text-main);">${escapeHTML(item.sha || 'N/A')}</div>
+                    <div style="font-size:9.5px; color:#059669; font-weight:700; margin-top:4px;">🔒 Trigger PostgreSQL Append-Only (ALCOA+ Intact)</div>
+                </div>
+
+                <div class="audit-inspector-card">
+                    <div class="audit-inspector-label">Environnement Réseau &amp; Sécurité</div>
+                    <div style="font-size:10.5px; color:var(--text-main);"><strong>IP Client :</strong> <span style="font-family:monospace;">${escapeHTML(item.ipAddress)}</span></div>
+                    <div style="font-size:10px; color:var(--text-dim); margin-top:2px; word-break:break-word;"><strong>User-Agent :</strong> ${escapeHTML(item.userAgent ? item.userAgent.substring(0, 70) + '...' : 'Client Web Nav')}</div>
+                </div>
+
+                <div class="audit-inspector-card">
+                    <div class="audit-inspector-label">Charge Utile Détaillée (Payload JSON)</div>
+                    <pre class="audit-json-box">${escapeHTML(formattedJSON)}</pre>
+                </div>
+            `;
+        }
+
+        function copyAuditHash(hash) {
+            if (!hash) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(hash).then(() => {
+                    if (typeof showNotifyModal === 'function') {
+                        showNotifyModal("Empreinte Copiée", `Le hachage SHA-256 a été copié dans votre presse-papiers :<br><code style="font-size:10px; word-break:break-all;">${escapeHTML(hash)}</code>`, "📋", "OK");
+                    }
+                });
+            } else {
+                prompt("Empreinte SHA-256 scellée :", hash);
+            }
+        }
+        window.copyAuditHash = copyAuditHash;
 
         function filterAuditTable() {
-            const q = document.getElementById("audit-filter-input").value.toLowerCase();
-            const filtered = mockAuditTrail.filter(a => 
-                a.code.toLowerCase().includes(q) ||
-                a.label.toLowerCase().includes(q) ||
-                a.user.toLowerCase().includes(q) ||
-                a.role.toLowerCase().includes(q) ||
-                a.target.toLowerCase().includes(q) ||
-                a.sha.toLowerCase().includes(q)
-            );
+            const q = (document.getElementById("audit-filter-input")?.value || '').trim().toLowerCase();
+            const timeFilter = document.getElementById("audit-time-filter")?.value || 'all';
+
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            const filtered = currentAuditLogs.filter(item => {
+                // Filtre par onglet
+                if (currentAuditTab !== 'all') {
+                    const cat = item.category || getActionCategory(item.code);
+                    if (cat !== currentAuditTab) return false;
+                }
+
+                // Filtre par période
+                if (timeFilter !== 'all' && item.rawTs) {
+                    const itemTime = new Date(item.rawTs).getTime();
+                    if (timeFilter === 'today' && now - itemTime > oneDay) return false;
+                    if (timeFilter === '7d' && now - itemTime > 7 * oneDay) return false;
+                    if (timeFilter === '30d' && now - itemTime > 30 * oneDay) return false;
+                }
+
+                // Filtre texte
+                if (!q) return true;
+                return (item.code && item.code.toLowerCase().includes(q)) ||
+                       (item.label && item.label.toLowerCase().includes(q)) ||
+                       (item.user && item.user.toLowerCase().includes(q)) ||
+                       (item.userEmail && item.userEmail.toLowerCase().includes(q)) ||
+                       (item.role && item.role.toLowerCase().includes(q)) ||
+                       (item.target && item.target.toLowerCase().includes(q)) ||
+                       (item.sha && item.sha.toLowerCase().includes(q)) ||
+                       (item.ipAddress && item.ipAddress.toLowerCase().includes(q));
+            });
+
+            selectedAuditIndex = filtered.length > 0 ? 0 : -1;
             renderAuditTable(filtered);
         }
+        window.filterAuditTable = filterAuditTable;
 
-        function exportAuditTrailCSV() {
-            showNotifyModal(
-                "Export CSV Certifié (Audit Trail)",
-                `<div style="display:flex; flex-direction:column; gap:8px;">
-                    <div style="color:var(--accent-emerald); font-weight:700;">
-                        ✓ Fichier CSV certifié généré avec succès
-                    </div>
-                    <div style="font-size:11px; color:var(--text-main);">
-                        Le fichier <code>audit_trail_${new Date().toISOString().slice(0,10)}.csv</code> contient l'historique complet infalsifiable avec horodatage UTC et hash chaîné.
-                    </div>
-                </div>`,
-                "📥",
-                "Fermer"
-            );
+        function exportAuditTrailCSV(all = false) {
+            const listToExport = all ? currentAuditLogs : filteredAuditList;
+            if (!listToExport || listToExport.length === 0) {
+                if (typeof showNotifyModal === 'function') {
+                    showNotifyModal("Export Impossible", "Aucun enregistrement d'audit trail à exporter dans cette vue.", "⚠️", "Fermer");
+                }
+                return;
+            }
+
+            // Génération conforme RFC 4180
+            const headers = ["ID", "Horodatage_UTC", "Code_Action", "Libelle_Action", "Categorie", "Operateur", "Email", "Role", "Type_Entite", "Cible", "Empreinte_SHA256", "Statut_Immuable", "IP_Client"];
+            const escapeCSV = (field) => {
+                const s = String(field == null ? '' : field).replace(/"/g, '""');
+                return `"${s}"`;
+            };
+
+            const rows = [headers.join(",")];
+            listToExport.forEach(item => {
+                rows.push([
+                    escapeCSV(item.id),
+                    escapeCSV(item.rawTs || item.ts),
+                    escapeCSV(item.code),
+                    escapeCSV(item.label),
+                    escapeCSV(item.category),
+                    escapeCSV(item.user),
+                    escapeCSV(item.userEmail),
+                    escapeCSV(item.role),
+                    escapeCSV(item.entityType),
+                    escapeCSV(item.target),
+                    escapeCSV(item.sha),
+                    escapeCSV(item.status || 'SCELLÉ SQL'),
+                    escapeCSV(item.ipAddress)
+                ].join(","));
+            });
+
+            const csvString = "\uFEFF" + rows.join("\r\n"); // UTF-8 BOM pour Excel
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const suffix = all ? "complet" : (currentAuditTab || "filtre");
+            a.href = url;
+            a.download = `audit_trail_alcoa_${suffix}_${dateStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            if (typeof showNotifyModal === 'function') {
+                showNotifyModal(
+                    "Export CSV Certifié Téléchargé (ALCOA+)",
+                    `<div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="color:var(--accent-emerald); font-weight:700;">
+                            ✓ Fichier CSV téléchargé avec succès (${listToExport.length} enregistrements)
+                        </div>
+                        <div style="font-size:11px; color:var(--text-main);">
+                            Nom de fichier : <code>audit_trail_alcoa_${suffix}_${dateStr}.csv</code><br>
+                            Le journal inclut toutes les métadonnées de traçabilité, les adresses IP et les empreintes SHA-256 scellées conformes aux normes BPF / 21 CFR Part 11.
+                        </div>
+                    </div>`,
+                    "📥",
+                    "Fermer"
+                );
+            }
         }
+        window.exportAuditTrailCSV = exportAuditTrailCSV;
 
         function simulateExportZip() {
             closeAddressBar();
