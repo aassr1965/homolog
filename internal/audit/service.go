@@ -63,6 +63,7 @@ type Entry struct {
 	Details        map[string]any
 	IPAddress      string
 	UserAgent      string
+	Location       string
 }
 
 // Service gère l'enregistrement et la restitution de la piste d'audit ALCOA+
@@ -98,12 +99,16 @@ func (s *Service) Log(ctx context.Context, entry *Entry) (*domain.AuditLog, erro
 	hasher.Write([]byte(entry.IPAddress))
 	sha256Hash := hex.EncodeToString(hasher.Sum(nil))
 
+	if entry.Location == "" {
+		entry.Location = ResolveLocation(entry.IPAddress, entry.UserAgent, entry.Details)
+	}
+
 	query := `
 		INSERT INTO audit_logs (
 			organization_id, user_id, user_email, user_role, action, 
 			entity_type, entity_id, details, ip_address, user_agent, 
-			sha256_hash, created_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			location, sha256_hash, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING id
 	`
 
@@ -119,6 +124,7 @@ func (s *Service) Log(ctx context.Context, entry *Entry) (*domain.AuditLog, erro
 		detailsJSON,
 		entry.IPAddress,
 		entry.UserAgent,
+		entry.Location,
 		sha256Hash,
 		now,
 	).Scan(&id)
@@ -139,6 +145,7 @@ func (s *Service) Log(ctx context.Context, entry *Entry) (*domain.AuditLog, erro
 		Details:        string(detailsJSON),
 		IPAddress:      entry.IPAddress,
 		UserAgent:      entry.UserAgent,
+		Location:       entry.Location,
 		SHA256Hash:     sha256Hash,
 		CreatedAt:      now,
 	}, nil
@@ -163,7 +170,7 @@ func (s *Service) List(ctx context.Context, orgID uuid.UUID, limit, offset int) 
 		SELECT 
 			id, organization_id, user_id, user_email, user_role, action,
 			entity_type, entity_id, details, ip_address, user_agent,
-			sha256_hash, created_at
+			COALESCE(location, ''), sha256_hash, created_at
 		FROM audit_logs
 		WHERE organization_id = $1
 		ORDER BY created_at DESC
@@ -184,9 +191,12 @@ func (s *Service) List(ctx context.Context, orgID uuid.UUID, limit, offset int) 
 		if err := rows.Scan(
 			&l.ID, &l.OrganizationID, &l.UserID, &l.UserEmail, &l.UserRole, &l.Action,
 			&l.EntityType, &l.EntityID, &rawDetails, &l.IPAddress, &l.UserAgent,
-			&l.SHA256Hash, &l.CreatedAt,
+			&l.Location, &l.SHA256Hash, &l.CreatedAt,
 		); err != nil {
 			return nil, 0, err
+		}
+		if l.Location == "" {
+			l.Location = ResolveLocation(l.IPAddress, l.UserAgent, nil)
 		}
 		l.Details = string(rawDetails)
 		logs = append(logs, &l)

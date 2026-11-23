@@ -88,6 +88,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/029_optimize_query_and_foreign_key_indexes.sql",
 		"migrations/030_miph_corporate_agrements_and_tabadol.sql",
 		"migrations/031_granular_corporate_checklist_items.sql",
+		"migrations/032_audit_logs_location.sql",
 	}
 
 	for _, file := range migrationFiles {

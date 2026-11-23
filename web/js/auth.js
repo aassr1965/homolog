@@ -3,12 +3,12 @@
 // ============================================================================
 
 const mockAuditTrail = [
-            { ts: "10/11/2026 15:42:01", code: "AUTH_LOGIN", label: "Connexion 2FA", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Session 192.168.1.45 (TOTP vérifié)", ipAddress: "192.168.1.45", sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "VALIDÉ" },
-            { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", ipAddress: "192.168.1.45", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
-            { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", ipAddress: "192.168.1.45", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
-            { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", ipAddress: "192.168.1.108", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
-            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle sanad_20261110.sanad", ipAddress: "127.0.0.1", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
-            { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", ipAddress: "192.168.1.45", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
+            { ts: "10/11/2026 15:42:01", code: "AUTH_LOGIN", label: "Connexion 2FA", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Session 192.168.1.45 (TOTP vérifié)", ipAddress: "192.168.1.45", location: "🏢 Siège Administratif & RA (Alger)", sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "VALIDÉ" },
+            { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", ipAddress: "192.168.1.45", location: "🏢 Siège Administratif & RA (Alger)", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
+            { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", ipAddress: "192.168.1.45", location: "🏢 Siège Administratif & RA (Alger)", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
+            { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", ipAddress: "192.168.1.108", location: "🏢 Siège Administratif & RA (Alger)", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
+            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle sanad_20261110.sanad", ipAddress: "127.0.0.1", location: "💻 Console Locale Serveur (Sur Site)", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
+            { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", ipAddress: "192.168.1.45", location: "🏢 Siège Administratif & RA (Alger)", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
         ];
 
 
@@ -1209,6 +1209,51 @@ const mockAuditTrail = [
             return labels[action] || String(action).replace(/_/g, ' ');
         }
 
+        function resolveClientLocation(ip) {
+            if (!ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === '0.0.0.0') {
+                return '💻 Console Locale Serveur (Sur Site)';
+            }
+            const clean = ip.split(':')[0].trim();
+            if (clean.startsWith('192.168.1.')) return '🏢 Siège Administratif & RA (Alger)';
+            if (clean.startsWith('192.168.10.')) return '🏭 Usine & Production (Oued Smar)';
+            if (clean.startsWith('192.168.20.')) return '🔬 Labo Contrôle Qualité LCQ (Alger)';
+            if (clean.startsWith('192.168.30.')) return '📦 Magasin Central & Logistique (Baraki)';
+            if (clean.startsWith('192.168.')) return '🏢 Réseau Intranet Siège (Alger)';
+            if (clean.startsWith('10.10.')) return '🏭 Usine & Production (Oued Smar)';
+            if (clean.startsWith('10.20.')) return '🔬 Labo Contrôle Qualité LCQ (Alger)';
+            if (clean.startsWith('10.30.')) return '📦 Magasin Central & Logistique (Baraki)';
+            if (clean.startsWith('10.')) return '🏢 Réseau Intranet GxP (Site Industriel)';
+            if (clean.startsWith('172.16.') || clean.startsWith('172.17.') || clean.startsWith('172.18.')) return '🏢 Réseau Sécurisé Datacenter GxP';
+            if (clean.startsWith('193.194.')) return '🇩🇿 CERIST / Réseau Ministériel (Alger)';
+            if (clean.startsWith('41.200.') || clean.startsWith('41.201.')) return '🇩🇿 Alger (Algérie Télécom)';
+            if (clean.startsWith('41.220.')) return '🇩🇿 Oran (Algérie)';
+            if (clean.startsWith('41.221.')) return '🇩🇿 Constantine (Algérie)';
+            if (clean.startsWith('41.')) return '🇩🇿 Alger, Algérie';
+            if (clean.startsWith('105.')) return '🇩🇿 Alger, Algérie (Fibre/4G)';
+            if (clean.startsWith('154.')) return '🇩🇿 Alger, Algérie (Mobilis/Djezzy)';
+            if (clean.startsWith('197.')) return '🇩🇿 Alger, Algérie (Ooredoo)';
+            if (clean.startsWith('194.')) return '🇫🇷 Paris, France (Partenaire B2B)';
+            if (clean.startsWith('195.')) return '🇨🇭 Bâle, Suisse (Titulaire API)';
+            if (clean.startsWith('165.')) return '🇩🇪 Francfort, Allemagne (Auditeur Qualité)';
+            if (clean.startsWith('115.') || clean.startsWith('103.')) return '🇮🇳 Hyderabad, Inde (Fournisseur API)';
+            if (clean.startsWith('185.')) return '🇪🇺 Europe (Accès Distant Sécurisé)';
+            return '🌍 Connexion Distante Sécurisée';
+        }
+
+        function getNetworkType(ip) {
+            if (!ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') {
+                return 'Console Locale Host';
+            }
+            const clean = ip.split(':')[0].trim();
+            if (clean.startsWith('192.168.') || clean.startsWith('10.') || clean.startsWith('172.16.')) {
+                return 'Intranet Privé GxP';
+            }
+            if (clean.startsWith('193.194.')) {
+                return 'Ligne Dédiée / VPN CERIST';
+            }
+            return 'Accès Distant SSL/TLS Chiffré';
+        }
+
         function switchAuditTab(tab) {
             currentAuditTab = tab || 'all';
             document.querySelectorAll('#audit-tabs-bar .audit-tab-btn').forEach(btn => {
@@ -1273,6 +1318,7 @@ const mockAuditTrail = [
                                 details: l.details || '{}',
                                 ipAddress: l.ip_address || '127.0.0.1',
                                 userAgent: l.user_agent || navigator.userAgent,
+                                location: l.location || resolveClientLocation(l.ip_address),
                                 status: 'SCELLÉ SQL'
                             };
                             mockAuditTrail.push(item);
@@ -1301,6 +1347,7 @@ const mockAuditTrail = [
                     details: JSON.stringify({ entity: m.target, action: m.code, operator: m.user }, null, 2),
                     ipAddress: m.ipAddress || '192.168.1.45',
                     userAgent: navigator.userAgent,
+                    location: m.location || resolveClientLocation(m.ipAddress || '192.168.1.45'),
                     status: m.status || 'SCELLÉ SQL'
                 }));
             }
@@ -1363,8 +1410,13 @@ const mockAuditTrail = [
                         <span style="font-weight:600; color:var(--text-main);">${escapeHTML(item.user)}</span>
                         <div style="color:var(--text-dim); font-size:10px;">${escapeHTML(item.role)}</div>
                     </td>
-                    <td style="padding:6px 10px; font-family:monospace; font-size:10.5px; color:var(--accent-blue); white-space:nowrap;">
-                        ${escapeHTML(item.ipAddress || '127.0.0.1')}
+                    <td style="padding:6px 10px; white-space:nowrap;">
+                        <div style="font-family:monospace; font-size:10.5px; color:var(--accent-blue); font-weight:600;">
+                            ${escapeHTML(item.ipAddress || '127.0.0.1')}
+                        </div>
+                        <div style="font-size:10px; color:var(--text-main); margin-top:2px; display:flex; align-items:center; gap:4px;" title="${escapeHTML(item.location || resolveClientLocation(item.ipAddress))}">
+                            <span>${escapeHTML(item.location || resolveClientLocation(item.ipAddress))}</span>
+                        </div>
                     </td>
                     <td style="padding:6px 10px; color:var(--text-main); font-size:11px;" title="${escapeHTML(item.target)}">${escapeHTML(item.target)}</td>
                     <td style="padding:6px 10px; font-family:monospace; font-size:10px; color:var(--text-dim);" title="${escapeHTML(item.sha)}">
@@ -1462,9 +1514,24 @@ const mockAuditTrail = [
                 </div>
 
                 <div class="audit-inspector-card">
-                    <div class="audit-inspector-label">Environnement Réseau &amp; Sécurité</div>
-                    <div style="font-size:10.5px; color:var(--text-main);"><strong>IP Client :</strong> <span style="font-family:monospace;">${escapeHTML(item.ipAddress)}</span></div>
-                    <div style="font-size:10px; color:var(--text-dim); margin-top:2px; word-break:break-word;"><strong>User-Agent :</strong> ${escapeHTML(item.userAgent ? item.userAgent.substring(0, 70) + '...' : 'Client Web Nav')}</div>
+                    <div class="audit-inspector-label">Environnement Réseau &amp; Sécurité GxP</div>
+                    <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+                        <div style="font-size:10.5px; color:var(--text-main);">
+                            <strong>📍 Lieu de Connexion :</strong> <span style="font-weight:600; color:var(--accent-blue);">${escapeHTML(item.location || resolveClientLocation(item.ipAddress))}</span>
+                        </div>
+                        <div style="font-size:10.5px; color:var(--text-main);">
+                            <strong>🌐 IP Client :</strong> <span style="font-family:monospace;">${escapeHTML(item.ipAddress || '127.0.0.1')}</span>
+                        </div>
+                        <div style="font-size:10.5px; color:var(--text-main);">
+                            <strong>🛡️ Type d'Accès :</strong> <span style="font-size:9.5px; background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.3); padding:1px 6px; border-radius:3px; color:var(--accent-blue); font-weight:600;">${escapeHTML(getNetworkType(item.ipAddress))}</span>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:2px; word-break:break-word;">
+                            <strong>User-Agent :</strong> ${escapeHTML(item.userAgent ? item.userAgent.substring(0, 70) + '...' : 'Client Web Nav')}
+                        </div>
+                        <div style="font-size:10px; color:var(--text-dim);">
+                            <strong>Fuseau Horaire :</strong> Africa/Algiers (UTC+1 / CET)
+                        </div>
+                    </div>
                 </div>
 
                 <div class="audit-inspector-card">
@@ -1519,7 +1586,8 @@ const mockAuditTrail = [
                        (item.role && item.role.toLowerCase().includes(q)) ||
                        (item.target && item.target.toLowerCase().includes(q)) ||
                        (item.sha && item.sha.toLowerCase().includes(q)) ||
-                       (item.ipAddress && item.ipAddress.toLowerCase().includes(q));
+                       (item.ipAddress && item.ipAddress.toLowerCase().includes(q)) ||
+                       (item.location && item.location.toLowerCase().includes(q));
             });
 
             selectedAuditIndex = filtered.length > 0 ? 0 : -1;
@@ -1537,7 +1605,7 @@ const mockAuditTrail = [
             }
 
             // Génération conforme RFC 4180
-            const headers = ["ID", "Horodatage_UTC", "Code_Action", "Libelle_Action", "Categorie", "Operateur", "Email", "Role", "Type_Entite", "Cible", "Empreinte_SHA256", "Statut_Immuable", "IP_Client"];
+            const headers = ["ID", "Horodatage_UTC", "Code_Action", "Libelle_Action", "Categorie", "Operateur", "Email", "Role", "Type_Entite", "Cible", "Empreinte_SHA256", "Statut_Immuable", "IP_Client", "Lieu_Connexion"];
             const escapeCSV = (field) => {
                 const s = String(field == null ? '' : field).replace(/"/g, '""');
                 return `"${s}"`;
@@ -1558,7 +1626,8 @@ const mockAuditTrail = [
                     escapeCSV(item.target),
                     escapeCSV(item.sha),
                     escapeCSV(item.status || 'SCELLÉ SQL'),
-                    escapeCSV(item.ipAddress)
+                    escapeCSV(item.ipAddress),
+                    escapeCSV(item.location || resolveClientLocation(item.ipAddress))
                 ].join(","));
             });
 

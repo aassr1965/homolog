@@ -186,6 +186,7 @@ type AuditLog struct {
 	Details        string     `json:"details"` // JSON payload
 	IPAddress      string     `json:"ip_address"`
 	UserAgent      string     `json:"user_agent"`
+	Location       string     `json:"location"`
 	SHA256Hash     string     `json:"sha256_hash"`
 	CreatedAt      time.Time  `json:"created_at"`
 }
