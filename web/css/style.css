@@ -279,6 +279,66 @@
         html[data-theme="dark"] .btn-urgent { color: #fca5a5; }
         .btn-urgent:hover { background: rgba(239, 68, 68, 0.25); }
 
+        /* Boutons d'action compacts pour les tables & toolbars (icônes seules avec tooltip) */
+        .btn-table-icon, .btn-table-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-surface, rgba(255, 255, 255, 0.04));
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+        .btn-table-icon:hover, .btn-table-action:hover {
+            background: var(--bg-row-hover, rgba(255, 255, 255, 0.1));
+            border-color: var(--accent-blue);
+            transform: translateY(-1px);
+        }
+        .btn-table-icon-primary {
+            background: var(--accent-blue);
+            color: #ffffff;
+            border-color: var(--accent-blue);
+        }
+        .btn-table-icon-primary:hover {
+            filter: brightness(1.15);
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+        .btn-table-icon-del:hover {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        /* Pastilles d'état / icône seule avec tooltip */
+        .badge-icon-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-size: 13px;
+            line-height: 1;
+            cursor: help;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        .badge-icon-status:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 6px rgba(0,0,0,0.2);
+        }
+
         /* Main Workspace 3 Panes */
         .workspace {
             display: flex;

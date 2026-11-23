@@ -337,6 +337,13 @@
         var currentRefSection = 'establishments';
 
         function switchDomainModule(domain) {
+            // Contrôle d'expiration de session réglementaire (BPF 15 min / 21 CFR Part 11)
+            if (typeof isSessionTimedOut === 'function' && isSessionTimedOut()) {
+                if (typeof showSessionTimeoutModal === 'function') {
+                    showSessionTimeoutModal('navigation');
+                }
+                return;
+            }
             // Contrôle d'habilitation préventif côté UI (CDC 7.2.2)
             if (domain === 'admin' && typeof hasPermission === 'function' && !hasPermission('USER_MANAGE') && !hasPermission('DOC_APPROVE_PDT')) {
                 showNotifyModal("Accès Refusé (RBAC)", "Votre profil actif ne dispose pas des permissions requises (<code>USER_MANAGE</code> ou <code>DOC_APPROVE_PDT</code>) pour accéder aux Paramètres et à la Console d'Administration.", "🚫", "Fermer");
@@ -410,7 +417,10 @@
             if (titleEl) {
                 let icon = "🏢";
                 let text = isArabic ? "المرجعية الصيدلانية" : "Référentiel Pharmaceutique";
-                if (domain === 'ctd') {
+                if (domain === 'corporate') {
+                    icon = "🏛️";
+                    text = isArabic ? "اعتمادات المؤسسات الصيدلانية MIPH" : "Agréments MIPH & Tabadol (Décret 21-82)";
+                } else if (domain === 'ctd') {
                     icon = "📋";
                     text = isArabic ? "ملفات التسجيل ANPP (CTD)" : "Dossiers d'Enregistrement (CTD)";
                 } else if (domain === 'deficiencies') {
@@ -441,6 +451,14 @@
             // Chargement des données métier correspondantes
             if (domain === 'ref') {
                 loadRefSection(currentRefSection || 'establishments');
+            } else if (domain === 'corporate') {
+                document.getElementById("bc-root").innerText = "SANAD_CORPORATE";
+                document.getElementById("bc-sec").innerText = "MIPH_Décret_21-82";
+                document.getElementById("bc-prod").innerText = "Agréments & Tabadol";
+                document.getElementById("bc-mod").innerText = "Établissements Pharmaceutiques";
+                if (typeof renderCorporateView === 'function') {
+                    renderCorporateView(currentCorporateFilter || 'ALL');
+                }
             } else if (domain === 'ctd') {
                 document.getElementById("bc-root").innerText = "DOSSIERS_ANPP";
                 document.getElementById("bc-sec").innerText = "Guide_CTD_2025";
@@ -514,6 +532,18 @@
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Base Référentiel : <strong style="color:var(--accent-emerald);">Opérationnelle &amp; Conforme</strong>
+                    </div>
+                `;
+            } else if (domain === 'corporate') {
+                tb.innerHTML = `
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕ Nouvelle Demande</button>
+                    <button class="btn-table-icon" onclick="selectCorporateFilter('ALL')" title="Toutes les Demandes MIPH">📁</button>
+                    <button class="btn-table-icon" onclick="selectCorporateFilter('LICENSES')" title="Registre des Agréments Ministériels Actifs">📜</button>
+                    <button class="btn-table-icon" onclick="renderCorporateView()" title="Actualiser la liste">🔄</button>
+                    <button class="btn-table-icon" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+                    <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
+                        Passerelle Tabadol : <strong style="color:var(--accent-emerald);">Connectée &amp; Sécurisée</strong>
                     </div>
                 `;
             } else if (domain === 'ctd') {
@@ -616,6 +646,12 @@
 
         function renderTreeForDomain(domain) {
             const container = document.getElementById("tree-root");
+            if (domain === 'corporate') {
+                if (typeof renderCorporateTree === 'function') {
+                    renderCorporateTree();
+                }
+                return;
+            }
             if (domain === 'sys') {
                 if (typeof renderSystemTree === 'function') {
                     renderSystemTree();
@@ -998,7 +1034,145 @@
             }
         }
 
-        // Visualiseur universel de documents & scans in-app (Agrandissable)
+        // Initialiseur générique de modales redimensionnables et déplaçables (Façon Fenêtre OS)
+        function initModalWindowResizer(dialogId, headerId, options) {
+            const dialog = document.getElementById(dialogId);
+            if (!dialog) return;
+            if (dialog._resizerInitialized) return;
+            dialog._resizerInitialized = true;
+
+            const header = headerId ? document.getElementById(headerId) : dialog.querySelector('.modal-header');
+            const minWidth = (options && options.minWidth) || 480;
+            const minHeight = (options && options.minHeight) || 360;
+
+            const edges = dialog.querySelectorAll('.modal-resize-edge');
+            edges.forEach(edge => {
+                edge.addEventListener('pointerdown', (e) => {
+                    if (dialog.classList.contains('modal-fullscreen') || e.button !== 0) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const dir = edge.dataset.direction;
+                    const startRect = dialog.getBoundingClientRect();
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+
+                    dialog.style.position = 'absolute';
+                    dialog.style.left = startRect.left + 'px';
+                    dialog.style.top = startRect.top + 'px';
+                    dialog.style.width = startRect.width + 'px';
+                    dialog.style.height = startRect.height + 'px';
+                    dialog.style.margin = '0';
+                    dialog.style.maxWidth = 'none';
+                    dialog.style.maxHeight = 'none';
+
+                    edge.setPointerCapture(e.pointerId);
+
+                    function onPointerMove(ev) {
+                        const dx = ev.clientX - startX;
+                        const dy = ev.clientY - startY;
+
+                        let newW = startRect.width;
+                        let newH = startRect.height;
+                        let newL = startRect.left;
+                        let newT = startRect.top;
+
+                        if (dir.includes('e')) {
+                            newW = Math.max(minWidth, startRect.width + dx);
+                            if (newL + newW > window.innerWidth - 6) newW = window.innerWidth - 6 - newL;
+                        }
+                        if (dir.includes('w')) {
+                            const maxL = startRect.right - minWidth;
+                            let candL = startRect.left + dx;
+                            if (candL > maxL) candL = maxL;
+                            if (candL < 6) candL = 6;
+                            newL = candL;
+                            newW = startRect.right - newL;
+                        }
+                        if (dir.includes('s')) {
+                            newH = Math.max(minHeight, startRect.height + dy);
+                            if (newT + newH > window.innerHeight - 6) newH = window.innerHeight - 6 - newT;
+                        }
+                        if (dir.includes('n')) {
+                            const maxT = startRect.bottom - minHeight;
+                            let candT = startRect.top + dy;
+                            if (candT > maxT) candT = maxT;
+                            if (candT < 6) candT = 6;
+                            newT = candT;
+                            newH = startRect.bottom - newT;
+                        }
+
+                        dialog.style.left = newL + 'px';
+                        dialog.style.top = newT + 'px';
+                        dialog.style.width = newW + 'px';
+                        dialog.style.height = newH + 'px';
+                    }
+
+                    function onPointerUp(ev) {
+                        edge.removeEventListener('pointermove', onPointerMove);
+                        edge.removeEventListener('pointerup', onPointerUp);
+                        edge.removeEventListener('pointercancel', onPointerUp);
+                        try { edge.releasePointerCapture(ev.pointerId); } catch (_) {}
+                    }
+
+                    edge.addEventListener('pointermove', onPointerMove);
+                    edge.addEventListener('pointerup', onPointerUp);
+                    edge.addEventListener('pointercancel', onPointerUp);
+                });
+            });
+
+            if (header) {
+                header.addEventListener('pointerdown', (e) => {
+                    if (e.target.closest('button, a, input, select, textarea') || dialog.classList.contains('modal-fullscreen') || e.button !== 0) {
+                        return;
+                    }
+                    e.preventDefault();
+                    const startRect = dialog.getBoundingClientRect();
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+
+                    dialog.style.position = 'absolute';
+                    dialog.style.left = startRect.left + 'px';
+                    dialog.style.top = startRect.top + 'px';
+                    dialog.style.width = startRect.width + 'px';
+                    dialog.style.height = startRect.height + 'px';
+                    dialog.style.margin = '0';
+                    dialog.style.maxWidth = 'none';
+                    dialog.style.maxHeight = 'none';
+
+                    header.style.cursor = 'grabbing';
+                    header.setPointerCapture(e.pointerId);
+
+                    function onHeaderMove(ev) {
+                        const dx = ev.clientX - startX;
+                        const dy = ev.clientY - startY;
+                        let candL = startRect.left + dx;
+                        let candT = startRect.top + dy;
+                        if (candL < 6) candL = 6;
+                        if (candT < 6) candT = 6;
+                        if (candL + startRect.width > window.innerWidth - 6) candL = window.innerWidth - 6 - startRect.width;
+                        if (candT + 40 > window.innerHeight) candT = window.innerHeight - 40;
+                        dialog.style.left = candL + 'px';
+                        dialog.style.top = candT + 'px';
+                    }
+
+                    function onHeaderUp(ev) {
+                        header.removeEventListener('pointermove', onHeaderMove);
+                        header.removeEventListener('pointerup', onHeaderUp);
+                        header.removeEventListener('pointercancel', onHeaderUp);
+                        header.style.cursor = 'grab';
+                        try { header.releasePointerCapture(ev.pointerId); } catch (_) {}
+                    }
+
+                    header.addEventListener('pointermove', onHeaderMove);
+                    header.addEventListener('pointerup', onHeaderUp);
+                    header.addEventListener('pointercancel', onHeaderUp);
+                });
+            }
+        }
+        window.initModalWindowResizer = initModalWindowResizer;
+
+        // Visualiseur universel de documents & scans in-app (Agrandissable & Redimensionnable)
         function openDocumentViewerModal(docId, docTitle, versionId) {
             if (!docId) {
                 if (typeof showNotifyModal === 'function') {
@@ -1029,6 +1203,9 @@
             }
 
             openModal("modal-doc-preview");
+            setTimeout(() => {
+                initModalWindowResizer('modal-doc-preview-dialog', 'modal-doc-preview-header', { minWidth: 480, minHeight: 360 });
+            }, 60);
         }
 
         function closeDocPreviewModal() {
@@ -1046,6 +1223,13 @@
 
 
         function goToLocation(targetKey) {
+            // Contrôle d'expiration de session réglementaire (BPF 15 min / 21 CFR Part 11)
+            if (typeof isSessionTimedOut === 'function' && isSessionTimedOut()) {
+                if (typeof showSessionTimeoutModal === 'function') {
+                    showSessionTimeoutModal('navigation');
+                }
+                return;
+            }
             if (targetKey && targetKey.startsWith("ctd-para-")) {
                 const modNum = parseInt(targetKey.replace("ctd-para-", ""), 10) || 1;
                 if (typeof openDossierModule === 'function') {
