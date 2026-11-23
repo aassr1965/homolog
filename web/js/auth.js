@@ -1232,6 +1232,14 @@ const mockAuditTrail = [
             closeAddressBar();
             closeAllModals();
 
+            const auditDialog = document.getElementById("modal-audit-dialog");
+            if (auditDialog && !auditDialog.classList.contains('modal-fullscreen')) {
+                auditDialog.style.position = '';
+                auditDialog.style.left = '';
+                auditDialog.style.top = '';
+                auditDialog.style.margin = 'auto';
+            }
+
             // Initialisation de la modale redimensionnable et déplaçable (façon fenêtre OS)
             if (typeof initModalWindowResizer === 'function') {
                 setTimeout(() => {

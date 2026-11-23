@@ -841,33 +841,28 @@
         .modal-lg { width: 780px; max-width: min(780px, calc(100vw - 24px)); }
         .modal-xl { width: 980px; max-width: min(980px, calc(100vw - 24px)); }
         .modal-fullscreen {
+            position: fixed !important;
+            top: 2vh !important;
+            left: 2vw !important;
+            right: 2vw !important;
+            bottom: 2vh !important;
             width: 96vw !important;
             max-width: 96vw !important;
-            height: 94vh !important;
-            max-height: 94vh !important;
+            height: 96vh !important;
+            max-height: 96vh !important;
+            margin: 0 !important;
             border-radius: 8px !important;
+            z-index: 100001 !important;
+            display: flex !important;
+            flex-direction: column !important;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
-        /* Poignées de Redimensionnement Multi-Bords & Coins (Façon Fenêtre Desktop OS) */
-        .modal-resize-edge {
-            position: absolute;
-            z-index: 60;
-            user-select: none;
-            touch-action: none;
-        }
-        .modal-resize-edge.edge-n { top: -3px; left: 12px; right: 12px; height: 8px; cursor: ns-resize; }
-        .modal-resize-edge.edge-s { bottom: -3px; left: 12px; right: 12px; height: 8px; cursor: ns-resize; }
-        .modal-resize-edge.edge-w { left: -3px; top: 12px; bottom: 12px; width: 8px; cursor: ew-resize; }
-        .modal-resize-edge.edge-e { right: -3px; top: 12px; bottom: 12px; width: 8px; cursor: ew-resize; }
-        .modal-resize-edge.edge-nw { top: -3px; left: -3px; width: 14px; height: 14px; cursor: nwse-resize; z-index: 61; }
-        .modal-resize-edge.edge-ne { top: -3px; right: -3px; width: 14px; height: 14px; cursor: nesw-resize; z-index: 61; }
-        .modal-resize-edge.edge-sw { bottom: -3px; left: -3px; width: 14px; height: 14px; cursor: nesw-resize; z-index: 61; }
-        .modal-resize-edge.edge-se { bottom: -3px; right: -3px; width: 14px; height: 14px; cursor: nwse-resize; z-index: 61; }
-        .modal.is-maximized .modal-resize-edge { display: none !important; }
+        .modal.modal-fullscreen .modal-resize-edge { display: none !important; }
 
         .modal-fullscreen .modal-body {
-            max-height: calc(94vh - 120px) !important;
+            flex: 1 !important;
+            max-height: none !important;
+            overflow: hidden !important;
         }
         .modal-fullscreen #doc-preview-body {
             max-height: calc(94vh - 55px) !important;

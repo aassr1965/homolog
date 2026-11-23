@@ -1057,6 +1057,41 @@
             if (!modal) return;
 
             const isFullscreen = modal.classList.toggle('modal-fullscreen');
+            if (isFullscreen) {
+                // Sauvegarder les dimensions et positions personnalisées pour restauration fidèle
+                modal._savedInlineStyles = {
+                    position: modal.style.position,
+                    left: modal.style.left,
+                    top: modal.style.top,
+                    width: modal.style.width,
+                    height: modal.style.height,
+                    margin: modal.style.margin,
+                    maxWidth: modal.style.maxWidth,
+                    maxHeight: modal.style.maxHeight
+                };
+                // Nettoyer les styles inline pour que le CSS .modal-fullscreen prenne le contrôle centré absolu
+                modal.style.position = '';
+                modal.style.left = '';
+                modal.style.top = '';
+                modal.style.width = '';
+                modal.style.height = '';
+                modal.style.margin = '';
+                modal.style.maxWidth = '';
+                modal.style.maxHeight = '';
+            } else {
+                // Restaurer les dimensions et positions personnalisées
+                if (modal._savedInlineStyles) {
+                    modal.style.position = modal._savedInlineStyles.position || '';
+                    modal.style.left = modal._savedInlineStyles.left || '';
+                    modal.style.top = modal._savedInlineStyles.top || '';
+                    modal.style.width = modal._savedInlineStyles.width || '';
+                    modal.style.height = modal._savedInlineStyles.height || '';
+                    modal.style.margin = modal._savedInlineStyles.margin || '';
+                    modal.style.maxWidth = modal._savedInlineStyles.maxWidth || '';
+                    modal.style.maxHeight = modal._savedInlineStyles.maxHeight || '';
+                }
+            }
+
             const btn = overlay.querySelector('.btn-modal-expand');
             if (btn) {
                 const icon = btn.querySelector('.expand-icon');
@@ -1078,7 +1113,18 @@
                 m.classList.remove('open');
                 m.style.display = "";
                 const modal = m.querySelector('.modal');
-                if (modal) modal.classList.remove('modal-fullscreen');
+                if (modal) {
+                    modal.classList.remove('modal-fullscreen');
+                    modal.style.position = '';
+                    modal.style.left = '';
+                    modal.style.top = '';
+                    modal.style.width = '';
+                    modal.style.height = '';
+                    modal.style.margin = '';
+                    modal.style.maxWidth = '';
+                    modal.style.maxHeight = '';
+                    modal._savedInlineStyles = null;
+                }
             });
             const previewIframe = document.getElementById("doc-preview-iframe");
             if (previewIframe && previewIframe.src !== "about:blank") {
@@ -1092,7 +1138,18 @@
                 el.classList.remove("open");
                 el.style.display = "";
                 const modal = el.querySelector('.modal');
-                if (modal) modal.classList.remove('modal-fullscreen');
+                if (modal) {
+                    modal.classList.remove('modal-fullscreen');
+                    modal.style.position = '';
+                    modal.style.left = '';
+                    modal.style.top = '';
+                    modal.style.width = '';
+                    modal.style.height = '';
+                    modal.style.margin = '';
+                    modal.style.maxWidth = '';
+                    modal.style.maxHeight = '';
+                    modal._savedInlineStyles = null;
+                }
                 const btn = el.querySelector('.btn-modal-expand');
                 if (btn) {
                     const icon = btn.querySelector('.expand-icon');
