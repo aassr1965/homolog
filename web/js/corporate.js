@@ -299,6 +299,145 @@ function selectCorporateApp(appId) {
 }
 
 // ============================================================================
+// CONFIGURATION DES VOLETS RÉGLEMENTAIRES DÉCRET EXÉCUTIF N° 21-82
+// ============================================================================
+
+const CORPORATE_SECTIONS_ORDER = [
+    'ADMINISTRATIF',
+    'PLANS_FLUX',
+    'UTILITES_EQUIPEMENTS',
+    'TECHNIQUE_LOCAUX',
+    'ORGANISATION_BPF',
+    'PHARMACIEN_DT',
+    'CONDITIONS_TECHNIQUES',
+    'MODIFICATIONS',
+    'AUTRE'
+];
+
+const CORPORATE_SECTION_CONFIG = {
+    'ADMINISTRATIF': {
+        title: "Volet I : Dossier Administratif, Légal & Statutaire (Art. 4 & 5 Décret 21-82)",
+        shortTitle: "Volet I : Dossier Administratif",
+        badge: "Art. 4-5",
+        icon: "🏛️"
+    },
+    'PLANS_FLUX': {
+        title: "Volet II : Conception des Locaux, Zonage BPF & Synoptiques des Flux (Art. 7 à 10)",
+        shortTitle: "Volet II : Locaux, Zonage & Flux",
+        badge: "Art. 7-10",
+        icon: "📐"
+    },
+    'UTILITES_EQUIPEMENTS': {
+        title: "Volet III : Utilités Critiques (CVC/Eau PPI) & Qualification Équipements",
+        shortTitle: "Volet III : Utilités & Équipements",
+        badge: "BPF / Ph. Eur.",
+        icon: "⚙️"
+    },
+    'TECHNIQUE_LOCAUX': {
+        title: "Volet Technique : Aménagement des Locaux & Installations BPF",
+        shortTitle: "Volet Technique : Locaux",
+        badge: "Locaux",
+        icon: "🏭"
+    },
+    'ORGANISATION_BPF': {
+        title: "Volet IV : Système de Gestion de la Qualité (PQS) & Procédures BPF (Art. 11 à 15)",
+        shortTitle: "Volet IV : Système Qualité PQS",
+        badge: "Art. 11-15",
+        icon: "📋"
+    },
+    'PHARMACIEN_DT': {
+        title: "Volet V : Pharmacien Directeur Technique & Équipe Pharmaceutique (Art. 16 à 24)",
+        shortTitle: "Volet V : Direction Technique",
+        badge: "Art. 16-24",
+        icon: "⚖️"
+    },
+    'CONDITIONS_TECHNIQUES': {
+        title: "Volet Technique : Conditions de Stockage & Chaîne du Froid (BPDG)",
+        shortTitle: "Volet Technique : BPDG",
+        badge: "BPDG",
+        icon: "❄️"
+    },
+    'MODIFICATIONS': {
+        title: "Volet Modifications : Éléments Substantiels & Justificatifs (Arrêté 22/09/2025)",
+        shortTitle: "Volet Modifications",
+        badge: "Arrêté 2025",
+        icon: "📑"
+    },
+    'AUTRE': {
+        title: "Volet Complémentaire : Exigences Réglementaires Spécifiques",
+        shortTitle: "Volet Complémentaire",
+        badge: "Réglementaire",
+        icon: "📁"
+    }
+};
+
+let corporateCollapsedSections = new Set();
+let corporateDrawerCollapsedSections = new Set();
+
+function getCorporateSectionKey(item) {
+    if (item.section === 'TECHNIQUE_LOCAUX') {
+        if (item.item_code.includes('.UTL.') || item.item_code.includes('.EQP.')) {
+            return 'UTILITES_EQUIPEMENTS';
+        }
+        if (item.item_code.includes('.PLN.') || item.item_code.includes('.FLX.')) {
+            return 'PLANS_FLUX';
+        }
+    }
+    return item.section || 'AUTRE';
+}
+
+function toggleCorporateSectionCollapse(secKey) {
+    if (corporateCollapsedSections.has(secKey)) {
+        corporateCollapsedSections.delete(secKey);
+    } else {
+        corporateCollapsedSections.add(secKey);
+    }
+    const isNowCollapsed = corporateCollapsedSections.has(secKey);
+    const rows = document.querySelectorAll(`tr[data-corp-section="${secKey}"]`);
+    rows.forEach(r => {
+        r.style.display = isNowCollapsed ? 'none' : '';
+    });
+    const indicator = document.getElementById(`corp-sec-ind-${secKey}`);
+    if (indicator) {
+        indicator.textContent = isNowCollapsed ? '▶' : '▼';
+    }
+}
+
+function toggleAllCorporateSections() {
+    const allSecKeys = Object.keys(CORPORATE_SECTION_CONFIG);
+    const anyExpanded = allSecKeys.some(k => !corporateCollapsedSections.has(k));
+    if (anyExpanded) {
+        allSecKeys.forEach(k => corporateCollapsedSections.add(k));
+    } else {
+        corporateCollapsedSections.clear();
+    }
+    allSecKeys.forEach(secKey => {
+        const isNowCollapsed = corporateCollapsedSections.has(secKey);
+        const rows = document.querySelectorAll(`tr[data-corp-section="${secKey}"]`);
+        rows.forEach(r => {
+            r.style.display = isNowCollapsed ? 'none' : '';
+        });
+        const indicator = document.getElementById(`corp-sec-ind-${secKey}`);
+        if (indicator) {
+            indicator.textContent = isNowCollapsed ? '▶' : '▼';
+        }
+    });
+}
+
+function toggleDrawerCorporateSection(secKey) {
+    if (corporateDrawerCollapsedSections.has(secKey)) {
+        corporateDrawerCollapsedSections.delete(secKey);
+    } else {
+        corporateDrawerCollapsedSections.add(secKey);
+    }
+    const isCollapsed = corporateDrawerCollapsedSections.has(secKey);
+    const body = document.getElementById(`drawer-sec-body-${secKey}`);
+    const ind = document.getElementById(`drawer-sec-ind-${secKey}`);
+    if (body) body.style.display = isCollapsed ? 'none' : 'flex';
+    if (ind) ind.textContent = isCollapsed ? '▶' : '▼';
+}
+
+// ============================================================================
 // 3.B VUE CHECKLIST DES DOCUMENTS RÉGLEMENTAIRES À JOINDRE (DÉCRET 21-82)
 // ============================================================================
 
@@ -308,7 +447,7 @@ async function viewCorporateChecklist(appId) {
     const tbody = document.getElementById("doc-tbody");
     if (!tbody || !thead) return;
 
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);"><span class="spin">⏳</span> Chargement de la liste des documents réglementaires Décret 21-82...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);"><span class="spin">⏳</span> Chargement de la checklist des volets Décret 21-82...</td></tr>`;
 
     try {
         const resp = await fetch('/api/v1/corporate/applications/' + appId);
@@ -337,6 +476,7 @@ async function viewCorporateChecklist(appId) {
                 <button class="btn-table-icon" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">←</button>
                 <button class="btn-table-icon" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕</button>
                 <button class="btn-table-icon btn-table-icon-primary" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>
+                <button class="btn-table-icon" onclick="toggleAllCorporateSections()" title="Tout déplier / Tout replier les volets réglementaires">📑</button>
                 <button class="btn-table-icon" onclick="openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
                 <button class="btn-table-icon" onclick="downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
                 <button class="btn-table-icon" onclick="viewCorporateChecklist('${app.id}')" title="Actualiser la liste">🔄</button>
@@ -352,9 +492,8 @@ async function viewCorporateChecklist(appId) {
             <tr>
                 <th style="width: 55px; text-align:center;" title="Statut de rattachement au coffre-fort GED">GED</th>
                 <th style="width: 110px;">Code Exigence</th>
-                <th>Intitulé du Document à joindre au Dossier MIPH</th>
-                <th>Section Réglementaire</th>
-                <th style="width: 140px;">Niveau d'Exigence</th>
+                <th>Intitulé du Document Réglementaire (Décret 21-82)</th>
+                <th style="width: 135px; text-align:center;">Niveau d'Exigence</th>
                 <th>Document du Coffre-fort GED</th>
                 <th style="width: 110px; text-align:center;">Action</th>
             </tr>
@@ -363,7 +502,7 @@ async function viewCorporateChecklist(appId) {
         if (items.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">
+                    <td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">
                         Aucune pièce requise configurée pour cette démarche.
                     </td>
                 </tr>
@@ -371,74 +510,128 @@ async function viewCorporateChecklist(appId) {
             return;
         }
 
+        const groupedSections = {};
+        items.forEach(it => {
+            const secKey = getCorporateSectionKey(it);
+            if (!groupedSections[secKey]) groupedSections[secKey] = [];
+            groupedSections[secKey].push(it);
+        });
+
         tbody.innerHTML = "";
-        items.forEach((it) => {
-            const tr = document.createElement("tr");
 
-            // Statut GED (icône seule avec tooltip)
-            let stBadge = `<span class="badge-icon-status" style="background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3);" title="Statut GED : Document manquant (exigence non couverte)">⚠️</span>`;
-            if (it.ged_document_id) {
-                stBadge = `<span class="badge-icon-status" style="background:rgba(5,150,105,0.12); border:1px solid rgba(5,150,105,0.3);" title="Statut GED : Document rattaché (${escapeHtml(it.document_name || 'Document GED')})">✅</span>`;
-            }
+        CORPORATE_SECTIONS_ORDER.forEach(secKey => {
+            const secItems = groupedSections[secKey];
+            if (!secItems || secItems.length === 0) return;
 
-            // Criticité
-            let reqBadge = `<span class="status-tag" style="background:#64748b; color:white; font-size:9px;">[S] Standard</span>`;
-            if (it.requirement_level === 'ELIMINATOIRE') {
-                reqBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:9px; font-weight:800;">[E] Éliminatoire Tabadol</span>`;
-            } else if (it.requirement_level === 'COMPLEMENT') {
-                reqBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white; font-size:9px; font-weight:700;">[C] Complément</span>`;
-            } else if (it.requirement_level === 'FACULTATIF') {
-                reqBadge = `<span class="status-tag" style="background:#0284c7; color:white; font-size:9px;">[F] Facultatif</span>`;
-            }
+            const secCfg = CORPORATE_SECTION_CONFIG[secKey] || {
+                title: `Volet : ${secKey}`,
+                badge: secKey,
+                icon: "📁"
+            };
 
-            // Info GED rattaché
-            let docInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Aucune pièce rattachée</span>`;
-            let actionBtn = `
-                <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
-                    📎
-                </button>
-            `;
+            const isCollapsed = corporateCollapsedSections.has(secKey);
+            const totalInSec = secItems.length;
+            const linkedInSec = secItems.filter(it => it.ged_document_id).length;
+            const mandatoryInSec = secItems.filter(it => it.is_mandatory && it.requirement_level === 'E').length;
 
-            if (it.ged_document_id) {
-                docInfo = `
-                    <div style="display:flex; flex-direction:column; gap:2px;">
-                        <a href="javascript:void(0)" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" style="font-weight:700; color:var(--accent-blue); font-size:11px; text-decoration:underline; display:inline-flex; align-items:center; gap:4px;" title="Cliquer pour visionner la pièce jointe">
-                            <span>📄 ${escapeHtml(it.document_name || 'Document GED')}</span>
-                        </a>
-                        <span style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono);">
-                            Réf: ${escapeHtml(it.document_code || '-')} • SHA-256: ${escapeHtml(it.file_sha256 ? it.file_sha256.substring(0, 16) + '...' : '-')}
+            // Ligne d'en-tête de section (accordéon déployable)
+            const trHeader = document.createElement("tr");
+            trHeader.className = "section-accordion-header";
+            trHeader.onclick = () => toggleCorporateSectionCollapse(secKey);
+            trHeader.title = isCollapsed ? "Cliquer pour déplier ce volet" : "Cliquer pour replier ce volet";
+
+            trHeader.innerHTML = `
+                <td colspan="6">
+                    <div class="sec-banner" style="display:flex; align-items:center; gap:8px; padding:2px 4px;">
+                        <span id="corp-sec-ind-${secKey}" style="font-size:11px; color:var(--text-dim); width:14px; display:inline-block; text-align:center;">
+                            ${isCollapsed ? '▶' : '▼'}
                         </span>
+                        <span>${secCfg.icon}</span>
+                        <span style="color:var(--text-main); font-weight:800; font-size:12px;">${secCfg.title}</span>
+                        <span style="font-size:9.5px; padding:2px 6px; border-radius:3px; background:rgba(2,132,199,0.12); color:var(--accent-blue); font-weight:700;">
+                            ${secCfg.badge}
+                        </span>
+                        <div class="sec-counts" style="margin-left:auto; display:inline-flex; align-items:center; gap:8px;">
+                            <span style="font-size:11px; color:${linkedInSec === totalInSec ? 'var(--accent-emerald)' : 'var(--text-muted)'}; font-weight:700;">
+                                ${linkedInSec} / ${totalInSec} pièce(s) liée(s)
+                            </span>
+                            ${mandatoryInSec > 0 ? `<span style="font-size:10px; color:var(--accent-amber); font-weight:800; background:rgba(217,119,6,0.1); border:1px solid rgba(217,119,6,0.3); padding:1px 6px; border-radius:3px;">[${mandatoryInSec} Éliminatoire(s)]</span>` : ''}
+                        </div>
                     </div>
-                `;
-                actionBtn = `
-                    <div style="display:inline-flex; gap:5px; align-items:center; justify-content:center;">
-                        <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
-                        <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer par un autre document GED">🔄</button>
-                        <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
-                    </div>
-                `;
-            }
-
-            tr.innerHTML = `
-                <td style="text-align:center;">${stBadge}</td>
-                <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--accent-blue); font-size:11px;">${escapeHtml(it.item_code)}</span></td>
-                <td>
-                    <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(it.title)}</div>
                 </td>
-                <td><span style="font-size:11px; color:var(--text-dim); font-weight:600;">${escapeHtml(it.section)}</span></td>
-                <td>${reqBadge}</td>
-                <td>${docInfo}</td>
-                <td style="text-align:center;">${actionBtn}</td>
             `;
+            tbody.appendChild(trHeader);
 
-            tbody.appendChild(tr);
+            // Lignes enfants du volet
+            secItems.forEach(it => {
+                const tr = document.createElement("tr");
+                tr.setAttribute("data-corp-section", secKey);
+                if (isCollapsed) tr.style.display = "none";
+
+                // Statut GED (icône seule avec tooltip)
+                let stBadge = `<span class="badge-icon-status" style="background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3);" title="Statut GED : Document manquant (exigence non couverte)">⚠️</span>`;
+                if (it.ged_document_id) {
+                    stBadge = `<span class="badge-icon-status" style="background:rgba(5,150,105,0.12); border:1px solid rgba(5,150,105,0.3);" title="Statut GED : Document rattaché (${escapeHtml(it.document_name || 'Document GED')})">✅</span>`;
+                }
+
+                // Criticité
+                let reqBadge = `<span class="status-tag" style="background:#64748b; color:white; font-size:9px;">[S] Standard</span>`;
+                if (it.requirement_level === 'ELIMINATOIRE') {
+                    reqBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:9px; font-weight:800;">[E] Éliminatoire Tabadol</span>`;
+                } else if (it.requirement_level === 'COMPLEMENT') {
+                    reqBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white; font-size:9px; font-weight:700;">[C] Complément</span>`;
+                } else if (it.requirement_level === 'FACULTATIF') {
+                    reqBadge = `<span class="status-tag" style="background:#0284c7; color:white; font-size:9px;">[F] Facultatif</span>`;
+                }
+
+                // Info GED rattaché
+                let docInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Aucune pièce rattachée</span>`;
+                let actionBtn = `
+                    <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
+                        📎
+                    </button>
+                `;
+
+                if (it.ged_document_id) {
+                    docInfo = `
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <a href="javascript:void(0)" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" style="font-weight:700; color:var(--accent-blue); font-size:11px; text-decoration:underline; display:inline-flex; align-items:center; gap:4px;" title="Cliquer pour visionner la pièce jointe">
+                                <span>📄 ${escapeHtml(it.document_name || 'Document GED')}</span>
+                            </a>
+                            <span style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono);">
+                                Réf: ${escapeHtml(it.document_code || '-')} • SHA-256: ${escapeHtml(it.file_sha256 ? it.file_sha256.substring(0, 16) + '...' : '-')}
+                            </span>
+                        </div>
+                    `;
+                    actionBtn = `
+                        <div style="display:inline-flex; gap:5px; align-items:center; justify-content:center;">
+                            <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
+                            <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer par un autre document GED">🔄</button>
+                            <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
+                        </div>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td style="text-align:center;">${stBadge}</td>
+                    <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--accent-blue); font-size:11px;">${escapeHtml(it.item_code)}</span></td>
+                    <td>
+                        <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(it.title)}</div>
+                    </td>
+                    <td style="text-align:center;">${reqBadge}</td>
+                    <td>${docInfo}</td>
+                    <td style="text-align:center;">${actionBtn}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
         });
 
         // Met également à jour le volet d'aperçu latéral
         renderCorporateAppPreview(appId);
 
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--accent-red);">❌ Erreur: ${escapeHtml(e.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--accent-red);">❌ Erreur: ${escapeHtml(e.message)}</td></tr>`;
     }
 }
 
@@ -661,34 +854,56 @@ function renderChecklistTabHtml(app) {
         return `<div style="text-align:center; padding:20px; color:var(--text-dim);">Aucune exigence configurée pour ce type d'établissement.</div>`;
     }
 
-    // Regrouper par section
+    // Regrouper par volet réglementaire Décret 21-82
     const sections = {};
     items.forEach(it => {
-        const sec = it.section || "GÉNÉRAL";
-        if (!sections[sec]) sections[sec] = [];
-        sections[sec].push(it);
+        const secKey = getCorporateSectionKey(it);
+        if (!sections[secKey]) sections[secKey] = [];
+        sections[secKey].push(it);
     });
 
     let html = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <div style="font-size:12px; font-weight:700; color:var(--text-main);">
-                Pièces Justificatives Obligatoires (Arrêtés sept/oct 2025)
+                Volets Réglementaires &amp; Exigences (Décret 21-82)
             </div>
             <button class="btn-table-icon btn-table-icon-primary" onclick="openTabadolAuditModal('${app.id}')" title="Évaluer la conformité Tabadol (Décret 21-82)">
                 🔍
             </button>
         </div>
-        <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
     `;
 
-    for (const [secName, secItems] of Object.entries(sections)) {
+    const orderedKeys = CORPORATE_SECTIONS_ORDER.filter(k => sections[k] && sections[k].length > 0);
+    Object.keys(sections).forEach(k => {
+        if (!orderedKeys.includes(k)) orderedKeys.push(k);
+    });
+
+    orderedKeys.forEach(secKey => {
+        const secItems = sections[secKey];
+        const cfg = CORPORATE_SECTION_CONFIG[secKey] || {
+            title: `Volet : ${secKey}`,
+            shortTitle: secKey,
+            badge: "Réglementaire",
+            icon: "📁"
+        };
+        const isCollapsed = corporateDrawerCollapsedSections.has(secKey);
+        const attachedCount = secItems.filter(i => i.ged_document_id).length;
+        const totalCount = secItems.length;
+
         html += `
             <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">
-                <div style="background:rgba(255,255,255,0.03); border-bottom:1px solid var(--border-color); padding:6px 10px; font-weight:700; font-size:11px; display:flex; justify-content:space-between;">
-                    <span>📂 Section ${escapeHtml(secName)}</span>
-                    <span style="color:var(--text-dim); font-size:10px;">${secItems.length} pièce(s)</span>
+                <div onclick="toggleDrawerCorporateSection('${secKey}')" style="cursor:pointer; background:rgba(255,255,255,0.03); border-bottom:1px solid var(--border-color); padding:8px 10px; font-weight:700; font-size:11px; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+                    <span style="display:inline-flex; align-items:center; gap:6px;">
+                        <span id="drawer-sec-ind-${secKey}" style="font-size:10px; color:var(--text-dim);">${isCollapsed ? '▶' : '▼'}</span>
+                        <span>${cfg.icon} ${escapeHtml(cfg.shortTitle || cfg.title)}</span>
+                    </span>
+                    <span style="display:inline-flex; gap:6px; align-items:center;">
+                        <span style="font-size:9px; background:rgba(59,130,246,0.15); color:var(--accent-blue); padding:1px 5px; border-radius:3px;">${escapeHtml(cfg.badge)}</span>
+                        <span style="color:${attachedCount === totalCount ? 'var(--accent-green)' : 'var(--text-dim)'}; font-size:10px; font-weight:600;">${attachedCount}/${totalCount}</span>
+                    </span>
                 </div>
-                <div style="display:flex; flex-direction:column;">
+                <div id="drawer-sec-body-${secKey}" style="display:${isCollapsed ? 'none' : 'flex'}; flex-direction:column;">
         `;
 
         secItems.forEach(it => {
@@ -749,7 +964,7 @@ function renderChecklistTabHtml(app) {
                 </div>
             </div>
         `;
-    }
+    });
 
     html += `</div>`;
     return html;
