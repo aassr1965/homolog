@@ -379,14 +379,17 @@ async function viewCorporateChecklist(appId) {
             if (it.ged_document_id) {
                 docInfo = `
                     <div style="display:flex; flex-direction:column; gap:2px;">
-                        <span style="font-weight:700; color:var(--text-main); font-size:11px;">📄 ${escapeHtml(it.document_name || 'Document GED')}</span>
+                        <a href="javascript:void(0)" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" style="font-weight:700; color:var(--accent-blue); font-size:11px; text-decoration:underline; display:inline-flex; align-items:center; gap:4px;" title="Cliquer pour visionner la pièce jointe">
+                            <span>📄 ${escapeHtml(it.document_name || 'Document GED')}</span>
+                        </a>
                         <span style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono);">
                             Réf: ${escapeHtml(it.document_code || '-')} • SHA-256: ${escapeHtml(it.file_sha256 ? it.file_sha256.substring(0, 16) + '...' : '-')}
                         </span>
                     </div>
                 `;
                 actionBtn = `
-                    <div style="display:inline-flex; gap:4px;">
+                    <div style="display:inline-flex; gap:4px; align-items:center;">
+                        <button class="btn-pill" style="font-size:10px; padding:3px 8px; background:var(--accent-blue); color:white; border:none; font-weight:700; cursor:pointer;" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe dans la modale redimensionnable">👁️ Visionner</button>
                         <button class="btn-table-action" style="color:var(--accent-blue);" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer la pièce">🔄 Remplacer</button>
                         <button class="btn-table-action" style="color:var(--accent-red);" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher">❌ Détacher</button>
                     </div>
@@ -681,9 +684,12 @@ function renderChecklistTabHtml(app) {
                 gedInfo = `
                     <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
                         <span style="font-size:10px; color:var(--accent-emerald); font-weight:700;">✅ Rattaché :</span>
-                        <span style="font-size:10px; color:var(--text-main); font-weight:600;">${escapeHtml(it.document_name || 'Document GED')}</span>
+                        <a href="javascript:void(0)" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" style="font-size:10px; color:var(--accent-blue); font-weight:700; text-decoration:underline;" title="Cliquer pour visionner">
+                            ${escapeHtml(it.document_name || 'Document GED')}
+                        </a>
                         <span style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono);">(${escapeHtml(it.document_code || '')})</span>
-                        <button class="btn-table-action" style="color:var(--accent-red); margin-left:auto; padding:2px 6px; font-size:9px;" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher">❌</button>
+                        <button class="btn-pill" style="font-size:9px; padding:2px 7px; background:var(--accent-blue); color:white; border:none; margin-left:auto; cursor:pointer;" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner">👁️ Visionner</button>
+                        <button class="btn-table-action" style="color:var(--accent-red); margin-left:4px; padding:2px 6px; font-size:9px;" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher">❌</button>
                     </div>
                 `;
             } else {
@@ -1036,6 +1042,20 @@ async function detachGEDDocumentFromItem(appId, itemId) {
         viewCorporateChecklist(appId);
     } catch (e) {
         showNotifyModal("Erreur", e.message, "❌", "Fermer");
+    }
+}
+
+// F. Visualisation de la pièce jointe dans la modale redimensionnable
+function openCorporateDocumentViewer(gedDocId, docTitle, itemCode) {
+    if (!gedDocId) {
+        showNotifyModal("Pièce Non Rattachée", "Aucun document GED n'est rattaché à cette exigence réglementaire.", "⚠️", "Fermer");
+        return;
+    }
+    const fullTitle = (itemCode ? `[${itemCode}] ` : '') + (docTitle || "Pièce Jointe Réglementaire (Décret 21-82)");
+    if (typeof openDocumentViewerModal === 'function') {
+        openDocumentViewerModal(gedDocId, fullTitle);
+    } else {
+        window.open(`/api/v1/ged/documents/${gedDocId}/download`, '_blank');
     }
 }
 

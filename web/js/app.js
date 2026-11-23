@@ -1027,7 +1027,145 @@
             }
         }
 
-        // Visualiseur universel de documents & scans in-app (Agrandissable)
+        // Initialiseur générique de modales redimensionnables et déplaçables (Façon Fenêtre OS)
+        function initModalWindowResizer(dialogId, headerId, options) {
+            const dialog = document.getElementById(dialogId);
+            if (!dialog) return;
+            if (dialog._resizerInitialized) return;
+            dialog._resizerInitialized = true;
+
+            const header = headerId ? document.getElementById(headerId) : dialog.querySelector('.modal-header');
+            const minWidth = (options && options.minWidth) || 480;
+            const minHeight = (options && options.minHeight) || 360;
+
+            const edges = dialog.querySelectorAll('.modal-resize-edge');
+            edges.forEach(edge => {
+                edge.addEventListener('pointerdown', (e) => {
+                    if (dialog.classList.contains('modal-fullscreen') || e.button !== 0) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const dir = edge.dataset.direction;
+                    const startRect = dialog.getBoundingClientRect();
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+
+                    dialog.style.position = 'absolute';
+                    dialog.style.left = startRect.left + 'px';
+                    dialog.style.top = startRect.top + 'px';
+                    dialog.style.width = startRect.width + 'px';
+                    dialog.style.height = startRect.height + 'px';
+                    dialog.style.margin = '0';
+                    dialog.style.maxWidth = 'none';
+                    dialog.style.maxHeight = 'none';
+
+                    edge.setPointerCapture(e.pointerId);
+
+                    function onPointerMove(ev) {
+                        const dx = ev.clientX - startX;
+                        const dy = ev.clientY - startY;
+
+                        let newW = startRect.width;
+                        let newH = startRect.height;
+                        let newL = startRect.left;
+                        let newT = startRect.top;
+
+                        if (dir.includes('e')) {
+                            newW = Math.max(minWidth, startRect.width + dx);
+                            if (newL + newW > window.innerWidth - 6) newW = window.innerWidth - 6 - newL;
+                        }
+                        if (dir.includes('w')) {
+                            const maxL = startRect.right - minWidth;
+                            let candL = startRect.left + dx;
+                            if (candL > maxL) candL = maxL;
+                            if (candL < 6) candL = 6;
+                            newL = candL;
+                            newW = startRect.right - newL;
+                        }
+                        if (dir.includes('s')) {
+                            newH = Math.max(minHeight, startRect.height + dy);
+                            if (newT + newH > window.innerHeight - 6) newH = window.innerHeight - 6 - newT;
+                        }
+                        if (dir.includes('n')) {
+                            const maxT = startRect.bottom - minHeight;
+                            let candT = startRect.top + dy;
+                            if (candT > maxT) candT = maxT;
+                            if (candT < 6) candT = 6;
+                            newT = candT;
+                            newH = startRect.bottom - newT;
+                        }
+
+                        dialog.style.left = newL + 'px';
+                        dialog.style.top = newT + 'px';
+                        dialog.style.width = newW + 'px';
+                        dialog.style.height = newH + 'px';
+                    }
+
+                    function onPointerUp(ev) {
+                        edge.removeEventListener('pointermove', onPointerMove);
+                        edge.removeEventListener('pointerup', onPointerUp);
+                        edge.removeEventListener('pointercancel', onPointerUp);
+                        try { edge.releasePointerCapture(ev.pointerId); } catch (_) {}
+                    }
+
+                    edge.addEventListener('pointermove', onPointerMove);
+                    edge.addEventListener('pointerup', onPointerUp);
+                    edge.addEventListener('pointercancel', onPointerUp);
+                });
+            });
+
+            if (header) {
+                header.addEventListener('pointerdown', (e) => {
+                    if (e.target.closest('button, a, input, select, textarea') || dialog.classList.contains('modal-fullscreen') || e.button !== 0) {
+                        return;
+                    }
+                    e.preventDefault();
+                    const startRect = dialog.getBoundingClientRect();
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+
+                    dialog.style.position = 'absolute';
+                    dialog.style.left = startRect.left + 'px';
+                    dialog.style.top = startRect.top + 'px';
+                    dialog.style.width = startRect.width + 'px';
+                    dialog.style.height = startRect.height + 'px';
+                    dialog.style.margin = '0';
+                    dialog.style.maxWidth = 'none';
+                    dialog.style.maxHeight = 'none';
+
+                    header.style.cursor = 'grabbing';
+                    header.setPointerCapture(e.pointerId);
+
+                    function onHeaderMove(ev) {
+                        const dx = ev.clientX - startX;
+                        const dy = ev.clientY - startY;
+                        let candL = startRect.left + dx;
+                        let candT = startRect.top + dy;
+                        if (candL < 6) candL = 6;
+                        if (candT < 6) candT = 6;
+                        if (candL + startRect.width > window.innerWidth - 6) candL = window.innerWidth - 6 - startRect.width;
+                        if (candT + 40 > window.innerHeight) candT = window.innerHeight - 40;
+                        dialog.style.left = candL + 'px';
+                        dialog.style.top = candT + 'px';
+                    }
+
+                    function onHeaderUp(ev) {
+                        header.removeEventListener('pointermove', onHeaderMove);
+                        header.removeEventListener('pointerup', onHeaderUp);
+                        header.removeEventListener('pointercancel', onHeaderUp);
+                        header.style.cursor = 'grab';
+                        try { header.releasePointerCapture(ev.pointerId); } catch (_) {}
+                    }
+
+                    header.addEventListener('pointermove', onHeaderMove);
+                    header.addEventListener('pointerup', onHeaderUp);
+                    header.addEventListener('pointercancel', onHeaderUp);
+                });
+            }
+        }
+        window.initModalWindowResizer = initModalWindowResizer;
+
+        // Visualiseur universel de documents & scans in-app (Agrandissable & Redimensionnable)
         function openDocumentViewerModal(docId, docTitle, versionId) {
             if (!docId) {
                 if (typeof showNotifyModal === 'function') {
@@ -1058,6 +1196,9 @@
             }
 
             openModal("modal-doc-preview");
+            setTimeout(() => {
+                initModalWindowResizer('modal-doc-preview-dialog', 'modal-doc-preview-header', { minWidth: 480, minHeight: 360 });
+            }, 60);
         }
 
         function closeDocPreviewModal() {
