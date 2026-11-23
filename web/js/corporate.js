@@ -271,7 +271,7 @@ async function renderCorporateView(filter) {
                 <td class="col-hide-sm">${tabadolHtml}</td>
                 <td style="text-align:center;">
                     <div style="display:inline-flex; gap:5px; align-items:center; justify-content:center;">
-                        <button class="btn-table-icon btn-table-icon-primary" onclick="event.stopPropagation(); viewCorporateChecklist('${app.id}')" title="Afficher les 12 pièces réglementaires à joindre (Décret 21-82)">📋</button>
+                        <button class="btn-table-icon btn-table-icon-primary" onclick="event.stopPropagation(); viewCorporateChecklist('${app.id}')" title="Afficher la checklist des pièces réglementaires Décret 21-82">📋</button>
                         <button class="btn-table-icon" onclick="event.stopPropagation(); openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
                         <button class="btn-table-icon" onclick="event.stopPropagation(); downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
                     </div>
