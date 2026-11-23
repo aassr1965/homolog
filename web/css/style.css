@@ -2403,4 +2403,103 @@ html[data-theme="dark"] .badge-gating-blocking {
     border-color: #f59e0b;
 }
 
+/* ========================================================================== */
+/* PISTE D'AUDIT TRAIL IMMUABLE (ALCOA+ / 21 CFR PART 11) - ONGLETS & INSPECTEUR */
+/* ========================================================================== */
+.audit-tabs-bar {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 4px;
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+.audit-tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all 0.12s ease;
+}
+.audit-tab-btn:hover {
+    background: var(--bg-surface);
+    color: var(--text-main);
+}
+.audit-tab-btn.active {
+    background: rgba(2, 132, 199, 0.12);
+    border-color: rgba(2, 132, 199, 0.35);
+    color: var(--accent-blue);
+    font-weight: 700;
+}
+.audit-tab-count {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 8px;
+    background: var(--badge-bg);
+    color: var(--text-muted);
+}
+.audit-tab-btn.active .audit-tab-count {
+    background: var(--accent-blue);
+    color: #ffffff;
+}
+.audit-row {
+    cursor: pointer;
+    transition: background 0.1s ease;
+}
+.audit-row:hover {
+    background: rgba(2, 132, 199, 0.06);
+}
+.audit-row.selected {
+    background: rgba(2, 132, 199, 0.14) !important;
+    border-left: 3px solid var(--accent-blue);
+}
+.audit-inspector-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 8px 10px;
+}
+.audit-inspector-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+}
+.audit-inspector-value {
+    font-size: 11.5px;
+    color: var(--text-main);
+    word-break: break-all;
+}
+.audit-json-box {
+    background: var(--bg-app);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 10.5px;
+    max-height: 180px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    color: var(--text-main);
+}
+@media (max-width: 900px) {
+    .audit-split-view {
+        flex-direction: column !important;
+    }
+    .audit-inspector-pane {
+        width: 100% !important;
+        height: 220px !important;
+    }
+}
+
+
 
