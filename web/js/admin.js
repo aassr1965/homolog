@@ -87,6 +87,9 @@ function renderAdminTree() {
 
 // Chargement principal de la section administration
 async function loadAdminSection(section) {
+    if (typeof resetStandardTableContainer === 'function') {
+        resetStandardTableContainer();
+    }
     const canManageUsers = typeof hasPermission === 'function' && hasPermission('USER_MANAGE');
     if (!canManageUsers) {
         currentAdminSection = 'settings';

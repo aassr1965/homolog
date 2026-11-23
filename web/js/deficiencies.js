@@ -19,8 +19,31 @@ if (typeof escapeHTML !== 'function') {
     }
 }
 
+var currentDeficiencyFilter = window.currentDeficiencyFilter || 'all';
+
 // Chargement et affichage du tableau de bord global des compléments
-async function loadDeficienciesDashboard() {
+async function loadDeficienciesDashboard(filter) {
+    if (filter) currentDeficiencyFilter = filter;
+
+    const bcMod = document.getElementById("bc-mod");
+    if (bcMod) {
+        if (currentDeficiencyFilter === 'critical') bcMod.innerText = "Alertes Critiques (J ≤ 15)";
+        else if (currentDeficiencyFilter === 'urgent') bcMod.innerText = "Urgences Réglementaires (J ≤ 30)";
+        else if (currentDeficiencyFilter === 'validated') bcMod.innerText = "Visées Pharmacien DT (1.A.7)";
+        else bcMod.innerText = "Traçabilité_Délais_Légaux";
+    }
+
+    const centerView = document.querySelector(".table-container") || document.getElementById("table-container");
+    if (centerView && (!activeDeficienciesDashboard || centerView.querySelector('#doc-table') || !centerView.querySelector('.deficiencies-dashboard-container'))) {
+        centerView.innerHTML = `
+            <div style="padding:40px; text-align:center; color:var(--text-muted);">
+                <div class="spin" style="font-size:24px; margin-bottom:12px;">⏳</div>
+                <div style="font-weight:600; color:var(--text-main);">Chargement du Studio de Compléments ANPP &amp; Délais Légaux...</div>
+                <div style="font-size:11px; margin-top:4px;">Synchronisation avec le registre officiel (Décret 20-325 &amp; Guide CTD 2025)</div>
+            </div>
+        `;
+    }
+
     try {
         const resp = await fetch('/api/v1/deficiencies/dashboard', {
             headers: { 'Accept': 'application/json' }
@@ -34,7 +57,7 @@ async function loadDeficienciesDashboard() {
         updateDeficiencyBadgeCount(data);
     } catch (err) {
         console.error("Erreur chargement compléments:", err);
-        const centerView = document.querySelector(".table-container");
+        const centerView = document.querySelector(".table-container") || document.getElementById("table-container");
         if (centerView) {
             centerView.innerHTML = `
                 <div style="padding:30px; text-align:center; color:var(--accent-red);">
@@ -88,12 +111,19 @@ function getUrgencyBadgeHTML(days, urgencyBadge) {
 // Rendu HTML du Cockpit Principal Studio de Compléments ANPP
 function renderDeficienciesDashboardView(data) {
     const tableHead = document.getElementById("table-head");
-    const centerView = document.querySelector(".table-container");
+    const centerView = document.querySelector(".table-container") || document.getElementById("table-container");
     if (!centerView) return;
 
     if (tableHead) tableHead.innerHTML = '';
 
-    const letters = data.recent_letters || [];
+    let letters = (data && data.recent_letters) ? data.recent_letters : [];
+    if (currentDeficiencyFilter === 'critical') {
+        letters = letters.filter(l => l.days_remaining <= 15 || l.urgency_badge === 'critical' || l.urgency_badge === 'expired');
+    } else if (currentDeficiencyFilter === 'urgent') {
+        letters = letters.filter(l => (l.days_remaining > 15 && l.days_remaining <= 30) || l.urgency_badge === 'urgent');
+    } else if (currentDeficiencyFilter === 'validated') {
+        letters = letters.filter(l => (l.validated_tasks_count || 0) > 0);
+    }
     currentDashboardLetters = letters;
 
     let html = `
@@ -112,33 +142,33 @@ function renderDeficienciesDashboardView(data) {
                     </div>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; padding:6px 14px; font-size:11.5px;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
-                        <button class="btn-pill" onclick="loadDeficienciesDashboard()" title="Actualiser les compteurs">🔄 Actualiser</button>
+                        <button class="btn-pill" onclick="loadDeficienciesDashboard(currentDeficiencyFilter || 'all')" title="Actualiser les compteurs">🔄 Actualiser</button>
                     </div>
                 </div>
 
                 <!-- 4 KPI Cards -->
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
-                    <div class="admin-preview-card" style="border-left:4px solid #dc2626; padding:10px;">
+                    <div class="admin-preview-card" style="border-left:4px solid #dc2626; padding:10px; cursor:pointer;" onclick="filterDeficienciesTree('critical')">
                         <div style="font-size:10.5px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">🚨 Échéances Critiques (J ≤ 15)</div>
-                        <div style="font-size:22px; font-weight:800; color:#dc2626; margin-top:4px;">${data.critical_letters || 0}</div>
+                        <div style="font-size:22px; font-weight:800; color:#dc2626; margin-top:4px;">${data ? (data.critical_letters || 0) : 0}</div>
                         <div style="font-size:10px; color:var(--text-muted);">Risque de caducité du dossier</div>
                     </div>
 
-                    <div class="admin-preview-card" style="border-left:4px solid #ea580c; padding:10px;">
+                    <div class="admin-preview-card" style="border-left:4px solid #ea580c; padding:10px; cursor:pointer;" onclick="filterDeficienciesTree('urgent')">
                         <div style="font-size:10.5px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">⚠️ Échéances Urgentes (J ≤ 30)</div>
-                        <div style="font-size:22px; font-weight:800; color:#ea580c; margin-top:4px;">${data.urgent_letters || 0}</div>
+                        <div style="font-size:22px; font-weight:800; color:#ea580c; margin-top:4px;">${data ? (data.urgent_letters || 0) : 0}</div>
                         <div style="font-size:10px; color:var(--text-muted);">Réponses en cours de finalisation</div>
                     </div>
 
-                    <div class="admin-preview-card" style="border-left:4px solid var(--accent-blue); padding:10px;">
+                    <div class="admin-preview-card" style="border-left:4px solid var(--accent-blue); padding:10px; cursor:pointer;" onclick="filterDeficienciesTree('all')">
                         <div style="font-size:10.5px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">📋 Questions à Répondre</div>
-                        <div style="font-size:22px; font-weight:800; color:var(--accent-blue); margin-top:4px;">${data.pending_tasks_count || 0}</div>
+                        <div style="font-size:22px; font-weight:800; color:var(--accent-blue); margin-top:4px;">${data ? (data.pending_tasks_count || 0) : 0}</div>
                         <div style="font-size:10px; color:var(--text-muted);">Découpées par module CTD</div>
                     </div>
 
-                    <div class="admin-preview-card" style="border-left:4px solid #16a34a; padding:10px;">
+                    <div class="admin-preview-card" style="border-left:4px solid #16a34a; padding:10px; cursor:pointer;" onclick="filterDeficienciesTree('validated')">
                         <div style="font-size:10.5px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">✍️ Visées Pharmacien DT (1.A.7)</div>
-                        <div style="font-size:22px; font-weight:800; color:#16a34a; margin-top:4px;">${data.validated_tasks_count || 0}</div>
+                        <div style="font-size:22px; font-weight:800; color:#16a34a; margin-top:4px;">${data ? (data.validated_tasks_count || 0) : 0}</div>
                         <div style="font-size:10px; color:var(--text-muted);">Scellées et prêtes au dépôt</div>
                     </div>
                 </div>
@@ -147,16 +177,17 @@ function renderDeficienciesDashboardView(data) {
             <!-- Tableau des Lettres Actives -->
             <div class="deficiencies-table-wrapper" style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:8px; overflow:hidden; flex-shrink:0;">
                 <div style="padding:10px 14px; background:var(--bg-surface); border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <span style="font-weight:700; font-size:12px; color:var(--text-main);">📋 Notifications Officielles de Compléments en Instance (${letters.length})</span>
+                    <span style="font-weight:700; font-size:12px; color:var(--text-main);">📋 Notifications Officielles de Compléments en Instance (${letters.length}${currentDeficiencyFilter !== 'all' ? ` — Filtre: ${currentDeficiencyFilter}` : ''})</span>
                     <button class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; font-weight:700; border:none; padding:4px 12px;" onclick="openNewDeficiencyLetterModal()">➕ Nouvelle Notification ANPP</button>
                 </div>
     `;
 
     if (letters.length === 0) {
+        const filterDesc = currentDeficiencyFilter === 'critical' ? 'critique (J ≤ 15)' : (currentDeficiencyFilter === 'urgent' ? 'urgente (J ≤ 30)' : (currentDeficiencyFilter === 'validated' ? 'visée PDT' : ''));
         html += `
             <div style="padding:40px; text-align:center; color:var(--text-muted); flex-shrink:0;">
                 <div style="font-size:32px; margin-bottom:8px;">🎉</div>
-                <div style="font-weight:600; font-size:13px; color:var(--text-main);">Aucun complément ANPP en instance</div>
+                <div style="font-weight:600; font-size:13px; color:var(--text-main);">Aucun complément ANPP ${filterDesc ? `correspondant au critère (${filterDesc})` : 'en instance'}</div>
                 <div style="font-size:11px; margin-top:4px; margin-bottom:16px;">Tous les dossiers d'enregistrement sont à jour ou en attente d'évaluation initiale.</div>
                 <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; padding:8px 18px; font-size:12px; cursor:pointer;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
             </div>

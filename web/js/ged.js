@@ -496,8 +496,15 @@
         }
 
         function renderGEDDocumentsTable(docs) {
-            const thead = document.getElementById("table-head");
-            const tbody = document.getElementById("doc-tbody");
+            let thead = document.getElementById("table-head");
+            let tbody = document.getElementById("doc-tbody");
+            if (!thead || !tbody) {
+                if (typeof resetStandardTableContainer === 'function') {
+                    resetStandardTableContainer();
+                }
+                thead = document.getElementById("table-head");
+                tbody = document.getElementById("doc-tbody");
+            }
             if (!thead || !tbody) return;
 
             thead.innerHTML = `

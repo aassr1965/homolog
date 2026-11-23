@@ -6,25 +6,6 @@ var currentRefSection = window.currentRefSection || 'establishments';
         let currentRefList = [];
         let selectedRefIndex = 0;
 
-        function resetStandardTableContainer() {
-            const container = document.querySelector('.table-container');
-            if (!container) return;
-            const table = document.getElementById("doc-table");
-            const tbody = document.getElementById("doc-tbody");
-            const thead = document.getElementById("table-head");
-            // Si la table de base est absente ou polluée par une vue complexe (ex: CTD KPIs)
-            if (!table || !tbody || !thead || container.querySelector('.kpi-dossier-bar') || container.querySelector('.tabs-bar')) {
-                container.innerHTML = `
-                    <table id="doc-table">
-                        <thead id="table-head"></thead>
-                        <tbody id="doc-tbody">
-                            <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Chargement des données réglementaires...</td></tr>
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
-
         async function loadRefSection(section) {
             currentRefSection = section || currentRefSection || 'establishments';
             resetStandardTableContainer();

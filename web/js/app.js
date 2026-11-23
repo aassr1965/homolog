@@ -336,6 +336,26 @@
         let currentDomain = 'ref';
         var currentRefSection = 'establishments';
 
+        function resetStandardTableContainer() {
+            const container = document.getElementById("table-container") || document.querySelector('.table-container');
+            if (!container) return;
+            const table = document.getElementById("doc-table");
+            const tbody = document.getElementById("doc-tbody");
+            const thead = document.getElementById("table-head");
+            // Si la table de base est absente ou remplacée par un conteneur personnalisé (ex: Studio Compléments, DDM)
+            if (!table || !tbody || !thead || container.querySelector('.deficiencies-dashboard-container') || container.querySelector('.kpi-dossier-bar') || container.querySelector('.tabs-bar')) {
+                container.innerHTML = `
+                    <table id="doc-table">
+                        <thead id="table-head"></thead>
+                        <tbody id="doc-tbody">
+                            <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);"><span class="spin">⏳</span> Chargement des données...</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+        window.resetStandardTableContainer = resetStandardTableContainer;
+
         function switchDomainModule(domain) {
             // Contrôle d'expiration de session réglementaire (BPF 15 min / 21 CFR Part 11)
             if (typeof isSessionTimedOut === 'function' && isSessionTimedOut()) {
@@ -450,12 +470,14 @@
 
             // Chargement des données métier correspondantes
             if (domain === 'ref') {
+                resetStandardTableContainer();
                 loadRefSection(currentRefSection || 'establishments');
             } else if (domain === 'corporate') {
                 document.getElementById("bc-root").innerText = "SANAD_CORPORATE";
                 document.getElementById("bc-sec").innerText = "MIPH_Décret_21-82";
                 document.getElementById("bc-prod").innerText = "Agréments & Tabadol";
                 document.getElementById("bc-mod").innerText = "Établissements Pharmaceutiques";
+                resetStandardTableContainer();
                 if (typeof renderCorporateView === 'function') {
                     renderCorporateView(currentCorporateFilter || 'ALL');
                 }
@@ -464,21 +486,39 @@
                 document.getElementById("bc-sec").innerText = "Guide_CTD_2025";
                 document.getElementById("bc-prod").innerText = "Catalogue des Dossiers";
                 document.getElementById("bc-mod").innerText = "Checklists Réglementaires";
+                resetStandardTableContainer();
                 loadDossiers();
             } else if (domain === 'deficiencies') {
                 document.getElementById("bc-root").innerText = "COMPLÉMENTS_ANPP";
                 document.getElementById("bc-sec").innerText = "Veille_Réglementaire";
                 document.getElementById("bc-prod").innerText = "Décret_20-325";
                 document.getElementById("bc-mod").innerText = "Traçabilité_Délais_Légaux";
+                const preview = document.getElementById("preview-body");
+                if (preview) {
+                    preview.innerHTML = `
+                        <div style="padding:24px; text-align:center; color:var(--text-muted); font-size:12px;">
+                            <div style="font-size:28px; margin-bottom:8px;">⏱️</div>
+                            <strong style="color:var(--text-main); font-size:13px;">Studio de Compléments ANPP</strong>
+                            <p style="margin-top:6px; font-size:11.5px; line-height:1.5;">Cliquez sur <strong>🔍 Ouvrir Studio</strong> sur une notification officielle pour décomposer les questions réglementaires et apposer le visa Pharmacien DT (1.A.7).</p>
+                        </div>
+                    `;
+                }
                 if (typeof loadDeficienciesDashboard === 'function') {
-                    loadDeficienciesDashboard();
+                    loadDeficienciesDashboard(typeof currentDeficiencyFilter !== 'undefined' ? currentDeficiencyFilter : 'all');
                 }
             } else if (domain === 'variations') {
                 document.getElementById("bc-root").innerText = "POST-AMM";
                 document.getElementById("bc-sec").innerText = "Variations";
                 document.getElementById("bc-prod").innerText = "LD-DEPP07/V01";
                 document.getElementById("bc-mod").innerText = "12 Items Réglementaires";
-                renderVariationsTable();
+                resetStandardTableContainer();
+                const preview = document.getElementById("preview-body");
+                if (preview && (typeof selectedVariationID === 'undefined' || !selectedVariationID)) {
+                    preview.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Sélectionnez une variation pour visualiser l'Impact Tree et le dossier réglementaire.</div>`;
+                }
+                if (typeof renderVariationsTable === 'function') {
+                    renderVariationsTable(typeof currentVariationsFilter !== 'undefined' ? currentVariationsFilter : 'all');
+                }
             } else if (domain === 'dm') {
                 document.getElementById("bc-root").innerText = "DISPOSITIFS_MÉDICAUX";
                 document.getElementById("bc-sec").innerText = "Décret_20-324";
@@ -494,6 +534,7 @@
                 document.getElementById("bc-sec").innerText = "GED_BPF";
                 document.getElementById("bc-prod").innerText = "Taxonomie";
                 document.getElementById("bc-mod").innerText = "Répertoire BPF";
+                resetStandardTableContainer();
                 currentGEDTaxonomyPath = '';
                 loadGEDTaxonomy();
                 loadGEDDocuments();
@@ -502,6 +543,7 @@
                 document.getElementById("bc-sec").innerText = "Habilitations_RBAC";
                 document.getElementById("bc-prod").innerText = "Collaborateurs & Matrice";
                 document.getElementById("bc-mod").innerText = "Conformité PSSI & BPF";
+                resetStandardTableContainer();
                 if (typeof loadAdminSection === 'function') {
                     loadAdminSection(currentAdminSection || 'users');
                 }
@@ -570,7 +612,7 @@
             } else if (domain === 'deficiencies') {
                 tb.innerHTML = `
                     <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
-                    <button class="btn-pill" onclick="loadDeficienciesDashboard()">🔄 Actualiser</button>
+                    <button class="btn-pill" onclick="loadDeficienciesDashboard(typeof currentDeficiencyFilter !== 'undefined' ? currentDeficiencyFilter : 'all')">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
@@ -580,7 +622,7 @@
             } else if (domain === 'variations') {
                 tb.innerHTML = `
                     <button class="btn-pill" id="tb-btn-new-variation" data-perm="DOSSIER_CREATE" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewVariationModal()">➕ Déposer une Variation (LD-DEPP07)</button>
-                    <button class="btn-pill" onclick="renderVariationsTable()">🔄 Actualiser</button>
+                    <button class="btn-pill" onclick="renderVariationsTable(typeof currentVariationsFilter !== 'undefined' ? currentVariationsFilter : 'all')">🔄 Actualiser</button>
                     <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
@@ -684,33 +726,35 @@
             } else if (domain === 'ctd') {
                 renderDossiersTree();
             } else if (domain === 'deficiencies') {
+                const curF = (typeof currentDeficiencyFilter !== 'undefined') ? currentDeficiencyFilter : 'all';
                 container.innerHTML = `
-                    <div class="tree-node selected" onclick="loadDeficienciesDashboard()">
+                    <div class="tree-node ${(!curF || curF === 'all') ? 'selected' : ''}" onclick="filterDeficienciesTree('all', this)">
                         <span class="chevron">⏱️</span>
                         <span>Toutes les Notifications ANPP</span>
                         <span class="count-badge req">Guide 2025</span>
                     </div>
-                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                    <div class="tree-node ${curF === 'critical' ? 'selected' : ''}" style="padding-left:24px;" onclick="filterDeficienciesTree('critical', this)">
                         <span>🚨 Alertes Critiques (J ≤ 15)</span>
                     </div>
-                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                    <div class="tree-node ${curF === 'urgent' ? 'selected' : ''}" style="padding-left:24px;" onclick="filterDeficienciesTree('urgent', this)">
                         <span>⚠️ Urgences Réglementaires (J ≤ 30)</span>
                     </div>
-                    <div class="tree-node" style="padding-left:24px;" onclick="loadDeficienciesDashboard()">
+                    <div class="tree-node ${curF === 'validated' ? 'selected' : ''}" style="padding-left:24px;" onclick="filterDeficienciesTree('validated', this)">
                         <span>✍️ Visées Pharmacien DT (1.A.7)</span>
                     </div>
                 `;
             } else if (domain === 'variations') {
+                const curV = (typeof currentVariationsFilter !== 'undefined') ? currentVariationsFilter : 'all';
                 container.innerHTML = `
-                    <div class="tree-node selected" onclick="toggleSub('sub-var-active')">
+                    <div class="tree-node ${(!curV || curV === 'all') ? 'selected' : ''}" onclick="filterVariationsTree('all', this)">
                         <span class="chevron">▼</span>
                         <span>🔄 Variations en Cours (ANPP)</span>
                         <span class="count-badge warn">3</span>
                     </div>
                     <div class="tree-sub open" id="sub-var-active">
-                        <div class="tree-node" style="padding-left:24px;" onclick="renderVariationsTable()"><span>🟡 Mmin (Mineures - 7.b.1)</span><span class="count-badge ok">1</span></div>
-                        <div class="tree-node" style="padding-left:24px;" onclick="renderVariationsTable()"><span>🟠 Mmod (Modérées - 12.a)</span><span class="count-badge ok">1</span></div>
-                        <div class="tree-node" style="padding-left:24px;" onclick="renderVariationsTable()"><span>🔴 Mmaj (Majeures - 7.b.2)</span><span class="count-badge req">1</span></div>
+                        <div class="tree-node ${curV === 'Mmin' ? 'selected' : ''}" style="padding-left:24px;" onclick="filterVariationsTree('Mmin', this)"><span>🟡 Mmin (Mineures - 7.b.1)</span><span class="count-badge ok">1</span></div>
+                        <div class="tree-node ${curV === 'Mmod' ? 'selected' : ''}" style="padding-left:24px;" onclick="filterVariationsTree('Mmod', this)"><span>🟠 Mmod (Modérées - 12.a)</span><span class="count-badge ok">1</span></div>
+                        <div class="tree-node ${curV === 'Mmaj' ? 'selected' : ''}" style="padding-left:24px;" onclick="filterVariationsTree('Mmaj', this)"><span>🔴 Mmaj (Majeures - 7.b.2)</span><span class="count-badge req">1</span></div>
                     </div>
 
                     <div class="tree-node" onclick="toggleSub('sub-var-history')">
@@ -773,6 +817,27 @@
             }
         }
 
+        function filterDeficienciesTree(filter, el) {
+            if (el) {
+                document.querySelectorAll('#tree-root .tree-node').forEach(n => n.classList.remove('selected'));
+                el.classList.add('selected');
+            }
+            if (typeof loadDeficienciesDashboard === 'function') {
+                loadDeficienciesDashboard(filter);
+            }
+        }
+        window.filterDeficienciesTree = filterDeficienciesTree;
+
+        function filterVariationsTree(filter, el) {
+            if (el) {
+                document.querySelectorAll('#tree-root .tree-node').forEach(n => n.classList.remove('selected'));
+                el.classList.add('selected');
+            }
+            if (typeof renderVariationsTable === 'function') {
+                renderVariationsTable(filter);
+            }
+        }
+        window.filterVariationsTree = filterVariationsTree;
 
         function toggleSub(id) {
             const el = document.getElementById(id);

@@ -49,13 +49,34 @@ async function refreshVariationsBadgeCount() {
     }
 }
 
-async function renderVariationsTable() {
+var currentVariationsFilter = window.currentVariationsFilter || 'all';
+
+async function renderVariationsTable(filter) {
+    if (filter) currentVariationsFilter = filter;
+    if (typeof resetStandardTableContainer === 'function') {
+        resetStandardTableContainer();
+    }
     if (window.innerWidth < 768 && typeof toggleMobileTree === 'function') {
         toggleMobileTree(false);
     }
-    const thead = document.getElementById("table-head");
-    const tbody = document.getElementById("doc-tbody");
+    let thead = document.getElementById("table-head");
+    let tbody = document.getElementById("doc-tbody");
+    if (!tbody || !thead) {
+        if (typeof resetStandardTableContainer === 'function') {
+            resetStandardTableContainer();
+        }
+        thead = document.getElementById("table-head");
+        tbody = document.getElementById("doc-tbody");
+    }
     if (!tbody || !thead) return;
+
+    const bcMod = document.getElementById("bc-mod");
+    if (bcMod) {
+        if (currentVariationsFilter === 'Mmin') bcMod.innerText = "Modifications Mineures (Mmin - 7.b.1)";
+        else if (currentVariationsFilter === 'Mmod') bcMod.innerText = "Modifications Modérées (Mmod - 12.a)";
+        else if (currentVariationsFilter === 'Mmaj') bcMod.innerText = "Modifications Majeures (Mmaj - 7.b.2)";
+        else bcMod.innerText = "12 Items Réglementaires";
+    }
 
     thead.innerHTML = `
         <tr>
@@ -79,12 +100,18 @@ async function renderVariationsTable() {
         currentVariationsList = data.variations || [];
         updateVariationsBadgeCount(currentVariationsList.length);
 
-        if (currentVariationsList.length === 0) {
+        let displayList = currentVariationsList;
+        if (currentVariationsFilter && currentVariationsFilter !== 'all') {
+            displayList = currentVariationsList.filter(v => v.overall_classification === currentVariationsFilter);
+        }
+
+        if (displayList.length === 0) {
+            const filterLabel = currentVariationsFilter !== 'all' ? `(${escapeHTML(currentVariationsFilter)})` : '';
             tbody.innerHTML = `
                 <tr>
                     <td colspan="8" style="text-align:center; padding:40px; color:var(--text-muted);">
                         <div style="font-size:24px; margin-bottom:8px;">🔄</div>
-                        <div style="font-weight:700; font-size:13px; color:var(--text-main);">Aucune demande de variation post-AMM enregistrée</div>
+                        <div style="font-weight:700; font-size:13px; color:var(--text-main);">Aucune demande de variation ${filterLabel} enregistrée</div>
                         <div style="font-size:11px; margin-top:4px;">Utilisez le bouton <strong>➕ Déposer une Variation</strong> dans la barre supérieure pour initialiser un dossier selon la LD-DEPP07/V01.</div>
                     </td>
                 </tr>
@@ -95,7 +122,7 @@ async function renderVariationsTable() {
         }
 
         tbody.innerHTML = "";
-        currentVariationsList.forEach((v) => {
+        displayList.forEach((v) => {
             const tr = document.createElement("tr");
             if (v.id === selectedVariationID) tr.classList.add("selected");
             tr.onclick = (e) => {
@@ -173,12 +200,13 @@ async function renderVariationsTable() {
             tbody.appendChild(tr);
         });
 
-        // Sélectionner par défaut la première variation
-        if (!selectedVariationID && currentVariationsList.length > 0) {
-            selectedVariationID = currentVariationsList[0].id;
+        // Sélectionner par défaut la première variation affichée
+        const hasSelected = displayList.some(v => v.id === selectedVariationID);
+        if (!hasSelected && displayList.length > 0) {
+            selectedVariationID = displayList[0].id;
         }
         if (selectedVariationID) {
-            const activeTr = Array.from(tbody.querySelectorAll('tr')).find((_, i) => currentVariationsList[i] && currentVariationsList[i].id === selectedVariationID);
+            const activeTr = Array.from(tbody.querySelectorAll('tr')).find((_, i) => displayList[i] && displayList[i].id === selectedVariationID);
             if (activeTr) activeTr.classList.add('selected');
             renderVariationPreview(selectedVariationID);
         }

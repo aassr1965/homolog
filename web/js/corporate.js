@@ -173,8 +173,19 @@ async function renderCorporateView(filter) {
     if (filter) currentCorporateFilter = filter;
     renderCorporateToolbar();
 
-    const thead = document.getElementById("table-head");
-    const tbody = document.getElementById("doc-tbody");
+    if (typeof resetStandardTableContainer === 'function') {
+        resetStandardTableContainer();
+    }
+
+    let thead = document.getElementById("table-head");
+    let tbody = document.getElementById("doc-tbody");
+    if (!tbody || !thead) {
+        if (typeof resetStandardTableContainer === 'function') {
+            resetStandardTableContainer();
+        }
+        thead = document.getElementById("table-head");
+        tbody = document.getElementById("doc-tbody");
+    }
     if (!tbody || !thead) return;
 
     if (window.innerWidth < 768 && typeof toggleMobileTree === 'function') {
