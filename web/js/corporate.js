@@ -327,7 +327,7 @@ async function viewCorporateChecklist(appId) {
         // En-tête du tableau des documents à joindre
         thead.innerHTML = `
             <tr>
-                <th style="width: 105px;">Statut GED</th>
+                <th style="width: 55px; text-align:center;" title="Statut de rattachement au coffre-fort GED">GED</th>
                 <th style="width: 110px;">Code Exigence</th>
                 <th>Intitulé du Document à joindre au Dossier MIPH</th>
                 <th>Section Réglementaire</th>
@@ -352,10 +352,10 @@ async function viewCorporateChecklist(appId) {
         items.forEach((it) => {
             const tr = document.createElement("tr");
 
-            // Statut
-            let stBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:10px;">⚠️ Manquant</span>`;
+            // Statut GED (icône seule avec tooltip)
+            let stBadge = `<span class="badge-icon-status" style="background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3);" title="Statut GED : Document manquant (exigence non couverte)">⚠️</span>`;
             if (it.ged_document_id) {
-                stBadge = `<span class="status-tag status-ok" style="background:#059669; color:white; font-size:10px; font-weight:700;">✅ Rattaché</span>`;
+                stBadge = `<span class="badge-icon-status" style="background:rgba(5,150,105,0.12); border:1px solid rgba(5,150,105,0.3);" title="Statut GED : Document rattaché (${escapeHtml(it.document_name || 'Document GED')})">✅</span>`;
             }
 
             // Criticité
@@ -397,7 +397,7 @@ async function viewCorporateChecklist(appId) {
             }
 
             tr.innerHTML = `
-                <td>${stBadge}</td>
+                <td style="text-align:center;">${stBadge}</td>
                 <td><span style="font-family:var(--font-mono); font-weight:700; color:var(--accent-blue); font-size:11px;">${escapeHtml(it.item_code)}</span></td>
                 <td>
                     <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(it.title)}</div>
@@ -683,7 +683,7 @@ function renderChecklistTabHtml(app) {
             if (it.ged_document_id) {
                 gedInfo = `
                     <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
-                        <span style="font-size:10px; color:var(--accent-emerald); font-weight:700;">✅ Rattaché :</span>
+                        <span class="badge-icon-status" style="width:20px; height:20px; font-size:11px; background:rgba(5,150,105,0.12); border:1px solid rgba(5,150,105,0.3); flex-shrink:0;" title="Statut GED : Document rattaché">✅</span>
                         <a href="javascript:void(0)" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" style="font-size:10px; color:var(--accent-blue); font-weight:700; text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;" title="${escapeHtml(it.document_name || 'Document GED')}">
                             ${escapeHtml(it.document_name || 'Document GED')}
                         </a>
@@ -696,7 +696,10 @@ function renderChecklistTabHtml(app) {
             } else {
                 gedInfo = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
-                        <span style="font-size:10px; color:var(--text-dim); font-style:italic;">Aucune pièce rattachée</span>
+                        <span style="display:inline-flex; align-items:center; gap:5px; font-size:10px; color:var(--text-dim); font-style:italic;">
+                            <span class="badge-icon-status" style="width:20px; height:20px; font-size:11px; background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3); flex-shrink:0;" title="Statut GED : Document manquant">⚠️</span>
+                            Aucune pièce rattachée
+                        </span>
                         <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
                             📎
                         </button>

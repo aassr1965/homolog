@@ -319,6 +319,26 @@
             color: var(--accent-red);
         }
 
+        /* Pastilles d'état / icône seule avec tooltip */
+        .badge-icon-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-size: 13px;
+            line-height: 1;
+            cursor: help;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        .badge-icon-status:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 6px rgba(0,0,0,0.2);
+        }
+
         /* Main Workspace 3 Panes */
         .workspace {
             display: flex;
