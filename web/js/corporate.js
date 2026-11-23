@@ -182,7 +182,7 @@ async function renderCorporateView(filter) {
             if (app.status === 'VISA_PDT_VALIDE') {
                 statusBadge = `<span class="status-tag status-ok" style="background:#0284c7; color:white;">Visa PDT Apposé</span>`;
             } else if (app.status === 'SOUMIS_TABADOL') {
-                statusBadge = `<span class="status-tag status-rev" style="background:#7c3aed; color:white;">Soumis Tabadol</span>`;
+                statusBadge = `<span class="status-tag status-rev" style="background:var(--accent-blue); color:white;">Soumis Tabadol</span>`;
             } else if (app.status === 'RECEPISE_BO_DELIVRE') {
                 statusBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white;">Récépissé BO</span>`;
             } else if (app.status === 'INSPECTION_MIPH_PROGRAMMEE') {
@@ -226,7 +226,7 @@ async function renderCorporateView(filter) {
             if (app.tabadol_submission_ref) {
                 tabadolHtml = `
                     <div style="display:flex; flex-direction:column; gap:2px;">
-                        <span style="font-weight:700; color:#7c3aed; font-size:10px;">🌐 ${escapeHtml(app.tabadol_submission_ref)}</span>
+                        <span style="font-weight:700; color:var(--accent-blue); font-size:10px;">🌐 ${escapeHtml(app.tabadol_submission_ref)}</span>
                         <span style="font-size:9px; color:var(--text-dim);">${formatDate(app.tabadol_submitted_at)}</span>
                     </div>
                 `;
@@ -248,10 +248,10 @@ async function renderCorporateView(filter) {
                 <td>${compHtml}</td>
                 <td class="col-hide-sm">${tabadolHtml}</td>
                 <td style="text-align:center;">
-                    <div style="display:inline-flex; gap:4px; align-items:center;">
-                        <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-size:10px; font-weight:700; padding:4px 8px;" onclick="event.stopPropagation(); viewCorporateChecklist('${app.id}')" title="Afficher la liste des documents réglementaires à joindre">📋 Pièces (${(app.checklist_items || []).length || 12})</button>
-                        <button class="btn-table-action" onclick="event.stopPropagation(); openTabadolAuditModal('${app.id}')" title="Audit de Conformité Tabadol">🔍</button>
-                        <button class="btn-table-action" onclick="event.stopPropagation(); downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
+                    <div style="display:inline-flex; gap:5px; align-items:center; justify-content:center;">
+                        <button class="btn-table-icon btn-table-icon-primary" onclick="event.stopPropagation(); viewCorporateChecklist('${app.id}')" title="Afficher les 12 pièces réglementaires à joindre (Décret 21-82)">📋</button>
+                        <button class="btn-table-icon" onclick="event.stopPropagation(); openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
+                        <button class="btn-table-icon" onclick="event.stopPropagation(); downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
                     </div>
                 </td>
             `;
@@ -312,12 +312,12 @@ async function viewCorporateChecklist(appId) {
         const tb = document.getElementById("main-toolbar");
         if (tb) {
             tb.innerHTML = `
-                <button class="btn-pill" style="background:var(--bg-input); border:1px solid var(--border-color); font-weight:700;" onclick="renderCorporateView('ALL')">← Retour aux Demandes</button>
-                <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openGEDPickerForCorporateItem('${app.id}', '')">📎 Rattacher Pièce GED</button>
-                <button class="btn-pill" style="background:#7c3aed; color:white; border:none; font-weight:700;" onclick="openTabadolAuditModal('${app.id}')">🔍 Audit Tabadol</button>
-                <button class="btn-pill" onclick="downloadTabadolPackage('${app.id}')">📦 Télécharger Archive (.zip)</button>
-                <button class="btn-pill" onclick="viewCorporateChecklist('${app.id}')">🔄 Actualiser</button>
-                <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                <button class="btn-table-icon" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">←</button>
+                <button class="btn-table-icon btn-table-icon-primary" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>
+                <button class="btn-table-icon" onclick="openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
+                <button class="btn-table-icon" onclick="downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
+                <button class="btn-table-icon" onclick="viewCorporateChecklist('${app.id}')" title="Actualiser la liste">🔄</button>
+                <button class="btn-table-icon" onclick="togglePreviewPane()" title="Volet d'aperçu latéral (Alt+P)">👁️</button>
                 <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
                     Complétude Dossier : <strong style="color:var(--accent-emerald);">${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length} pièces rattachées)</strong>
                 </div>
@@ -333,7 +333,7 @@ async function viewCorporateChecklist(appId) {
                 <th>Section Réglementaire</th>
                 <th style="width: 140px;">Niveau d'Exigence</th>
                 <th>Document du Coffre-fort GED</th>
-                <th style="width: 170px; text-align:center;">Action Pièce</th>
+                <th style="width: 110px; text-align:center;">Action</th>
             </tr>
         `;
 
@@ -371,8 +371,8 @@ async function viewCorporateChecklist(appId) {
             // Info GED rattaché
             let docInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Aucune pièce rattachée</span>`;
             let actionBtn = `
-                <button class="btn-pill" style="font-size:10px; padding:3px 10px; border:1px solid var(--accent-blue); color:var(--accent-blue); background:none; font-weight:700;" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')">
-                    📎 Rattacher Pièce GED
+                <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
+                    📎
                 </button>
             `;
 
@@ -388,10 +388,10 @@ async function viewCorporateChecklist(appId) {
                     </div>
                 `;
                 actionBtn = `
-                    <div style="display:inline-flex; gap:4px; align-items:center;">
-                        <button class="btn-pill" style="font-size:10px; padding:3px 8px; background:var(--accent-blue); color:white; border:none; font-weight:700; cursor:pointer;" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe dans la modale redimensionnable">👁️ Visionner</button>
-                        <button class="btn-table-action" style="color:var(--accent-blue);" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer la pièce">🔄 Remplacer</button>
-                        <button class="btn-table-action" style="color:var(--accent-red);" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher">❌ Détacher</button>
+                    <div style="display:inline-flex; gap:5px; align-items:center; justify-content:center;">
+                        <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
+                        <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer par un autre document GED">🔄</button>
+                        <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
                     </div>
                 `;
             }
@@ -650,8 +650,8 @@ function renderChecklistTabHtml(app) {
             <div style="font-size:12px; font-weight:700; color:var(--text-main);">
                 Pièces Justificatives Obligatoires (Arrêtés sept/oct 2025)
             </div>
-            <button class="btn-pill" style="font-size:10px; padding:4px 8px; border:none; background:var(--accent-blue); color:white;" onclick="openTabadolAuditModal('${app.id}')">
-                🔍 Évaluer la Conformité Tabadol
+            <button class="btn-table-icon btn-table-icon-primary" onclick="openTabadolAuditModal('${app.id}')" title="Évaluer la conformité Tabadol (Décret 21-82)">
+                🔍
             </button>
         </div>
         <div style="display:flex; flex-direction:column; gap:12px;">
@@ -684,20 +684,21 @@ function renderChecklistTabHtml(app) {
                 gedInfo = `
                     <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
                         <span style="font-size:10px; color:var(--accent-emerald); font-weight:700;">✅ Rattaché :</span>
-                        <a href="javascript:void(0)" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" style="font-size:10px; color:var(--accent-blue); font-weight:700; text-decoration:underline;" title="Cliquer pour visionner">
+                        <a href="javascript:void(0)" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" style="font-size:10px; color:var(--accent-blue); font-weight:700; text-decoration:underline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;" title="${escapeHtml(it.document_name || 'Document GED')}">
                             ${escapeHtml(it.document_name || 'Document GED')}
                         </a>
-                        <span style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono);">(${escapeHtml(it.document_code || '')})</span>
-                        <button class="btn-pill" style="font-size:9px; padding:2px 7px; background:var(--accent-blue); color:white; border:none; margin-left:auto; cursor:pointer;" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner">👁️ Visionner</button>
-                        <button class="btn-table-action" style="color:var(--accent-red); margin-left:4px; padding:2px 6px; font-size:9px;" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher">❌</button>
+                        <div style="margin-left:auto; display:inline-flex; gap:4px; align-items:center;">
+                            <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
+                            <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
+                        </div>
                     </div>
                 `;
             } else {
                 gedInfo = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
-                        <span style="font-size:10px; color:var(--text-dim);">Aucun fichier GED rattaché</span>
-                        <button class="btn-pill" style="font-size:10px; padding:2px 8px; border:1px solid var(--accent-blue); color:var(--accent-blue); background:none;" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')">
-                            📎 Rattacher Pièce GED
+                        <span style="font-size:10px; color:var(--text-dim); font-style:italic;">Aucune pièce rattachée</span>
+                        <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
+                            📎
                         </button>
                     </div>
                 `;
@@ -806,7 +807,7 @@ function renderTabadolTabHtml(app) {
             <div style="font-size:10px; color:var(--text-dim); line-height:1.4; margin-bottom:8px;">
                 Conformément à l'Article 18 du Décret exécutif n° 21-82, le dossier d'agrément doit être obligatoirement certifié conforme par le Pharmacien DT avant toute télésoumission sur la plateforme Tabadol.
             </div>
-            <button class="btn-pill" style="background:#7e22ce; color:white; border:none; font-size:10px; font-weight:700; padding:4px 10px;" onclick="openCorporatePDTSignModal('${app.id}')">
+            <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-size:10px; font-weight:700; padding:5px 12px; border-radius:4px;" onclick="openCorporatePDTSignModal('${app.id}')" title="Apposer le visa électronique PDT (21 CFR Part 11)">
                 ⚖️ Apposer le Visa Électronique PDT (21 CFR Part 11)
             </button>
         </div>
@@ -832,15 +833,15 @@ function renderTabadolTabHtml(app) {
     if (!isSubmitted) {
         tabadolActionHtml = `
             <div style="margin-top:12px;">
-                <button class="btn-pill" style="background:#7c3aed; color:white; border:none; padding:8px 14px; font-weight:700; width:100%;" onclick="openTabadolSubmitModal('${app.id}')">
+                <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; padding:8px 14px; font-weight:700; width:100%; border-radius:4px;" onclick="openTabadolSubmitModal('${app.id}')" title="Télésoumettre à la Plateforme Tabadol MIPH">
                     🚀 Télésoumettre à la Plateforme Tabadol MIPH
                 </button>
             </div>
         `;
     } else {
         tabadolActionHtml = `
-            <div style="background:rgba(124,58,237,0.08); border:1px solid #7c3aed; border-radius:6px; padding:10px; margin-top:12px;">
-                <div style="font-weight:700; color:#7c3aed; font-size:11px;">
+            <div style="background:rgba(2,132,199,0.08); border:1px solid var(--accent-blue); border-radius:6px; padding:10px; margin-top:12px;">
+                <div style="font-weight:700; color:var(--accent-blue); font-size:11px;">
                     🌐 Dossier Télésoumis avec succès sur Tabadol
                 </div>
                 <div style="font-size:11px; margin-top:4px;">
@@ -1209,7 +1210,7 @@ function openCorporatePDTSignModal(appId) {
                 <button class="modal-close" onclick="closeCorporateModal('modal-corporate-pdt-sign')">✕</button>
             </div>
             <div class="modal-body">
-                <div style="font-size:11px; color:var(--text-main); line-height:1.5; margin-bottom:12px; background:rgba(126,34,206,0.06); border:1px solid #7e22ce; border-radius:6px; padding:10px;">
+                <div style="font-size:11px; color:var(--text-main); line-height:1.5; margin-bottom:12px; background:rgba(2,132,199,0.06); border:1px solid var(--accent-blue); border-radius:6px; padding:10px;">
                     <strong>Déclaration solennelle d'engagement réglementaire (21 CFR Part 11) :</strong><br>
                     En qualité de Pharmacien Directeur Technique habilité de l'établissement, j'atteste sur l'honneur l'authenticité, l'intégrité et la conformité des pièces constitutives du présent dossier au regard du Décret exécutif n° 21-82 et des Bonnes Pratiques de Fabrication / Distribution pharmaceutiques.
                 </div>
@@ -1220,7 +1221,7 @@ function openCorporatePDTSignModal(appId) {
             </div>
             <div class="modal-footer">
                 <button class="btn-pill" onclick="closeCorporateModal('modal-corporate-pdt-sign')">Annuler</button>
-                <button class="btn-pill" style="background:#7e22ce; color:white; border:none; font-weight:700;" onclick="submitCorporatePDTSign('${appId}')">
+                <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="submitCorporatePDTSign('${appId}')">
                     ⚖️ Signer &amp; Sceller le Dossier
                 </button>
             </div>
@@ -1287,7 +1288,7 @@ function openTabadolSubmitModal(appId) {
             </div>
             <div class="modal-footer">
                 <button class="btn-pill" onclick="closeCorporateModal('modal-corporate-tabadol-submit')">Annuler</button>
-                <button class="btn-pill" style="background:#7c3aed; color:white; border:none; font-weight:700;" onclick="submitCorporateTabadol('${appId}')">
+                <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none; font-weight:700;" onclick="submitCorporateTabadol('${appId}')">
                     🚀 Confirmer la Télésoumission
                 </button>
             </div>
