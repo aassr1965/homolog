@@ -363,6 +363,11 @@
                 <span class="act-icon">🏢</span>
                 <span class="act-label" id="lbl-act-ref">Référentiel</span>
             </button>
+            <button class="act-btn" id="act-corporate" data-perm="REF_VIEW" onclick="switchDomainModule('corporate')" title="Module Sanad Corporate — Agréments MIPH & Passerelle Tabadol (Décret 21-82)">
+                <span class="act-icon">🏛️</span>
+                <span class="act-label" id="lbl-act-corp">Corporate</span>
+                <span class="act-badge" id="badge-corporate-count" style="display:none; background:var(--accent-blue); color:white;">0</span>
+            </button>
             <button class="act-btn" id="act-ctd" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('ctd')" title="Dossiers d'Enregistrement ANPP (Modules CTD 1 à 5)">
                 <span class="act-icon">📋</span>
                 <span class="act-label" id="lbl-act-ctd">Dossiers CTD</span>
@@ -412,6 +417,7 @@
             <!-- Sélecteur d'univers métier sur mobile (tiroir) -->
             <div class="mobile-domain-switcher" id="mobile-domain-switcher">
                 <button class="mob-dom-btn active" id="mob-act-ref" data-perm="REF_VIEW" onclick="switchDomainModule('ref')" title="Référentiel Pharmaceutique">🏢 Ref</button>
+                <button class="mob-dom-btn" id="mob-act-corporate" data-perm="REF_VIEW" onclick="switchDomainModule('corporate')" title="Agréments MIPH Corporate">🏛️ Corp</button>
                 <button class="mob-dom-btn" id="mob-act-ctd" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('ctd')" title="Dossiers CTD">📋 CTD</button>
                 <button class="mob-dom-btn" id="mob-act-deficiencies" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('deficiencies')" title="Compléments ANPP">⏱️ Compléments</button>
                 <button class="mob-dom-btn" id="mob-act-variations" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('variations')" title="Variations Post-AMM">🔄 Variations</button>
@@ -518,6 +524,10 @@
         <button class="mob-nav-btn active" id="mobnav-ref" onclick="switchDomainModule('ref')" title="Référentiel">
             <span class="mob-nav-icon">🏢</span>
             <span class="mob-nav-label">Réf</span>
+        </button>
+        <button class="mob-nav-btn" id="mobnav-corporate" data-perm="REF_VIEW" onclick="switchDomainModule('corporate')" title="Agréments MIPH">
+            <span class="mob-nav-icon">🏛️</span>
+            <span class="mob-nav-label">Corp</span>
         </button>
         <button class="mob-nav-btn" id="mobnav-ctd" data-perm="DOSSIER_VIEW" onclick="switchDomainModule('ctd')" title="Dossiers CTD">
             <span class="mob-nav-icon">📋</span>
@@ -4892,6 +4902,7 @@
     <script src="/js/admin.js?v=2026.11.20.1"></script>
     <script src="/js/system_admin.js?v=2026.11.17.5"></script>
     <script src="/js/referential.js?v=2026.11.17.5"></script>
+    <script src="/js/corporate.js?v=2026.11.23.1"></script>
     <script src="/js/variations.js?v=2026.11.17.5"></script>
     <script src="/js/dm.js?v=2026.11.22.1"></script>
     <script src="/js/ged.js?v=2026.11.17.11"></script>

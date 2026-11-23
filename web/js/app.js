@@ -410,7 +410,10 @@
             if (titleEl) {
                 let icon = "🏢";
                 let text = isArabic ? "المرجعية الصيدلانية" : "Référentiel Pharmaceutique";
-                if (domain === 'ctd') {
+                if (domain === 'corporate') {
+                    icon = "🏛️";
+                    text = isArabic ? "اعتمادات المؤسسات الصيدلانية MIPH" : "Agréments MIPH & Tabadol (Décret 21-82)";
+                } else if (domain === 'ctd') {
                     icon = "📋";
                     text = isArabic ? "ملفات التسجيل ANPP (CTD)" : "Dossiers d'Enregistrement (CTD)";
                 } else if (domain === 'deficiencies') {
@@ -441,6 +444,14 @@
             // Chargement des données métier correspondantes
             if (domain === 'ref') {
                 loadRefSection(currentRefSection || 'establishments');
+            } else if (domain === 'corporate') {
+                document.getElementById("bc-root").innerText = "SANAD_CORPORATE";
+                document.getElementById("bc-sec").innerText = "MIPH_Décret_21-82";
+                document.getElementById("bc-prod").innerText = "Agréments & Tabadol";
+                document.getElementById("bc-mod").innerText = "Établissements Pharmaceutiques";
+                if (typeof renderCorporateView === 'function') {
+                    renderCorporateView(currentCorporateFilter || 'ALL');
+                }
             } else if (domain === 'ctd') {
                 document.getElementById("bc-root").innerText = "DOSSIERS_ANPP";
                 document.getElementById("bc-sec").innerText = "Guide_CTD_2025";
@@ -514,6 +525,18 @@
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Base Référentiel : <strong style="color:var(--accent-emerald);">Opérationnelle &amp; Conforme</strong>
+                    </div>
+                `;
+            } else if (domain === 'corporate') {
+                tb.innerHTML = `
+                    <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewCorporateAppModal()">➕ Nouvelle Demande MIPH</button>
+                    <button class="btn-pill" onclick="selectCorporateFilter('ALL')">📁 Toutes les Demandes</button>
+                    <button class="btn-pill" onclick="selectCorporateFilter('LICENSES')">📜 Registre Agréments Actifs</button>
+                    <button class="btn-pill" onclick="renderCorporateView()">🔄 Actualiser</button>
+                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
+                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
+                        Passerelle Tabadol : <strong style="color:var(--accent-emerald);">Connectée &amp; Sécurisée</strong>
                     </div>
                 `;
             } else if (domain === 'ctd') {
@@ -616,6 +639,12 @@
 
         function renderTreeForDomain(domain) {
             const container = document.getElementById("tree-root");
+            if (domain === 'corporate') {
+                if (typeof renderCorporateTree === 'function') {
+                    renderCorporateTree();
+                }
+                return;
+            }
             if (domain === 'sys') {
                 if (typeof renderSystemTree === 'function') {
                     renderSystemTree();

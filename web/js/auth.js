@@ -601,6 +601,9 @@ const mockAuditTrail = [
             if (typeof refreshVariationsBadgeCount === 'function') {
                 refreshVariationsBadgeCount();
             }
+            if (typeof refreshCorporateBadgeCount === 'function') {
+                refreshCorporateBadgeCount();
+            }
         }
 
         function toggleUserDropdown(e) {

@@ -69,6 +69,7 @@ func main() {
 	var variationHandler *api.VariationHandler
 	var dmHandler *api.DMHandler
 	var dmModHandler *api.DMModificationHandler
+	var corpHandler *api.CorporateHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -151,6 +152,9 @@ func main() {
 
 		dmModRepo := repository.NewDMModificationRepository(db.Pool)
 		dmModHandler = api.NewDMModificationHandler(dmModRepo, dmRepo, auditService)
+
+		corpRepo := repository.NewCorporateRepository(db.Pool)
+		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
 
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
@@ -644,6 +648,23 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/dm-modifications/{id}", dmModHandler.UpdateModification)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dm-modifications/{id}/seal", dmModHandler.SealModification)
 				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/dm-modifications/{id}/avenant", dmModHandler.IssueAvenant)
+			}
+
+			if corpHandler != nil {
+				// Module Sanad Corporate : Agréments des Établissements Pharmaceutiques & Tabadol (Jalon 2.7 - Décret 21-82)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications", corpHandler.ListApplications)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/corporate/applications", corpHandler.CreateApplication)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications/{id}", corpHandler.GetApplication)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/corporate/applications/{id}", corpHandler.UpdateApplication)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview, domain.PermRefEdit)).Post("/api/v1/corporate/applications/{id}/items/{itemId}/attach", corpHandler.AttachDocument)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview, domain.PermRefEdit)).Post("/api/v1/corporate/applications/{id}/items/{itemId}/detach", corpHandler.DetachDocument)
+				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/corporate/applications/{id}/sign-pdt", corpHandler.SignPDT)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/corporate/applications/{id}/tabadol/submit", corpHandler.SubmitTabadol)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/corporate/applications/{id}/miph-receipt", corpHandler.RecordMIPHReceipt)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/corporate/applications/{id}/grant", corpHandler.GrantLicense)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications/{id}/tabadol/audit", corpHandler.AuditTabadol)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications/{id}/tabadol/export-package", corpHandler.ExportTabadolPackage)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/licenses", corpHandler.ListLicenses)
 			}
 		})
 	}
