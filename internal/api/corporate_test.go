@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -112,6 +113,7 @@ func TestCorporateAPI_FullWorkflow(t *testing.T) {
 	r.Post("/corporate/applications/{id}/grant", corpHandler.GrantLicense)
 	r.Get("/corporate/applications/{id}/tabadol/audit", corpHandler.AuditTabadol)
 	r.Get("/corporate/applications/{id}/tabadol/export-package", corpHandler.ExportTabadolPackage)
+	r.Get("/corporate/applications/{id}/bordereau-miph", corpHandler.GetMIPHBordereau)
 	r.Get("/corporate/licenses", corpHandler.ListLicenses)
 
 	// Étape A : Création d'une demande d'agrément préalable de réalisation (Fabrication)
@@ -259,4 +261,17 @@ func TestCorporateAPI_FullWorkflow(t *testing.T) {
 		t.Fatalf("Content-Type attendu application/zip, reçu %s", w.Header().Get("Content-Type"))
 	}
 	t.Logf("✅ Submission Package Tabadol (.zip) exporté avec succès (%d octets)", w.Body.Len())
+
+	// Étape I : Consultation et rendu du Bordereau officiel d'accompagnement Bureau d'Ordre MIPH
+	req = httptest.NewRequest("GET", "/corporate/applications/"+appID.String()+"/bordereau-miph", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("échec génération bordereau MIPH: %s", w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), "Bordereau Récapitulatif") || !strings.Contains(w.Body.String(), "Bureau d'Ordre Central") {
+		t.Fatalf("contenu du bordereau invalide: %s", w.Body.String()[:200])
+	}
+	t.Logf("✅ Bordereau officiel d'accompagnement Bureau d'Ordre MIPH généré avec succès (%d octets HTML)", w.Body.Len())
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 	"time"
@@ -564,6 +565,39 @@ func (h *CorporateHandler) ExportTabadolPackage(w http.ResponseWriter, r *http.R
 			_, _ = fIndex.Write([]byte(line))
 		}
 	}
+
+	// 3. Bordereau récapitulatif officiel d'accompagnement (pour émargement au Bureau d'Ordre Central du MIPH)
+	bordereauHTML := renderBordereauMIPHHTML(app)
+	fBordereau, err := zw.Create("BORDEREAU_ACCOMPAGNEMENT_MIPH.html")
+	if err == nil {
+		_, _ = fBordereau.Write([]byte(bordereauHTML))
+	}
+}
+
+// GetMIPHBordereau renvoie le bordereau récapitulatif officiel d'accompagnement en HTML imprimable
+func (h *CorporateHandler) GetMIPHBordereau(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Non authentifié")
+		return
+	}
+
+	appID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "ID demande invalide")
+		return
+	}
+
+	app, err := h.corpRepo.GetApplication(r.Context(), user.OrganizationID, appID)
+	if err != nil {
+		writeJSONError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	htmlContent := renderBordereauMIPHHTML(app)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(htmlContent))
 }
 
 // ListLicenses liste les titres réglementaires et compte à rebours d'expiration
@@ -586,4 +620,229 @@ func (h *CorporateHandler) ListLicenses(w http.ResponseWriter, r *http.Request) 
 		"licenses": licenses,
 		"count":    len(licenses),
 	})
+}
+
+// renderBordereauMIPHHTML génère le bordereau officiel d'accompagnement pour émargement avec décharge au bureau d'ordre central MIPH
+func renderBordereauMIPHHTML(app *domain.CorporateApplication) string {
+	dateStr := time.Now().Format("02/01/2006 à 15:04")
+	pdtVisa := "EN ATTENTE DE VISA DU PHARMACIEN DIRECTEUR TECHNIQUE"
+	pdtSealInfo := "Le visa formel n'a pas encore été apposé."
+	if app.PDTSignedAt != nil {
+		pdtVisa = "DOCUMENT CERTIFIÉ CONFORME PAR LE PHARMACIEN DT"
+		pdtSealInfo = fmt.Sprintf("Visa 21 CFR Part 11 apposé le %s<br>Empreinte cryptographique : <code>%s</code>",
+			app.PDTSignedAt.Format("02/01/2006 15:04:05 MST"),
+			html.EscapeString(app.PDTSignatureSeal),
+		)
+	}
+
+	tabadolInfo := "Non transmis sur la passerelle Tabadol"
+	if app.TabadolSubmissionRef != "" {
+		tabadolDate := ""
+		if app.TabadolSubmittedAt != nil {
+			tabadolDate = " le " + app.TabadolSubmittedAt.Format("02/01/2006 à 15:04")
+		}
+		tabadolInfo = fmt.Sprintf("Télésoumis avec succès — Réf. <strong>%s</strong>%s",
+			html.EscapeString(app.TabadolSubmissionRef), tabadolDate,
+		)
+	}
+
+	rowsHTML := strings.Builder{}
+	for _, it := range app.ChecklistItems {
+		badgeClass := "status-missing"
+		badgeLabel := "Manquant"
+		if it.Status == "rattache" || it.Status == "valide_qualite" {
+			badgeClass = "status-attached"
+			badgeLabel = "Rattaché"
+		}
+
+		shaDisplay := "-"
+		if it.FileSHA256 != "" {
+			if len(it.FileSHA256) > 16 {
+				shaDisplay = it.FileSHA256[:16] + "…"
+			} else {
+				shaDisplay = it.FileSHA256
+			}
+		}
+
+		docCode := "-"
+		if it.DocumentCode != "" {
+			docCode = it.DocumentCode
+		}
+
+		rowsHTML.WriteString(fmt.Sprintf(`
+			<tr>
+				<td style="font-family:monospace; font-weight:700;">%s</td>
+				<td><strong>%s</strong></td>
+				<td style="text-align:center;"><span class="badge-req req-%s">[%s]</span></td>
+				<td>%s</td>
+				<td style="text-align:center;"><span class="%s">%s</span></td>
+				<td style="font-family:monospace; font-size:7.5pt; text-align:center;">%s</td>
+			</tr>
+		`,
+			html.EscapeString(it.ItemCode),
+			html.EscapeString(it.Title),
+			strings.ToLower(it.RequirementLevel),
+			html.EscapeString(it.RequirementLevel),
+			html.EscapeString(docCode),
+			badgeClass, badgeLabel,
+			html.EscapeString(shaDisplay),
+		))
+	}
+
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bordereau Récapitulatif d'Accompagnement — MIPH / Tabadol (%s)</title>
+    <style>
+        @page { size: A4; margin: 12mm 15mm 15mm 15mm; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 8.5pt; line-height: 1.35; color: #0f172a; margin: 0; padding: 15px; }
+        .header-table { width: 100%%; border-collapse: collapse; margin-bottom: 12px; }
+        .header-title { text-align: center; }
+        .header-title h1 { font-size: 11pt; font-weight: 800; margin: 0 0 2px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-title h2 { font-size: 9pt; font-weight: 700; color: #1e3a8a; margin: 0 0 2px 0; }
+        .header-title h3 { font-size: 8pt; font-weight: 600; color: #475569; margin: 0; }
+        .doc-banner { background: #0f2942; color: white; padding: 8px 12px; border-radius: 4px; text-align: center; margin: 10px 0 14px 0; }
+        .doc-banner h4 { margin: 0; font-size: 10.5pt; letter-spacing: 0.8px; text-transform: uppercase; }
+        .doc-banner p { margin: 2px 0 0 0; font-size: 7.5pt; opacity: 0.9; }
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .meta-card { border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px 10px; background: #f8fafc; }
+        .meta-card table { width: 100%%; font-size: 8pt; border-collapse: collapse; }
+        .meta-card td { padding: 2px 4px; vertical-align: top; }
+        .meta-card td.lbl { font-weight: 600; color: #475569; width: 40%%; }
+        .items-table { width: 100%%; border-collapse: collapse; font-size: 7.8pt; margin-bottom: 16px; }
+        .items-table th { background: #1e293b; color: white; padding: 6px 6px; text-align: left; font-size: 7.5pt; text-transform: uppercase; }
+        .items-table td { border-bottom: 1px solid #e2e8f0; padding: 5px 6px; }
+        .items-table tr:nth-child(even) { background: #f8fafc; }
+        .badge-req { font-weight: 700; padding: 1px 4px; border-radius: 3px; font-size: 7pt; }
+        .req-e { background: #fee2e2; color: #b91c1c; }
+        .req-c { background: #fef3c7; color: #b45309; }
+        .req-f { background: #e0f2fe; color: #0369a1; }
+        .req-s { background: #f3e8ff; color: #6b21a8; }
+        .status-attached { background: #dcfce7; color: #15803d; font-weight: 700; padding: 2px 6px; border-radius: 3px; font-size: 7pt; }
+        .status-missing { background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 2px 6px; border-radius: 3px; font-size: 7pt; }
+        .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; page-break-inside: avoid; }
+        .sign-box { border: 1.5px solid #0f2942; border-radius: 4px; padding: 10px; min-height: 120px; position: relative; }
+        .sign-header { font-weight: 700; font-size: 8pt; color: #0f2942; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 6px; text-transform: uppercase; }
+        .sign-space { height: 60px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-style: italic; font-size: 7.5pt; }
+        .footer-note { font-size: 7pt; color: #64748b; text-align: center; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+        @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 12px; text-align: right;">
+        <button onclick="window.print()" style="background:#0f2942; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:700; cursor:pointer;">🖨️ Imprimer le Bordereau</button>
+    </div>
+
+    <table class="header-table">
+        <tr>
+            <td style="width: 20%%; text-align: left; font-size: 7.5pt; color: #64748b;">
+                RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE<br>
+                MINISTÈRE DE L'INDUSTRIE PHARMACEUTIQUE (MIPH)<br>
+                DIRECTION DES AGRÉMENTS
+            </td>
+            <td class="header-title">
+                <h1>Direction Générale de la Réglementation</h1>
+                <h2>Guichet de Télésoumission Tabadol (gate.miph.gov.dz)</h2>
+                <h3>Décret exécutif n° 21-82 du 23 février 2021</h3>
+            </td>
+            <td style="width: 20%%; text-align: right; font-size: 7.5pt; color: #64748b;">
+                BUREAU D'ORDRE CENTRAL<br>
+                Gouvernance BPF / ALCOA+<br>
+                Date d'édition : %s
+            </td>
+        </tr>
+    </table>
+
+    <div class="doc-banner">
+        <h4>Bordereau Récapitulatif d'Accompagnement du Dossier d'Agrément</h4>
+        <p>Document officiel à joindre au dépôt physique pour émargement avec décharge au Bureau d'Ordre Central du Ministère</p>
+    </div>
+
+    <div class="meta-grid">
+        <div class="meta-card">
+            <table>
+                <tr><td class="lbl">Réf. Demande :</td><td><strong>%s</strong></td></tr>
+                <tr><td class="lbl">Intitulé :</td><td>%s</td></tr>
+                <tr><td class="lbl">Catégorie :</td><td><strong>%s</strong></td></tr>
+                <tr><td class="lbl">Nature Démarche :</td><td>%s</td></tr>
+            </table>
+        </div>
+        <div class="meta-card">
+            <table>
+                <tr><td class="lbl">Établissement :</td><td><strong>%s</strong></td></tr>
+                <tr><td class="lbl">Plateforme Tabadol :</td><td>%s</td></tr>
+                <tr><td class="lbl">Complétude [E] :</td><td><strong>%.1f %%%%</strong></td></tr>
+                <tr><td class="lbl">Statut Dossier :</td><td><strong>%s</strong></td></tr>
+            </table>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 12%%%%;">Code</th>
+                <th style="width: 44%%%%;">Pièce Justificative Exigée (Décret 21-82)</th>
+                <th style="width: 8%%%%; text-align:center;">Niv.</th>
+                <th style="width: 14%%%%;">Réf. GED</th>
+                <th style="width: 10%%%%; text-align:center;">État</th>
+                <th style="width: 12%%%%; text-align:center;">Empreinte SHA-256</th>
+            </tr>
+        </thead>
+        <tbody>
+            %s
+        </tbody>
+    </table>
+
+    <div class="sign-grid">
+        <div class="sign-box">
+            <div class="sign-header">Visa & Certification du Pharmacien Directeur Technique</div>
+            <div style="font-size:7pt; color:#475569; margin-bottom:4px;">
+                Je soussigné, Pharmacien Directeur Technique, certifie sur l'honneur l'exactitude des informations et pièces rattachées à la présente demande.
+            </div>
+            <div class="sign-space">
+                <div>
+                    <strong style="color:#0f2942;">%s</strong><br>
+                    <span style="font-size:6.8pt;">%s</span>
+                </div>
+            </div>
+        </div>
+        <div class="sign-box">
+            <div class="sign-header">Cadre Réservé au Bureau d'Ordre Central du MIPH</div>
+            <div style="font-size:7pt; color:#475569; margin-bottom:4px;">
+                Réservé à l'émargement physique, enregistrement et apposition de la décharge officielle :
+            </div>
+            <div class="sign-space">
+                <div>
+                    Date de dépôt : ____ / ____ / 2026<br>
+                    N° d'enregistrement BO : ____________________<br>
+                    <span style="font-size:6.8pt;">Cachet humide & visa de l'agent récepteur</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        SANAD PHARMA • Plateforme Réglementaire Souveraine Homolog • Intégrité ALCOA+ & 21 CFR Part 11 • Document scellé cryptographiquement
+    </div>
+</body>
+</html>`,
+		html.EscapeString(app.ApplicationNumber),
+		dateStr,
+		html.EscapeString(app.ApplicationNumber),
+		html.EscapeString(app.Title),
+		html.EscapeString(string(app.Category)),
+		html.EscapeString(string(app.Nature)),
+		html.EscapeString(app.EstablishmentName),
+		tabadolInfo,
+		app.CompletenessPercent,
+		html.EscapeString(string(app.Status)),
+		rowsHTML.String(),
+		pdtVisa,
+		pdtSealInfo,
+	)
 }

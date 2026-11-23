@@ -1237,12 +1237,15 @@ function renderTabadolTabHtml(app) {
 
             ${pdtSealHtml}
 
-            <div style="display:flex; gap:8px; margin-bottom:12px;">
-                <button class="btn-pill" style="flex:1; background:var(--bg-input); border:1px solid var(--border-color); font-size:11px; font-weight:600;" onclick="openTabadolAuditModal('${app.id}')">
-                    🔍 Lancer l'Audit Pré-soumission
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                <button class="btn-pill" style="flex:1; min-width:130px; background:var(--bg-input); border:1px solid var(--border-color); font-size:11px; font-weight:600;" onclick="openTabadolAuditModal('${app.id}')" title="Vérifier les critères éliminatoires et la complétude [E]">
+                    🔍 Audit Pré-soumission
                 </button>
-                <button class="btn-pill" style="flex:1; background:var(--bg-input); border:1px solid var(--border-color); font-size:11px; font-weight:600;" onclick="downloadTabadolPackage('${app.id}')">
+                <button class="btn-pill" style="flex:1; min-width:130px; background:var(--bg-input); border:1px solid var(--border-color); font-size:11px; font-weight:600;" onclick="downloadTabadolPackage('${app.id}')" title="Générer et télécharger l'archive structurée .zip pour Tabadol">
                     📦 Télécharger Package (.zip)
+                </button>
+                <button class="btn-pill" style="flex:1; min-width:130px; background:var(--bg-input); border:1px solid var(--border-color); font-size:11px; font-weight:600;" onclick="openCorporateBordereau('${app.id}')" title="Afficher et imprimer le bordereau officiel d'accompagnement pour émargement BO MIPH">
+                    📄 Bordereau BO MIPH
                 </button>
             </div>
 
@@ -1435,9 +1438,13 @@ async function saveCorporateLicense(appId) {
     }
 }
 
-// D. Téléchargement de l'archive Tabadol (.zip)
+// D. Téléchargement de l'archive Tabadol (.zip) & Impression du Bordereau BO MIPH
 function downloadTabadolPackage(appId) {
-    window.open(`/api/v1/corporate/applications/${appId}/tabadol/package`, '_blank');
+    window.open(`/api/v1/corporate/applications/${appId}/tabadol/export-package`, '_blank');
+}
+
+function openCorporateBordereau(appId) {
+    window.open(`/api/v1/corporate/applications/${appId}/bordereau-miph`, '_blank');
 }
 
 // E. Détachement d'un document GED

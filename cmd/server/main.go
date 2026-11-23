@@ -664,6 +664,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/corporate/applications/{id}/grant", corpHandler.GrantLicense)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications/{id}/tabadol/audit", corpHandler.AuditTabadol)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications/{id}/tabadol/export-package", corpHandler.ExportTabadolPackage)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications/{id}/tabadol/package", corpHandler.ExportTabadolPackage)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/applications/{id}/bordereau-miph", corpHandler.GetMIPHBordereau)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/corporate/licenses", corpHandler.ListLicenses)
 			}
 		})
