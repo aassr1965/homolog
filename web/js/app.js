@@ -342,8 +342,16 @@
             const table = document.getElementById("doc-table");
             const tbody = document.getElementById("doc-tbody");
             const thead = document.getElementById("table-head");
-            // Si la table de base est absente ou remplacée par un conteneur personnalisé (ex: Studio Compléments, DDM)
-            if (!table || !tbody || !thead || container.querySelector('.deficiencies-dashboard-container') || container.querySelector('.kpi-dossier-bar') || container.querySelector('.tabs-bar')) {
+            // Si le conteneur contient des éléments parasites (Chemin critique CTD, E-Services, Compléments, DDM, tabs) ou n'a pas la table standard
+            const hasParasites = container.querySelector('#dossier-gating-container') ||
+                                 container.querySelector('#dossier-smart-planning-container') ||
+                                 container.querySelector('#dossier-payments-container') ||
+                                 container.querySelector('.deficiencies-dashboard-container') ||
+                                 container.querySelector('.table-quick-filter-bar') ||
+                                 container.querySelector('.kpi-gauge-bar') ||
+                                 container.children.length !== 1 ||
+                                 (container.firstElementChild && container.firstElementChild.id !== 'doc-table');
+            if (!table || !tbody || !thead || hasParasites) {
                 container.innerHTML = `
                     <table id="doc-table">
                         <thead id="table-head"></thead>
