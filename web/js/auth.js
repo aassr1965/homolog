@@ -3,12 +3,12 @@
 // ============================================================================
 
 const mockAuditTrail = [
-            { ts: "10/11/2026 15:42:01", code: "AUTH_LOGIN", label: "Connexion 2FA", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Session 192.168.1.45 (TOTP vérifié)", sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "VALIDÉ" },
-            { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
-            { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
-            { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
-            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle sanad_20261110.sanad", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
-            { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
+            { ts: "10/11/2026 15:42:01", code: "AUTH_LOGIN", label: "Connexion 2FA", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Session 192.168.1.45 (TOTP vérifié)", ipAddress: "192.168.1.45", sha: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", status: "VALIDÉ" },
+            { ts: "10/11/2026 15:45:18", code: "DOC_VIEW", label: "Consultation Pièce", user: "Dr. Amine K.", role: "Pharmacien DT", target: "3.2.S.1_Nomenclature_et_Structure.pdf", ipAddress: "192.168.1.45", sha: "7a89f102bc4501a1d9e487102b3391cd048a6efb019485720194857201948572", status: "CONFORME" },
+            { ts: "10/11/2026 15:48:32", code: "DOC_SIGN_DT", label: "Signature Électronique", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Visa DT : Module 3 Qualité (CMC)", ipAddress: "192.168.1.45", sha: "18b95c328e8f192b001859ac910e5274901baef4827591028374950182749501", status: "SCELLÉ 21 CFR" },
+            { ts: "10/11/2026 15:52:10", code: "FILE_UPLOAD", label: "Dépôt de Document", user: "Ing. Sarah B.", role: "Affaires Réglementaires", target: "3.2.P.1_Composition_Formule.pdf (v1.0)", ipAddress: "192.168.1.108", sha: "4c718a93e8194b00284759102837495018274950182749501827495018274950", status: "HASHÉ CAS" },
+            { ts: "10/11/2026 16:01:45", code: "SYS_BACKUP", label: "Sauvegarde Immuable", user: "Système Automatique", role: "Admin Système", target: "Archive universelle sanad_20261110.sanad", ipAddress: "127.0.0.1", sha: "8f5a910283749501827495018274950182749501827495018274950182749501", status: "VÉRIFIÉ" },
+            { ts: "10/11/2026 16:15:00", code: "EXPORT_CTD", label: "Génération Archive", user: "Dr. Amine K.", role: "Pharmacien DT", target: "Dossier CTD Paracétamol 500mg (Modules 1 à 5)", ipAddress: "192.168.1.45", sha: "5fa98c32bb4e0192e47856cd891b002138947ef3a92184950182749501827495", status: "PRÊT ANPP" }
         ];
 
 
@@ -980,6 +980,7 @@ const mockAuditTrail = [
                 user: "Dr. Amine K.",
                 role: "Pharmacien DT",
                 target: (doc ? doc.name : "Document") + " (Visa DT)",
+                ipAddress: "192.168.1.45",
                 sha: auditHash,
                 status: "SCELLÉ 21 CFR"
             });
@@ -1298,7 +1299,7 @@ const mockAuditTrail = [
                     target: m.target,
                     sha: m.sha,
                     details: JSON.stringify({ entity: m.target, action: m.code, operator: m.user }, null, 2),
-                    ipAddress: '192.168.1.45',
+                    ipAddress: m.ipAddress || '192.168.1.45',
                     userAgent: navigator.userAgent,
                     status: m.status || 'SCELLÉ SQL'
                 }));
@@ -1332,7 +1333,7 @@ const mockAuditTrail = [
             tbody.innerHTML = "";
 
             if (list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:36px; color:var(--text-muted);"><div style="font-size:24px; margin-bottom:8px;">🛡️</div>Aucun événement trouvé pour ce filtre ou cet onglet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:36px; color:var(--text-muted);"><div style="font-size:24px; margin-bottom:8px;">🛡️</div>Aucun événement trouvé pour ce filtre ou cet onglet.</td></tr>`;
                 renderAuditInspector(null);
                 const badge = document.getElementById("audit-count-badge");
                 if (badge) badge.innerText = "0 événement scellé";
@@ -1361,6 +1362,9 @@ const mockAuditTrail = [
                     <td style="padding:6px 10px;">
                         <span style="font-weight:600; color:var(--text-main);">${escapeHTML(item.user)}</span>
                         <div style="color:var(--text-dim); font-size:10px;">${escapeHTML(item.role)}</div>
+                    </td>
+                    <td style="padding:6px 10px; font-family:monospace; font-size:10.5px; color:var(--accent-blue); white-space:nowrap;">
+                        ${escapeHTML(item.ipAddress || '127.0.0.1')}
                     </td>
                     <td style="padding:6px 10px; color:var(--text-main); font-size:11px;" title="${escapeHTML(item.target)}">${escapeHTML(item.target)}</td>
                     <td style="padding:6px 10px; font-family:monospace; font-size:10px; color:var(--text-dim);" title="${escapeHTML(item.sha)}">

@@ -706,11 +706,11 @@
 
                 <!-- Barre d'outils et de filtrage instantané -->
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <div style="flex:1; min-width:240px; display:flex; align-items:center; position:relative;">
-                        <input type="text" id="audit-filter-input" placeholder="🔍 Rechercher par action, acteur, rôle, cible, hash SHA-256..." 
+                    <div class="flex-1 min-w-[240px] flex items-center relative">
+                        <input type="text" id="audit-filter-input" placeholder="🔍 Rechercher par action, acteur, rôle, adresse IP, cible, hash SHA-256..." 
                                onkeyup="filterAuditTable()" 
-                               style="width:100%; padding:6px 10px 6px 30px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:5px; font-size:12px;">
-                        <span style="position:absolute; left:10px; font-size:12px; pointer-events:none; opacity:0.6;">🔍</span>
+                               class="w-full pl-[30px] pr-2.5 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-main)] rounded-[5px] text-xs">
+                        <span class="absolute left-2.5 text-xs pointer-events-none opacity-60">🔍</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <select id="audit-time-filter" onchange="filterAuditTable()" style="padding:5px 8px; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); border-radius:5px; font-size:11.5px; cursor:pointer;">
@@ -730,11 +730,12 @@
                         <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;">
                             <thead style="background:var(--bg-th); position:sticky; top:0; z-index:2; border-bottom:1px solid var(--border-color);">
                                 <tr>
-                                    <th style="padding:7px 10px; color:var(--text-dim); width:135px;">Horodatage UTC</th>
-                                    <th style="padding:7px 10px; color:var(--text-dim); width:190px;">Événement BPF</th>
-                                    <th style="padding:7px 10px; color:var(--text-dim);">Utilisateur &amp; Rôle</th>
+                                    <th style="padding:7px 10px; color:var(--text-dim); width:130px;">Horodatage UTC</th>
+                                    <th style="padding:7px 10px; color:var(--text-dim); width:170px;">Événement BPF</th>
+                                    <th style="padding:7px 10px; color:var(--text-dim); width:140px;">Utilisateur &amp; Rôle</th>
+                                    <th style="padding:7px 10px; color:var(--text-dim); width:105px;">Adresse IP</th>
                                     <th style="padding:7px 10px; color:var(--text-dim);">Cible / Entité</th>
-                                    <th style="padding:7px 10px; color:var(--text-dim); width:130px;">Empreinte SHA-256</th>
+                                    <th style="padding:7px 10px; color:var(--text-dim); width:125px;">Empreinte SHA-256</th>
                                     <th style="padding:7px 10px; color:var(--text-dim); width:85px; text-align:center;">Statut</th>
                                 </tr>
                             </thead>
@@ -5039,8 +5040,8 @@
     </div>
 
     <!-- Scripts applicatifs modulaires (Zéro dépendance externe) -->
-    <script src="/js/app.js?v=2026.11.23.10"></script>
-    <script src="/js/auth.js?v=2026.11.23.10"></script>
+    <script src="/js/app.js?v=2026.11.23.11"></script>
+    <script src="/js/auth.js?v=2026.11.23.11"></script>
     <script src="/js/admin.js?v=2026.11.23.8"></script>
     <script src="/js/system_admin.js?v=2026.11.17.5"></script>
     <script src="/js/referential.js?v=2026.11.23.8"></script>
