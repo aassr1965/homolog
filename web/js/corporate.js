@@ -6,6 +6,7 @@
 let currentCorporateApplications = [];
 let currentCorporateLicenses = [];
 let selectedCorporateAppID = null;
+let currentCorporateApp = null;
 let currentCorporateFilter = 'ALL'; // ALL, FABRICATION, IMPORTATION, DISTRIBUTION, EXPLOITATION, LICENSES
 let currentCorporatePreviewTab = 'checklist';
 
@@ -455,6 +456,7 @@ async function viewCorporateChecklist(appId) {
         const data = await resp.json();
         const app = data.application;
         if (!app) throw new Error("Dossier introuvable");
+        currentCorporateApp = app;
 
         const items = app.checklist_items || [];
         const pct = app.completeness_percent || 0;
@@ -475,7 +477,8 @@ async function viewCorporateChecklist(appId) {
             tb.innerHTML = `
                 <button class="btn-table-icon" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">←</button>
                 <button class="btn-table-icon" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕</button>
-                <button class="btn-table-icon btn-table-icon-primary" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>
+                <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '')" title="Téléverser directement un nouveau document">📤</button>
+                <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>
                 <button class="btn-table-icon" onclick="toggleAllCorporateSections()" title="Tout déplier / Tout replier les volets réglementaires">📑</button>
                 <button class="btn-table-icon" onclick="openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
                 <button class="btn-table-icon" onclick="downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
@@ -495,7 +498,7 @@ async function viewCorporateChecklist(appId) {
                 <th>Intitulé du Document Réglementaire (Décret 21-82)</th>
                 <th style="width: 135px; text-align:center;">Niveau d'Exigence</th>
                 <th>Document du Coffre-fort GED</th>
-                <th style="width: 110px; text-align:center;">Action</th>
+                <th style="width: 140px; text-align:center;">Action</th>
             </tr>
         `;
 
@@ -587,9 +590,14 @@ async function viewCorporateChecklist(appId) {
                 // Info GED rattaché
                 let docInfo = `<span style="color:var(--text-dim); font-size:11px; font-style:italic;">Aucune pièce rattachée</span>`;
                 let actionBtn = `
-                    <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
-                        📎
-                    </button>
+                    <div style="display:inline-flex; gap:4px; align-items:center; justify-content:center;">
+                        <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser directement un nouveau document">
+                            📤
+                        </button>
+                        <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document existant du coffre-fort GED">
+                            📎
+                        </button>
+                    </div>
                 `;
 
                 if (it.ged_document_id) {
@@ -604,9 +612,10 @@ async function viewCorporateChecklist(appId) {
                         </div>
                     `;
                     actionBtn = `
-                        <div style="display:inline-flex; gap:5px; align-items:center; justify-content:center;">
+                        <div style="display:inline-flex; gap:4px; align-items:center; justify-content:center;">
                             <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
-                            <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer par un autre document GED">🔄</button>
+                            <button class="btn-table-icon" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document / remplacer">📤</button>
+                            <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Remplacer par un autre document GED existant">🔄</button>
                             <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
                         </div>
                     `;
@@ -928,6 +937,7 @@ function renderChecklistTabHtml(app) {
                         </a>
                         <div style="margin-left:auto; display:inline-flex; gap:4px; align-items:center;">
                             <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateDocumentViewer('${it.ged_document_id}', '${escapeHtml(it.document_name)}', '${it.item_code}')" title="Visionner la pièce jointe">👁️</button>
+                            <button class="btn-table-icon" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document / remplacer">📤</button>
                             <button class="btn-table-icon btn-table-icon-del" onclick="detachGEDDocumentFromItem('${app.id}', '${it.id}')" title="Détacher la pièce de l'exigence">❌</button>
                         </div>
                     </div>
@@ -939,9 +949,14 @@ function renderChecklistTabHtml(app) {
                             <span class="badge-icon-status" style="width:20px; height:20px; font-size:11px; background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.3); flex-shrink:0;" title="Statut GED : Document manquant">⚠️</span>
                             Aucune pièce rattachée
                         </span>
-                        <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
-                            📎
-                        </button>
+                        <div style="display:inline-flex; gap:4px; align-items:center;">
+                            <button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '${it.id}')" title="Téléverser un nouveau document">
+                                📤
+                            </button>
+                            <button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '${it.id}')" title="Rattacher un document du coffre-fort GED">
+                                📎
+                            </button>
+                        </div>
                     </div>
                 `;
             }
@@ -1564,8 +1579,23 @@ async function submitCorporateTabadol(appId) {
     }
 }
 
-// Modal Rattachement Document GED
-async function openGEDPickerForCorporateItem(appId, itemId) {
+// ============================================================================
+// MODAL TÉLÉVERSEMENT DIRECT & RATTACHEMENT GED (DÉCRET 21-82)
+// ============================================================================
+
+let corporateSelectedUploadFile = null;
+let corporateAllGEDDocs = [];
+
+function openCorporateUploadModal(appId, itemId) {
+    openCorporateDocModal(appId, itemId, 'upload');
+}
+
+function openGEDPickerForCorporateItem(appId, itemId) {
+    openCorporateDocModal(appId, itemId, 'pick');
+}
+
+async function openCorporateDocModal(appId, itemId, activeTab = 'upload') {
+    selectedCorporateAppID = appId;
     let modal = document.getElementById("modal-corporate-ged-picker");
     if (!modal) {
         modal = document.createElement("div");
@@ -1574,17 +1604,174 @@ async function openGEDPickerForCorporateItem(appId, itemId) {
         document.body.appendChild(modal);
     }
 
+    // Charger l'application si nécessaire
+    if (!currentCorporateApp || currentCorporateApp.id !== appId) {
+        try {
+            const resp = await fetch('/api/v1/corporate/applications/' + appId);
+            if (resp.ok) {
+                const data = await resp.json();
+                currentCorporateApp = data.application;
+            }
+        } catch (_) {}
+    }
+
+    const items = (currentCorporateApp && currentCorporateApp.checklist_items) || [];
+    let selectedItem = items.find(i => i.id === itemId) || (items.length > 0 ? items[0] : null);
+    if (!itemId && selectedItem) {
+        itemId = selectedItem.id;
+    }
+
+    let itemOptionsHtml = '';
+    items.forEach(it => {
+        const isSel = it.id === itemId ? 'selected' : '';
+        itemOptionsHtml += `<option value="${it.id}" ${isSel}>[${escapeHtml(it.item_code)}] ${escapeHtml(it.title)}</option>`;
+    });
+
+    let defaultTax = "01_Affaires_Reglementaires/01_01_Agrements_Etablissement";
+    let defaultType = "Statuts & Juridique";
+    if (selectedItem) {
+        if (['PLANS_FLUX', 'UTILITES_EQUIPEMENTS', 'TECHNIQUE_LOCAUX', 'ORGANISATION_BPF'].includes(selectedItem.section)) {
+            defaultTax = "02_Assurance_Qualite_BPF/02_01_Manuel_Qualite_Procedures";
+        }
+        if (selectedItem.section === 'ADMINISTRATIF') defaultType = "Statuts & Juridique";
+        else if (selectedItem.section === 'PLANS_FLUX' || selectedItem.section === 'TECHNIQUE_LOCAUX') defaultType = "Plan Technique & Zonage";
+        else if (selectedItem.section === 'UTILITES_EQUIPEMENTS') defaultType = "Rapport de Qualification";
+        else if (selectedItem.section === 'ORGANISATION_BPF') defaultType = "Procédure SOP / PQS";
+        else if (selectedItem.section === 'PHARMACIEN_DT') defaultType = "Diplôme & Agrément DT";
+    }
+
+    const defaultTitle = selectedItem ? selectedItem.title : "Document Réglementaire Décret 21-82";
+    const defaultCode = selectedItem ? `GED-${selectedItem.item_code}-${Date.now().toString().slice(-4)}` : `GED-CORP-${Date.now().toString().slice(-4)}`;
+
     modal.innerHTML = `
-        <div class="modal" style="max-width:680px;">
-            <div class="modal-header">
-                <span class="modal-title">📎 Rattacher un Document GED Pharmaceutique</span>
-                <button class="modal-close" onclick="closeCorporateModal('modal-corporate-ged-picker')">✕</button>
+        <div class="modal" style="max-width:720px; width:95%;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding:12px 18px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px;">📁</span>
+                    <span class="modal-title" style="font-weight:700; font-size:14px; color:var(--text-main);">Pièce Jointe Réglementaire (Décret 21-82)</span>
+                </div>
+                <button class="modal-close" onclick="closeCorporateModal('modal-corporate-ged-picker')" style="background:none; border:none; color:var(--text-muted); font-size:16px; cursor:pointer;">✕</button>
             </div>
-            <div class="modal-body" id="corp-ged-picker-body">
-                <div style="text-align:center; padding:30px; color:var(--text-muted);"><span class="spin">⏳</span> Chargement des documents approuvés du coffre-fort...</div>
+
+            <!-- Cible de l'exigence -->
+            <div style="background:rgba(255,255,255,0.02); padding:10px 18px; border-bottom:1px solid var(--border-color);">
+                <label style="display:block; font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; margin-bottom:4px;">Exigence réglementaire visée :</label>
+                <select id="corp-target-item-id" onchange="onCorporateTargetItemChange()" style="width:100%; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); font-size:11px; font-weight:600;">
+                    ${itemOptionsHtml}
+                </select>
             </div>
-            <div class="modal-footer">
+
+            <!-- Onglets (Téléverser vs Choisir GED) -->
+            <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-card); padding:4px 14px; gap:8px;">
+                <button id="corp-tab-btn-upload" class="btn-pill" style="border:none; font-size:11px; font-weight:700; padding:7px 14px; cursor:pointer; border-radius:5px; transition:all 0.15s; ${activeTab === 'upload' ? 'background:var(--accent-blue); color:white;' : 'background:transparent; color:var(--text-muted);'}" onclick="switchCorporateDocTab('upload')">
+                    📤 Téléverser un nouveau document
+                </button>
+                <button id="corp-tab-btn-pick" class="btn-pill" style="border:none; font-size:11px; font-weight:700; padding:7px 14px; cursor:pointer; border-radius:5px; transition:all 0.15s; ${activeTab === 'pick' ? 'background:var(--accent-blue); color:white;' : 'background:transparent; color:var(--text-muted);'}" onclick="switchCorporateDocTab('pick')">
+                    📎 Choisir dans le Coffre-Fort GED
+                </button>
+            </div>
+
+            <div class="modal-body" style="padding:16px 18px; max-height:calc(85vh - 160px); overflow-y:auto;">
+                <!-- ONGLET 1 : TÉLÉVERSEMENT DIRECT -->
+                <div id="corp-tab-pane-upload" style="display:${activeTab === 'upload' ? 'block' : 'none'};">
+                    <!-- Dropzone -->
+                    <div id="corp-dropzone" style="border:2px dashed var(--border-color); border-radius:8px; padding:22px; text-align:center; background:rgba(255,255,255,0.02); cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('corp-file-input').click()">
+                        <div style="font-size:32px; margin-bottom:6px;">📄</div>
+                        <div style="font-weight:700; font-size:13px; color:var(--text-main);">
+                            Glissez-déposez le fichier ici, ou <span style="color:var(--accent-blue); text-decoration:underline;">cliquez pour parcourir</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+                            Formats acceptés : PDF, Word (.docx), Excel (.xlsx), ZIP, Images (.png, .jpg) • Max 50 Mo
+                        </div>
+                        <div id="corp-file-selected-name" style="margin-top:10px; font-weight:700; font-size:12px; color:var(--accent-green); display:none; padding:6px; background:rgba(5,150,105,0.1); border-radius:4px; border:1px solid rgba(5,150,105,0.25);"></div>
+                        <input type="file" id="corp-file-input" style="display:none;" onchange="handleCorporateFileSelect(this)">
+                    </div>
+
+                    <!-- Métadonnées GED -->
+                    <div style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div style="grid-column:1 / -1;">
+                            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-main); margin-bottom:3px;">
+                                Intitulé du document (FR) <span style="color:var(--accent-red);">*</span>
+                            </label>
+                            <input type="text" id="corp-doc-title" value="${escapeHtml(defaultTitle)}" required style="width:100%; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main); font-size:11px;">
+                        </div>
+
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-main); margin-bottom:3px;">
+                                Code Document GED <span style="color:var(--accent-red);">*</span>
+                            </label>
+                            <input type="text" id="corp-doc-code" value="${escapeHtml(defaultCode)}" required style="width:100%; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main); font-size:11px; font-family:var(--font-mono);">
+                        </div>
+
+                        <div>
+                            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-main); margin-bottom:3px;">
+                                Type de document
+                            </label>
+                            <select id="corp-doc-type" style="width:100%; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main); font-size:11px;">
+                                <option value="Statuts & Juridique" ${defaultType === 'Statuts & Juridique' ? 'selected' : ''}>Statuts &amp; Juridique</option>
+                                <option value="Plan Technique & Zonage" ${defaultType === 'Plan Technique & Zonage' ? 'selected' : ''}>Plan Technique &amp; Zonage BPF</option>
+                                <option value="Rapport de Qualification" ${defaultType === 'Rapport de Qualification' ? 'selected' : ''}>Rapport de Qualification Équipement / CVC</option>
+                                <option value="Procédure SOP / PQS" ${defaultType === 'Procédure SOP / PQS' ? 'selected' : ''}>Procédure SOP / Manuel PQS</option>
+                                <option value="Diplôme & Agrément DT" ${defaultType === 'Diplôme & Agrément DT' ? 'selected' : ''}>Diplôme, Inscription Ordre &amp; DT</option>
+                                <option value="Contrat & Accord Qualité" ${defaultType === 'Contrat & Accord Qualité' ? 'selected' : ''}>Contrat &amp; Accord Qualité</option>
+                                <option value="Autre Document Réglementaire">Autre Document Réglementaire</option>
+                            </select>
+                        </div>
+
+                        <div style="grid-column:1 / -1;">
+                            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-main); margin-bottom:3px;">
+                                Dossier de classement GED (Taxonomie BPF) <span style="color:var(--accent-red);">*</span>
+                            </label>
+                            <select id="corp-doc-taxonomy" style="width:100%; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main); font-size:11px;">
+                                <optgroup label="01. Affaires Réglementaires">
+                                    <option value="01_Affaires_Reglementaires/01_01_Agrements_Etablissement" ${defaultTax === '01_Affaires_Reglementaires/01_01_Agrements_Etablissement' ? 'selected' : ''}>01.01 Agréments Établissement (MIPH)</option>
+                                    <option value="01_Affaires_Reglementaires/01_02_Decisions_Enregistrement">01.02 Décisions d'Enregistrement (DE)</option>
+                                    <option value="01_Affaires_Reglementaires/01_03_Decisions_Homologation">01.03 Décisions d'Homologation DM</option>
+                                    <option value="01_Affaires_Reglementaires/01_04_Dossiers_CTD_Reference">01.04 Dossiers CTD de Référence</option>
+                                    <option value="01_Affaires_Reglementaires/01_05_Notices_Articles_Conditionnement">01.05 Notices &amp; Conditionnement</option>
+                                    <option value="01_Affaires_Reglementaires/01_06_Correspondances_ANPP">01.06 Correspondances &amp; Notifications ANPP</option>
+                                </optgroup>
+                                <optgroup label="02. Assurance Qualité & BPF">
+                                    <option value="02_Assurance_Qualite_BPF/02_01_Manuel_Qualite_Procedures" ${defaultTax === '02_Assurance_Qualite_BPF/02_01_Manuel_Qualite_Procedures' ? 'selected' : ''}>02.01 Manuel Qualité &amp; Procédures (SOP)</option>
+                                    <option value="02_Assurance_Qualite_BPF/02_02_Certificats_BPF_ISO">02.02 Certificats BPF/GMP &amp; ISO</option>
+                                    <option value="02_Assurance_Qualite_BPF/02_03_Rapports_Audit_Inspections">02.03 Rapports d'Audit &amp; Inspections ANPP</option>
+                                    <option value="02_Assurance_Qualite_BPF/02_04_CAPA_Deviations">02.04 CAPA &amp; Gestion des Déviations</option>
+                                </optgroup>
+                                <optgroup label="03. Développement & Production">
+                                    <option value="03_Developpement_Production/03_01_Formules_Fabrication_DMF">03.01 Formules de Fabrication &amp; DMF</option>
+                                    <option value="03_Developpement_Production/03_02_Methodes_Controle_Validation">03.02 Méthodes de Contrôle &amp; Validations</option>
+                                    <option value="03_Developpement_Production/03_03_Etudes_Stabilite">03.03 Études de Stabilité (Zone IVb)</option>
+                                    <option value="03_Developpement_Production/03_04_Specifications_Matieres_PF">03.04 Spécifications Matières &amp; PF</option>
+                                    <option value="03_Developpement_Production/03_05_Dossiers_Techniques_DM">03.05 Dossiers Techniques DM</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div style="grid-column:1 / -1;">
+                            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-main); margin-bottom:3px;">
+                                Motif / Résumé du dépôt
+                            </label>
+                            <input type="text" id="corp-doc-summary" value="Dépôt initial pour dossier d'agrément MIPH (Décret 21-82)" style="width:100%; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:4px; color:var(--text-main); font-size:11px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ONGLET 2 : CHOISIR DANS LE COFFRE-FORT GED -->
+                <div id="corp-tab-pane-pick" style="display:${activeTab === 'pick' ? 'block' : 'none'};">
+                    <input type="text" id="corp-ged-search" placeholder="🔍 Rechercher par titre, code ou dossier..." oninput="filterCorporateGEDPicker(this.value)" style="width:100%; padding:8px 12px; margin-bottom:10px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:var(--text-main); font-size:11px;">
+                    <div id="corp-ged-picker-docs-list" style="display:flex; flex-direction:column; gap:6px; max-height:280px; overflow-y:auto;">
+                        <div style="text-align:center; padding:25px; color:var(--text-muted);"><span class="spin">⏳</span> Chargement des documents approuvés du coffre-fort...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding:10px 18px;">
                 <button class="btn-pill" onclick="closeCorporateModal('modal-corporate-ged-picker')">Annuler</button>
+                <div id="corp-modal-footer-action">
+                    <button class="btn-pill" id="corp-upload-submit-btn" style="background:var(--accent-blue); color:white; font-weight:700; padding:6px 16px; border:none; ${activeTab === 'upload' ? '' : 'display:none;'}" onclick="submitCorporateDirectUpload('${appId}')">
+                        📤 Téléverser &amp; Rattacher
+                    </button>
+                </div>
             </div>
         </div>
     `;
@@ -1592,49 +1779,294 @@ async function openGEDPickerForCorporateItem(appId, itemId) {
     modal.style.display = "flex";
     modal.classList.add("open");
 
+    corporateSelectedUploadFile = null;
+    setupCorporateDropzone();
+
+    // Charger les documents GED en arrière-plan pour l'onglet 2
+    loadCorporateGEDDocsForPicker(appId);
+}
+
+function switchCorporateDocTab(tabName) {
+    const uploadPane = document.getElementById('corp-tab-pane-upload');
+    const pickPane = document.getElementById('corp-tab-pane-pick');
+    const uploadBtn = document.getElementById('corp-tab-btn-upload');
+    const pickBtn = document.getElementById('corp-tab-btn-pick');
+    const submitBtn = document.getElementById('corp-upload-submit-btn');
+
+    if (tabName === 'upload') {
+        if (uploadPane) uploadPane.style.display = 'block';
+        if (pickPane) pickPane.style.display = 'none';
+        if (uploadBtn) {
+            uploadBtn.style.background = 'var(--accent-blue)';
+            uploadBtn.style.color = 'white';
+        }
+        if (pickBtn) {
+            pickBtn.style.background = 'transparent';
+            pickBtn.style.color = 'var(--text-muted)';
+        }
+        if (submitBtn) submitBtn.style.display = 'inline-block';
+    } else {
+        if (uploadPane) uploadPane.style.display = 'none';
+        if (pickPane) pickPane.style.display = 'block';
+        if (uploadBtn) {
+            uploadBtn.style.background = 'transparent';
+            uploadBtn.style.color = 'var(--text-muted)';
+        }
+        if (pickBtn) {
+            pickBtn.style.background = 'var(--accent-blue)';
+            pickBtn.style.color = 'white';
+        }
+        if (submitBtn) submitBtn.style.display = 'none';
+    }
+}
+
+function handleCorporateFileSelect(input) {
+    if (input.files && input.files[0]) {
+        corporateSelectedUploadFile = input.files[0];
+        const nameEl = document.getElementById('corp-file-selected-name');
+        const sizeKb = (corporateSelectedUploadFile.size / 1024).toFixed(1);
+        const sizeMb = (corporateSelectedUploadFile.size / (1024 * 1024)).toFixed(2);
+        const displaySize = corporateSelectedUploadFile.size >= 1024 * 1024 ? `${sizeMb} Mo` : `${sizeKb} Ko`;
+        if (nameEl) {
+            nameEl.style.display = 'block';
+            nameEl.innerHTML = `✅ Fichier sélectionné : <strong>${escapeHtml(corporateSelectedUploadFile.name)}</strong> (${displaySize})`;
+        }
+        const titleInput = document.getElementById('corp-doc-title');
+        if (titleInput && (!titleInput.value || titleInput.value.trim() === '')) {
+            const baseName = corporateSelectedUploadFile.name.replace(/\.[^/.]+$/, "");
+            titleInput.value = baseName;
+        }
+    }
+}
+
+function setupCorporateDropzone() {
+    const dz = document.getElementById('corp-dropzone');
+    const fi = document.getElementById('corp-file-input');
+    if (!dz || !fi) return;
+
+    dz.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.style.borderColor = 'var(--accent-blue)';
+        dz.style.background = 'rgba(59, 130, 246, 0.08)';
+    });
+
+    dz.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.style.borderColor = 'var(--border-color)';
+        dz.style.background = 'rgba(255, 255, 255, 0.02)';
+    });
+
+    dz.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.style.borderColor = 'var(--border-color)';
+        dz.style.background = 'rgba(255, 255, 255, 0.02)';
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            fi.files = e.dataTransfer.files;
+            handleCorporateFileSelect(fi);
+        }
+    });
+}
+
+function onCorporateTargetItemChange() {
+    const sel = document.getElementById('corp-target-item-id');
+    if (!sel || !currentCorporateApp) return;
+    const item = (currentCorporateApp.checklist_items || []).find(i => i.id === sel.value);
+    if (!item) return;
+
+    const titleInput = document.getElementById('corp-doc-title');
+    const codeInput = document.getElementById('corp-doc-code');
+    const taxSelect = document.getElementById('corp-doc-taxonomy');
+    const typeSelect = document.getElementById('corp-doc-type');
+
+    if (titleInput) titleInput.value = item.title;
+    if (codeInput) codeInput.value = `GED-${item.item_code}-${Date.now().toString().slice(-4)}`;
+
+    if (taxSelect) {
+        if (['PLANS_FLUX', 'UTILITES_EQUIPEMENTS', 'TECHNIQUE_LOCAUX', 'ORGANISATION_BPF'].includes(item.section)) {
+            taxSelect.value = '02_Assurance_Qualite_BPF/02_01_Manuel_Qualite_Procedures';
+        } else {
+            taxSelect.value = '01_Affaires_Reglementaires/01_01_Agrements_Etablissement';
+        }
+    }
+
+    if (typeSelect) {
+        if (item.section === 'ADMINISTRATIF') typeSelect.value = 'Statuts & Juridique';
+        else if (item.section === 'PLANS_FLUX' || item.section === 'TECHNIQUE_LOCAUX') typeSelect.value = 'Plan Technique & Zonage';
+        else if (item.section === 'UTILITES_EQUIPEMENTS') typeSelect.value = 'Rapport de Qualification';
+        else if (item.section === 'ORGANISATION_BPF') typeSelect.value = 'Procédure SOP / PQS';
+        else if (item.section === 'PHARMACIEN_DT') typeSelect.value = 'Diplôme & Agrément DT';
+    }
+}
+
+function getCorporateCurrentTargetItemId() {
+    const sel = document.getElementById('corp-target-item-id');
+    return sel ? sel.value : '';
+}
+
+async function loadCorporateGEDDocsForPicker(appId) {
     try {
         const resp = await fetch('/api/v1/ged/documents');
         if (!resp.ok) throw new Error("Erreur HTTP " + resp.status);
         const data = await resp.json();
-        const docs = data.documents || [];
-        const body = document.getElementById("corp-ged-picker-body");
-
-        if (docs.length === 0) {
-            body.innerHTML = `
-                <div style="text-align:center; padding:30px; color:var(--text-muted);">
-                    Aucun document GED disponible dans votre coffre-fort.<br>
-                    Veuillez d'abord déposer et valider les pièces dans le module GED BPF.
-                </div>
-            `;
-            return;
+        corporateAllGEDDocs = data.documents || [];
+        filterCorporateGEDPicker(document.getElementById('corp-ged-search') ? document.getElementById('corp-ged-search').value : '');
+    } catch (e) {
+        const listEl = document.getElementById('corp-ged-picker-docs-list');
+        if (listEl) {
+            listEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--accent-red);">❌ Erreur: ${escapeHtml(e.message)}</div>`;
         }
+    }
+}
 
-        body.innerHTML = `
-            <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">
-                Sélectionnez une pièce vérifiée pour satisfaire l'exigence réglementaire :
-            </div>
-            <div style="display:flex; flex-direction:column; gap:6px; max-height:300px; overflow-y:auto;">
-                ${docs.map(d => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--bg-input); border-radius:6px; border:1px solid var(--border-color);">
-                        <div>
-                            <div style="font-weight:700; font-size:11px; color:var(--text-main);">${escapeHtml(d.title_fr || d.title || 'Document')}</div>
-                            <div style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono);">
-                                Code: ${escapeHtml(d.document_code || '-')} • Ver: ${escapeHtml(d.current_version || 'v1.0')} • Statut: ${escapeHtml(d.status || 'approuvé')}
-                            </div>
-                        </div>
-                        <button class="btn-pill" style="font-size:10px; padding:4px 10px; border:none; background:var(--accent-blue); color:white; font-weight:700;" onclick="attachGEDToCorporateItem('${appId}', '${itemId}', '${d.id}')">
-                            Sélectionner
-                        </button>
-                    </div>
-                `).join('')}
+function filterCorporateGEDPicker(query) {
+    const listEl = document.getElementById('corp-ged-picker-docs-list');
+    if (!listEl) return;
+
+    if (corporateAllGEDDocs.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align:center; padding:25px; color:var(--text-muted); font-size:11px;">
+                <div style="font-size:24px; margin-bottom:6px;">📭</div>
+                Aucun document n'est actuellement disponible dans le coffre-fort.<br><br>
+                <button class="btn-pill" style="background:var(--accent-blue); color:white; font-size:11px; padding:6px 14px; border:none; cursor:pointer;" onclick="switchCorporateDocTab('upload')">
+                    📤 Téléverser directement un nouveau document
+                </button>
             </div>
         `;
-    } catch (e) {
-        document.getElementById("corp-ged-picker-body").innerHTML = `<div style="text-align:center; padding:20px; color:var(--accent-red);">❌ Erreur: ${escapeHtml(e.message)}</div>`;
+        return;
+    }
+
+    const q = (query || '').toLowerCase().trim();
+    const filtered = corporateAllGEDDocs.filter(d => {
+        const title = (d.title_fr || d.title || '').toLowerCase();
+        const code = (d.document_code || '').toLowerCase();
+        const tax = (d.taxonomy_path || '').toLowerCase();
+        return !q || title.includes(q) || code.includes(q) || tax.includes(q);
+    });
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align:center; padding:25px; color:var(--text-muted); font-size:11px;">
+                Aucun document ne correspond à « ${escapeHtml(query)} ».
+            </div>
+        `;
+        return;
+    }
+
+    const currentAppId = selectedCorporateAppID;
+
+    listEl.innerHTML = filtered.map(d => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--bg-input); border-radius:6px; border:1px solid var(--border-color); gap:8px;">
+            <div style="min-width:0; flex:1;">
+                <div style="font-weight:700; font-size:11px; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(d.title_fr || d.title || 'Document')}</div>
+                <div style="font-size:9px; color:var(--text-dim); font-family:var(--font-mono); margin-top:2px;">
+                    Code: ${escapeHtml(d.document_code || '-')} • Ver: ${escapeHtml(d.current_version || 'v1.0')} • Statut: ${escapeHtml(d.status || 'approuvé')}
+                </div>
+            </div>
+            <button class="btn-pill" style="font-size:10px; padding:4px 10px; border:none; background:var(--accent-blue); color:white; font-weight:700; white-space:nowrap; flex-shrink:0;" onclick="attachGEDToCorporateItem('${currentAppId}', getCorporateCurrentTargetItemId(), '${d.id}')">
+                Sélectionner
+            </button>
+        </div>
+    `).join('');
+}
+
+async function submitCorporateDirectUpload(appId) {
+    const fileInput = document.getElementById('corp-file-input');
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showNotifyModal("Fichier manquant", "Veuillez sélectionner un fichier à téléverser.", "⚠️", "Fermer");
+        return;
+    }
+
+    const itemId = getCorporateCurrentTargetItemId();
+    if (!itemId) {
+        showNotifyModal("Exigence manquante", "Veuillez sélectionner l'exigence réglementaire visée.", "⚠️", "Fermer");
+        return;
+    }
+
+    const title = document.getElementById('corp-doc-title').value.trim();
+    const docCode = document.getElementById('corp-doc-code').value.trim();
+    const taxonomy = document.getElementById('corp-doc-taxonomy').value;
+    const docType = document.getElementById('corp-doc-type').value;
+    const summary = document.getElementById('corp-doc-summary').value.trim();
+
+    if (!title || !docCode || !taxonomy) {
+        showNotifyModal("Champs obligatoires", "Veuillez renseigner le titre, le code et le dossier de classement.", "⚠️", "Fermer");
+        return;
+    }
+
+    const btn = document.getElementById('corp-upload-submit-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spin">⏳</span> Téléversement en cours...`;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('title_fr', title);
+    formData.append('document_code', docCode);
+    formData.append('taxonomy_path', taxonomy);
+    formData.append('document_type', docType);
+    formData.append('department', 'affaires_reglementaires');
+    formData.append('revision_summary', summary || "Dépôt initial pour dossier d'agrément MIPH (Décret 21-82)");
+
+    if (currentCorporateApp && currentCorporateApp.establishment_id) {
+        formData.append('establishment_id', currentCorporateApp.establishment_id);
+    }
+
+    try {
+        // 1. Dépôt dans le coffre-fort GED
+        const gedResp = await fetch('/api/v1/ged/documents', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!gedResp.ok) {
+            const errData = await gedResp.json().catch(() => ({}));
+            throw new Error(errData.message || errData.error || `Erreur GED HTTP ${gedResp.status}`);
+        }
+
+        const createdDoc = await gedResp.json();
+        const gedDocId = createdDoc.id;
+
+        // 2. Rattachement immédiat à l'exigence de la checklist
+        const attachResp = await fetch(`/api/v1/corporate/applications/${appId}/items/${itemId}/attach`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ged_document_id: gedDocId })
+        });
+
+        if (!attachResp.ok) {
+            const attachErr = await attachResp.json().catch(() => ({}));
+            throw new Error(attachErr.message || "Document créé en GED mais échec de rattachement à la checklist");
+        }
+
+        closeCorporateModal('modal-corporate-ged-picker');
+        showNotifyModal(
+            "Document Téléversé & Rattaché",
+            `Le document « ${title} » a été haché (SHA-256) et rattaché avec succès à l'exigence réglementaire.`,
+            "✅",
+            "Fermer"
+        );
+        viewCorporateChecklist(appId);
+    } catch (err) {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `📤 Téléverser &amp; Rattacher`;
+        }
+        showNotifyModal("Erreur de téléversement", err.message, "❌", "Fermer");
     }
 }
 
 async function attachGEDToCorporateItem(appId, itemId, gedDocId) {
+    if (!itemId) {
+        itemId = getCorporateCurrentTargetItemId();
+    }
+    if (!itemId) {
+        showNotifyModal("Exigence manquante", "Veuillez sélectionner l'exigence réglementaire visée.", "⚠️", "Fermer");
+        return;
+    }
     try {
         const resp = await fetch(`/api/v1/corporate/applications/${appId}/items/${itemId}/attach`, {
             method: 'POST',
