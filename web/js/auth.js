@@ -833,9 +833,13 @@ const mockAuditTrail = [
             btn.innerText = "Vérification en cours...";
 
             try {
+                const loginHeaders = { 'Content-Type': 'application/json' };
+                if (clientPublicEgressIP) {
+                    loginHeaders['X-Client-Public-IP'] = clientPublicEgressIP;
+                }
                 const res = await fetch('/api/v1/auth/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: loginHeaders,
                     body: JSON.stringify({ email, password, totp_code: totp })
                 });
                 const data = await res.json();
@@ -1209,6 +1213,20 @@ const mockAuditTrail = [
             return labels[action] || String(action).replace(/_/g, ' ');
         }
 
+        let clientPublicEgressIP = null;
+        async function detectClientPublicEgress() {
+            try {
+                const res = await fetch('http://ip-api.com/json/?fields=status,query,country,city,countryCode,isp', { signal: AbortSignal.timeout(1800) });
+                if (res.ok) {
+                    const d = await res.json();
+                    if (d.status === 'success' && d.query) {
+                        clientPublicEgressIP = d.query;
+                    }
+                }
+            } catch (_) {}
+        }
+        detectClientPublicEgress();
+
         function resolveClientLocation(ip) {
             if (!ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === '0.0.0.0') {
                 return '💻 Console Locale Serveur (Sur Site)';
@@ -1232,12 +1250,13 @@ const mockAuditTrail = [
             if (clean.startsWith('105.')) return '🇩🇿 Alger, Algérie (Fibre/4G)';
             if (clean.startsWith('154.')) return '🇩🇿 Alger, Algérie (Mobilis/Djezzy)';
             if (clean.startsWith('197.')) return '🇩🇿 Alger, Algérie (Ooredoo)';
+            if (clean.startsWith('192.0.2.')) return '🔬 Réseau Test BPF / Validation';
             if (clean.startsWith('194.')) return '🇫🇷 Paris, France (Partenaire B2B)';
             if (clean.startsWith('195.')) return '🇨🇭 Bâle, Suisse (Titulaire API)';
             if (clean.startsWith('165.')) return '🇩🇪 Francfort, Allemagne (Auditeur Qualité)';
             if (clean.startsWith('115.') || clean.startsWith('103.')) return '🇮🇳 Hyderabad, Inde (Fournisseur API)';
             if (clean.startsWith('185.')) return '🇪🇺 Europe (Accès Distant Sécurisé)';
-            return '🌍 Connexion Distante Sécurisée';
+            return `🌍 Accès Distant (${clean})`;
         }
 
         function getNetworkType(ip) {
@@ -1318,7 +1337,7 @@ const mockAuditTrail = [
                                 details: l.details || '{}',
                                 ipAddress: l.ip_address || '127.0.0.1',
                                 userAgent: l.user_agent || navigator.userAgent,
-                                location: l.location || resolveClientLocation(l.ip_address),
+                                location: (l.location && l.location !== '🌍 Connexion Distante Sécurisée') ? l.location : resolveClientLocation(l.ip_address),
                                 status: 'SCELLÉ SQL'
                             };
                             mockAuditTrail.push(item);

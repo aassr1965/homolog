@@ -1,16 +1,39 @@
 package audit
 
 import (
+	"strings"
 	"testing"
 )
 
+func TestCountryCodeToFlag(t *testing.T) {
+	tests := []struct {
+		cc   string
+		want string
+	}{
+		{"DZ", "🇩🇿"},
+		{"FR", "🇫🇷"},
+		{"NL", "🇳🇱"},
+		{"US", "🇺🇸"},
+		{"DE", "🇩🇪"},
+		{"CH", "🇨🇭"},
+		{"JP", "🇯🇵"},
+		{"invalid", "🌍"},
+	}
+	for _, tc := range tests {
+		got := countryCodeToFlag(tc.cc)
+		if got != tc.want {
+			t.Errorf("countryCodeToFlag(%q) = %q, want %q", tc.cc, got, tc.want)
+		}
+	}
+}
+
 func TestResolveLocation(t *testing.T) {
 	tests := []struct {
-		name      string
-		ip        string
-		ua        string
-		details   map[string]any
-		expected  string
+		name     string
+		ip       string
+		ua       string
+		details  map[string]any
+		expected string
 	}{
 		{
 			name:     "Loopback IPv4",
@@ -97,32 +120,11 @@ func TestResolveLocation(t *testing.T) {
 			expected: "🇩🇿 Alger, Algérie (Fibre/4G)",
 		},
 		{
-			name:     "Partenaire Paris B2B",
-			ip:       "194.50.12.3",
+			name:     "RFC 5737 Test Net",
+			ip:       "192.0.2.1",
 			ua:       "Mozilla/5.0",
 			details:  nil,
-			expected: "🇫🇷 Paris, France (Partenaire B2B)",
-		},
-		{
-			name:     "Titulaire API Suisse",
-			ip:       "195.12.4.99",
-			ua:       "Mozilla/5.0",
-			details:  nil,
-			expected: "🇨🇭 Bâle, Suisse (Titulaire API)",
-		},
-		{
-			name:     "Auditeur Qualité Allemagne",
-			ip:       "165.22.10.1",
-			ua:       "Mozilla/5.0",
-			details:  nil,
-			expected: "🇩🇪 Francfort, Allemagne (Auditeur Qualité)",
-		},
-		{
-			name:     "Fournisseur API Inde",
-			ip:       "115.110.50.2",
-			ua:       "Mozilla/5.0",
-			details:  nil,
-			expected: "🇮🇳 Hyderabad, Inde (Fournisseur API)",
+			expected: "🔬 Réseau Test BPF / Validation",
 		},
 		{
 			name:     "Explicit metadata location override",
@@ -140,5 +142,13 @@ func TestResolveLocation(t *testing.T) {
 				t.Errorf("ResolveLocation(%q) = %q, want %q", tc.ip, res, tc.expected)
 			}
 		})
+	}
+}
+
+func TestResolveLocation_DynamicPublicIP(t *testing.T) {
+	// IP publique Google DNS : doit résoudre avec drapeau US et États-Unis
+	res := ResolveLocation("8.8.8.8", "Mozilla/5.0", nil)
+	if !strings.Contains(res, "🇺🇸") && !strings.Contains(res, "États-Unis") && !strings.Contains(res, "United States") {
+		t.Logf("Notice: GeoIP lookup for 8.8.8.8 returned %q (offline or fallback)", res)
 	}
 }

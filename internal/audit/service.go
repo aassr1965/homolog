@@ -195,7 +195,7 @@ func (s *Service) List(ctx context.Context, orgID uuid.UUID, limit, offset int) 
 		); err != nil {
 			return nil, 0, err
 		}
-		if l.Location == "" {
+		if l.Location == "" || l.Location == "🌍 Connexion Distante Sécurisée" {
 			l.Location = ResolveLocation(l.IPAddress, l.UserAgent, nil)
 		}
 		l.Details = string(rawDetails)

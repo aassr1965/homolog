@@ -1,8 +1,13 @@
 package audit
 
 import (
+	"encoding/json"
+	"fmt"
 	"net"
+	"net/http"
 	"strings"
+	"sync"
+	"time"
 )
 
 type ipLocationRule struct {
@@ -10,7 +15,44 @@ type ipLocationRule struct {
 	location string
 }
 
-var parsedRules []ipLocationRule
+var (
+	parsedRules []ipLocationRule
+	geoIPCache  sync.Map
+	httpClient  = &http.Client{
+		Timeout: 2 * time.Second,
+	}
+)
+
+var frenchCountryNames = map[string]string{
+	"Algeria":              "Algérie",
+	"France":               "France",
+	"Netherlands":          "Pays-Bas",
+	"United States":        "États-Unis",
+	"Germany":              "Allemagne",
+	"Switzerland":          "Suisse",
+	"United Kingdom":       "Royaume-Uni",
+	"Spain":                "Espagne",
+	"Italy":                "Italie",
+	"Belgium":              "Belgique",
+	"Canada":               "Canada",
+	"India":                "Inde",
+	"Tunisia":              "Tunisie",
+	"Morocco":              "Maroc",
+	"Turkey":               "Turquie",
+	"Sweden":               "Suède",
+	"Norway":               "Norvège",
+	"Japan":                "Japon",
+	"China":                "Chine",
+	"Singapore":            "Singapour",
+	"Ukraine":              "Ukraine",
+	"Poland":               "Pologne",
+	"Ireland":              "Irlande",
+	"Portugal":             "Portugal",
+	"Austria":              "Autriche",
+	"Australia":            "Australie",
+	"United Arab Emirates": "Émirats Arabes Unis",
+	"Saudi Arabia":         "Arabie Saoudite",
+}
 
 func init() {
 	rules := []struct {
@@ -41,7 +83,12 @@ func init() {
 		{"197.112.0.0/12", "🇩🇿 Alger, Algérie (Ooredoo)"},
 		{"197.0.0.0/8", "🇩🇿 Alger, Algérie"},
 
-		// Réseaux Partenaires B2B / Titulaires API / Auditeurs Étrangers
+		// Plages de test et validation BPF (RFC 5737)
+		{"192.0.2.0/24", "🔬 Réseau Test BPF / Validation"},
+		{"198.51.100.0/24", "🔬 Réseau Test BPF / Validation"},
+		{"203.0.113.0/24", "🔬 Réseau Test BPF / Validation"},
+
+		// Réseaux Partenaires B2B / Titulaires API / Auditeurs Étrangers connus
 		{"194.0.0.0/8", "🇫🇷 Paris, France (Partenaire B2B)"},
 		{"195.0.0.0/8", "🇨🇭 Bâle, Suisse (Titulaire API)"},
 		{"165.0.0.0/8", "🇩🇪 Francfort, Allemagne (Auditeur Qualité)"},
@@ -61,6 +108,110 @@ func init() {
 	}
 }
 
+func countryCodeToFlag(countryCode string) string {
+	cc := strings.ToUpper(strings.TrimSpace(countryCode))
+	if len(cc) != 2 || cc[0] < 'A' || cc[0] > 'Z' || cc[1] < 'A' || cc[1] > 'Z' {
+		return "🌍"
+	}
+	r1 := rune(0x1F1E6 + int(cc[0]-'A'))
+	r2 := rune(0x1F1E6 + int(cc[1]-'A'))
+	return string([]rune{r1, r2})
+}
+
+func isVPNOrHosting(isp, org string) bool {
+	combined := strings.ToLower(isp + " " + org)
+	keywords := []string{
+		"vpn", "datacenter", "data center", "hosting", "datacamp", "m247",
+		"ovh", "hetzner", "digitalocean", "linode", "aws", "amazon", "google cloud",
+		"azure", "microsoft", "leaseweb", "choopa", "vultr", "packetexchange",
+		"private internet", "nord", "proton", "expressvpn", "surfshark", "cyberghost",
+		"tunnel", "proxy", "tor", "cloud", "server",
+	}
+	for _, kw := range keywords {
+		if strings.Contains(combined, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+type geoIPResponse struct {
+	Status      string `json:"status"`
+	Country     string `json:"country"`
+	CountryCode string `json:"countryCode"`
+	City        string `json:"city"`
+	ISP         string `json:"isp"`
+	Org         string `json:"org"`
+}
+
+func queryGeoIP(ipStr string) string {
+	if val, ok := geoIPCache.Load(ipStr); ok {
+		return val.(string)
+	}
+
+	url := fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country,city,countryCode,isp,org", ipStr)
+	resp, err := httpClient.Get(url)
+	if err != nil {
+		fallback := fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
+		geoIPCache.Store(ipStr, fallback)
+		return fallback
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fallback := fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
+		geoIPCache.Store(ipStr, fallback)
+		return fallback
+	}
+
+	var data geoIPResponse
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil || data.Status != "success" {
+		fallback := fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
+		geoIPCache.Store(ipStr, fallback)
+		return fallback
+	}
+
+	flag := countryCodeToFlag(data.CountryCode)
+	country := data.Country
+	if frName, exists := frenchCountryNames[country]; exists {
+		country = frName
+	}
+
+	city := strings.TrimSpace(data.City)
+	isVPN := isVPNOrHosting(data.ISP, data.Org)
+
+	var resolved string
+	if city != "" && country != "" {
+		if isVPN {
+			resolved = fmt.Sprintf("%s %s, %s (VPN / %s)", flag, city, country, cleanISP(data.ISP))
+		} else {
+			resolved = fmt.Sprintf("%s %s, %s", flag, city, country)
+		}
+	} else if country != "" {
+		if isVPN {
+			resolved = fmt.Sprintf("%s %s (VPN)", flag, country)
+		} else {
+			resolved = fmt.Sprintf("%s %s", flag, country)
+		}
+	} else {
+		resolved = fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
+	}
+
+	geoIPCache.Store(ipStr, resolved)
+	return resolved
+}
+
+func cleanISP(isp string) string {
+	isp = strings.TrimSpace(isp)
+	if len(isp) > 20 {
+		return isp[:18] + ".."
+	}
+	if isp == "" {
+		return "Accès Distant"
+	}
+	return isp
+}
+
 // ResolveLocation détermine le lieu géographique et physique à partir de l'IP,
 // du User-Agent et des métadonnées contextuelles.
 func ResolveLocation(ipAddress, userAgent string, details map[string]any) string {
@@ -71,6 +222,9 @@ func ResolveLocation(ipAddress, userAgent string, details map[string]any) string
 		}
 		if site, ok := details["site"].(string); ok && strings.TrimSpace(site) != "" {
 			return strings.TrimSpace(site)
+		}
+		if clientLoc, ok := details["client_location"].(string); ok && strings.TrimSpace(clientLoc) != "" {
+			return strings.TrimSpace(clientLoc)
 		}
 	}
 
@@ -94,7 +248,7 @@ func ResolveLocation(ipAddress, userAgent string, details map[string]any) string
 		return "📍 Emplacement Inconnu"
 	}
 
-	// Correspondance avec les règles CIDR ordonnées
+	// Correspondance avec les règles CIDR ordonnées (sites internes et partenaires fixes)
 	for _, rule := range parsedRules {
 		if rule.cidr.Contains(parsedIP) {
 			return rule.location
@@ -109,5 +263,6 @@ func ResolveLocation(ipAddress, userAgent string, details map[string]any) string
 		return "🏢 Réseau Intranet Privé GxP"
 	}
 
-	return "🌍 Connexion Distante Sécurisée"
+	// Résolution dynamique GeoIP pour toute adresse IP publique (VPN, télétravail, auditeurs internationaux)
+	return queryGeoIP(cleanIP)
 }

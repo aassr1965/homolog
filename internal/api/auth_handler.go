@@ -508,6 +508,9 @@ func getClientIP(r *http.Request) string {
 
 	isLocalProxy := remoteHost == "127.0.0.1" || remoteHost == "::1" || remoteHost == "localhost"
 	if isLocalProxy {
+		if pubIP := strings.TrimSpace(r.Header.Get("X-Client-Public-IP")); pubIP != "" {
+			return pubIP
+		}
 		if rip := strings.TrimSpace(r.Header.Get("X-Real-IP")); rip != "" {
 			return rip
 		}
