@@ -19,6 +19,7 @@ cookies*.txt
 
 # Documentation confidentielle et stratégique
 docs/
+!docs/validation/
 
 # Fichiers système et éditeurs
 .DS_Store
