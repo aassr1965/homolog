@@ -303,12 +303,12 @@ func (r *VariationRepository) UpdateVariationItem(ctx context.Context, item *dom
 			proposed_state = $8,
 			notes = $9,
 			updated_at = $10
-		WHERE id = $11
+		WHERE id = $11 AND variation_request_id = $12
 	`
 	res, err := r.pool.Exec(ctx, query,
 		string(item.NominalClassification), string(item.EffectiveClassification), item.IsEscalated, item.EscalationReason,
 		condJSON, item.AllConditionsMet, item.CurrentState, item.ProposedState, item.Notes,
-		item.UpdatedAt, item.ID,
+		item.UpdatedAt, item.ID, item.VariationRequestID,
 	)
 	if err != nil {
 		return fmt.Errorf("mise à jour variation item échouée: %w", err)
@@ -322,8 +322,8 @@ func (r *VariationRepository) UpdateVariationItem(ctx context.Context, item *dom
 
 // DeleteVariationItem retire une rubrique et recalcule la sévérité
 func (r *VariationRepository) DeleteVariationItem(ctx context.Context, itemID uuid.UUID, variationRequestID uuid.UUID) error {
-	query := `DELETE FROM anpp_variation_items WHERE id = $1`
-	res, err := r.pool.Exec(ctx, query, itemID)
+	query := `DELETE FROM anpp_variation_items WHERE id = $1 AND variation_request_id = $2`
+	res, err := r.pool.Exec(ctx, query, itemID, variationRequestID)
 	if err != nil {
 		return fmt.Errorf("suppression variation item échouée: %w", err)
 	}

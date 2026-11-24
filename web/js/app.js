@@ -18,6 +18,19 @@
     }
 })();
 
+// Fonction universelle d'échappement HTML anti-XSS (Protection OWASP ASVS)
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+window.escapeHtml = escapeHtml;
+window.escapeHTML = escapeHtml;
+
 // Cibles de navigation pour la barre d'adresse (Ctrl+K)
         const addressLocations = [
             { icon: "💊", title: "Paracétamol 500mg Comprimé — Module 3 : Qualité CMC", path: "📁 GED > 01_Affaires_Reglementaires > CTD_Paracetamol > Module 3", target: "ctd-para-3" },

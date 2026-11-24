@@ -14,13 +14,17 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"homolog/internal/audit"
 	"homolog/internal/auth"
 )
+
+var validIdentifierRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
 // SanadManifest (alias HomologManifest) décrit l'inventaire cryptographique et les métadonnées de l'archive .sanad
 type HomologManifest struct {
@@ -625,10 +629,18 @@ func (h *SystemHandler) restoreTablesData(ctx context.Context, dataFiles map[str
 				idx++
 			}
 
+			var safeCols []string
+			for _, col := range cols {
+				if !validIdentifierRegex.MatchString(col) {
+					return nil, fmt.Errorf("identifiant de colonne suspect détecté dans la sauvegarde (%s : %q)", tblName, col)
+				}
+				safeCols = append(safeCols, pgx.Identifier{col}.Sanitize())
+			}
+
 			conflictClause := "ON CONFLICT DO NOTHING"
 			query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) %s",
-				tblName,
-				strings.Join(cols, ", "),
+				pgx.Identifier{tblName}.Sanitize(),
+				strings.Join(safeCols, ", "),
 				strings.Join(placeholders, ", "),
 				conflictClause,
 			)
