@@ -339,6 +339,107 @@
             box-shadow: 0 0 6px rgba(0,0,0,0.2);
         }
 
+        /* ==========================================================================
+           STANDARDISATIONS ERGONOMIQUES UNIVERSELLES : ANTI-SCISSION DE LIGNES
+           ========================================================================== */
+
+        /* 1. Boutons, onglets et éléments interactifs */
+        button,
+        .btn,
+        .btn-pill,
+        .btn-action,
+        .btn-table-action,
+        .btn-table-icon,
+        .btn-sign-dt,
+        .btn-login-submit,
+        .btn-focus-mode,
+        .audit-tab-btn,
+        .module-tab-btn,
+        .report-tab-btn,
+        .btn-tpl-cat,
+        .demo-btn,
+        .pvt-btn,
+        .sub-tab-btn,
+        .dm-tab-btn {
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+
+        /* 2. Badges, tags, puces et statuts */
+        .badge,
+        .status-tag,
+        .status-tag-interactive,
+        .badge-status,
+        .badge-dept,
+        .badge-proc,
+        .badge-req-e,
+        .badge-req-f,
+        .badge-req-p,
+        .badge-req-na,
+        .badge-wf-drafting,
+        .badge-wf-under_review,
+        .badge-wf-pending_approval,
+        .badge-wf-approved_sealed,
+        .badge-wf-draft_pending,
+        .badge-rev,
+        .badge-rev-sealed,
+        .badge-gating-blocking,
+        .badge-gating-blocked,
+        .badge-icon-status,
+        .count-badge,
+        .brand-badge,
+        .tree-count-pill,
+        .pill-filter,
+        .pill-attached,
+        .pill-missing,
+        .pill-mandatory,
+        .lock-pill,
+        .audit-live-badge,
+        .btn-focus-badge,
+        .badge-dm-class,
+        .badge-dm-status,
+        .badge-corp-status,
+        span[class*="badge"],
+        span[class*="status"],
+        span[class*="pill"],
+        span[class*="tag"] {
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            max-width: 100%;
+        }
+
+        /* 3. Protection anti-wrap sur cellules de tableaux contenant badges/boutons */
+        td:has(.badge),
+        td:has(.status-tag),
+        td:has(.btn-pill),
+        td:has(.btn-table-action),
+        td:has(.btn-table-icon),
+        .td-actions,
+        .td-status,
+        .td-badge {
+            white-space: nowrap !important;
+        }
+
+        /* 4. Barres de filtres, onglets et navigation protégées du wrapping */
+        .table-quick-filter-bar,
+        .quick-status-pills,
+        .audit-tabs-bar,
+        .module-tab-bar,
+        .preview-tabs-nav,
+        .dossier-filter-bar,
+        .sp-milestones-ribbon {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+            flex-wrap: nowrap !important;
+        }
+
         /* Main Workspace 3 Panes */
         .workspace {
             display: flex;
@@ -530,7 +631,7 @@
         }
 
         .toolbar {
-            min-height: 38px;
+            min-height: 40px;
             height: auto;
             background: var(--bg-header);
             border-bottom: 1px solid var(--border-color);
@@ -538,7 +639,17 @@
             align-items: center;
             padding: 4px 10px;
             gap: 6px;
-            flex-wrap: wrap;
+            overflow-x: auto;
+            white-space: nowrap;
+            flex-wrap: nowrap !important;
+            scrollbar-width: thin;
+        }
+        .toolbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .toolbar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
         }
 
         .table-container {
@@ -1201,6 +1312,14 @@
             font-size: 11.5px;
             font-weight: 700;
             transition: all 0.12s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .tree-module-item > span:first-child {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .tree-module-item:hover {
             background: var(--bg-row-hover);
@@ -1222,6 +1341,14 @@
             font-size: 11px;
             font-weight: 600;
             transition: all 0.12s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .tree-submodule-item > span:first-child {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .tree-submodule-item:hover {
             background: var(--bg-row-hover);
@@ -1527,6 +1654,15 @@
         @media (max-width: 1400px) {
             .address-bar-wrapper { max-width: 380px; }
             #txt-app-title { display: none; }
+            #status-counts { display: none !important; }
+            #user-badge {
+                max-width: 130px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
+            }
 
             /* Maintien du volet d'aperçu ancré dans le flux sur desktop/laptop */
             .pane-preview {
@@ -1547,6 +1683,33 @@
             .btn-pill kbd { display: none; }
             .search-input { width: 140px; }
             .pane-tree { width: 260px; }
+
+            /* TopBar & Footer Compactage */
+            #dev-role-switcher-container span { display: none !important; }
+            #dev-role-select { max-width: 130px !important; }
+            #user-badge { max-width: 85px !important; }
+            .footer-right span:nth-child(1),
+            .footer-right span:nth-child(2) { display: none !important; }
+
+            /* Volet d'aperçu converti en slide-over drawer pour libérer 100% de la largeur du tableau */
+            .pane-preview {
+                position: fixed !important;
+                top: 44px !important;
+                bottom: 26px !important;
+                right: 0 !important;
+                width: 420px !important;
+                max-width: 90vw !important;
+                z-index: 100 !important;
+                box-shadow: -8px 0 30px rgba(0, 0, 0, 0.35) !important;
+                border-left: 1px solid var(--border-color) !important;
+                background: var(--bg-panel) !important;
+                transform: translateX(100%);
+                transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            .pane-preview.slide-open {
+                transform: translateX(0) !important;
+            }
+            #splitter-right { display: none !important; }
         }
 
         /* 4. Palier Tablette Standard (<= 992px) */
@@ -1575,9 +1738,11 @@
                 content: " 2";
                 font-weight: 800;
             }
-            #user-badge {
-                max-width: 75px;
-                overflow: hidden;
+            #user-badge { display: none !important; }
+            #dev-role-switcher-container { display: none !important; }
+            .footer-right span:nth-child(3),
+            .footer-right span:nth-child(4) { display: none !important; }
+        }
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 display: inline-block;

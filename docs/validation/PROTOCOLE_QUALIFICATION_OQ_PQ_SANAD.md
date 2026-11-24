@@ -102,7 +102,7 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
    • OQ-AUTH (Multi-Rôles) • PQ-CTD (Dossiers eCTD)               • PQ-MC (Maker-Checker)    • OQ-AUD (Audit Live/Geo)
    • OQ-SES (Timeouts)     • PQ-DEF (Observations ANPP)           • PQ-CONF (Secret/CRO)     • OQ-SIG (Signature Élec)
    • OQ-GATE (Sas d'Accès) • PQ-FEE (Redevances & Bordereaux)     • PQ-CORP (Tabadol/MIPH)   • OQ-EXP (Archivage PDF/A)
-                           • PQ-DM (Dispositifs Médicaux)
+                           • PQ-DM (Dispositifs Médicaux)                                    • OQ-UI (Ergonomie Responsive)
 ```
 
 ---
@@ -495,6 +495,26 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 
 * **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
 * **Preuve Documentaire :** `SCR-OQ-SIG-02.png`
+
+---
+
+### MODULE 12 : QUALIFICATION ERGONOMIQUE MULTI-BREAKPOINTS & INTÉGRITÉ VISUELLE ALCOA+
+
+#### Test Ref : `OQ-UI-01`
+* **Titre :** Vérification de l'intégrité visuelle ALCOA+ (Lisibilité / Non-scission des boutons et badges) et adaptabilité multi-résolutions.
+* **Exigence Réglementaire :** ALCOA+ (*Legible / Lisible* — Les données réglementaires, statuts et contrôles doivent rester non tronqués, sans scission anarchique de texte, quelle que soit la résolution du poste de travail).
+* **Rôle Requis :** Pharmacien Directeur Technique (`pdt@pharma.dz`).
+* **Résolutions de Test :** 1920×1080 (Desktop), 1366×768 (Laptop Standard), 1200×800 (Laptop Compact / iPad Pro), 992×768 (Tablette).
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Se connecter en Directeur Technique à la résolution 1920×1080 et naviguer sur le module **Dossiers d'Enregistrement (CTD)**. | Viewport 1920×1080 | • Carte de dossier : Le code dossier (`DOS-2026-PARAC-NF`), le délai (`J-48`) et le statut (`EN PRÉPARATION`) sont affichés sur une seule ligne sans scission de texte.<br>• Barre d'outils centrale : Alignée sur une seule ligne fluide.<br>• Frise Smart Planning : Les 6 jalons (`J-240` à `J-0`) forment un ruban chronologique continu.<br>• Volet d'Aperçu : Les onglets (`📄 Aperçu Pièce`, `📋 Fiche ANPP`, `🛠️ Atelier & Visa`) sont nets et alignés sur un seul rang. |
+| 2 | Redimensionner le navigateur à la résolution Laptop Standard (**1366×768**). | Viewport 1366×768 | • Les boutons de barres d'outils restent strictement sur 1 rangée horizontale défilante (aucun empilement vertical parasite sur 3 ou 7 lignes).<br>• Aucun badge ou bouton ne subit de retour à la ligne au milieu d'un mot ou d'un chiffre. |
+| 3 | Naviguer vers le module **Dispositifs Médicaux (DDM)** et tester la résolution **1200×800**. | Viewport 1200×800 | • Les boutons de filtre de classe (`Classe I`, `Classe IIa`, `Classe IIb`, `Classe III`) sont affichés d'un seul bloc, sans coupure en syllabes (`CLAS` / `SE I`).<br>• Les badges du tableau (`Classe IIa`, `🏭 Fabrication Locale`, `En Enregistrement`) conservent leur intégrité visuelle sans retour à la ligne.<br>• Le volet d'aperçu latéral se convertit en **slide-over drawer** rétractable (`Alt+P`), préservant 100% de la largeur utile du tableau central. |
+| 4 | Tester la résolution **992×768** sur le module **Agréments Corporate (Décret 21-82)**. | Viewport 992×768 | • Le sélecteur de rôle démo se masque automatiquement pour éviter l'écrasement de la barre supérieure.<br>• Le pied de page masque les métriques secondaires pour ne conserver que l'heure UTC+1 d'Alger.<br>• Les badges `[S] Standard`, `[E] Éliminatoire Tabadol` et `J-180 / J-90` ne sont jamais coupés. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-OQ-UI-01-DESKTOP.png`, `SCR-OQ-UI-01-LAPTOP.png`, `SCR-OQ-UI-01-COMPACT.png`, `SCR-OQ-UI-01-TABLET.png`
 
 ---
 

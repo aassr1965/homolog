@@ -340,14 +340,14 @@
                     html += `
                         <div class="tree-dossier-root ${isSel ? 'selected' : ''} ${isExp ? 'expanded' : ''} ${cardBorderClass}" id="tree-dossier-${d.id}" style="${cardCustomStyle}">
                             <div class="tree-dossier-header" onclick="selectDossier('${d.id}')">
-                                <div class="tree-dossier-toprow">
-                                    <div class="tree-dossier-code" style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
-                                        <span onclick="toggleDossierTreeItem(event, '${d.id}')" style="cursor:pointer; display:inline-block; width:14px; text-align:center; color:var(--text-dim);" title="${isExp ? 'Replier l\'arbre' : 'Déplier l\'arbre'}">${isExp ? '▼' : '▶'}</span>
-                                        <span class="${pBadgeClass}">${escapeHTML(d.procedure_code)}</span>
-                                        <span>${escapeHTML(d.dossier_code)}</span>
+                                <div class="tree-dossier-toprow" style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                                    <div class="tree-dossier-code" style="display:flex; align-items:center; gap:5px; flex-wrap:nowrap; overflow:hidden; white-space:nowrap;">
+                                        <span onclick="toggleDossierTreeItem(event, '${d.id}')" style="cursor:pointer; display:inline-block; width:14px; text-align:center; color:var(--text-dim); flex-shrink:0;" title="${isExp ? 'Replier l\'arbre' : 'Déplier l\'arbre'}">${isExp ? '▼' : '▶'}</span>
+                                        <span class="${pBadgeClass}" style="flex-shrink:0;">${escapeHTML(d.procedure_code)}</span>
+                                        <span style="font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(d.dossier_code)}</span>
                                         ${healthBadgeHTML}
                                     </div>
-                                    <div style="display:flex; align-items:center; gap:5px;">
+                                    <div style="display:flex; align-items:center; gap:5px; flex-shrink:0; white-space:nowrap;">
                                         ${sp && sp.days_to_target_deposit !== undefined ? `
                                             <span style="font-size:9.5px; font-weight:700; color:${hasCriticalOrOverdueDate ? '#dc2626' : 'var(--text-dim)'};" title="Délai par rapport à la date butoir">
                                                 ${sp.days_to_target_deposit >= 0 ? `J-${sp.days_to_target_deposit}` : `+${Math.abs(sp.days_to_target_deposit)}j`}
@@ -3001,8 +3001,8 @@
                     </div>
                 </div>
 
-                <!-- 6 Jalons incompressibles en ruban interactif -->
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:6px; margin-top:2px;">
+                <!-- 6 Jalons incompressibles en ruban interactif avec défilement horizontal fluide -->
+                <div class="sp-milestones-ribbon" style="display:flex; gap:6px; margin-top:2px; overflow-x:auto; white-space:nowrap; scrollbar-width:thin; padding-bottom:4px;">
                     ${(sp.milestones || []).map(m => {
                         const mColors = getSmartPlanningHealthStyles(m.health);
                         const mDate = m.target_date ? new Date(m.target_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' }) : '';
@@ -3018,7 +3018,7 @@
                             ? `Cliquer pour gérer le créneau officiel ANPP (rdvpp/rdvdm) ou voir la pièce ${resolvedItem ? resolvedItem.item_code : '1.A.1'} : ${escapeHTML(m.name_fr)}`
                             : `Cliquer pour défiler et sélectionner l'exigence (${displayActionCode}) : ${escapeHTML(m.name_fr)}`;
                         return `
-                            <div class="sp-milestone-card" style="background:var(--bg-surface); border:1px solid ${m.health === 'FATAL_BLOCK' || m.health === 'CRITICAL_DELAY' ? mColors.border : 'var(--border-color)'}; border-radius:4px; padding:5px 7px; font-size:10px; display:flex; flex-direction:column; gap:2px; cursor:pointer;" 
+                            <div class="sp-milestone-card" style="background:var(--bg-surface); border:1px solid ${m.health === 'FATAL_BLOCK' || m.health === 'CRITICAL_DELAY' ? mColors.border : 'var(--border-color)'}; border-radius:4px; padding:5px 7px; font-size:10px; display:flex; flex-direction:column; gap:2px; cursor:pointer; min-width:145px; flex:1 0 145px;" 
                                  onclick="navigateToSmartPlanningMilestone('${escapeHTML(m.code || m.name_fr)}')" 
                                  title="${cardTooltip}">
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
