@@ -315,19 +315,68 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 ### MODULE 07 : HOMOLOGATION & RÉGULARISATION DES DISPOSITIFS MÉDICAUX (DM)
 
 #### Test Ref : `PQ-DM-01`
-* **Titre :** Enregistrement d'un Dispositif Médical avec classification de risque et suivi des attestations.
-* **Exigence Réglementaire :** Réglementation ANPP Homologation DM (Classes I, IIa, IIb, III).
-* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`).
+* **Titre :** Renseignement et validation du Formulaire Officiel d'Homologation DM en 6 sections normées (`ES-REG-02-DM`).
+* **Exigence Réglementaire :** Décret exécutif n° 20-324 & Arrêté du 10 mai 2021 (Composition du dossier d'homologation).
+* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`) ou Pharmacien DT.
 
 | Étape | Action de l'Auditeur (Navigation UI) | Données de Test à Saisir | Résultat Attendu (Acceptance Criteria) |
 | :---: | :--- | :--- | :--- |
-| 1 | Dans le menu de gauche, cliquer sur l'onglet **« Dispositifs Médicaux »** (icône 🩺). | Clic onglet | L'espace dédié aux DM s'ouvre. |
-| 2 | Cliquer sur **`+ Nouveau Dossier d'Homologation DM`**. | Clic bouton | Le formulaire d'homologation DM apparaît. |
-| 3 | Saisir les métadonnées :<br>- **Nom Commercial :**<br>- **Classe de Risque :**<br>- **Destination / Indication :**<br>- **Fabricant :**<br>- **Organisme Notifié (CE) :** | `SERINGUE STÉRILE S-GUARD`<br>`Classe IIa`<br>`Injection parentérale à usage unique`<br>`PlastiMed Algérie SARL`<br>`LNE/G-MED (0459)` | Les champs sont renseignés. Selon la classe choisie, le système ajuste la liste des pièces obligatoires (Notice, Étiquetage, Déclaration CE, Essais de biocompatibilité ISO 10993). |
-| 4 | Cliquer sur **`Enregistrer le Dossier DM`**. | Clic bouton | Le dossier est créé avec le cycle de vie spécifique aux dispositifs médicaux. |
+| 1 | Dans la barre d'activités gauche, cliquer sur l'icône Dispositifs Médicaux (icône 💉 ou seringue, `#act-dm`). | Clic icône `#act-dm` | Le cockpit DM s'ouvre avec les 3 onglets thématiques : *Portefeuille & 6 Sections*, *Mesures Transitoires & Régularisation*, *Modifications Post-Homologation*. |
+| 2 | Dans l'onglet **« 🩺 Portefeuille & 6 Sections »**, repérer le dispositif *« Cathéter intraveineux stérile »* et cliquer sur le bouton **`Fiche 6 Sections`**. | Clic bouton | La modale `#modal-dm-homologation` surgit, affichant le formulaire officiel `ES-REG-02-DM` structuré en 6 sections normées. |
+| 3 | Parcourir les 6 sections techniques :<br>- **Sec. 1 (Administratif) :** Nomenclature GMDN, Classe de risque.<br>- **Sec. 2 (Technique) :** Mode d'action, dimensions, stérilisation ETO.<br>- **Sec. 3 (Fabricant & Sites) :** Sites de fabrication et d'assemblage.<br>- **Sec. 4 (Toxicologie & Sécurité) :** Déclarations Latex Free, sans CMR, sans phtalates DEHP.<br>- **Sec. 5 (Normes ISO) :** ISO 14971, ISO 10993, ISO 14155, ISO 11607.<br>- **Sec. 6 (Échantillons) :** Lots pilotes LNCM. | Modifier une référence (ex. Référence ISO 14971 : `PGR-ISO14971-2026-REV02`) | Les champs sont éditables avec contrôle de validité en temps réel. |
+| 4 | Cliquer sur le bouton bleu **`💾 Enregistrer la Fiche 6 Sections`**. | Clic bouton | 1. La fiche est mise à jour avec succès.<br>2. La modale se referme et affiche la notification verte : *« Données d'homologation 6 sections mises à jour »*.<br>3. L'événement est consigné dans l'Audit Trail. |
 
 * **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
 * **Preuve Documentaire :** `SCR-PQ-DM-01.png`
+
+---
+
+#### Test Ref : `PQ-DM-02`
+* **Titre :** Audit de recevabilité en 13 points (`ES-REG-03-DM`), scoring et scellement du Récépissé Officiel par visa 2FA du Pharmacien DT.
+* **Exigence Réglementaire :** Arrêté du 10 mai 2021 (Annexe II), 21 CFR §11.50 & §11.70.
+* **Rôle Requis :** Pharmacien Directeur Technique (`pdt@pharma.dz`).
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Dans l'onglet **« 🩺 Portefeuille & 6 Sections »**, cliquer sur le bouton **`Évaluer Recevabilité`** en face du dossier de DM. | Clic bouton | La modale `#modal-dm-recevabilite` s'affiche, présentant la grille d'évaluation de la recevabilité en 13 points de contrôle éliminatoires de l'ANPP. |
+| 2 | Examiner le barème de recevabilité affiché : | Observation visuelle | 1. Les 13 points de contrôle sont listés (lettre de demande, formulaire 6 sections, agrément MIPH, redevance BNA, CLV/FSC, marquage CE, ISO 13485, matières premières, matériovigilance, stérilisation, ISO 14971/10993, clinique ISO 14155, 04 exemplaires électroniques).<br>2. Le badge de score indique **`Score : 13/13 (100%) — COMPLET ET RECEVABLE`** (fond vert). |
+| 3 | Cliquer sur le bouton vert **`Sceller et Délivrer le Récépissé Officiel (Visa DT)`**. | Clic bouton scellement | 1. Le système exige la confirmation de signature légale du Pharmacien DT.<br>2. Le Récépissé Officiel `ES-REG-03-DM` est scellé avec génération d'un numéro d'enregistrement DDM (ex. `ANPP/DDM/REC/2026/0148`).<br>3. Le hash cryptographique SHA-256 du récépissé est gravé et un événement `DM_RECEVABILITE_SEAL` est enregistré dans l'Audit Trail. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-PQ-DM-02.png`
+
+---
+
+#### Test Ref : `PQ-DM-03`
+* **Titre :** Suivi des Mesures Transitoires, quotas de distribution hospitalière vs officine et export du canevas dérogatoire ministériel.
+* **Exigence Réglementaire :** Dispositions transitoires du Décret 20-324, Canevas ministériel ANPP.
+* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`) ou Pharmacien DT.
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Dans le cockpit DM, cliquer sur le deuxième onglet : **`⏱️ Mesures Transitoires & Régularisation`**. | Clic onglet | Le tableau de bord de régularisation s'ouvre, affichant les indicateurs clés (Total DM en régularisation, volume trimestriel, alertes forclusion). |
+| 2 | Vérifier les données du tableau : | Observation visuelle | 1. La liste affiche les DM en circulation sous dérogation (codes `REG-DM-...`).<br>2. Les colonnes détaillent : Statut dérogatoire, Accusé DDM, Échéance légale avec badge dynamique (ex. `J-22` ou `J-90`), Quotas Hôpitaux PCH (%) vs Officines (%). |
+| 3 | Cliquer sur le bouton bleu **`📊 Exporter Canevas Dérogatoire (.xlsx)`** dans la barre d'outils. | Clic bouton export | Le fichier officiel de déclaration trimestrielle `CANEVAS_REGULARISATION_DM_ANPP.csv` / `.xlsx` est téléchargé instantanément, prêt pour télétransmission à la DDM de l'ANPP. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-PQ-DM-03.png`
+
+---
+
+#### Test Ref : `PQ-DM-04`
+* **Titre :** Gestion des Modifications Post-Homologation (Articles 22 à 25 du Décret 20-324) et matrice d'impact normatif ISO.
+* **Exigence Réglementaire :** Décret 20-324 (Articles 22 à 25), Ord. 21-07 Art. 31 (Redevance d'avenant).
+* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`) ou Pharmacien DT.
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Dans le cockpit DM, cliquer sur le troisième onglet : **`🔄 Modifications Post-Homologation`**. | Clic onglet | Le registre des demandes de modification s'affiche avec la répartition : Modifications Substantielles (avec demande d'avenant) vs Non-Substantielles (déclarations annuelles). |
+| 2 | Cliquer sur **`➕ Nouvelle Modification DM`**. | Clic bouton | La modale de saisie de modification post-homologation `#modal-dm-modification-new` s'ouvre. |
+| 3 | Renseigner les champs :<br>- **Dispositif Médical :**<br>- **Nature de la modification :**<br>- **Catégorie :**<br>- **Description :**<br>- **Impact Normatif ISO :** | Sélectionner `Cathéter intraveineux`<br>`SUBSTANTIELLE (Avenant Décision DDM)`<br>`DM_SUB_03 - Changement de site de stérilisation`<br>`Transfert du procédé ETO vers nouveau site qualifié ISO 11135`<br>Cocher `ISO 11135 (Stérilisation)` et `ISO 14971 (Risques)` | Les champs sont renseignés et le montant de la redevance légale d'avenant est calculé automatiquement (150 000 DA). |
+| 4 | Cliquer sur **`Enregistrer la Déclaration de Modification`**. | Clic bouton | 1. La modification est enregistrée dans le système avec son code unique.<br>2. La matrice d'impact normatif ISO est gravée et l'événement est consigné dans l'Audit Trail. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-PQ-DM-04.png`
 
 ---
 
