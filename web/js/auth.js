@@ -837,10 +837,22 @@ const mockAuditTrail = [
                 if (clientPublicEgressIP) {
                     loginHeaders['X-Client-Public-IP'] = clientPublicEgressIP;
                 }
+                if (clientPreciseLocation) {
+                    try {
+                        loginHeaders['X-Client-Location'] = encodeURIComponent(clientPreciseLocation);
+                    } catch (e) {
+                        // Ignore header encoding error, JSON body client_location will be used
+                    }
+                }
                 const res = await fetch('/api/v1/auth/login', {
                     method: 'POST',
                     headers: loginHeaders,
-                    body: JSON.stringify({ email, password, totp_code: totp })
+                    body: JSON.stringify({ 
+                        email, 
+                        password, 
+                        totp_code: totp,
+                        client_location: clientPreciseLocation 
+                    })
                 });
                 const data = await res.json();
 
@@ -1214,6 +1226,16 @@ const mockAuditTrail = [
         }
 
         let clientPublicEgressIP = null;
+        let clientPreciseLocation = sessionStorage.getItem('sanad_precise_location') || null;
+
+        function countryCodeToFlag(countryCode) {
+            const cc = (countryCode || '').toUpperCase().trim();
+            if (cc.length !== 2) return '🌍';
+            const r1 = 0x1F1E6 + (cc.charCodeAt(0) - 65);
+            const r2 = 0x1F1E6 + (cc.charCodeAt(1) - 65);
+            return String.fromCodePoint(r1, r2);
+        }
+
         async function detectClientPublicEgress() {
             try {
                 const res = await fetch('http://ip-api.com/json/?fields=status,query,country,city,countryCode,isp', { signal: AbortSignal.timeout(1800) });
@@ -1227,9 +1249,62 @@ const mockAuditTrail = [
         }
         detectClientPublicEgress();
 
+        async function detectHighPrecisionLocation() {
+            // 1. Tenter la géolocalisation HTML5 haute précision (GPS / Wi-Fi)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    try {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=fr`, { signal: AbortSignal.timeout(2500) });
+                        if (res.ok) {
+                            const data = await res.json();
+                            formatAndStoreLocality(data);
+                        }
+                    } catch (_) {}
+                }, () => {
+                    detectIPLocality();
+                }, { timeout: 3500, maximumAge: 60000 });
+            } else {
+                detectIPLocality();
+            }
+        }
+
+        async function detectIPLocality() {
+            try {
+                const res = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=fr', { signal: AbortSignal.timeout(2500) });
+                if (res.ok) {
+                    const data = await res.json();
+                    formatAndStoreLocality(data);
+                }
+            } catch (_) {}
+        }
+
+        function formatAndStoreLocality(data) {
+            if (!data) return;
+            const locality = (data.locality || '').trim();
+            let city = (data.city || data.principalSubdivision || '').replace(/wilaya d'/i, '').replace(/wilaya de /i, '').trim();
+            const country = (data.countryName === 'Algerie' ? 'Algérie' : (data.countryName || 'Algérie')).trim();
+            const flag = countryCodeToFlag(data.countryCode || 'DZ');
+
+            let parts = [];
+            if (locality) parts.push(locality);
+            if (city && city.toLowerCase() !== locality.toLowerCase()) parts.push(city);
+            if (country) parts.push(country);
+
+            if (parts.length > 0) {
+                clientPreciseLocation = `${flag} ${parts.join(', ')}`;
+                sessionStorage.setItem('sanad_precise_location', clientPreciseLocation);
+            }
+        }
+        detectHighPrecisionLocation();
+
         function resolveClientLocation(ip) {
             if (!ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === '0.0.0.0') {
                 return '💻 Console Locale Serveur (Sur Site)';
+            }
+            if (clientPreciseLocation && (ip === clientPublicEgressIP || !clientPublicEgressIP)) {
+                return clientPreciseLocation;
             }
             const clean = ip.split(':')[0].trim();
             if (clean.startsWith('192.168.1.')) return '🏢 Siège Administratif & RA (Alger)';
@@ -1247,7 +1322,10 @@ const mockAuditTrail = [
             if (clean.startsWith('41.220.')) return '🇩🇿 Oran (Algérie)';
             if (clean.startsWith('41.221.')) return '🇩🇿 Constantine (Algérie)';
             if (clean.startsWith('41.')) return '🇩🇿 Alger, Algérie';
-            if (clean.startsWith('105.')) return '🇩🇿 Alger, Algérie (Fibre/4G)';
+            if (clean.startsWith('105.')) {
+                if (clientPreciseLocation) return clientPreciseLocation;
+                return '🇩🇿 Alger, Algérie (Fibre/4G)';
+            }
             if (clean.startsWith('154.')) return '🇩🇿 Alger, Algérie (Mobilis/Djezzy)';
             if (clean.startsWith('197.')) return '🇩🇿 Alger, Algérie (Ooredoo)';
             if (clean.startsWith('192.0.2.')) return '🔬 Réseau Test BPF / Validation';
@@ -1293,6 +1371,147 @@ const mockAuditTrail = [
         }
         window.switchAuditTab = switchAuditTab;
 
+        let auditLiveTimer = null;
+        let isAuditLiveActive = true;
+        let isAuditFetching = false;
+        let lastKnownTopAuditId = null;
+
+        async function fetchAndProcessAuditLogs(silent = false) {
+            if (isAuditFetching) return;
+            isAuditFetching = true;
+
+            const syncEl = document.getElementById("audit-last-sync-time");
+            if (!silent && syncEl) {
+                syncEl.textContent = "Synchro : En cours...";
+            }
+
+            try {
+                const res = await fetch('/api/v1/audit/logs');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.logs && data.logs.length > 0) {
+                        const topId = data.logs[0]?.id;
+                        const hasNewArrivals = (lastKnownTopAuditId !== null && topId > lastKnownTopAuditId);
+
+                        mockAuditTrail.length = 0;
+                        const prevSelectedId = (filteredAuditList && filteredAuditList[selectedAuditIndex]) ? filteredAuditList[selectedAuditIndex].id : null;
+
+                        currentAuditLogs = data.logs.map(l => {
+                            const d = new Date(l.created_at);
+                            const isNew = hasNewArrivals && (l.id > lastKnownTopAuditId);
+                            const item = {
+                                id: l.id,
+                                rawTs: l.created_at,
+                                ts: d.toLocaleDateString('fr-FR') + " " + d.toLocaleTimeString('fr-FR'),
+                                code: l.action,
+                                label: getActionFriendlyLabel(l.action),
+                                category: getActionCategory(l.action),
+                                user: l.user_email ? l.user_email.split('@')[0] : 'Système',
+                                userEmail: l.user_email || 'system@homolog.dz',
+                                role: l.user_role === 'directeur_technique' ? 'Pharmacien DT' : (l.user_role || 'Système'),
+                                entityType: l.entity_type || 'N/A',
+                                target: l.entity_id || '-',
+                                sha: l.sha256_hash || '',
+                                details: l.details || '{}',
+                                ipAddress: l.ip_address || '127.0.0.1',
+                                userAgent: l.user_agent || navigator.userAgent,
+                                location: (l.location && l.location !== '🌍 Connexion Distante Sécurisée') ? l.location : resolveClientLocation(l.ip_address),
+                                status: 'SCELLÉ SQL',
+                                isNew: isNew
+                            };
+                            mockAuditTrail.push(item);
+                            return item;
+                        });
+
+                        lastKnownTopAuditId = topId;
+
+                        updateAuditTabCounts();
+                        filterAuditTable();
+
+                        // Maintenir la ligne sélectionnée si possible
+                        if (prevSelectedId != null) {
+                            const foundIdx = filteredAuditList.findIndex(x => x.id === prevSelectedId);
+                            if (foundIdx >= 0) {
+                                selectAuditRow(foundIdx, filteredAuditList[foundIdx]);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Lecture API audit:", e);
+            } finally {
+                isAuditFetching = false;
+                const nowStr = new Date().toLocaleTimeString('fr-FR');
+                if (syncEl) {
+                    syncEl.textContent = `Synchro : ${nowStr}`;
+                }
+            }
+        }
+
+        function startAuditLiveStream() {
+            stopAuditLiveStream();
+            isAuditLiveActive = true;
+            updateLiveBadgeUI();
+            auditLiveTimer = setInterval(async () => {
+                const modal = document.getElementById("modal-audit");
+                if (modal && modal.classList.contains("open") && isAuditLiveActive) {
+                    await fetchAndProcessAuditLogs(true);
+                } else if (!modal || !modal.classList.contains("open")) {
+                    stopAuditLiveStream();
+                }
+            }, 3000);
+        }
+        window.startAuditLiveStream = startAuditLiveStream;
+
+        function stopAuditLiveStream() {
+            if (auditLiveTimer) {
+                clearInterval(auditLiveTimer);
+                auditLiveTimer = null;
+            }
+        }
+        window.stopAuditLiveStream = stopAuditLiveStream;
+
+        function toggleAuditLiveStream() {
+            isAuditLiveActive = !isAuditLiveActive;
+            updateLiveBadgeUI();
+            if (isAuditLiveActive) {
+                fetchAndProcessAuditLogs(false);
+                startAuditLiveStream();
+            }
+        }
+        window.toggleAuditLiveStream = toggleAuditLiveStream;
+
+        function updateLiveBadgeUI() {
+            const badge = document.getElementById("audit-live-badge");
+            const btnText = document.getElementById("audit-live-btn-text");
+            const btnIcon = document.getElementById("audit-live-btn-icon");
+            if (isAuditLiveActive) {
+                if (badge) {
+                    badge.classList.remove("paused");
+                    badge.innerHTML = `<span class="audit-live-dot"></span> EN DIRECT (3s)`;
+                }
+                if (btnText) btnText.textContent = "Pause";
+                if (btnIcon) btnIcon.textContent = "⏸️";
+            } else {
+                if (badge) {
+                    badge.classList.add("paused");
+                    badge.innerHTML = `⏸️ EN PAUSE`;
+                }
+                if (btnText) btnText.textContent = "Reprendre";
+                if (btnIcon) btnIcon.textContent = "▶️";
+            }
+        }
+
+        async function manualRefreshAuditTrail() {
+            const icon = document.getElementById("audit-refresh-icon");
+            if (icon) icon.classList.add("spin-anim");
+            await fetchAndProcessAuditLogs(false);
+            setTimeout(() => {
+                if (icon) icon.classList.remove("spin-anim");
+            }, 600);
+        }
+        window.manualRefreshAuditTrail = manualRefreshAuditTrail;
+
         async function openAuditModal() {
             closeAddressBar();
             closeAllModals();
@@ -1312,42 +1531,8 @@ const mockAuditTrail = [
                 }, 40);
             }
 
-            // Rechargement en direct depuis la base de données PostgreSQL
-            try {
-                const res = await fetch('/api/v1/audit/logs');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.logs && data.logs.length > 0) {
-                        mockAuditTrail.length = 0;
-                        currentAuditLogs = data.logs.map(l => {
-                            const d = new Date(l.created_at);
-                            const item = {
-                                id: l.id,
-                                rawTs: l.created_at,
-                                ts: d.toLocaleDateString('fr-FR') + " " + d.toLocaleTimeString('fr-FR'),
-                                code: l.action,
-                                label: getActionFriendlyLabel(l.action),
-                                category: getActionCategory(l.action),
-                                user: l.user_email ? l.user_email.split('@')[0] : 'Système',
-                                userEmail: l.user_email || 'system@homolog.dz',
-                                role: l.user_role === 'directeur_technique' ? 'Pharmacien DT' : (l.user_role || 'Système'),
-                                entityType: l.entity_type || 'N/A',
-                                target: l.entity_id || '-',
-                                sha: l.sha256_hash || '',
-                                details: l.details || '{}',
-                                ipAddress: l.ip_address || '127.0.0.1',
-                                userAgent: l.user_agent || navigator.userAgent,
-                                location: (l.location && l.location !== '🌍 Connexion Distante Sécurisée') ? l.location : resolveClientLocation(l.ip_address),
-                                status: 'SCELLÉ SQL'
-                            };
-                            mockAuditTrail.push(item);
-                            return item;
-                        });
-                    }
-                }
-            } catch (e) {
-                console.warn("Lecture API audit:", e);
-            }
+            // Chargement initial des logs
+            await fetchAndProcessAuditLogs(false);
 
             if (currentAuditLogs.length === 0 && mockAuditTrail.length > 0) {
                 currentAuditLogs = mockAuditTrail.map((m, idx) => ({
@@ -1369,13 +1554,15 @@ const mockAuditTrail = [
                     location: m.location || resolveClientLocation(m.ipAddress || '192.168.1.45'),
                     status: m.status || 'SCELLÉ SQL'
                 }));
+                updateAuditTabCounts();
+                selectedAuditIndex = currentAuditLogs.length > 0 ? 0 : -1;
+                filterAuditTable();
             }
 
-            updateAuditTabCounts();
-            selectedAuditIndex = currentAuditLogs.length > 0 ? 0 : -1;
-            filterAuditTable();
-
             document.getElementById("modal-audit").classList.add("open");
+
+            // Lancement du rafraîchissement temps réel
+            startAuditLiveStream();
         }
 
         function updateAuditTabCounts() {
@@ -1408,7 +1595,8 @@ const mockAuditTrail = [
 
             list.forEach((item, idx) => {
                 const tr = document.createElement("tr");
-                tr.className = "audit-row" + (idx === selectedAuditIndex ? " selected" : "");
+                tr.className = "audit-row" + (idx === selectedAuditIndex ? " selected" : "") + (item.isNew ? " new-entry-flash" : "");
+                if (item.isNew) item.isNew = false;
                 tr.onclick = () => selectAuditRow(idx, item);
 
                 // Catégorie badge color

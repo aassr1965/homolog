@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -41,9 +42,10 @@ func NewAuthHandler(pool *pgxpool.Pool, sm *auth.SessionManager, auditService *a
 
 // LoginRequest corps de la requête de connexion
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	TOTPCode string `json:"totp_code,omitempty"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	TOTPCode       string `json:"totp_code,omitempty"`
+	ClientLocation string `json:"client_location,omitempty"`
 }
 
 // Login gère la connexion nominative avec protection anti-bruteforce et 2FA
@@ -203,10 +205,25 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 8. Enregistrement dans l'Audit Trail immuable
-	_ = h.logAuthEvent(r.Context(), orgID, &userID, email, role, audit.ActionAuthLogin, ip, userAgent, map[string]any{
+	clientLoc := strings.TrimSpace(req.ClientLocation)
+	if clientLoc == "" {
+		rawHdr := strings.TrimSpace(r.Header.Get("X-Client-Location"))
+		if rawHdr != "" {
+			if decoded, err := url.QueryUnescape(rawHdr); err == nil {
+				clientLoc = decoded
+			} else {
+				clientLoc = rawHdr
+			}
+		}
+	}
+	loginDetails := map[string]any{
 		"auth_method": "password_argon2id",
 		"has_2fa":     totpEnabled,
-	})
+	}
+	if clientLoc != "" {
+		loginDetails["client_location"] = clientLoc
+	}
+	_ = h.logAuthEvent(r.Context(), orgID, &userID, email, role, audit.ActionAuthLogin, ip, userAgent, loginDetails)
 
 	// 9. Chargement des permissions effectives de l'utilisateur
 	sessionUser, _ := h.sessionManager.ValidateSession(r.Context(), token)

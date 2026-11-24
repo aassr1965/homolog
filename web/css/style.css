@@ -2496,5 +2496,63 @@ html[data-theme="dark"] .badge-gating-blocking {
     }
 }
 
+/* Indicateur Live Temps Réel Audit Trail */
+.audit-live-badge {
+    transition: all 0.25s ease;
+}
+.audit-live-dot {
+    width: 7px;
+    height: 7px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: auditPulseLive 1.8s infinite;
+}
+.audit-live-badge.paused .audit-live-dot {
+    background-color: #94a3b8;
+    animation: none;
+    box-shadow: none;
+}
+.audit-live-badge.paused {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #64748b !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+}
+@keyframes auditPulseLive {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+@keyframes auditRowFlash {
+    0% {
+        background-color: rgba(16, 185, 129, 0.25);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+.audit-row.new-entry-flash {
+    animation: auditRowFlash 2.5s ease-out;
+}
+.spin-anim {
+    display: inline-block;
+    animation: spinRefresh 0.6s linear;
+}
+@keyframes spinRefresh {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
 
 

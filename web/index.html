@@ -654,12 +654,22 @@
             <div class="modal-resize-edge edge-se" data-direction="se" title="Étirer l'angle bas-droit"></div>
 
             <div class="modal-header" id="modal-audit-header" ondblclick="if(!event.target.closest('button, a, input, select')) toggleModalFullscreen('modal-audit')" style="padding:10px 16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel); flex-shrink:0; cursor:grab; user-select:none;" title="Glisser pour déplacer • Double-clic pour plein écran">
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span style="font-size:16px;">🛡️</span>
                     <span style="font-weight:700;">Piste d'Audit Trail Immuable (ALCOA+ / 21 CFR Part 11)</span>
-                    <span style="font-size:10px; background:rgba(16,185,129,0.2); color:#10b981; padding:2px 8px; border-radius:10px; font-weight:700;">APPEND-ONLY (TRIGGER SQL POSTGRESQL)</span>
+                    <span style="font-size:10px; background:rgba(16,185,129,0.2); color:#10b981; padding:2px 8px; border-radius:10px; font-weight:700;">APPEND-ONLY</span>
+                    <!-- Badge Temps Réel Live -->
+                    <span id="audit-live-badge" class="audit-live-badge" style="display:inline-flex; align-items:center; gap:5px; font-size:10px; background:rgba(16,185,129,0.15); color:#059669; border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px; font-weight:700;">
+                        <span class="audit-live-dot"></span> EN DIRECT (3s)
+                    </span>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                    <button type="button" class="btn-pill" id="audit-live-toggle-btn" onclick="toggleAuditLiveStream()" style="height:26px; padding:2px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="Mettre en pause ou reprendre le flux en temps réel">
+                        <span id="audit-live-btn-icon">⏸️</span> <span id="audit-live-btn-text">Pause</span>
+                    </button>
+                    <button type="button" class="btn-pill" id="audit-refresh-btn" onclick="manualRefreshAuditTrail()" style="height:26px; padding:2px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="Actualiser immédiatement les événements">
+                        <span id="audit-refresh-icon">🔄</span> Actualiser
+                    </button>
                     <button type="button" class="btn-pill btn-modal-expand" onclick="toggleModalFullscreen('modal-audit')" title="Agrandir en plein écran" style="height:26px; padding:2px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
                         <span class="expand-icon">⛶</span> <span class="expand-label">Agrandir</span>
                     </button>
@@ -765,6 +775,8 @@
                     <span>🛡️ Registre PostgreSQL certifié conforme ALCOA+</span>
                     <span>•</span>
                     <span id="audit-active-tab-label">Tous les événements</span>
+                    <span>•</span>
+                    <span id="audit-last-sync-time" style="font-family:monospace; color:var(--text-muted); font-size:10.5px;">Synchro : En attente...</span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <button class="btn-pill" onclick="exportAuditTrailCSV(false)" title="Exporter les événements de l'onglet actif avec les filtres en cours">📥 Exporter Vue Filtrée (.CSV)</button>

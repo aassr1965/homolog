@@ -1158,6 +1158,9 @@
                     if (lbl) lbl.innerText = 'Agrandir';
                 }
             }
+            if (id === 'modal-audit' && typeof stopAuditLiveStream === 'function') {
+                stopAuditLiveStream();
+            }
             if (id === 'modal-doc-preview') {
                 const iframe = document.getElementById("doc-preview-iframe");
                 if (iframe) iframe.src = "about:blank";

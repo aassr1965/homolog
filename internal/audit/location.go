@@ -144,57 +144,108 @@ type geoIPResponse struct {
 	Org         string `json:"org"`
 }
 
+type bdcLocalityResponse struct {
+	CountryName          string `json:"countryName"`
+	CountryCode          string `json:"countryCode"`
+	PrincipalSubdivision string `json:"principalSubdivision"`
+	City                 string `json:"city"`
+	Locality             string `json:"locality"`
+}
+
 func queryGeoIP(ipStr string) string {
 	if val, ok := geoIPCache.Load(ipStr); ok {
 		return val.(string)
 	}
 
-	url := fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country,city,countryCode,isp,org", ipStr)
-	resp, err := httpClient.Get(url)
-	if err != nil {
+	// 1. Tenter la résolution haute précision (Commune / Daïra / Ville via BigDataCloud)
+	bdcURL := fmt.Sprintf("https://api.bigdatacloud.net/data/reverse-geocode-client?ip=%s&localityLanguage=fr", ipStr)
+	var (
+		countryCode string
+		countryName string
+		locality    string
+		city        string
+	)
+
+	bdcResp, err := httpClient.Get(bdcURL)
+	if err == nil && bdcResp.StatusCode == http.StatusOK {
+		var bdc bdcLocalityResponse
+		if json.NewDecoder(bdcResp.Body).Decode(&bdc) == nil && bdc.CountryCode != "" {
+			countryCode = bdc.CountryCode
+			countryName = bdc.CountryName
+			locality = strings.TrimSpace(bdc.Locality)
+			city = strings.TrimSpace(bdc.City)
+			if city == "" {
+				city = strings.TrimSpace(bdc.PrincipalSubdivision)
+			}
+			city = strings.TrimPrefix(city, "wilaya d'")
+			city = strings.TrimPrefix(city, "wilaya de ")
+			city = strings.TrimPrefix(city, "Wilaya d'")
+			city = strings.TrimPrefix(city, "Wilaya de ")
+		}
+		bdcResp.Body.Close()
+	}
+
+	// 2. Interroger ip-api pour ISP et détection VPN
+	apiURL := fmt.Sprintf("http://ip-api.com/json/%s?fields=status,country,city,countryCode,isp,org", ipStr)
+	var (
+		isVPN   bool
+		ispName string
+	)
+	apiResp, err := httpClient.Get(apiURL)
+	if err == nil && apiResp.StatusCode == http.StatusOK {
+		var data geoIPResponse
+		if json.NewDecoder(apiResp.Body).Decode(&data) == nil && data.Status == "success" {
+			if countryCode == "" {
+				countryCode = data.CountryCode
+				countryName = data.Country
+			}
+			if city == "" {
+				city = strings.TrimSpace(data.City)
+			}
+			ispName = data.ISP
+			isVPN = isVPNOrHosting(data.ISP, data.Org)
+		}
+		apiResp.Body.Close()
+	}
+
+	if countryCode == "" && city == "" {
 		fallback := fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
 		geoIPCache.Store(ipStr, fallback)
 		return fallback
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		fallback := fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
-		geoIPCache.Store(ipStr, fallback)
-		return fallback
-	}
-
-	var data geoIPResponse
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil || data.Status != "success" {
-		fallback := fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
-		geoIPCache.Store(ipStr, fallback)
-		return fallback
-	}
-
-	flag := countryCodeToFlag(data.CountryCode)
-	country := data.Country
+	flag := countryCodeToFlag(countryCode)
+	country := countryName
 	if frName, exists := frenchCountryNames[country]; exists {
 		country = frName
 	}
+	if country == "Algerie" {
+		country = "Algérie"
+	}
 
-	city := strings.TrimSpace(data.City)
-	isVPN := isVPNOrHosting(data.ISP, data.Org)
+	var parts []string
+	if locality != "" {
+		parts = append(parts, locality)
+	}
+	if city != "" && !strings.EqualFold(city, locality) {
+		parts = append(parts, city)
+	}
+	if country != "" {
+		parts = append(parts, country)
+	}
+
+	var locationBase string
+	if len(parts) > 0 {
+		locationBase = strings.Join(parts, ", ")
+	} else {
+		locationBase = cleanISP(ispName)
+	}
 
 	var resolved string
-	if city != "" && country != "" {
-		if isVPN {
-			resolved = fmt.Sprintf("%s %s, %s (VPN / %s)", flag, city, country, cleanISP(data.ISP))
-		} else {
-			resolved = fmt.Sprintf("%s %s, %s", flag, city, country)
-		}
-	} else if country != "" {
-		if isVPN {
-			resolved = fmt.Sprintf("%s %s (VPN)", flag, country)
-		} else {
-			resolved = fmt.Sprintf("%s %s", flag, country)
-		}
+	if isVPN {
+		resolved = fmt.Sprintf("%s %s (VPN / %s)", flag, locationBase, cleanISP(ispName))
 	} else {
-		resolved = fmt.Sprintf("🌍 Accès Distant (%s)", ipStr)
+		resolved = fmt.Sprintf("%s %s", flag, locationBase)
 	}
 
 	geoIPCache.Store(ipStr, resolved)
