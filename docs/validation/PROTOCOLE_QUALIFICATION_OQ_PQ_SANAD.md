@@ -619,8 +619,8 @@ Tout écart constaté lors de l'exécution d'un test doit être consigné dans l
 | Statistique de Qualification | Valeur Observée | Seuil d'Acceptabilité GxP |
 | :--- | :---: | :---: |
 | **Nombre total de tests exécutés :** | `...` | 100% des cas prévus |
-| **Nombre de tests CONFORMES (PASS) :** | `...` | $\ge 98\%$ |
-| **Nombre de déviations mineures acceptées :** | `...` | $\le 2$ (avec plan d'action CAPA) |
+| **Nombre de tests CONFORMES (PASS) :** | `...` | ≥ 98 % |
+| **Nombre de déviations mineures acceptées :** | `...` | ≤ 2 (avec plan d'action CAPA) |
 | **Nombre de déviations critiques :** | `...` | **0 Tolérance Zéro** |
 
 ### Visa et Approbation Formelle de la Recette
