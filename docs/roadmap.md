@@ -642,6 +642,23 @@ gantt
   - Boutons « 📠 Numériser » et « 📷 Capturer » intégrés directement dans la modale de rattachement de documents aux exigences CTD/DM et dans le coffre-fort GED.
   - Visionneuse de validation pré-dépôt avec rotation, découpage, réordonnancement des pages et prévisualisation avant versement officiel.
 
+### Jalon 3.7 : Option Commerciale & Modulaire « Sanad eQMS » (Déviations, CAPA, Change Control BPF, Audits & Formations)
+- [ ] **Architecture Multi-Tenant & Feature Flag Optionnel (`eqms_enabled`) :**
+  - Migration SQL dédiée créant les tables `eqms_deviations`, `eqms_capas`, `eqms_capa_actions`, `eqms_change_controls`, `eqms_audits`, `eqms_audit_findings`, `eqms_complaints` et `eqms_training_records`.
+  - Paramètre d'activation par établissement dans `organizations` / `tenant_regulatory_settings` et middleware de gating `/api/v1/eqms/*` + affichage conditionnel dans le cockpit.
+- [ ] **Gestion des Déviations & CAPA (avec VOE) :**
+  - Déclaration d'écart (Mineur / Majeur / Critique), confinement produit/lot, ateliers d'analyse causes racines (5 Pourquoi / Ishikawa) et clôture signée AQ/DT (ou assistant habilité `02_`).
+  - Plans CAPA multi-départements liés aux déviations, audits ou lettres d'observation ANPP, avec étape bloquante de **Vérification d'Efficacité (VOE)**.
+- [ ] **Change Control Interne BPF & Passerelle Native vers `Sanad Variations` (`LD-DEPP07/V01`) :**
+  - Workflow d'évaluation d'impact multi-pôles (AQ, CQ, Production, AR) avec analyse de risque ICH Q9.
+  - Génération automatique en 1 clic d'une variation ANPP (`Mmin` / `Mmod` / `Mmaj`) ou d'une modification DM (`Décret 20-324`) dès qu'un impact réglementaire est qualifié.
+- [ ] **Audits BPF / Fournisseurs, Réclamations & Formations SOP :**
+  - Programme annuel d'audits internes et fournisseurs (`1.H.8`), gestion des constats et ouverture directe de CAPA.
+  - Registre des réclamations qualité et déclenchement automatique des formations/lectures lors de la mise en vigueur d'une SOP dans le coffre-fort GED.
+- [ ] **Qualification OQ/PQ & Tests Automatisés :**
+  - Suite de tests Go d'intégration (`eqms_test.go`) couvrant le gating multi-tenant, la SoD, la passerelle Change Control → Variations et la piste d'audit ALCOA+.
+  - Ajout du module eQMS dans `docs/validation/PROTOCOLE_QUALIFICATION_OQ_PQ_SANAD.md`.
+
 ---
 
 ## Guide d'avancement et métriques de suivi
