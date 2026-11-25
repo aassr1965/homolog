@@ -588,15 +588,45 @@ window.escapeHTML = escapeHtml;
             }
         }
 
+        function closeAllToolbarDropdowns() {
+            document.querySelectorAll('.tb-dropdown-menu.open').forEach(m => m.classList.remove('open'));
+        }
+
+        function toggleToolbarDropdown(triggerBtn, menuId) {
+            const menu = document.getElementById(menuId);
+            if (!menu) return;
+            const wasOpen = menu.classList.contains('open');
+            closeAllToolbarDropdowns();
+            if (!wasOpen) {
+                const rect = triggerBtn.getBoundingClientRect();
+                menu.classList.add('open');
+                const menuW = menu.offsetWidth || 230;
+                const isRtl = document.documentElement.dir === 'rtl';
+                let left = isRtl ? (rect.right - menuW) : rect.left;
+                left = Math.max(8, Math.min(left, window.innerWidth - menuW - 8));
+                menu.style.top = (rect.bottom + 4) + 'px';
+                menu.style.left = left + 'px';
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.tb-dropdown-trigger') && !e.target.closest('.tb-dropdown-menu')) {
+                closeAllToolbarDropdowns();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAllToolbarDropdowns();
+        });
+
         function updateToolbarForDomain(domain) {
             const tb = document.getElementById("main-toolbar");
             if (!tb) return;
             if (domain === 'ref') {
                 tb.innerHTML = `
                     <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewPharmaModal()">➕ Nouveau</button>
-                    <button class="btn-pill" onclick="loadRefSection(currentRefSection)">🔄 Actualiser</button>
-                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
-                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <button class="btn-table-icon" onclick="loadRefSection(currentRefSection)" title="Actualiser la liste">🔄</button>
+                    <button class="btn-table-icon" data-perm="AUDIT_VIEW" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+                    <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Base Référentiel : <strong style="color:var(--accent-emerald);">Opérationnelle &amp; Conforme</strong>
                     </div>
@@ -615,31 +645,47 @@ window.escapeHTML = escapeHtml;
                 `;
             } else if (domain === 'ctd') {
                 tb.innerHTML = `
-                    <button class="btn-pill" id="tb-btn-new-dossier" data-perm="DOSSIER_CREATE" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDossierModal()">➕ Nouveau Dossier</button>
-                    <button class="btn-pill" id="tb-btn-members" onclick="openDossierMembersModal()">👥 Équipe &amp; Secret</button>
-                    <button class="btn-pill" id="tb-btn-sign-pdt" onclick="openSignPDTModal()">✍️ Visa PDT (21 CFR Part 11)</button>
-                    <button class="btn-pill" id="tb-btn-deposit-anpp" onclick="openRecordDepositModal()">🏛️ Enregistrer Dépôt ANPP</button>
-                    <button class="btn-pill" id="tb-btn-eservices" style="background:linear-gradient(135deg, #2563eb, #10b981); color:white; border:none; font-weight:700;" onclick="openPreSubmissionAuditModal(selectedDossierId)">🚀 E-Services ANPP</button>
-                    <button class="btn-pill" id="tb-btn-fees" onclick="openGenerateFeeSlipModal(selectedDossierId)">💰 Bordereau BV1/BV2</button>
-                    <button class="btn-pill" id="tb-btn-schedules" onclick="openFeeSchedulesModal()">⚖️ Barème ANPP</button>
-                    <button class="btn-pill" id="tb-btn-cost-analytics" style="background:rgba(37,99,235,0.1); color:var(--accent-blue); border:1px solid rgba(37,99,235,0.3); font-weight:700;" onclick="openCostAnalyticsDashboardModal()">📊 Coûts Consolidés</button>
-                    <button class="btn-pill" id="tb-btn-deficiency" onclick="openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Enregistrer Complément ANPP</button>
-                    <button class="btn-pill" id="tb-btn-appointments" onclick="openAppointmentsModal()">📅 Séances ANPP</button>
-                    <button class="btn-pill" id="tb-btn-reg-watch" onclick="openRegulatoryWatchModal()">📜 Veille Juridique</button>
-                    <button class="btn-pill" id="tb-btn-export" data-perm="EXPORT_PACKAGE" onclick="simulateExportZip()">📦 Exporter CTD (ZIP)</button>
-                    <button class="btn-pill" onclick="loadDossiers()">🔄 Actualiser</button>
-                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
-                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
-                    <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
-                        Complétude : <strong id="kpi-dossier-completeness" style="color:var(--accent-blue);">0%</strong>
+                    <button class="btn-pill" id="tb-btn-sign-pdt" onclick="openSignPDTModal()" title="Apposer le visa électronique du Pharmacien Directeur Technique (21 CFR Part 11)">✍️ Visa PDT</button>
+
+                    <button class="btn-pill tb-dropdown-trigger" style="background:linear-gradient(135deg, #2563eb, #10b981); color:white; border:none; font-weight:700;" onclick="toggleToolbarDropdown(this, 'tb-menu-eservices')" title="Télé-soumission ANPP, Dépôts, Compléments &amp; Export">🚀 E-Services ▾</button>
+                    <div class="tb-dropdown-menu" id="tb-menu-eservices">
+                        <button class="tb-dropdown-item" id="tb-btn-eservices" onclick="closeAllToolbarDropdowns(); openPreSubmissionAuditModal(selectedDossierId)">🚀 Audit Pré-Dépôt E-Services ANPP</button>
+                        <button class="tb-dropdown-item" id="tb-btn-deposit-anpp" onclick="closeAllToolbarDropdowns(); openRecordDepositModal()">🏛️ Enregistrer Dépôt ANPP</button>
+                        <button class="tb-dropdown-item" id="tb-btn-deficiency" onclick="closeAllToolbarDropdowns(); openNewDeficiencyLetterModal(selectedDossierId)">⏱️ Enregistrer Complément ANPP</button>
+                        <button class="tb-dropdown-item" id="tb-btn-appointments" onclick="closeAllToolbarDropdowns(); openAppointmentsModal()">📅 Séances &amp; RDV ANPP</button>
+                        <div class="tb-dropdown-sep"></div>
+                        <button class="tb-dropdown-item" id="tb-btn-export" data-perm="EXPORT_PACKAGE" onclick="closeAllToolbarDropdowns(); simulateExportZip()">📦 Exporter CTD (ZIP)</button>
+                    </div>
+
+                    <button class="btn-pill tb-dropdown-trigger" onclick="toggleToolbarDropdown(this, 'tb-menu-fees')" title="Bordereaux BV1/BV2, Barèmes &amp; Coûts Consolidés">💰 Redevances ▾</button>
+                    <div class="tb-dropdown-menu" id="tb-menu-fees">
+                        <button class="tb-dropdown-item" id="tb-btn-fees" onclick="closeAllToolbarDropdowns(); openGenerateFeeSlipModal(selectedDossierId)">💰 Émettre Bordereau BV1/BV2</button>
+                        <button class="tb-dropdown-item" id="tb-btn-schedules" onclick="closeAllToolbarDropdowns(); openFeeSchedulesModal()">⚖️ Barème Officiel ANPP</button>
+                        <button class="tb-dropdown-item" id="tb-btn-cost-analytics" onclick="closeAllToolbarDropdowns(); openCostAnalyticsDashboardModal()">📊 Coûts Consolidés</button>
+                    </div>
+
+                    <button class="btn-pill tb-dropdown-trigger" onclick="toggleToolbarDropdown(this, 'tb-menu-dossier')" title="Gestion du dossier, Équipe &amp; Veille Juridique">⚙️ Dossier ▾</button>
+                    <div class="tb-dropdown-menu" id="tb-menu-dossier">
+                        <button class="tb-dropdown-item" id="tb-btn-new-dossier" data-perm="DOSSIER_CREATE" onclick="closeAllToolbarDropdowns(); openNewDossierModal()">➕ Nouveau Dossier ANPP</button>
+                        <button class="tb-dropdown-item" id="tb-btn-members" onclick="closeAllToolbarDropdowns(); openDossierMembersModal()">👥 Équipe &amp; Secret Industriel</button>
+                        <div class="tb-dropdown-sep"></div>
+                        <button class="tb-dropdown-item" id="tb-btn-reg-watch" onclick="closeAllToolbarDropdowns(); openRegulatoryWatchModal()">📜 Veille Juridique (JORADP)</button>
+                    </div>
+
+                    <button class="btn-table-icon" onclick="loadDossiers()" title="Actualiser le dossier">🔄</button>
+                    <button class="btn-table-icon" data-perm="AUDIT_VIEW" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+                    <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
+
+                    <div style="margin-left:auto; font-size:10.5px; color:var(--text-muted); white-space:nowrap;" id="dossier-progress">
+                        Compl. : <strong id="kpi-dossier-completeness" style="color:var(--accent-blue);">0%</strong>
                     </div>
                 `;
             } else if (domain === 'deficiencies') {
                 tb.innerHTML = `
-                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewDeficiencyLetterModal()">➕ Enregistrer une Notification de Compléments ANPP</button>
-                    <button class="btn-pill" onclick="loadDeficienciesDashboard(typeof currentDeficiencyFilter !== 'undefined' ? currentDeficiencyFilter : 'all')">🔄 Actualiser</button>
-                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
-                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewDeficiencyLetterModal()">➕ Nouvelle Notification Complément ANPP</button>
+                    <button class="btn-table-icon" onclick="loadDeficienciesDashboard(typeof currentDeficiencyFilter !== 'undefined' ? currentDeficiencyFilter : 'all')" title="Actualiser la liste">🔄</button>
+                    <button class="btn-table-icon" data-perm="AUDIT_VIEW" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+                    <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Délais Légaux : <strong style="color:var(--accent-blue);">Compte à Rebours J-X (Guide 2025)</strong>
                     </div>
@@ -647,9 +693,9 @@ window.escapeHTML = escapeHtml;
             } else if (domain === 'variations') {
                 tb.innerHTML = `
                     <button class="btn-pill" id="tb-btn-new-variation" data-perm="DOSSIER_CREATE" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="openNewVariationModal()">➕ Déposer une Variation (LD-DEPP07)</button>
-                    <button class="btn-pill" onclick="renderVariationsTable(typeof currentVariationsFilter !== 'undefined' ? currentVariationsFilter : 'all')">🔄 Actualiser</button>
-                    <button class="btn-pill" data-perm="AUDIT_VIEW" onclick="openAuditModal()">🛡️ Audit Trail</button>
-                    <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
+                    <button class="btn-table-icon" onclick="renderVariationsTable(typeof currentVariationsFilter !== 'undefined' ? currentVariationsFilter : 'all')" title="Actualiser la liste">🔄</button>
+                    <button class="btn-table-icon" data-perm="AUDIT_VIEW" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
+                    <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">
                         Ligne Directrice : <strong style="color:var(--accent-blue);">ANPP LD-DEPP07/V01 (Avril 2026)</strong>
                     </div>

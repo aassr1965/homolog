@@ -653,7 +653,7 @@
                     btnSignPDT.style.borderColor = "rgba(16,185,129,0.4)";
                     btnSignPDT.disabled = true;
                 } else if (dossier.completeness_percent === 100) {
-                    btnSignPDT.innerHTML = "✍️ Apposer Visa PDT (100%)";
+                    btnSignPDT.innerHTML = "✍️ Visa PDT (100%)";
                     btnSignPDT.style.background = "var(--accent-emerald)";
                     btnSignPDT.style.color = "white";
                     btnSignPDT.style.border = "none";
