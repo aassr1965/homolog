@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -141,7 +142,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			lockTime = &t
 		}
 
-		_, _ = h.pool.Exec(r.Context(), "UPDATE users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3", newFailed, lockTime, userID)
+		if _, errExec := h.pool.Exec(r.Context(), "UPDATE users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3", newFailed, lockTime, userID); errExec != nil {
+			log.Printf("[ALERTE SÉCURITÉ] Échec de mise à jour du verrouillage pour %s : %v", email, errExec)
+		}
 
 		_ = h.logAuthEvent(r.Context(), orgID, &userID, email, role, audit.ActionAuthLoginFailed, ip, userAgent, map[string]any{
 			"reason":          "mot de passe incorrect",
@@ -177,13 +180,19 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 				writeJSONError(w, http.StatusUnauthorized, "Code 2FA incorrect ou expiré")
 				return
 			}
-			// Mise à jour des codes de secours restants
-			_, _ = h.pool.Exec(r.Context(), "UPDATE users SET recovery_codes = $1 WHERE id = $2", remainingBackup, userID)
+			// Mise à jour des codes de secours restants avec contrôle d'erreur strict
+			if _, errExec := h.pool.Exec(r.Context(), "UPDATE users SET recovery_codes = $1 WHERE id = $2", remainingBackup, userID); errExec != nil {
+				log.Printf("[ALERTE SÉCURITÉ] Échec de consommation du code de secours pour %s : %v", email, errExec)
+				writeJSONError(w, http.StatusInternalServerError, "Erreur de mise à jour de la sécurité du compte")
+				return
+			}
 		}
 	}
 
 	// 5. Réinitialisation des échecs et enregistrement de connexion réussie
-	_, _ = h.pool.Exec(r.Context(), "UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login_at = $1 WHERE id = $2", now, userID)
+	if _, errExec := h.pool.Exec(r.Context(), "UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login_at = $1 WHERE id = $2", now, userID); errExec != nil {
+		log.Printf("[ALERTE SÉCURITÉ] Échec de réinitialisation des échecs de connexion pour %s : %v", email, errExec)
+	}
 
 	// 6. Création de session sécurisée
 	token, err := h.sessionManager.CreateSession(r.Context(), userID, ip, userAgent)

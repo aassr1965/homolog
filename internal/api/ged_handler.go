@@ -556,8 +556,20 @@ func (h *GEDHandler) DownloadVersion(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rc.Close()
 
+	// Protection contre Stored XSS :
+	// Seuls les documents PDF et les images matricielles (PNG, JPEG) peuvent être servis inline.
+	// Tous les autres formats (HTML, SVG, binaires) sont forcés en attachment.
+	isSafeInline := v.MimeType == "application/pdf" || v.MimeType == "image/png" || v.MimeType == "image/jpeg"
+	disposition := "attachment"
+	if isSafeInline {
+		disposition = "inline"
+	}
+	safeFilename := strings.ReplaceAll(strings.ReplaceAll(v.OriginalFilename, `"`, ""), "\n", "")
+	safeFilename = strings.ReplaceAll(safeFilename, "\r", "")
+
 	w.Header().Set("Content-Type", v.MimeType)
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, v.OriginalFilename))
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`%s; filename=%q`, disposition, safeFilename))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Content-Length", strconv.FormatInt(v.FileSizeBytes, 10))
 	w.Header().Set("ETag", fmt.Sprintf(`"%s"`, v.FileSHA256))
 	w.Header().Set("X-Content-SHA256", v.FileSHA256)

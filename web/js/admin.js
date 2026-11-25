@@ -87,6 +87,8 @@ function renderAdminTree() {
 
 // Chargement principal de la section administration
 async function loadAdminSection(section) {
+    const tbl = document.getElementById("doc-table");
+    if (tbl) tbl.style.tableLayout = "";
     if (typeof resetStandardTableContainer === 'function') {
         resetStandardTableContainer();
     }
@@ -700,10 +702,10 @@ function renderAdminPoliciesView() {
     tbody.innerHTML = `
         <tr>
             <td colspan="7" style="padding:20px;">
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:15px; width:100%; box-sizing:border-box;">
                     
                     <!-- Carte 1 : SoD Maker != Approver -->
-                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:15px; display:flex; flex-direction:column; gap:8px;">
+                    <div style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:6px; padding:15px; display:flex; flex-direction:column; gap:8px; min-width:0; overflow:hidden; box-sizing:border-box;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="font-size:20px;">⚖️</span>
                             <span style="font-weight:700; font-size:13px; color:var(--text-main);">1. Séparation des Tâches (SoD)</span>
@@ -1345,6 +1347,8 @@ function exportRBACMatrixCSV() {
 let tenantRegulatorySettings = [];
 
 async function renderAdminSettingsView() {
+    const tbl = document.getElementById("doc-table");
+    if (tbl) tbl.style.tableLayout = "fixed";
     const thead = document.getElementById("table-head");
     const tbody = document.getElementById("doc-tbody");
     if (!thead || !tbody) return;
@@ -1376,13 +1380,13 @@ async function renderAdminSettingsView() {
 
         let html = `
             <tr>
-                <td colspan="7" style="padding:16px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; background:var(--bg-surface); padding:10px 14px; border-radius:6px; border:1px solid var(--border-color);">
-                        <div>
+                <td colspan="7" style="padding:14px; max-width:100%; box-sizing:border-box;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px; background:var(--bg-surface); padding:10px 14px; border-radius:6px; border:1px solid var(--border-color);">
+                        <div style="min-width:0; flex:1;">
                             <div style="font-weight:800; font-size:13px; color:var(--text-main);">Configuration Réglementaire & Institutionnelle (ALCOA+ / GAMP 5)</div>
                             <div style="font-size:11px; color:var(--text-dim);">Les modifications sur les coordonnées bancaires et barèmes sont tracées temporellement (valid_from/valid_to) avec visa du Pharmacien DT.</div>
                         </div>
-                        <button class="btn-pill" onclick="loadAdminSection('settings')" style="font-size:11px; padding:4px 10px;">🔄 Rafraîchir</button>
+                        <button class="btn-pill" onclick="loadAdminSection('settings')" style="font-size:11px; padding:4px 10px; flex-shrink:0;">🔄 Rafraîchir</button>
                     </div>
         `;
 
@@ -1395,27 +1399,27 @@ async function renderAdminSettingsView() {
                     <div style="font-weight:700; font-size:12px; color:var(--text-main); margin-bottom:8px; display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
                         <span>${cat.icon}</span> <span>${cat.title}</span>
                     </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:10px;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap:10px; width:100%; box-sizing:border-box;">
             `;
 
             for (const item of items) {
                 const isPending = item.status === 'PENDING_APPROVAL_DT';
                 const statusBadge = isPending 
-                    ? `<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:10px;">⏳ Visa DT Requis</span>`
-                    : `<span style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:10px;">✓ Actif</span>`;
+                    ? `<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:10px; white-space:nowrap; flex-shrink:0;">⏳ Visa DT Requis</span>`
+                    : `<span style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:10px; white-space:nowrap; flex-shrink:0;">✓ Actif</span>`;
 
                 html += `
-                    <div style="background:var(--bg-surface); border:1px solid ${isPending ? '#f59e0b' : 'var(--border-color)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; gap:8px;">
-                        <div>
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
-                                <div style="font-weight:700; font-size:12px; color:var(--text-main);">${escapeAdminHtml(item.label_fr)}</div>
+                    <div style="background:var(--bg-surface); border:1px solid ${isPending ? '#f59e0b' : 'var(--border-color)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; gap:8px; min-width:0; overflow:hidden; box-sizing:border-box;">
+                        <div style="min-width:0;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
+                                <div style="font-weight:700; font-size:12px; color:var(--text-main); min-width:0; overflow-wrap:anywhere;">${escapeAdminHtml(item.label_fr)}</div>
                                 ${statusBadge}
                             </div>
-                            <div style="font-family:monospace; font-size:10px; color:var(--text-dim); margin-bottom:6px;">${escapeAdminHtml(item.setting_key)}</div>
+                            <div style="font-family:monospace; font-size:10px; color:var(--text-dim); margin-bottom:6px; overflow-wrap:anywhere;">${escapeAdminHtml(item.setting_key)}</div>
                             
-                            <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:4px; padding:6px 8px; margin-bottom:6px;">
+                            <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:4px; padding:6px 8px; margin-bottom:6px; min-width:0; overflow:hidden;">
                                 <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:700;">Valeur Active en Vigueur :</div>
-                                <div style="font-weight:800; font-size:12px; color:var(--accent-purple); word-break:break-all;">${escapeAdminHtml(item.setting_value)}</div>
+                                <div style="font-weight:800; font-size:12px; color:var(--accent-purple); white-space:normal; overflow-wrap:anywhere; word-break:break-word;">${escapeAdminHtml(item.setting_value)}</div>
                             </div>
 
                             ${isPending ? `

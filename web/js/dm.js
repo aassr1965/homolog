@@ -37,12 +37,12 @@ function updateDMToolbar() {
 
     if (currentDMTab === 'homologation') {
         tb.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-                <button class="btn-pill active" onclick="switchDMTab('homologation')">🩺 Portefeuille & 6 Sections</button>
-                <button class="btn-pill" onclick="switchDMTab('regularization')">⏱️ Mesures Transitoires & Régularisation</button>
-                <button class="btn-pill" onclick="switchDMTab('modifications')">🔄 Modifications Post-Homologation</button>
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <button class="btn-pill active" onclick="switchDMTab('homologation')">🩺 Portefeuille (6 Sections)</button>
+                <button class="btn-pill" onclick="switchDMTab('regularization')">⏱️ Mesures Transitoires</button>
+                <button class="btn-pill" onclick="switchDMTab('modifications')">🔄 Modifications Post-Homol.</button>
             </div>
-            <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+            <div style="margin-left:auto; display:flex; gap:8px; align-items:center; flex-shrink:0;">
                 <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDMModal()">➕ Nouveau DM</button>
                 <button class="btn-pill" onclick="loadDMDevices()">🔄 Actualiser</button>
                 <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
@@ -50,12 +50,12 @@ function updateDMToolbar() {
         `;
     } else if (currentDMTab === 'regularization') {
         tb.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-                <button class="btn-pill" onclick="switchDMTab('homologation')">🩺 Portefeuille & 6 Sections</button>
-                <button class="btn-pill active" onclick="switchDMTab('regularization')">⏱️ Mesures Transitoires & Régularisation</button>
-                <button class="btn-pill" onclick="switchDMTab('modifications')">🔄 Modifications Post-Homologation</button>
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <button class="btn-pill" onclick="switchDMTab('homologation')">🩺 Portefeuille (6 Sections)</button>
+                <button class="btn-pill active" onclick="switchDMTab('regularization')">⏱️ Mesures Transitoires</button>
+                <button class="btn-pill" onclick="switchDMTab('modifications')">🔄 Modifications Post-Homol.</button>
             </div>
-            <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+            <div style="margin-left:auto; display:flex; gap:8px; align-items:center; flex-shrink:0;">
                 <button class="btn-pill" data-perm="REF_EDIT" style="background:#059669; color:white; border:none;" onclick="openNewDMRegularizationModal()">➕ Nouveau Suivi Régularisation</button>
                 <button class="btn-pill" style="background:#0284c7; color:white; border:none;" onclick="exportDMCanevasXLSX()">📊 Exporter Canevas Dérogatoire (.xlsx)</button>
                 <button class="btn-pill" onclick="loadDMRegularizations()">🔄 Actualiser</button>
@@ -63,12 +63,12 @@ function updateDMToolbar() {
         `;
     } else {
         tb.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-                <button class="btn-pill" onclick="switchDMTab('homologation')">🩺 Portefeuille & 6 Sections</button>
-                <button class="btn-pill" onclick="switchDMTab('regularization')">⏱️ Mesures Transitoires & Régularisation</button>
-                <button class="btn-pill active" onclick="switchDMTab('modifications')">🔄 Modifications Post-Homologation</button>
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <button class="btn-pill" onclick="switchDMTab('homologation')">🩺 Portefeuille (6 Sections)</button>
+                <button class="btn-pill" onclick="switchDMTab('regularization')">⏱️ Mesures Transitoires</button>
+                <button class="btn-pill active" onclick="switchDMTab('modifications')">🔄 Modifications Post-Homol.</button>
             </div>
-            <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+            <div style="margin-left:auto; display:flex; gap:8px; align-items:center; flex-shrink:0;">
                 <button class="btn-pill" data-perm="REF_EDIT" style="background:var(--accent-blue); color:white; border:none;" onclick="openNewDMModificationModal()">➕ Nouvelle Modification DM</button>
                 <button class="btn-pill" onclick="loadDMModifications()">🔄 Actualiser</button>
             </div>
@@ -138,7 +138,7 @@ function renderDMDevicesTable() {
                     Formulaire 6 sections (ES-REG-02-DM) & Grille de recevabilité en 13 points (ES-REG-03-DM)
                 </div>
             </div>
-            <div style="display:flex; gap:6px;">
+            <div style="display:flex; gap:6px; flex-shrink:0; overflow-x:auto;">
                 <button class="btn-pill ${dmFilterClass === 'all' ? 'active' : ''}" onclick="filterDMClass('all')">Tous (${dmDevicesList.length})</button>
                 <button class="btn-pill ${dmFilterClass === 'I' ? 'active' : ''}" onclick="filterDMClass('I')">Classe I</button>
                 <button class="btn-pill ${dmFilterClass === 'IIa' ? 'active' : ''}" onclick="filterDMClass('IIa')">Classe IIa</button>
@@ -148,16 +148,16 @@ function renderDMDevicesTable() {
         </div>
 
         <div style="overflow-x:auto; padding:12px 16px;">
-            <table class="dense-table" style="width:100%; font-size:11.5px;">
+            <table class="dense-table" style="width:100%; min-width:850px; font-size:11.5px;">
                 <thead>
                     <tr>
                         <th style="width:25%;">Dispositif Médical</th>
-                        <th style="width:12%;">Réf. Fabricant</th>
-                        <th style="width:10%;">Classe</th>
-                        <th style="width:12%;">Régime & Origine</th>
-                        <th style="width:12%;">Stérilité</th>
+                        <th class="col-hide-lg" style="width:12%;">Réf. Fabricant</th>
+                        <th style="width:11%;">Classe</th>
+                        <th style="width:13%;">Régime &amp; Origine</th>
+                        <th class="col-hide-xl" style="width:11%;">Stérilité</th>
                         <th style="width:11%;">Statut</th>
-                        <th style="width:18%; text-align:right;">Actions Réglementaires</th>
+                        <th style="width:17%; text-align:right;">Actions Réglementaires</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -173,23 +173,23 @@ function renderDMDevicesTable() {
         `;
     } else {
         filtered.forEach(d => {
-            const isSterile = d.is_sterile ? `<span style="color:#059669; font-weight:700;">✓ Stérile</span> (${d.sterilization_method || 'ETO'})` : `<span style="color:var(--text-muted);">Non stérile</span>`;
+            const isSterile = d.is_sterile ? `<span style="color:#059669; font-weight:700;">✓ Stérile</span> (${escapeHTML(d.sterilization_method || 'ETO')})` : `<span style="color:var(--text-muted);">Non stérile</span>`;
             const isLocal = (d.origin_type || '').includes('local');
             const originTag = isLocal ? 
                 `<span class="status-tag" style="background:#0284c7; color:white;">🏭 Fabrication Locale</span>` : 
-                `<span class="status-tag" style="background:#64748b; color:white;">🚢 Importé (${d.legal_manufacturer_country || 'DE'})</span>`;
+                `<span class="status-tag" style="background:#64748b; color:white;">🚢 Importé (${escapeHTML(d.legal_manufacturer_country || 'DE')})</span>`;
 
             html += `
                 <tr>
                     <td>
                         <strong style="color:var(--text-main); font-size:12px;">${escapeHTML(d.commercial_name_fr || 'Sans nom')}</strong>
                         <div style="font-size:10px; color:var(--text-muted); font-family:'Traditional Arabic', Tahoma;">${escapeHTML(d.commercial_name_ar || '')}</div>
-                        <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">GMDN: <code>${d.gmdn_code || '34978'}</code></div>
+                        <div style="font-size:10px; color:var(--text-dim); margin-top:2px;">GMDN: <code>${escapeHTML(d.gmdn_code || '34978')}</code></div>
                     </td>
-                    <td><code>${escapeHTML(d.manufacturer_reference || 'N/A')}</code></td>
-                    <td><span class="status-tag" style="background:#0f3b60; color:white; font-weight:bold;">Classe ${d.dm_class || 'IIa'}</span></td>
+                    <td class="col-hide-lg"><code>${escapeHTML(d.manufacturer_reference || 'N/A')}</code></td>
+                    <td><span class="status-tag" style="background:#0f3b60; color:white; font-weight:bold;">Classe ${escapeHTML(d.dm_class || 'IIa')}</span></td>
                     <td>${originTag}</td>
-                    <td>${isSterile}</td>
+                    <td class="col-hide-xl">${isSterile}</td>
                     <td><span class="status-tag status-ok">En Enregistrement</span></td>
                     <td style="text-align:right; white-space:nowrap;">
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-right:4px;" onclick="openDMHomologationModal('${d.id}')" title="Éditer et vérifier les 6 sections techniques">📋 6 Sections</button>
@@ -618,7 +618,7 @@ function renderDMRegularizationsDashboard() {
 
         <!-- TABLEAU DES DOSSIERS TRANSITOIRES -->
         <div style="overflow-x:auto; padding:12px 16px;">
-            <table class="dense-table" style="width:100%; font-size:11px;">
+            <table class="dense-table" style="width:100%; min-width:850px; font-size:11px;">
                 <thead>
                     <tr>
                         <th style="width:12%;">Code Dossier</th>
@@ -955,8 +955,8 @@ function renderDMModificationsDashboard() {
         </div>
 
         <!-- TABLEAU DES MODIFICATIONS POST-HOMOLOGATION -->
-        <div style="padding:16px 20px;">
-            <table class="data-table" style="width:100%; border-collapse:collapse; font-size:12px;">
+        <div style="overflow-x:auto; padding:16px 20px;">
+            <table class="data-table" style="width:100%; min-width:850px; border-collapse:collapse; font-size:12px;">
                 <thead>
                     <tr>
                         <th style="width:12%;">Code</th>

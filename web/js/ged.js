@@ -559,26 +559,26 @@
                 tr.innerHTML = `
                     <td>${formatGEDStatusBadge(doc.status)}</td>
                     <td>
-                        <div style="font-weight:600; color:var(--text-main);">${doc.title_fr}</div>
-                        <div style="font-size:10px; color:var(--accent-blue); font-family:monospace;">${doc.document_code}</div>
+                        <div style="font-weight:600; color:var(--text-main);">${escapeHtml(doc.title_fr)}</div>
+                        <div style="font-size:10px; color:var(--accent-blue); font-family:monospace;">${escapeHtml(doc.document_code)}</div>
                     </td>
-                    <td class="col-hide-sm" style="font-size:11px; color:var(--text-muted);">${folderShort}</td>
-                    <td><strong style="color:var(--accent-emerald);">${doc.current_version}</strong></td>
+                    <td class="col-hide-sm" style="font-size:11px; color:var(--text-muted);">${escapeHtml(folderShort)}</td>
+                    <td><strong style="color:var(--accent-emerald);">${escapeHtml(doc.current_version)}</strong></td>
                     <td class="col-hide-sm">${lockBadge}</td>
                     <td class="col-hide-md">${dtBadge}</td>
                     <td class="col-hide-lg">
-                        <div style="font-family:monospace; font-size:10px; color:var(--text-dim);" title="${sha}">${sha.substring(0, 16)}...</div>
-                        <div style="font-size:10px; color:var(--text-muted);">${sizeKB}</div>
+                        <div style="font-family:monospace; font-size:10px; color:var(--text-dim);" title="${escapeHtml(sha)}">${escapeHtml(sha.substring(0, 16))}...</div>
+                        <div style="font-size:10px; color:var(--text-muted);">${escapeHtml(sizeKB)}</div>
                     </td>
                     <td style="text-align:right;">
-                        <button class="btn-pill btn-zero-trust-pharma-doc" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); downloadGEDVersion('${doc.id}', '${v ? v.id : ''}')" title="Télécharger le fichier physique">📥</button>
-                        <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); openGEDVersionsModal('${doc.id}')" title="Historique & Check-in">📜</button>
+                        <button class="btn-pill btn-zero-trust-pharma-doc" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); downloadGEDVersion('${escapeHtml(doc.id)}', '${v ? escapeHtml(v.id) : ''}')" title="Télécharger le fichier physique">📥</button>
+                        <button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); openGEDVersionsModal('${escapeHtml(doc.id)}')" title="Historique & Check-in">📜</button>
                         ${doc.is_locked ? 
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; color:var(--accent-red);" onclick="selectGEDDocument('${doc.id}'); handleCancelCheckOutGED('${doc.id}')" title="Annuler le verrouillage">🔓</button>` :
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${doc.id}'); handleCheckOutGED('${doc.id}')" title="Verrouiller pour édition (Check-out)">🔒</button>`
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; color:var(--accent-red);" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); handleCancelCheckOutGED('${escapeHtml(doc.id)}')" title="Annuler le verrouillage">🔓</button>` :
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); handleCheckOutGED('${escapeHtml(doc.id)}')" title="Verrouiller pour édition (Check-out)">🔒</button>`
                         }
                         ${((doc.status === 'en_approbation_dt' || (v && !v.is_signed_dt)) && (typeof hasPermission !== 'function' || hasPermission('DOC_APPROVE_PDT'))) ?
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${doc.id}'); openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')" title="Signer électroniquement (PDT)">✍️</button>` : ''
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); openSignGEDDTModal('${escapeHtml(doc.id)}', '${v ? escapeHtml(v.id) : ''}', '${escapeHtml(doc.document_code)}', '${escapeHtml(doc.title_fr)}', '${escapeHtml(sha)}')" title="Signer électroniquement (PDT)">✍️</button>` : ''
                         }
                     </td>
                 `;

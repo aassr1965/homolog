@@ -102,7 +102,7 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
    • OQ-AUTH (Multi-Rôles) • PQ-CTD (Dossiers eCTD)               • PQ-MC (Maker-Checker)    • OQ-AUD (Audit Live/Geo)
    • OQ-SES (Timeouts)     • PQ-DEF (Observations ANPP)           • PQ-CONF (Secret/CRO)     • OQ-SIG (Signature Élec)
    • OQ-GATE (Sas d'Accès) • PQ-FEE (Redevances & Bordereaux)     • PQ-CORP (Tabadol/MIPH)   • OQ-EXP (Archivage PDF/A)
-                           • PQ-DM (Dispositifs Médicaux)
+                           • PQ-DM (Dispositifs Médicaux)                                    • OQ-UI (Ergonomie Responsive)
 ```
 
 ---
@@ -315,19 +315,68 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 ### MODULE 07 : HOMOLOGATION & RÉGULARISATION DES DISPOSITIFS MÉDICAUX (DM)
 
 #### Test Ref : `PQ-DM-01`
-* **Titre :** Enregistrement d'un Dispositif Médical avec classification de risque et suivi des attestations.
-* **Exigence Réglementaire :** Réglementation ANPP Homologation DM (Classes I, IIa, IIb, III).
-* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`).
+* **Titre :** Renseignement et validation du Formulaire Officiel d'Homologation DM en 6 sections normées (`ES-REG-02-DM`).
+* **Exigence Réglementaire :** Décret exécutif n° 20-324 & Arrêté du 10 mai 2021 (Composition du dossier d'homologation).
+* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`) ou Pharmacien DT.
 
 | Étape | Action de l'Auditeur (Navigation UI) | Données de Test à Saisir | Résultat Attendu (Acceptance Criteria) |
 | :---: | :--- | :--- | :--- |
-| 1 | Dans le menu de gauche, cliquer sur l'onglet **« Dispositifs Médicaux »** (icône 🩺). | Clic onglet | L'espace dédié aux DM s'ouvre. |
-| 2 | Cliquer sur **`+ Nouveau Dossier d'Homologation DM`**. | Clic bouton | Le formulaire d'homologation DM apparaît. |
-| 3 | Saisir les métadonnées :<br>- **Nom Commercial :**<br>- **Classe de Risque :**<br>- **Destination / Indication :**<br>- **Fabricant :**<br>- **Organisme Notifié (CE) :** | `SERINGUE STÉRILE S-GUARD`<br>`Classe IIa`<br>`Injection parentérale à usage unique`<br>`PlastiMed Algérie SARL`<br>`LNE/G-MED (0459)` | Les champs sont renseignés. Selon la classe choisie, le système ajuste la liste des pièces obligatoires (Notice, Étiquetage, Déclaration CE, Essais de biocompatibilité ISO 10993). |
-| 4 | Cliquer sur **`Enregistrer le Dossier DM`**. | Clic bouton | Le dossier est créé avec le cycle de vie spécifique aux dispositifs médicaux. |
+| 1 | Dans la barre d'activités gauche, cliquer sur l'icône Dispositifs Médicaux (icône 💉 ou seringue, `#act-dm`). | Clic icône `#act-dm` | Le cockpit DM s'ouvre avec les 3 onglets thématiques : *Portefeuille & 6 Sections*, *Mesures Transitoires & Régularisation*, *Modifications Post-Homologation*. |
+| 2 | Dans l'onglet **« 🩺 Portefeuille & 6 Sections »**, repérer le dispositif *« Cathéter intraveineux stérile »* et cliquer sur le bouton **`Fiche 6 Sections`**. | Clic bouton | La modale `#modal-dm-homologation` surgit, affichant le formulaire officiel `ES-REG-02-DM` structuré en 6 sections normées. |
+| 3 | Parcourir les 6 sections techniques :<br>- **Sec. 1 (Administratif) :** Nomenclature GMDN, Classe de risque.<br>- **Sec. 2 (Technique) :** Mode d'action, dimensions, stérilisation ETO.<br>- **Sec. 3 (Fabricant & Sites) :** Sites de fabrication et d'assemblage.<br>- **Sec. 4 (Toxicologie & Sécurité) :** Déclarations Latex Free, sans CMR, sans phtalates DEHP.<br>- **Sec. 5 (Normes ISO) :** ISO 14971, ISO 10993, ISO 14155, ISO 11607.<br>- **Sec. 6 (Échantillons) :** Lots pilotes LNCM. | Modifier une référence (ex. Référence ISO 14971 : `PGR-ISO14971-2026-REV02`) | Les champs sont éditables avec contrôle de validité en temps réel. |
+| 4 | Cliquer sur le bouton bleu **`💾 Enregistrer la Fiche 6 Sections`**. | Clic bouton | 1. La fiche est mise à jour avec succès.<br>2. La modale se referme et affiche la notification verte : *« Données d'homologation 6 sections mises à jour »*.<br>3. L'événement est consigné dans l'Audit Trail. |
 
 * **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
 * **Preuve Documentaire :** `SCR-PQ-DM-01.png`
+
+---
+
+#### Test Ref : `PQ-DM-02`
+* **Titre :** Audit de recevabilité en 13 points (`ES-REG-03-DM`), scoring et scellement du Récépissé Officiel par visa 2FA du Pharmacien DT.
+* **Exigence Réglementaire :** Arrêté du 10 mai 2021 (Annexe II), 21 CFR §11.50 & §11.70.
+* **Rôle Requis :** Pharmacien Directeur Technique (`pdt@pharma.dz`).
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Dans l'onglet **« 🩺 Portefeuille & 6 Sections »**, cliquer sur le bouton **`Évaluer Recevabilité`** en face du dossier de DM. | Clic bouton | La modale `#modal-dm-recevabilite` s'affiche, présentant la grille d'évaluation de la recevabilité en 13 points de contrôle éliminatoires de l'ANPP. |
+| 2 | Examiner le barème de recevabilité affiché : | Observation visuelle | 1. Les 13 points de contrôle sont listés (lettre de demande, formulaire 6 sections, agrément MIPH, redevance BNA, CLV/FSC, marquage CE, ISO 13485, matières premières, matériovigilance, stérilisation, ISO 14971/10993, clinique ISO 14155, 04 exemplaires électroniques).<br>2. Le badge de score indique **`Score : 13/13 (100%) — COMPLET ET RECEVABLE`** (fond vert). |
+| 3 | Cliquer sur le bouton vert **`Sceller et Délivrer le Récépissé Officiel (Visa DT)`**. | Clic bouton scellement | 1. Le système exige la confirmation de signature légale du Pharmacien DT.<br>2. Le Récépissé Officiel `ES-REG-03-DM` est scellé avec génération d'un numéro d'enregistrement DDM (ex. `ANPP/DDM/REC/2026/0148`).<br>3. Le hash cryptographique SHA-256 du récépissé est gravé et un événement `DM_RECEVABILITE_SEAL` est enregistré dans l'Audit Trail. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-PQ-DM-02.png`
+
+---
+
+#### Test Ref : `PQ-DM-03`
+* **Titre :** Suivi des Mesures Transitoires, quotas de distribution hospitalière vs officine et export du canevas dérogatoire ministériel.
+* **Exigence Réglementaire :** Dispositions transitoires du Décret 20-324, Canevas ministériel ANPP.
+* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`) ou Pharmacien DT.
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Dans le cockpit DM, cliquer sur le deuxième onglet : **`⏱️ Mesures Transitoires & Régularisation`**. | Clic onglet | Le tableau de bord de régularisation s'ouvre, affichant les indicateurs clés (Total DM en régularisation, volume trimestriel, alertes forclusion). |
+| 2 | Vérifier les données du tableau : | Observation visuelle | 1. La liste affiche les DM en circulation sous dérogation (codes `REG-DM-...`).<br>2. Les colonnes détaillent : Statut dérogatoire, Accusé DDM, Échéance légale avec badge dynamique (ex. `J-22` ou `J-90`), Quotas Hôpitaux PCH (%) vs Officines (%). |
+| 3 | Cliquer sur le bouton bleu **`📊 Exporter Canevas Dérogatoire (.xlsx)`** dans la barre d'outils. | Clic bouton export | Le fichier officiel de déclaration trimestrielle `CANEVAS_REGULARISATION_DM_ANPP.csv` / `.xlsx` est téléchargé instantanément, prêt pour télétransmission à la DDM de l'ANPP. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-PQ-DM-03.png`
+
+---
+
+#### Test Ref : `PQ-DM-04`
+* **Titre :** Gestion des Modifications Post-Homologation (Articles 22 à 25 du Décret 20-324) et matrice d'impact normatif ISO.
+* **Exigence Réglementaire :** Décret 20-324 (Articles 22 à 25), Ord. 21-07 Art. 31 (Redevance d'avenant).
+* **Rôle Requis :** Responsable Affaires Réglementaires DM (`ra.lead@pharma.dz`) ou Pharmacien DT.
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Dans le cockpit DM, cliquer sur le troisième onglet : **`🔄 Modifications Post-Homologation`**. | Clic onglet | Le registre des demandes de modification s'affiche avec la répartition : Modifications Substantielles (avec demande d'avenant) vs Non-Substantielles (déclarations annuelles). |
+| 2 | Cliquer sur **`➕ Nouvelle Modification DM`**. | Clic bouton | La modale de saisie de modification post-homologation `#modal-dm-modification-new` s'ouvre. |
+| 3 | Renseigner les champs :<br>- **Dispositif Médical :**<br>- **Nature de la modification :**<br>- **Catégorie :**<br>- **Description :**<br>- **Impact Normatif ISO :** | Sélectionner `Cathéter intraveineux`<br>`SUBSTANTIELLE (Avenant Décision DDM)`<br>`DM_SUB_03 - Changement de site de stérilisation`<br>`Transfert du procédé ETO vers nouveau site qualifié ISO 11135`<br>Cocher `ISO 11135 (Stérilisation)` et `ISO 14971 (Risques)` | Les champs sont renseignés et le montant de la redevance légale d'avenant est calculé automatiquement (150 000 DA). |
+| 4 | Cliquer sur **`Enregistrer la Déclaration de Modification`**. | Clic bouton | 1. La modification est enregistrée dans le système avec son code unique.<br>2. La matrice d'impact normatif ISO est gravée et l'événement est consigné dans l'Audit Trail. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-PQ-DM-04.png`
 
 ---
 
@@ -446,6 +495,43 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 
 * **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
 * **Preuve Documentaire :** `SCR-OQ-SIG-02.png`
+
+---
+
+### MODULE 12 : QUALIFICATION ERGONOMIQUE MULTI-BREAKPOINTS & INTÉGRITÉ VISUELLE ALCOA+
+
+#### Test Ref : `OQ-UI-01`
+* **Titre :** Vérification de l'intégrité visuelle ALCOA+ (Lisibilité / Non-scission des boutons et badges) et adaptabilité multi-résolutions.
+* **Exigence Réglementaire :** ALCOA+ (*Legible / Lisible* — Les données réglementaires, statuts et contrôles doivent rester non tronqués, sans scission anarchique de texte, quelle que soit la résolution du poste de travail).
+* **Rôle Requis :** Pharmacien Directeur Technique (`pdt@pharma.dz`).
+* **Résolutions de Test :** 1920×1080 (Desktop), 1366×768 (Laptop Standard), 1200×800 (Laptop Compact / iPad Pro), 992×768 (Tablette).
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Se connecter en Directeur Technique à la résolution 1920×1080 et naviguer sur le module **Dossiers d'Enregistrement (CTD)**. | Viewport 1920×1080 | • Carte de dossier : Le code dossier (`DOS-2026-PARAC-NF`), le délai (`J-48`) et le statut (`EN PRÉPARATION`) sont affichés sur une seule ligne sans scission de texte.<br>• Barre d'outils centrale : Alignée sur une seule ligne fluide.<br>• Frise Smart Planning : Les 6 jalons (`J-240` à `J-0`) forment un ruban chronologique continu.<br>• Volet d'Aperçu : Les onglets (`📄 Pièce`, `📋 Fiche ANPP`, `🛠️ Atelier & Visa`) et le bouton `✕ Alt+P` sont nets et alignés sans chevauchement ni débordement.<br>• Cartes de paramétrage Admin Lab & aperçus GED (`.pdf-sim-page`) : Les textes longs et empreintes SHA-256 restent strictement confinés à l'intérieur de leur card sans déborder sur les cards adjacentes. |
+| 2 | Redimensionner le navigateur à la résolution Laptop Standard (**1366×768**). | Viewport 1366×768 | • Les boutons de barres d'outils restent strictement sur 1 rangée horizontale défilante (aucun empilement vertical parasite sur 3 ou 7 lignes).<br>• Aucun badge ou bouton ne subit de retour à la ligne au milieu d'un mot ou d'un chiffre. |
+| 3 | Naviguer vers le module **Dispositifs Médicaux (DDM)** et tester la résolution **1200×800**. | Viewport 1200×800 | • Les boutons de filtre de classe (`Classe I`, `Classe IIa`, `Classe IIb`, `Classe III`) sont affichés d'un seul bloc, sans coupure en syllabes (`CLAS` / `SE I`).<br>• Les badges du tableau (`Classe IIa`, `🏭 Fabrication Locale`, `En Enregistrement`) conservent leur intégrité visuelle sans retour à la ligne.<br>• Le volet d'aperçu latéral se convertit en **slide-over drawer** rétractable (`Alt+P`), préservant 100% de la largeur utile du tableau central. |
+| 4 | Tester la résolution **992×768** sur le module **Agréments Corporate (Décret 21-82)**. | Viewport 992×768 | • Le sélecteur de rôle démo se masque automatiquement pour éviter l'écrasement de la barre supérieure.<br>• Le pied de page masque les métriques secondaires pour ne conserver que l'heure UTC+1 d'Alger.<br>• Les badges `[S] Standard`, `[E] Éliminatoire Tabadol` et `J-180 / J-90` ne sont jamais coupés. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-OQ-UI-01-DESKTOP.png`, `SCR-OQ-UI-01-LAPTOP.png`, `SCR-OQ-UI-01-COMPACT.png`, `SCR-OQ-UI-01-TABLET.png`
+
+---
+
+#### Test Ref : `OQ-UI-02`
+* **Titre :** Vérification de l'affichage des intitulés réglementaires officiels complets au survol (Infobulles GxP).
+* **Exigence Réglementaire :** ALCOA+ (*Accurate / Exact* & *Legible / Lisible*) & GAMP 5 — Tout texte législatif ou réglementaire cité de façon compacte dans l'interface (badge, bouton, tableau, barre d'outils ou Veille Juridique) doit permettre à l'utilisateur de consulter son intitulé officiel intégral (numéro, dates hégirienne et grégorienne, référence JORADP) au survol sans encombrer l'espace de travail.
+* **Rôle Requis :** Pharmacien Directeur Technique (`pdt@pharma.dz`).
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Sur le module **Dossiers d'Enregistrement (CTD)**, survoler avec la souris un badge réglementaire dans l'arborescence ou le tableau (ex. `Décret 20-325`, `Arrêté 10 Mai`, `Décret 20-324`). | Curseur sur badge | • Le curseur prend l'aspect d'aide (`cursor: help`) et un soulignement pointillé discret apparaît.<br>• Une infobulle native (`title`) affiche l'intitulé officiel complet du texte ainsi que sa référence JORADP. |
+| 2 | Ouvrir la modale **📜 Veille Juridique** et survoler une référence légale dans la colonne *Texte & Référence*. | Clic sur `📜 Veille Juridique` | • Chaque ligne du corpus affiche la référence et son titre ; le survol de la référence révèle l'intitulé complet enrichi issu du référentiel `SANAD_REGULATORY_DICTIONARY`. |
+| 3 | Naviguer vers **Agréments Corporate (Décret 21-82)** et **Variations (LD-DEPP07/V01)** et survoler les mentions réglementaires. | Navigation onglets | • Les mentions dynamiques (`Décret 21-82`, `LD-DEPP07/V01`, `Arrêté 22/09/2025`, `21 CFR Part 11`) reçoivent automatiquement leur intitulé officiel complet au survol via le `MutationObserver`. |
+| 4 | Ouvrir la modale **🛡️ Audit Trail**, saisir la poignée droite d'un en-tête de colonne (`Horodatage UTC` ou `Cible / Entité`) et la faire glisser horizontalement, puis double-cliquer sur une poignée. | Clic-glisser sur `.audit-col-resizer` | • Le curseur passe en `col-resize` et la colonne s'élargit ou se rétrécit en temps réel (minimum 60px) avec persistance dans `localStorage`.<br>• Le double-clic sur une poignée réinitialise toutes les largeurs par défaut. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-OQ-UI-02-TOOLTIPS.png`
 
 ---
 

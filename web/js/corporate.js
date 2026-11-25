@@ -202,8 +202,8 @@ async function renderCorporateView(filter) {
         <tr>
             <th style="width: 110px;">Statut Réglem.</th>
             <th>N° Demande &amp; Objet de l'Agrément MIPH</th>
-            <th>Catégorie (Décret 21-82)</th>
-            <th>Nature de Demande</th>
+            <th class="col-hide-lg">Catégorie (Décret 21-82)</th>
+            <th class="col-hide-xl">Nature de Demande</th>
             <th class="col-hide-md">Établissement</th>
             <th style="width: 140px;">Complétude</th>
             <th class="col-hide-sm">Passerelle Tabadol</th>
@@ -320,12 +320,12 @@ async function renderCorporateView(filter) {
                     <div style="font-weight:700; color:var(--text-main); font-size:12px;">${escapeHtml(app.title)}</div>
                     <div style="font-size:10px; color:var(--text-dim); font-family:var(--font-mono);">N° ${escapeHtml(app.application_number)}</div>
                 </td>
-                <td>
+                <td class="col-hide-lg">
                     <span style="display:inline-flex; align-items:center; gap:4px; font-weight:600; font-size:11px;">
                         <span>${catIcon}</span> <span>${catLabel}</span>
                     </span>
                 </td>
-                <td><span style="font-size:11px; color:var(--text-main);">${natureLabel}</span></td>
+                <td class="col-hide-xl"><span style="font-size:11px; color:var(--text-main);">${natureLabel}</span></td>
                 <td class="col-hide-md"><span style="font-size:11px; color:var(--text-dim);">${escapeHtml(app.establishment_name || 'Établissement Principal')}</span></td>
                 <td>${compHtml}</td>
                 <td class="col-hide-sm">${tabadolHtml}</td>
@@ -840,19 +840,19 @@ async function renderCorporateAppPreview(appId) {
         const pct = app.completeness_percent || 0;
         const items = app.checklist_items || [];
 
-        // Boutons de changement de sous-onglets
+        // Boutons de changement de sous-onglets avec défilement horizontal fluide
         const tabsHtml = `
-            <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-card); padding:4px 8px; gap:4px; margin-bottom:12px;">
-                <button class="btn-pill ${currentCorporatePreviewTab === 'checklist' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 12px;" onclick="switchCorporatePreviewTab('${app.id}', 'checklist')">
+            <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-card); padding:4px 8px; gap:4px; margin-bottom:12px; overflow-x:auto; white-space:nowrap; flex-wrap:nowrap; scrollbar-width:none;">
+                <button class="btn-pill ${currentCorporatePreviewTab === 'checklist' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'checklist')">
                     📋 Checklist MIPH (${items.length})
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'eform' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 12px;" onclick="switchCorporatePreviewTab('${app.id}', 'eform')">
+                <button class="btn-pill ${currentCorporatePreviewTab === 'eform' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'eform')">
                     📝 Formulaire e-Form
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'tabadol' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 12px;" onclick="switchCorporatePreviewTab('${app.id}', 'tabadol')">
+                <button class="btn-pill ${currentCorporatePreviewTab === 'tabadol' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'tabadol')">
                     🌐 Tabadol &amp; Visa PDT
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'miph' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 12px;" onclick="switchCorporatePreviewTab('${app.id}', 'miph')">
+                <button class="btn-pill ${currentCorporatePreviewTab === 'miph' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'miph')">
                     🏛️ Récépissé &amp; Arrêté
                 </button>
             </div>

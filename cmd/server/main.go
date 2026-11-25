@@ -202,8 +202,9 @@ func main() {
 			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 			w.Header().Set("X-XSS-Protection", "0")
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-			w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+			w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self), payment=()")
 			w.Header().Set("X-Robots-Tag", "noindex, nofollow, noarchive")
+			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.bigdatacloud.net https://api.ipify.org http://ip-api.com; frame-src 'self'; object-src 'none'; base-uri 'self';")
 			next.ServeHTTP(w, r)
 		})
 	})
@@ -216,8 +217,8 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   corsOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Client-Location", "X-Client-Public-IP"},
+		ExposedHeaders:   []string{"Link", "X-Sanad-Seal", "X-Content-SHA256"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
