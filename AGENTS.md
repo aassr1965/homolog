@@ -24,3 +24,14 @@
 > 1. Exécuter systématiquement le script de pré-validation **`powershell -ExecutionPolicy Bypass -File scripts/verify.ps1`** (qui enchaîne `gofmt -w .`, `go vet ./...`, `node --check web/js/*.js`, `go test ./...` et un `go build` de contrôle).
 > 2. Vous devez **systématiquement exécuter un `git commit`** propre et descriptif incluant l'ensemble des fichiers modifiés (code source, documentation `cahier_des_charges.md`, `roadmap.md`, et protocole `PROTOCOLE_QUALIFICATION_OQ_PQ_SANAD.md`).
 > 3. Vérifier l'état du dépôt avec `git status` avant et après le commit afin de ne laisser aucun changement non commité en fin de phase.
+
+## 4. Règle Permanente : Ergonomie UI — Interdiction des Boîtes Natives (`alert`, `confirm`, `prompt`)
+> [!IMPORTANT]
+> **Règle d'interface utilisateur (UX / GxP) :**
+> L'utilisation des boîtes de dialogue natives du navigateur (`window.alert()`, `window.confirm()`, `window.prompt()`) est **strictement proscrite** dans l'ensemble du code frontend (`web/js/*.js` et `web/*.html`).
+>
+> **Composants obligatoires à utiliser :**
+> - **Notifications rapides / erreurs / succès** : `showToast(message, type)` (`'info'`, `'success'`, `'warning'`, `'error'`).
+> - **Messages d'information riches ou alertes réglementaires bloquantes** : `showNotifyModal(title, contentHtml, icon, btnText)`.
+> - **Demandes de confirmation (Oui/Non)** : `await showConfirmModal(title, message, options)`.
+> - **Saisies courtes de motif ou commentaire** : `await showPromptModal(title, message, defaultValue, options)`.

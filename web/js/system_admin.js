@@ -374,7 +374,7 @@ async function loadSystemSessions() {
 
 // Révoquer une session individuelle
 async function revokeSessionById(sessionId, email) {
-    if (!confirm(`Confirmez-vous la révocation immédiate de la session active de ${email} ?\nL'utilisateur sera immédiatement déconnecté.`)) {
+    if (!(await showConfirmModal("Révocation de Session", `Confirmez-vous la révocation immédiate de la session active de ${email} ?\nL'utilisateur sera immédiatement déconnecté.`, { icon: "🔒", danger: true, confirmText: "Révoquer" }))) {
         return;
     }
 
@@ -394,10 +394,12 @@ async function revokeSessionById(sessionId, email) {
 }
 
 // Modal Verrouillage d'Urgence
-function openEmergencyLockdownModal() {
-    const reason = prompt(
-        "🚨 ALERTE DE SÉCURITÉ PSSI / VERROUILLAGE D'URGENCE\n\nCette opération détruira TOUTES les sessions actives sur la plateforme, forçant l'ensemble des collaborateurs à se reconnecter.\n\nVeuillez saisir le motif réglementaire de sécurité :",
-        "Mesure conservatoire de sécurité PSSI / Alerte intrusion"
+async function openEmergencyLockdownModal() {
+    const reason = await showPromptModal(
+        "Alerte Sécurité PSSI / Verrouillage d'Urgence",
+        "Cette opération détruira TOUTES les sessions actives sur la plateforme, forçant l'ensemble des collaborateurs à se reconnecter.\nVeuillez saisir le motif réglementaire de sécurité :",
+        "Mesure conservatoire de sécurité PSSI / Alerte intrusion",
+        { icon: "🚨", danger: true, confirmText: "Verrouiller la Plateforme" }
     );
 
     if (!reason || reason.trim().length < 3) {
@@ -750,7 +752,7 @@ async function submitRestoreHomolog(e) {
     e.preventDefault();
     const fileInput = document.getElementById("restore-file-input");
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        alert("Veuillez sélectionner un fichier d'archive .sanad ou .homolog.");
+        showToast("Veuillez sélectionner un fichier d'archive .sanad ou .homolog.", "warning");
         return;
     }
 

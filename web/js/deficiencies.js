@@ -295,7 +295,7 @@ async function openDeficiencyLetterDetail(letterId) {
         currentDeficiencyLetterDetail = letter;
         renderDeficiencyLetterDetailModal(letter);
     } catch (err) {
-        alert("Impossible de charger la lettre: " + err.message);
+        showToast("Impossible de charger la lettre: " + err.message, "error");
     }
 }
 
@@ -447,23 +447,24 @@ async function saveTaskAnswer(taskId) {
             throw new Error(err.error || `Erreur HTTP ${resp.status}`);
         }
 
-        if (typeof showToast === 'function') {
-            showToast("Réponse enregistrée avec succès");
-        } else {
-            alert("Réponse enregistrée avec succès");
-        }
+        showToast("Réponse enregistrée avec succès", "success");
 
         if (currentDeficiencyLetterDetail) {
             openDeficiencyLetterDetail(currentDeficiencyLetterDetail.id);
         }
     } catch (err) {
-        alert("Erreur lors de l'enregistrement: " + err.message);
+        showToast("Erreur lors de l'enregistrement: " + err.message, "error");
     }
 }
 
 // Apposition du visa légal du Pharmacien Directeur Technique (PDT - 1.A.7)
 async function validateTaskDT(taskId) {
-    const comment = prompt("Visa du Pharmacien Directeur Technique (Mandat Légal 1.A.7) :\nSaisir un commentaire de validation pour l'Audit Trail BPF (optionnel) :", "Réponse approuvée conforme aux exigences du Guide CTD ANPP 2025");
+    const comment = await showPromptModal(
+        "Visa Légal PDT (Mandat 1.A.7)",
+        "Saisir un commentaire de validation pour l'Audit Trail BPF (optionnel) :",
+        "Réponse approuvée conforme aux exigences du Guide CTD ANPP 2025",
+        { icon: "✍️", confirmText: "Apposer le Visa PDT" }
+    );
     if (comment === null) return;
 
     try {
@@ -481,17 +482,13 @@ async function validateTaskDT(taskId) {
             throw new Error(err.error || `Erreur HTTP ${resp.status}`);
         }
 
-        if (typeof showToast === 'function') {
-            showToast("Visa légal PDT apposé avec succès (Audit Trail scellé)");
-        } else {
-            alert("Visa légal PDT apposé avec succès (Audit Trail scellé)");
-        }
+        showToast("Visa légal PDT apposé avec succès (Audit Trail scellé)", "success");
 
         if (currentDeficiencyLetterDetail) {
             openDeficiencyLetterDetail(currentDeficiencyLetterDetail.id);
         }
     } catch (err) {
-        alert("Erreur lors de l'apposition du visa PDT: " + err.message);
+        showToast("Erreur lors de l'apposition du visa PDT: " + err.message, "error");
     }
 }
 
@@ -741,7 +738,7 @@ async function executeCreateDeficiencyLetter(e) {
         dossierId = selectEl.value;
     }
     if (!dossierId) {
-        alert("Veuillez sélectionner un dossier d'enregistrement");
+        showToast("Veuillez sélectionner un dossier d'enregistrement", "warning");
         return;
     }
 
@@ -773,7 +770,7 @@ async function executeCreateDeficiencyLetter(e) {
     }
 
     if (!refNumber) {
-        alert("La référence officielle de la lettre ANPP est obligatoire");
+        showToast("La référence officielle de la lettre ANPP est obligatoire", "warning");
         return;
     }
 
@@ -794,7 +791,7 @@ async function executeCreateDeficiencyLetter(e) {
     });
 
     if (tasks.length === 0) {
-        alert("Veuillez saisir au moins une question notifiée par l'ANPP");
+        showToast("Veuillez saisir au moins une question notifiée par l'ANPP", "warning");
         return;
     }
 
@@ -854,11 +851,7 @@ async function executeCreateDeficiencyLetter(e) {
         closeModal("modal-new-deficiency-letter");
         if (fileInput) fileInput.value = '';
         
-        if (typeof showToast === 'function') {
-            showToast(`Lettre ANPP enregistrée (${tasks.length} questions décomposées)`);
-        } else {
-            alert(`Lettre ANPP enregistrée (${tasks.length} questions décomposées)`);
-        }
+        showToast(`Lettre ANPP enregistrée (${tasks.length} questions décomposées)`, "success");
 
         // Si nous sommes dans la vue compléments, rafraîchir le dashboard
         if (typeof currentDomain !== 'undefined' && currentDomain === 'deficiencies') {
@@ -867,7 +860,7 @@ async function executeCreateDeficiencyLetter(e) {
             loadDossiers();
         }
     } catch (err) {
-        alert("Erreur lors de la création de la lettre: " + err.message);
+        showToast("Erreur lors de la création de la lettre: " + err.message, "error");
     }
 }
 
@@ -934,11 +927,7 @@ async function executeAttachScanFileToLetter(input) {
             throw new Error("Échec du rattachement : " + (errJson.error || attachResp.statusText));
         }
 
-        if (typeof showToast === 'function') {
-            showToast("Scan officiel archivé et rattaché avec succès");
-        } else {
-            alert("Scan officiel archivé et rattaché avec succès");
-        }
+        showToast("Scan officiel archivé et rattaché avec succès", "success");
 
         // Si le modal détail est ouvert pour cette lettre, rafraîchir le détail
         const detailModal = document.getElementById("modal-deficiency-detail");
@@ -949,7 +938,7 @@ async function executeAttachScanFileToLetter(input) {
             loadDeficienciesDashboard();
         }
     } catch (err) {
-        alert("Erreur lors du versement du document : " + err.message);
+        showToast("Erreur lors du versement du document : " + err.message, "error");
     }
 }
 

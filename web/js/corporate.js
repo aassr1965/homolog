@@ -1494,7 +1494,7 @@ async function detachGEDDocumentFromItem(appId, itemId) {
         showNotifyModal("Accès Refusé", "Vous n'avez pas le privilège requis pour détacher un document.", "🔒", "Fermer");
         return;
     }
-    if (!confirm("Détacher cette pièce GED de l'exigence réglementaire ?")) return;
+    if (!(await showConfirmModal("Détacher Pièce GED", "Détacher cette pièce GED de l'exigence réglementaire ?", { icon: "🔗", danger: true, confirmText: "Détacher" }))) return;
     try {
         const resp = await fetch(`/api/v1/corporate/applications/${appId}/items/${itemId}/detach`, {
             method: 'POST'

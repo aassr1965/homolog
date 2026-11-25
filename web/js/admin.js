@@ -793,7 +793,12 @@ function renderAdminPoliciesView() {
 
 // Mise à jour du rôle d'un collaborateur
 async function handleUserRoleChange(userId, newRole, email) {
-    if (!confirm(`Confirmez-vous la modification du rôle pour ${email} vers "${formatRole(newRole)}" ?\nCette opération incrémentera la version des permissions et sera inscrite dans l'Audit Trail.`)) {
+    const ok = await showConfirmModal(
+        "Modification de Rôle",
+        `Confirmez-vous la modification du rôle pour ${email} vers "${formatRole(newRole)}" ?\nCette opération incrémentera la version des permissions et sera inscrite dans l'Audit Trail.`,
+        { icon: "🛡️", confirmText: "Confirmer" }
+    );
+    if (!ok) {
         loadAdminSection('users');
         return;
     }
@@ -1069,7 +1074,12 @@ async function handleResetPasswordSubmit(event) {
 
 // 4. Réinitialisation TOTP (2FA)
 async function handleResetTOTP(userId, email) {
-    const reason = prompt(`Confirmez-vous la réinitialisation du 2FA TOTP pour ${email} ?\n\nVeuillez saisir le motif réglementaire (ex: perte ou remplacement de smartphone) :`, "Perte déclarée du terminal d'authentification");
+    const reason = await showPromptModal(
+        "Réinitialisation 2FA TOTP",
+        `Confirmez-vous la réinitialisation du 2FA TOTP pour ${email} ?\nVeuillez saisir le motif réglementaire (ex: perte ou remplacement de smartphone) :`,
+        "Perte déclarée du terminal d'authentification",
+        { icon: "🔐", danger: true, confirmText: "Réinitialiser" }
+    );
     if (!reason || reason.trim().length < 3) {
         if (reason !== null) {
             showNotifyModal("Action Annulée", "Un motif circonstancié est obligatoire pour réinitialiser le 2FA (BPF / PSSI).", "⚠️", "Fermer");
@@ -1465,7 +1475,7 @@ async function renderAdminSettingsView() {
 function openEditSettingModal(key) {
     const item = tenantRegulatorySettings.find(s => s.setting_key === key);
     if (!item) {
-        alert("Paramètre introuvable.");
+        showToast("Paramètre introuvable.", "error");
         return;
     }
 
@@ -1514,7 +1524,7 @@ async function submitEditSettingForm(e) {
     const reason = document.getElementById("edit-setting-reason").value.trim();
 
     if (!key || !newVal || !reason) {
-        alert("Veuillez remplir tous les champs obligatoires.");
+        showToast("Veuillez remplir tous les champs obligatoires.", "warning");
         return;
     }
 
@@ -1540,23 +1550,23 @@ async function submitEditSettingForm(e) {
         if (typeof closeModal === 'function') {
             closeModal('modal-edit-setting');
         }
-        if (typeof showToast === 'function') {
-            showToast(data.message || "Paramètre enregistré avec succès", "success");
-        } else {
-            alert(data.message || "Paramètre enregistré avec succès");
-        }
+        showToast(data.message || "Paramètre enregistré avec succès", "success");
         renderAdminSettingsView();
     } catch(err) {
-        alert("Erreur lors de la modification : " + err.message);
+        showToast("Erreur lors de la modification : " + err.message, "error");
     }
 }
 
 // Modal d'approbation DT
-function approveSettingModal(key) {
+async function approveSettingModal(key) {
     const item = tenantRegulatorySettings.find(s => s.setting_key === key);
     const label = item ? item.label_fr : key;
 
-    const ok = confirm(`Confirmation de Visa Légal (Pharmacien Directeur Technique) :\n\nConfirmez-vous sur l'honneur l'exactitude de cette modification institutionnelle pour "${label}" ?`);
+    const ok = await showConfirmModal(
+        "Visa Légal — Pharmacien Directeur Technique",
+        `Confirmez-vous sur l'honneur l'exactitude de cette modification institutionnelle pour "${label}" ?`,
+        { icon: "✍️", confirmText: "Approuver" }
+    );
     if (!ok) return;
 
     fetch(`/api/v1/admin/settings/regulatory/${encodeURIComponent(key)}/approve`, {
@@ -1578,7 +1588,7 @@ function approveSettingModal(key) {
         renderAdminSettingsView();
     })
     .catch(err => {
-        alert("Erreur lors du visa DT : " + err.message);
+        showToast("Erreur lors du visa DT : " + err.message, "error");
     });
 }
 
@@ -1636,7 +1646,7 @@ async function openSettingHistoryModal(key) {
 
         showNotifyModal(`Audit Trail Temporel : ${label}`, bodyHtml, "📜", "Fermer");
     } catch (e) {
-        alert("Erreur chargement historique : " + e.message);
+        showToast("Erreur chargement historique : " + e.message, "error");
     }
 }
 

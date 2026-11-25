@@ -271,7 +271,7 @@ async function executeCreateAppointment(e) {
     const notes = document.getElementById("app-notes").value.trim();
 
     if (!sched) {
-        alert("Veuillez sélectionner la date et l'heure du créneau.");
+        showToast("Veuillez sélectionner la date et l'heure du créneau.", "warning");
         return;
     }
 
@@ -303,7 +303,7 @@ async function executeCreateAppointment(e) {
             throw new Error(err.error || `Erreur HTTP ${resp.status}`);
         }
 
-        alert("Séance / Rendez-vous ANPP planifié avec succès.");
+        showToast("Séance / Rendez-vous ANPP planifié avec succès.", "success");
         document.getElementById("form-create-appointment").reset();
         await loadAppointmentsList();
 
@@ -312,7 +312,7 @@ async function executeCreateAppointment(e) {
             await selectDossier(selectedDossierId);
         }
     } catch (err) {
-        alert("Erreur lors de la planification : " + err.message);
+        showToast("Erreur lors de la planification : " + err.message, "error");
     }
 }
 
@@ -339,6 +339,6 @@ async function updateAppointmentState(appId, newStatus) {
             await selectDossier(selectedDossierId);
         }
     } catch (err) {
-        alert("Erreur mise à jour : " + err.message);
+        showToast("Erreur mise à jour : " + err.message, "error");
     }
 }
