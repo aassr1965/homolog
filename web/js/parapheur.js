@@ -1016,25 +1016,36 @@
      * Charge la liste des assistants pour le sélecteur
      */
     window.loadAssistantSelect = async function () {
-        const select = document.getElementById('deleg-delegate-select');
-        if (!select) return;
+        const selects = [
+            document.getElementById('deleg-delegate-select'),
+            document.getElementById('perm-delegate-select')
+        ].filter(Boolean);
+        if (selects.length === 0) return;
 
         try {
             const res = await fetch('/api/v1/parapheur/assistants');
             if (!res.ok) return;
             const assistants = await res.json();
 
-            if (!assistants || assistants.length === 0) {
-                select.innerHTML = '<option value="">Aucun Pharmacien Assistant trouvé dans l\'établissement</option>';
-                return;
-            }
+            const html = (!assistants || assistants.length === 0)
+                ? '<option value="">Aucun Pharmacien Assistant trouvé dans l\'établissement</option>'
+                : '<option value="">Sélectionnez un Pharmacien Assistant...</option>' +
+                  assistants.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.first_name + ' ' + a.last_name)} (${escapeHtml(a.email)})</option>`).join('');
 
-            select.innerHTML = '<option value="">Sélectionnez un Pharmacien Assistant...</option>' + 
-                assistants.map(a => `<option value="${a.id}">${escapeHtml(a.first_name + ' ' + a.last_name)} (${a.email})</option>`).join('');
+            selects.forEach(sel => { sel.innerHTML = html; });
         } catch (e) {
             console.error('Erreur chargement assistants:', e);
         }
     };
+
+    function notifyDelegation(message, type = 'info', duration = 4200) {
+        if (typeof showToast === 'function') {
+            showToast(message, type, duration);
+        } else if (typeof showNotifyModal === 'function') {
+            const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : 'ℹ️'));
+            showNotifyModal('Délégation DT', escapeHtml(message), icon, 'Fermer');
+        }
+    }
 
     /**
      * Soumission du formulaire de création de mandat d'intérim
@@ -1048,7 +1059,7 @@
         const reason = document.getElementById('deleg-reason')?.value?.trim();
 
         if (!delegateId || !miphRef || !startDateStr || !endDateStr || !reason) {
-            alert("Veuillez renseigner tous les champs obligatoires du mandat.");
+            notifyDelegation("Veuillez renseigner tous les champs obligatoires du mandat.", "warning");
             return;
         }
 
@@ -1056,13 +1067,22 @@
         const end = new Date(endDateStr);
 
         if (end <= start) {
-            alert("La date de fin doit être postérieure à la date de début.");
+            notifyDelegation("La date de fin doit être postérieure à la date de début.", "warning");
             return;
         }
 
         const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
         if (diffDays > 92) {
-            alert("⚠️ Infraction Décret exécutif n° 21-82 (Art. 24) :\nLa durée d'un mandat d'intérim technique ne peut excéder trois (3) mois (92 jours). Au-delà, un nouveau Pharmacien DT titulaire doit être nommé auprès du MIPH.");
+            if (typeof showNotifyModal === 'function') {
+                showNotifyModal(
+                    "Infraction Décret exécutif n° 21-82 (Art. 24)",
+                    "La durée d'un mandat d'intérim technique ne peut excéder <strong>trois (3) mois (92 jours)</strong>. Au-delà, un nouveau Pharmacien DT titulaire doit être nommé auprès du MIPH.",
+                    "⚠️",
+                    "Compris"
+                );
+            } else {
+                notifyDelegation("Durée maximale légale dépassée (92 jours max — Art. 24).", "error");
+            }
             return;
         }
 
@@ -1081,68 +1101,103 @@
 
             if (!res.ok) {
                 const errData = await res.json();
-                alert("Erreur enregistrement mandat : " + (errData.error || errData.message || res.statusText));
+                notifyDelegation("Erreur enregistrement mandat : " + (errData.error || errData.message || res.statusText), "error");
                 return;
             }
 
-            alert("✅ Mandat d'intérim enregistré avec succès au Registre BPF (Décret 21-82 Art. 24).");
+            notifyDelegation("✅ Mandat d'intérim enregistré avec succès au Registre BPF (Décret 21-82 Art. 24).", "success");
             document.getElementById('form-create-delegation')?.reset();
             loadDTDelegations();
             refreshParapheurBadge();
         } catch (err) {
             console.error('Erreur création délégation:', err);
-            alert("Erreur réseau lors de l'enregistrement du mandat.");
+            notifyDelegation("Erreur réseau lors de l'enregistrement du mandat.", "error");
+        }
+    };
+
+    let pendingRevokeTarget = null;
+
+    function openRevokeDelegationModal(id, kind) {
+        pendingRevokeTarget = { id, kind };
+        const modal = document.getElementById('modal-revoke-delegation');
+        const titleEl = document.getElementById('revoke-modal-title');
+        const descEl = document.getElementById('revoke-modal-desc');
+        const reasonInput = document.getElementById('revoke-delegation-reason');
+
+        if (!modal) return;
+        if (kind === 'permanent') {
+            if (titleEl) titleEl.textContent = "Révoquer l'Habilitation Permanente Ciblée";
+            if (descEl) descEl.textContent = "Le Pharmacien Assistant ne pourra plus signer de documents GED dans le cadre de cette habilitation hors intérim.";
+            if (reasonInput) reasonInput.value = "Révocation par le Directeur Technique";
+        } else {
+            if (titleEl) titleEl.textContent = "Révoquer le Mandat d'Intérim Technique";
+            if (descEl) descEl.textContent = "Le Pharmacien Assistant ne pourra plus apposer de visas au Parapheur DT ni accéder à l'Audit Trail au titre de cet intérim.";
+            if (reasonInput) reasonInput.value = "Reprise de fonctions du Pharmacien Directeur Technique titulaire";
+        }
+
+        if (typeof openModal === 'function') {
+            openModal('modal-revoke-delegation');
+        } else {
+            modal.classList.add('active');
+        }
+        setTimeout(() => reasonInput?.focus(), 50);
+    }
+
+    window.closeRevokeDelegationModal = function () {
+        pendingRevokeTarget = null;
+        const modal = document.getElementById('modal-revoke-delegation');
+        if (!modal) return;
+        if (typeof closeModal === 'function') {
+            closeModal('modal-revoke-delegation');
+        } else {
+            modal.classList.remove('active');
+        }
+    };
+
+    window.executeRevokeDelegation = async function () {
+        if (!pendingRevokeTarget) return;
+        const { id, kind } = pendingRevokeTarget;
+        const reason = document.getElementById('revoke-delegation-reason')?.value?.trim() || '';
+        const url = kind === 'permanent'
+            ? `/api/v1/parapheur/permanent-delegations/${id}/revoke`
+            : `/api/v1/parapheur/delegations/${id}/revoke`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+            if (!res.ok) {
+                const errData = await res.json();
+                notifyDelegation("Erreur révocation : " + (errData.error || errData.message || res.statusText), "error");
+                return;
+            }
+            closeRevokeDelegationModal();
+            if (kind === 'permanent') {
+                notifyDelegation("Habilitation permanente révoquée. Piste d'audit ALCOA+ mise à jour.", "success");
+                loadDTPermanentDelegations();
+            } else {
+                notifyDelegation("Mandat d'intérim révoqué. Piste d'audit ALCOA+ mise à jour.", "success");
+                loadDTDelegations();
+                refreshParapheurBadge();
+            }
+        } catch (err) {
+            console.error('Erreur révocation:', err);
+            notifyDelegation("Erreur réseau lors de la révocation.", "error");
         }
     };
 
     /**
      * Révocation d'un mandat d'intérim
      */
-    window.revokeDTDelegation = async function (id) {
-        if (!confirm("Êtes-vous certain de vouloir révoquer ce mandat d'intérim technique ?\nLe Pharmacien Assistant ne pourra plus apposer de visas au Parapheur.")) {
-            return;
-        }
-
-        const reason = prompt("Motif de la révocation (ex: Reprise de fonction du Pharmacien DT titulaire) :", "Reprise de fonctions du Pharmacien Directeur Technique titulaire");
-        if (reason === null) return;
-
-        try {
-            const res = await fetch(`/api/v1/parapheur/delegations/${id}/revoke`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reason: reason })
-            });
-
-            if (!res.ok) {
-                const errData = await res.json();
-                alert("Erreur révocation : " + (errData.error || errData.message || res.statusText));
-                return;
-            }
-
-            alert("Mandat d'intérim révoqué. La piste d'audit ALCOA+ a été mise à jour.");
-            loadDTDelegations();
-            refreshParapheurBadge();
-        } catch (err) {
-            console.error('Erreur révocation:', err);
-            alert("Erreur réseau lors de la révocation du mandat.");
-        }
+    window.revokeDTDelegation = function (id) {
+        openRevokeDelegationModal(id, 'interim');
     };
 
     window.loadDTPermanentDelegations = async function () {
         const tbody = document.getElementById('dt-perm-delegations-tbody');
         const countSpan = document.getElementById('dt-perm-delegations-count');
-        const permSel = document.getElementById('perm-delegate-select');
-        if (permSel && permSel.options.length <= 1) {
-            try {
-                const aRes = await fetch('/api/v1/parapheur/assistants');
-                if (aRes.ok) {
-                    const aData = await aRes.json();
-                    const list = aData.assistants || [];
-                    permSel.innerHTML = '<option value="">Sélectionnez un Pharmacien Assistant...</option>' +
-                        list.map(u => `<option value="${escapeHtml(u.id)}">${escapeHtml(u.full_name || (u.first_name + ' ' + u.last_name))} (${escapeHtml(u.email)})</option>`).join('');
-                }
-            } catch (_) {}
-        }
         if (!tbody) return;
 
         try {
@@ -1195,11 +1250,11 @@
         const prefixes = Array.from(document.querySelectorAll('input[name="perm-prefix"]:checked')).map(el => el.value);
 
         if (!delegateId || !habRef) {
-            alert("Veuillez sélectionner un Pharmacien Assistant et saisir la référence d'habilitation.");
+            notifyDelegation("Veuillez sélectionner un Pharmacien Assistant et saisir la référence d'habilitation.", "warning");
             return;
         }
         if (prefixes.length === 0) {
-            alert("Veuillez cocher au moins un périmètre Qualité ou Production.");
+            notifyDelegation("Veuillez cocher au moins un périmètre Qualité ou Production.", "warning");
             return;
         }
 
@@ -1216,39 +1271,21 @@
             });
             if (!res.ok) {
                 const errData = await res.json();
-                alert("Erreur : " + (errData.error || errData.message || res.statusText));
+                notifyDelegation("Erreur : " + (errData.error || errData.message || res.statusText), "error");
                 return;
             }
-            alert("Habilitation permanente ciblée activée (Qualité / Production).");
+            notifyDelegation("✅ Habilitation permanente ciblée activée (Qualité / Production).", "success");
             document.getElementById('form-create-perm-delegation')?.reset();
             document.querySelectorAll('input[name="perm-prefix"]').forEach(el => { el.checked = true; });
             loadDTPermanentDelegations();
         } catch (err) {
             console.error('Erreur création délégation permanente:', err);
-            alert("Erreur réseau lors de l'enregistrement.");
+            notifyDelegation("Erreur réseau lors de l'enregistrement.", "error");
         }
     };
 
-    window.revokeDTPermanentDelegation = async function (id) {
-        if (!confirm("Révoquer cette habilitation permanente ciblée ?")) return;
-        const reason = prompt("Motif de révocation :", "Révocation par le Directeur Technique");
-        if (reason === null) return;
-        try {
-            const res = await fetch(`/api/v1/parapheur/permanent-delegations/${id}/revoke`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reason })
-            });
-            if (!res.ok) {
-                const errData = await res.json();
-                alert("Erreur : " + (errData.error || errData.message || res.statusText));
-                return;
-            }
-            alert("Habilitation permanente révoquée.");
-            loadDTPermanentDelegations();
-        } catch (err) {
-            console.error('Erreur révocation délégation permanente:', err);
-        }
+    window.revokeDTPermanentDelegation = function (id) {
+        openRevokeDelegationModal(id, 'permanent');
     };
 
     function escapeHtml(str) {

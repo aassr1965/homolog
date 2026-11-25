@@ -11,7 +11,7 @@ async function openPreSubmissionAuditModal(dossierId) {
         if (typeof selectedDossierId !== 'undefined' && selectedDossierId) {
             dossierId = selectedDossierId;
         } else {
-            alert("Veuillez sélectionner un dossier d'enregistrement");
+            showToast("Veuillez sélectionner un dossier d'enregistrement", "warning");
             return;
         }
     }
@@ -177,7 +177,12 @@ function downloadEservicesManifest(format) {
 async function executeLockPreSubmission() {
     if (!currentAuditDossierId) return;
 
-    const notes = prompt("Notes ou observations pour la certification de télé-dépôt E-Services ANPP (optionnel) :", "Vérifié conforme pour télé-transmission officielle session ANPP 2026");
+    const notes = await showPromptModal(
+        "Certification Télé-Dépôt E-Services ANPP",
+        "Notes ou observations pour la certification de télé-dépôt (optionnel) :",
+        "Vérifié conforme pour télé-transmission officielle session ANPP 2026",
+        { icon: "🔏", confirmText: "Certifier & Sceller" }
+    );
     if (notes === null) return; // Annulé
 
     try {
@@ -196,7 +201,12 @@ async function executeLockPreSubmission() {
         }
 
         const data = await resp.json();
-        alert(`✅ ${data.message}\n\nEmpreinte d'intégrité scellée (SHA-256) :\n${data.manifest_digest}`);
+        showNotifyModal(
+            "Télé-Dépôt Certifié & Scellé",
+            `<div>${escapeHTML(data.message || '')}</div><div style="margin-top:8px;"><strong>Empreinte d'intégrité scellée (SHA-256) :</strong><br><code style="font-size:10.5px; word-break:break-all;">${escapeHTML(data.manifest_digest || '')}</code></div>`,
+            "✅",
+            "Fermer"
+        );
 
         closeModal("modal-pre-submission-audit");
 
@@ -208,6 +218,6 @@ async function executeLockPreSubmission() {
             selectDossier(currentAuditDossierId);
         }
     } catch (err) {
-        alert("Erreur lors de la certification : " + err.message);
+        showToast("Erreur lors de la certification : " + err.message, "error");
     }
 }

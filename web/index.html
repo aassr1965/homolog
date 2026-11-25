@@ -862,6 +862,29 @@
         </div>
     </div>
 
+    <!-- Modal Universelle de Confirmation & Saisie (Remplace confirm() et prompt()) -->
+    <div class="modal-overlay" id="modal-universal-dialog" style="z-index:10050;">
+        <div class="modal" style="width:480px; max-width:calc(100vw - 24px);">
+            <div class="modal-header" id="udialog-header" style="padding:10px 16px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="udialog-icon" style="font-size:17px;">❓</span>
+                    <span id="udialog-title" style="font-weight:800; font-size:13px;">Confirmation</span>
+                </div>
+                <button type="button" class="close-btn" id="udialog-btn-close">✕</button>
+            </div>
+            <div class="modal-body" style="padding:14px 16px; display:flex; flex-direction:column; gap:10px; font-size:12px; line-height:1.5;">
+                <div id="udialog-message" style="white-space:pre-line; color:var(--text-main);"></div>
+                <div id="udialog-input-wrap" style="display:none;">
+                    <input type="text" id="udialog-input" style="width:100%; padding:7px 9px; font-size:12px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; display:flex; justify-content:flex-end; gap:8px;">
+                <button type="button" class="btn-pill" id="udialog-btn-cancel">Annuler</button>
+                <button type="button" class="btn-pill" id="udialog-btn-confirm" style="background:var(--accent-blue); color:white; border:none; font-weight:700;">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Avertissement Déconnexion Automatique Réglementaire (BPF / 21 CFR Part 11) -->
     <div class="modal-overlay" id="modal-session-timeout" style="z-index: 999999; display: none;">
         <div class="modal" style="max-width: 530px; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);">
@@ -4171,9 +4194,33 @@
 
             <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:11px; color:var(--text-dim);">
-                    ⚖️ Décret exécutif n° 21-82 Art. 24 : En cas d'absence > 3 mois, un nouveau DT doit être nommé auprès du MIPH.
+                    ⚖️ Décret exécutif n° 21-82 Art. 24 : En cas d'absence &gt; 3 mois, un nouveau DT doit être nommé auprès du MIPH.
                 </div>
                 <button type="button" class="btn-pill" onclick="closeDTDelegationsModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Révocation Délégation / Habilitation -->
+    <div class="modal-overlay" id="modal-revoke-delegation" style="z-index:1100;" onclick="if(event.target === this) closeRevokeDelegationModal()">
+        <div class="modal" style="width:460px; max-width:calc(100vw - 24px);">
+            <div class="modal-header" style="border-bottom:2px solid var(--accent-red); background:rgba(239,68,68,0.06); padding:10px 16px;">
+                <div class="modal-title" style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:13.5px; color:var(--text-main);">
+                    <span>⚠️</span>
+                    <span id="revoke-modal-title">Confirmation de Révocation</span>
+                </div>
+                <button class="close-btn" onclick="closeRevokeDelegationModal()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+                <p id="revoke-modal-desc" style="font-size:12px; color:var(--text-main); margin:0; line-height:1.45;"></p>
+                <div>
+                    <label for="revoke-delegation-reason" style="display:block; font-size:11px; font-weight:700; margin-bottom:4px; color:var(--text-dim);">Motif de la révocation (journalisé ALCOA+) :</label>
+                    <input type="text" id="revoke-delegation-reason" style="width:100%; padding:7px 9px; font-size:12px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:8px;">
+                <button type="button" class="btn-pill" onclick="closeRevokeDelegationModal()">Annuler</button>
+                <button type="button" class="btn-pill" id="btn-confirm-revoke-delegation" style="background:var(--accent-red); color:white; border:none; font-weight:700;" onclick="executeRevokeDelegation()">Confirmer la Révocation</button>
             </div>
         </div>
     </div>

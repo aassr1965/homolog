@@ -570,6 +570,7 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 | 7 | Tester l'accès à l'**Audit Trail** (`AUDIT_VIEW`) avec un compte **Pharmacien Assistant** (`pharmacien_assistant`) hors période d'intérim, puis durant un mandat d'intérim DT actif (`dt_delegations`). | Compte `pharmacien_assistant` | • **Hors intérim :** L'accès à `GET /api/v1/audit/logs` est bloqué (**HTTP 403**) et le bouton Audit Trail n'est pas actif.<br>• **Durant un intérim DT actif :** La permission `AUDIT_VIEW` est dynamiquement octroyée pour la durée du mandat (`start_date` à `end_date`) et révoquée automatiquement dès la clôture/révocation du mandat. |
 | 8 | Tester la signature GED (`/api/v1/ged/documents/{id}/sign-dt`) par le **DT intérimaire** (`pharmacien_assistant` avec mandat actif) sur un document *Qualité / Production* (`02_Assurance_Qualite`, `03_Developpement_Production`, `04_Controle_Qualite`) vs un document *Affaires Réglementaires* (`01_Affaires_Reglementaires`). | Mandat intérim actif | • **Qualité & Production (`02_`, `03_`, `04_`) :** Signature acceptée (**HTTP 200**) avec mention `[Intérim DT — Mandat ...]` dans la déclaration scellée.<br>• **Hors périmètre (`01_Affaires_Reglementaires`) ou hors intérim :** Bloqué (**HTTP 403**). |
 | 9 | Hors période d'intérim : dans la modale **Registre des Mandats & Habilitations** du Parapheur DT, créer une **Délégation Permanente Ciblée** (`NOTE-HAB-DT-2026-01`) au profit d'un `pharmacien_assistant` sur `02_Assurance_Qualite` et `03_Developpement_Production`, puis tester la signature GED depuis l'interface GED. | Habilitation permanente active (hors intérim) | • **Création avec `01_Affaires_Reglementaires` :** Refusée (**HTTP 400**).<br>• **Signature GED sur `02_` / `03_` :** Bouton & modale de signature accessibles en GED, scellement réussi (**HTTP 200**) avec mention `[Par délégation permanente DT — Réf. NOTE-HAB-DT-2026-01]`.<br>• **Après révocation ou sur `01_` :** Bloqué (**HTTP 403**). |
+| 10 | Déclencher une confirmation, une saisie de motif et une notification de succès/erreur dans les modules (ex. création/révocation de délégation, changement de rôle Admin, soumission/scellement workflow, veille réglementaire, frais ANPP). | Actions UI diverses | • **Zéro boîte native :** Aucune fenêtre native du navigateur (`alert`, `confirm`, `prompt`) n'apparaît.<br>• Toutes les confirmations et saisies passent par la modale unifiée `#modal-universal-dialog` (`showConfirmModal` / `showPromptModal`) ou `#modal-revoke-delegation`, et les retours utilisent `showToast(...)` ou `showNotifyModal(...)`. |
 
 * **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
 * **Preuve Documentaire :** `SCR-OQ-UI-02-TOOLTIPS.png`
@@ -618,8 +619,8 @@ Tout écart constaté lors de l'exécution d'un test doit être consigné dans l
 | Statistique de Qualification | Valeur Observée | Seuil d'Acceptabilité GxP |
 | :--- | :---: | :---: |
 | **Nombre total de tests exécutés :** | `...` | 100% des cas prévus |
-| **Nombre de tests CONFORMES (PASS) :** | `...` | $\ge 98\%$ |
-| **Nombre de déviations mineures acceptées :** | `...` | $\le 2$ (avec plan d'action CAPA) |
+| **Nombre de tests CONFORMES (PASS) :** | `...` | ≥ 98 % |
+| **Nombre de déviations mineures acceptées :** | `...` | ≤ 2 (avec plan d'action CAPA) |
 | **Nombre de déviations critiques :** | `...` | **0 Tolérance Zéro** |
 
 ### Visa et Approbation Formelle de la Recette

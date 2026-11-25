@@ -7,7 +7,6 @@
 if (typeof window.showToast !== 'function') {
     window.showToast = function(msg, type) {
         console.log(`[TOAST ${type || 'info'}] ${msg}`);
-        if (typeof alert === 'function' && type === 'error') alert(msg);
     };
 }
 
@@ -329,7 +328,7 @@ async function submitWorkflowAssign(e) {
 // Soumission à Relecture Qualité (Maker -> Checker)
 // ----------------------------------------------------------------------------
 async function submitItemForReview(dossierId, itemId, itemCode) {
-    if (!confirm(`Soumettre la section [${itemCode}] à la relecture Qualité/Pair (Checker BPF) ?\nElle basculera en statut 'En revue AQ'.`)) {
+    if (!(await showConfirmModal("Soumission à Relecture Qualité", `Soumettre la section [${itemCode}] à la relecture Qualité/Pair (Checker BPF) ?\nElle basculera en statut 'En revue AQ'.`, { icon: "📤", confirmText: "Soumettre" }))) {
         return;
     }
 
@@ -345,7 +344,7 @@ async function submitItemForReview(dossierId, itemId, itemCode) {
                 showGatingBlockedAlert(data);
                 return;
             }
-            alert(data.message || data.error || "Erreur lors de la soumission à revue");
+            showToast(data.message || data.error || "Erreur lors de la soumission à revue", "error");
             return;
         }
 
@@ -358,7 +357,7 @@ async function submitItemForReview(dossierId, itemId, itemCode) {
             }
         }
     } catch (err) {
-        alert(err.message || "Erreur réseau");
+        showToast(err.message || "Erreur réseau", "error");
     }
 }
 
@@ -992,7 +991,7 @@ function downloadActiveReportCSV() {
 }
 
 async function sealActiveReport() {
-    if (!confirm(`Confirmer le scellement formel de l'état ${currentReportCode} avec signature numérique Pharmacien DT et horodatage certifié ?`)) {
+    if (!(await showConfirmModal("Scellement Formel DT", `Confirmer le scellement formel de l'état ${currentReportCode} avec signature numérique Pharmacien DT et horodatage certifié ?`, { icon: "🔏", confirmText: "Sceller" }))) {
         return;
     }
 
@@ -1004,14 +1003,14 @@ async function sealActiveReport() {
         });
         const data = await resp.json();
         if (!resp.ok) {
-            alert(data.message || "Erreur lors du scellement");
+            showToast(data.message || "Erreur lors du scellement", "error");
             return;
         }
 
         showToast(`🔏 Rapport scellé avec succès ! Empreinte SHA-256 : ${data.sha256_hash ? data.sha256_hash.substring(0, 16) + '...' : ''}`, "success");
         loadReportView(currentReportCode);
     } catch (err) {
-        alert(err.message || "Erreur réseau");
+        showToast(err.message || "Erreur réseau", "error");
     }
 }
 
@@ -1023,7 +1022,7 @@ function showGatingBlockedAlert(data) {
     const titleEl = document.getElementById('gating-modal-sub');
     const contentEl = document.getElementById('gating-modal-content');
     if (!contentEl) {
-        alert(data.error || "Action bloquée par verrou réglementaire");
+        showToast(data.error || "Action bloquée par verrou réglementaire", "error");
         return;
     }
 

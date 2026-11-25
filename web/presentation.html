@@ -984,7 +984,7 @@
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => alert(`Erreur: ${err.message}`));
+                document.documentElement.requestFullscreen().catch(err => console.warn(`Plein écran indisponible: ${err.message}`));
             } else {
                 document.exitFullscreen();
             }

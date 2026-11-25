@@ -1843,7 +1843,7 @@ const mockAuditTrail = [
                     }
                 });
             } else {
-                prompt("Empreinte SHA-256 scellée :", hash);
+                showNotifyModal("Empreinte SHA-256 Scellée", `<code style="font-size:11px; word-break:break-all;">${escapeHTML(hash)}</code>`, "🔐", "Fermer");
             }
         }
         window.copyAuditHash = copyAuditHash;

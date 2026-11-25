@@ -45,7 +45,7 @@ async function openGenerateFeeSlipModal(dossierId) {
 
     const id = dossierId || (typeof selectedDossierId !== 'undefined' ? selectedDossierId : null);
     if (!id) {
-        alert("Veuillez sélectionner un dossier réglementaire");
+        showToast("Veuillez sélectionner un dossier réglementaire", "warning");
         return;
     }
 
@@ -100,11 +100,7 @@ async function executeGenerateFeeSlip(e) {
         const slip = await resp.json();
         closeModal("modal-generate-slip");
 
-        if (typeof showToast === 'function') {
-            showToast(`Bordereau ${slip.slip_type} généré : ${slip.slip_number} (${formatDZD(slip.amount_dzd)})`);
-        } else {
-            alert(`Bordereau ${slip.slip_type} généré : ${slip.slip_number} (${formatDZD(slip.amount_dzd)})`);
-        }
+        showToast(`Bordereau ${slip.slip_type} généré : ${slip.slip_number} (${formatDZD(slip.amount_dzd)})`, "success");
 
         // Ouvrir automatiquement la vue imprimable officielle
         openPrintSlipWindow(slip.id);
@@ -115,7 +111,7 @@ async function executeGenerateFeeSlip(e) {
             selectDossier(dossierId, true);
         }
     } catch (err) {
-        alert("Erreur lors de la génération du bordereau: " + err.message);
+        showToast("Erreur lors de la génération du bordereau: " + err.message, "error");
     }
 }
 
@@ -234,7 +230,7 @@ async function executeVerifySlip1A4(e) {
     const fxDocId = document.getElementById("pay-slip-fx-doc").value || null;
 
     if (!ref || !payDate) {
-        alert("La référence de quittance/avis bancaire et la date de paiement sont obligatoires.");
+        showToast("La référence de quittance/avis bancaire et la date de paiement sont obligatoires.", "warning");
         return;
     }
 
@@ -254,7 +250,7 @@ async function executeVerifySlip1A4(e) {
     }
     if (requiresFX) {
         if (!fxRateStr || !fxRef || !fxDate) {
-            alert("Pour un dossier avec change en devises, le cours officiel BA, la référence de l'attestation et la date sont obligatoires.");
+            showToast("Pour un dossier avec change en devises, le cours officiel BA, la référence de l'attestation et la date sont obligatoires.", "warning");
             return;
         }
         payload.fx_rate = parseFloat(fxRateStr);
@@ -282,13 +278,9 @@ async function executeVerifySlip1A4(e) {
         closeModal("modal-record-slip-payment");
 
         if (data.slip && data.slip.verification_status === 'conforme') {
-            if (typeof showToast === 'function') {
-                showToast("✅ Conformité 1.A.4 validée et scellée avec succès !");
-            } else {
-                alert("Conformité 1.A.4 validée et scellée avec succès !");
-            }
+            showToast("✅ Conformité 1.A.4 validée et scellée avec succès !", "success");
         } else {
-            alert("Attention : Enregistrement effectué mais des non-conformités subsistent (vérifiez l'attestation BA ou la concordance du montant).");
+            showToast("Attention : Enregistrement effectué mais des non-conformités subsistent (vérifiez l'attestation BA ou la concordance du montant).", "warning", 5500);
         }
 
         if (dossierId && typeof selectDossier === 'function') {
@@ -296,7 +288,7 @@ async function executeVerifySlip1A4(e) {
             selectDossier(dossierId, true);
         }
     } catch (err) {
-        alert("Erreur lors de la vérification 1.A.4: " + err.message);
+        showToast("Erreur lors de la vérification 1.A.4: " + err.message, "error");
     }
 }
 
@@ -383,7 +375,7 @@ async function executeSaveFeeSchedule(e) {
     const notes = document.getElementById("sched-notes").value.trim();
 
     if (!procCode || !label || !legalRef || isNaN(amt) || amt <= 0) {
-        alert("Veuillez renseigner tous les champs obligatoires (code, libellé, référence légale, montant valide)");
+        showToast("Veuillez renseigner tous les champs obligatoires (code, libellé, référence légale, montant valide)", "warning");
         return;
     }
 
@@ -410,15 +402,11 @@ async function executeSaveFeeSchedule(e) {
             throw new Error(err.error || `Erreur HTTP ${resp.status}`);
         }
 
-        if (typeof showToast === 'function') {
-            showToast("Nouveau barème officiel enregistré et ancienne grille clôturée automatiquement");
-        } else {
-            alert("Nouveau barème officiel enregistré et ancienne grille clôturée automatiquement");
-        }
+        showToast("Nouveau barème officiel enregistré et ancienne grille clôturée automatiquement", "success");
 
         loadFeeSchedules();
     } catch (err) {
-        alert("Erreur lors de la mise à jour du barème: " + err.message);
+        showToast("Erreur lors de la mise à jour du barème: " + err.message, "error");
     }
 }
 
@@ -438,7 +426,7 @@ function formatDZD(amount) {
 async function openRecordPreSubmissionModal(dossierId) {
     const dId = dossierId || (typeof selectedDossierId !== 'undefined' ? selectedDossierId : null);
     if (!dId) {
-        alert("Veuillez d'abord sélectionner un dossier.");
+        showToast("Veuillez d'abord sélectionner un dossier.", "warning");
         return;
     }
 
@@ -567,7 +555,7 @@ async function executeVerifyPreSubmission1A5(e) {
     const notes = document.getElementById("presub-verification-notes").value.trim();
 
     if (!anppRef || !notifDate || !slipRef || !payDate || !accordDocId || !paymentDocId) {
-        alert("Veuillez remplir l'ensemble des champs obligatoires et sélectionner les deux justificatifs GED (Accord préalable & Quittance).");
+        showToast("Veuillez remplir l'ensemble des champs obligatoires et sélectionner les deux justificatifs GED (Accord préalable & Quittance).", "warning");
         return;
     }
 
@@ -599,18 +587,14 @@ async function executeVerifyPreSubmission1A5(e) {
         const data = await resp.json();
         closeModal("modal-record-presubmission");
 
-        if (typeof showToast === 'function') {
-            showToast("✅ Accord et redevance de pré-soumission 1.A.5 validés et scellés avec succès !");
-        } else {
-            alert("Accord et redevance de pré-soumission 1.A.5 validés et scellés avec succès !");
-        }
+        showToast("✅ Accord et redevance de pré-soumission 1.A.5 validés et scellés avec succès !", "success");
 
         if (dossierId && typeof selectDossier === 'function') {
             if (typeof invalidateDossierCache === 'function') invalidateDossierCache(dossierId);
             selectDossier(dossierId, true);
         }
     } catch (err) {
-        alert("Erreur lors de la validation 1.A.5: " + err.message);
+        showToast("Erreur lors de la validation 1.A.5: " + err.message, "error");
     }
 }
 
@@ -641,7 +625,7 @@ async function loadCostAnalyticsDashboard() {
         costDashboardData = await resp.json();
         renderCostDashboard(costDashboardData);
     } catch (err) {
-        alert("Erreur lors du chargement du tableau de bord des coûts: " + err.message);
+        showToast("Erreur lors du chargement du tableau de bord des coûts: " + err.message, "error");
     }
 }
 

@@ -261,7 +261,7 @@ async function executeCreateRegulatoryWatch(e) {
     const analysis = document.getElementById("reg-analysis").value.trim();
 
     if (!title || !ref || !pub || !summary) {
-        alert("Veuillez remplir tous les champs obligatoires (*).");
+        showToast("Veuillez remplir tous les champs obligatoires (*).", "warning");
         return;
     }
 
@@ -294,10 +294,10 @@ async function executeCreateRegulatoryWatch(e) {
             throw new Error(err.error || `Erreur HTTP ${resp.status}`);
         }
 
-        alert("Texte de veille réglementaire enregistré avec succès dans le corpus.");
+        showToast("Texte de veille réglementaire enregistré avec succès dans le corpus.", "success");
         document.getElementById("form-create-reg-watch").reset();
         await loadRegulatoryWatchList();
     } catch (err) {
-        alert("Erreur lors de l'enregistrement : " + err.message);
+        showToast("Erreur lors de l'enregistrement : " + err.message, "error");
     }
 }

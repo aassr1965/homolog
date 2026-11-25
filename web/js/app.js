@@ -1374,7 +1374,7 @@ window.escapeHTML = escapeHtml;
                 if (typeof showNotifyModal === 'function') {
                     showNotifyModal("Document introuvable", "Aucun identifiant de pièce documentaire n'a été fourni.", "⚠️");
                 } else {
-                    alert("Aucun document à afficher");
+                    showToast("Aucun document à afficher", "warning");
                 }
                 return;
             }
@@ -1415,6 +1415,89 @@ window.escapeHTML = escapeHtml;
             document.getElementById("notify-body").innerHTML = contentHtml;
             document.getElementById("notify-btn-ok").innerText = btnText;
             document.getElementById("modal-notify").classList.add("open");
+        }
+
+        function _openUniversalDialog({ title, message, icon = "❓", confirmText = "Confirmer", cancelText = "Annuler", danger = false, isPrompt = false, defaultValue = "", placeholder = "" }) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById("modal-universal-dialog");
+                if (!overlay) {
+                    resolve(isPrompt ? null : false);
+                    return;
+                }
+                const titleEl = document.getElementById("udialog-title");
+                const iconEl = document.getElementById("udialog-icon");
+                const msgEl = document.getElementById("udialog-message");
+                const inputWrap = document.getElementById("udialog-input-wrap");
+                const inputEl = document.getElementById("udialog-input");
+                const btnOk = document.getElementById("udialog-btn-confirm");
+                const btnCancel = document.getElementById("udialog-btn-cancel");
+                const btnClose = document.getElementById("udialog-btn-close");
+
+                titleEl.textContent = title || "Confirmation";
+                iconEl.textContent = icon;
+                msgEl.textContent = message || "";
+                btnOk.textContent = confirmText;
+                btnCancel.textContent = cancelText;
+                btnOk.style.background = danger ? "var(--accent-red)" : "var(--accent-blue)";
+
+                if (isPrompt) {
+                    inputWrap.style.display = "block";
+                    inputEl.value = defaultValue || "";
+                    inputEl.placeholder = placeholder || "";
+                } else {
+                    inputWrap.style.display = "none";
+                    inputEl.value = "";
+                }
+
+                const cleanup = (result) => {
+                    overlay.classList.remove("open");
+                    btnOk.onclick = null;
+                    btnCancel.onclick = null;
+                    btnClose.onclick = null;
+                    overlay.onclick = null;
+                    inputEl.onkeydown = null;
+                    resolve(result);
+                };
+
+                btnOk.onclick = () => cleanup(isPrompt ? inputEl.value : true);
+                btnCancel.onclick = () => cleanup(isPrompt ? null : false);
+                btnClose.onclick = () => cleanup(isPrompt ? null : false);
+                overlay.onclick = (e) => { if (e.target === overlay) cleanup(isPrompt ? null : false); };
+                inputEl.onkeydown = (e) => {
+                    if (e.key === "Enter") { e.preventDefault(); cleanup(inputEl.value); }
+                    else if (e.key === "Escape") { e.preventDefault(); cleanup(null); }
+                };
+
+                overlay.classList.add("open");
+                if (isPrompt) setTimeout(() => { inputEl.focus(); inputEl.select(); }, 40);
+                else setTimeout(() => btnOk.focus(), 40);
+            });
+        }
+
+        function showConfirmModal(title, message, options = {}) {
+            return _openUniversalDialog({
+                title: title || "Confirmation",
+                message,
+                icon: options.icon || "⚠️",
+                confirmText: options.confirmText || "Confirmer",
+                cancelText: options.cancelText || "Annuler",
+                danger: Boolean(options.danger),
+                isPrompt: false
+            });
+        }
+
+        function showPromptModal(title, message, defaultValue = "", options = {}) {
+            return _openUniversalDialog({
+                title: title || "Saisie requise",
+                message,
+                icon: options.icon || "✍️",
+                confirmText: options.confirmText || "Valider",
+                cancelText: options.cancelText || "Annuler",
+                danger: Boolean(options.danger),
+                isPrompt: true,
+                defaultValue,
+                placeholder: options.placeholder || ""
+            });
         }
 
 

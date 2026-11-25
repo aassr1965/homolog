@@ -2235,7 +2235,7 @@
         }
 
         async function executeDetachGED(itemId, itemCode) {
-            if (!confirm(`Détacher la pièce associée à l'exigence [${itemCode}] ?`)) {
+            if (!(await showConfirmModal("Détacher Pièce GED", `Détacher la pièce associée à l'exigence [${itemCode}] ?`, { icon: "🔗", danger: true, confirmText: "Détacher" }))) {
                 return;
             }
 
@@ -2604,7 +2604,7 @@
         async function executeRemoveMember(userId) {
             if (!selectedDossierId || !userId) return;
 
-            if (!confirm("Confirmez-vous la révocation immédiate des accès de ce collaborateur sur ce dossier ?")) {
+            if (!(await showConfirmModal("Révocation d'Accès", "Confirmez-vous la révocation immédiate des accès de ce collaborateur sur ce dossier ?", { icon: "🔒", danger: true, confirmText: "Révoquer" }))) {
                 return;
             }
 
@@ -3269,7 +3269,7 @@
         async function syncSmartPlanningDueDates() {
             if (!selectedDossierId) return;
 
-            if (!confirm("Voulez-vous synchroniser automatiquement les dates d'échéances de toutes les sections CTD du dossier en fonction du rétroplanning inversé ?")) {
+            if (!(await showConfirmModal("Synchronisation Smart Planning", "Voulez-vous synchroniser automatiquement les dates d'échéances de toutes les sections CTD du dossier en fonction du rétroplanning inversé ?", { icon: "📅", confirmText: "Synchroniser" }))) {
                 return;
             }
 

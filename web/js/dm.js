@@ -228,7 +228,7 @@ async function openDMHomologationModal(deviceID) {
         populateDMHomologationModal(activeDMForEdit);
         document.getElementById("modal-dm-homologation").classList.add("open");
     } catch (e) {
-        alert("Impossible de charger la fiche technique DM: " + e.message);
+        showToast("Impossible de charger la fiche technique DM: " + e.message, "error");
     }
 }
 
@@ -315,7 +315,7 @@ async function saveDMHomologationForm(event) {
         showNotifyModal("Fiche Technique DM Sauvegardée", "Les 6 sections d'homologation ont été enregistrées avec succès conformément à l'Arrêté du 10 mai 2021.", "✅", "OK");
         loadDMDevices();
     } catch (e) {
-        alert("Erreur lors de la sauvegarde : " + e.message);
+        showToast("Erreur lors de la sauvegarde : " + e.message, "error");
     }
 }
 
@@ -361,7 +361,7 @@ async function openDMRecevabiliteModal(deviceID) {
     try {
         const dossierID = await getOrCreateDMDossierID(deviceID);
         if (!dossierID) {
-            alert("Impossible de localiser ou d'initialiser le dossier d'homologation pour ce DM.");
+            showToast("Impossible de localiser ou d'initialiser le dossier d'homologation pour ce DM.", "error");
             return;
         }
 
@@ -372,7 +372,7 @@ async function openDMRecevabiliteModal(deviceID) {
         populateDMRecevabiliteModal(activeDMEval, dossierID);
         document.getElementById("modal-dm-recevabilite").classList.add("open");
     } catch (e) {
-        alert("Impossible d'ouvrir la recevabilité: " + e.message);
+        showToast("Impossible d'ouvrir la recevabilité: " + e.message, "error");
     }
 }
 
@@ -474,7 +474,7 @@ async function saveDMRecevabiliteForm() {
         }
         showNotifyModal("Recevabilité Enregistrée", "La grille en 13 points a été mise à jour avec succès.", "✅", "OK");
     } catch (e) {
-        alert("Erreur: " + e.message);
+        showToast("Erreur: " + e.message, "error");
     }
 }
 
@@ -482,7 +482,11 @@ async function sealDMRecevabiliteDT() {
     const dossierID = document.getElementById("dm-rec-dossier-id").value;
     if (!dossierID) return;
 
-    const confirmed = confirm("En qualité de Pharmacien Directeur Technique, confirmez-vous solennellement la complétude et l'exactitude des pièces soumises sous le N° d'ordre DDM ?");
+    const confirmed = await showConfirmModal(
+        "Scellement Solennel DT — Recevabilité DDM",
+        "En qualité de Pharmacien Directeur Technique, confirmez-vous solennellement la complétude et l'exactitude des pièces soumises sous le N° d'ordre DDM ?",
+        { icon: "✍️", confirmText: "Confirmer & Sceller" }
+    );
     if (!confirmed) return;
 
     try {
@@ -503,7 +507,7 @@ async function sealDMRecevabiliteDT() {
         showNotifyModal("Récépissé Scellé (21 CFR Part 11)", `L'acte officiel ES-REG-03-DM a été scellé par le Pharmacien DT avec l'empreinte :<br><code>${data.seal}</code>`, "🔏", "OK");
         loadDMDevices();
     } catch (e) {
-        alert("Erreur scellement: " + e.message);
+        showToast("Erreur scellement: " + e.message, "error");
     }
 }
 
@@ -741,7 +745,7 @@ async function previewDMReport(reportCode, deviceID, modID) {
     try {
         const dossierID = await getOrCreateDMDossierID(deviceID);
         if (!dossierID) {
-            alert("Impossible d'ouvrir l'état officiel : aucun dossier d'homologation disponible.");
+            showToast("Impossible d'ouvrir l'état officiel : aucun dossier d'homologation disponible.", "warning");
             return;
         }
 
@@ -782,7 +786,7 @@ async function previewDMReport(reportCode, deviceID, modID) {
             window.open(reportURL, '_blank');
         }
     } catch (e) {
-        alert("Erreur ouverture état officiel : " + e.message);
+        showToast("Erreur ouverture état officiel : " + e.message, "error");
     }
 }
 
@@ -834,7 +838,7 @@ async function submitNewDMRegularization(event) {
         showNotifyModal("Régularisation Enregistrée", "Le dispositif médical a été inscrit au registre des mesures transitoires DDM.", "✅", "OK");
         loadDMRegularizations();
     } catch (e) {
-        alert("Erreur: " + e.message);
+        showToast("Erreur: " + e.message, "error");
     }
 }
 
@@ -1210,12 +1214,16 @@ async function submitNewDMModification(event) {
         showNotifyModal("Modification Enregistrée", "La demande de modification a été inscrite au registre post-homologation DDM.", "✅", "OK");
         loadDMModifications();
     } catch (e) {
-        alert("Erreur: " + e.message);
+        showToast("Erreur: " + e.message, "error");
     }
 }
 
 async function sealDMModification(modID, modCode) {
-    const ok = confirm(`Confirmation d'engagement solennel (21 CFR Part 11 / Décret 20-324) :\n\nEn tant que Pharmacien Directeur Technique, certifiez-vous que la modification ${modCode} a fait l'objet d'une maîtrise des changements rigoureuse (ISO 13485) et que les rapports techniques associés sont conformes aux exigences de l'ANPP ?\n\nCette action génèrera une empreinte cryptographique SHA-256 infalsifiable.`);
+    const ok = await showConfirmModal(
+        "Engagement Solennel (21 CFR Part 11 / Décret 20-324)",
+        `En tant que Pharmacien Directeur Technique, certifiez-vous que la modification ${modCode} a fait l'objet d'une maîtrise des changements rigoureuse (ISO 13485) et que les rapports techniques associés sont conformes aux exigences de l'ANPP ?\n\nCette action génèrera une empreinte cryptographique SHA-256 infalsifiable.`,
+        { icon: "🔏", confirmText: "Certifier & Sceller" }
+    );
     if (!ok) return;
 
     try {
@@ -1236,6 +1244,6 @@ async function sealDMModification(modID, modCode) {
         showNotifyModal("Modification Scellée (21 CFR Part 11)", `La modification ${modCode} a été scellée avec succès par le Pharmacien DT.<br><br>Sceau cryptographique :<br><code>${data.seal}</code>`, "🔏", "OK");
         loadDMModifications();
     } catch (e) {
-        alert("Erreur lors du scellement : " + e.message);
+        showToast("Erreur lors du scellement : " + e.message, "error");
     }
 }
