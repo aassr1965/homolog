@@ -577,8 +577,8 @@
                             `<button class="btn-pill" style="padding:2px 6px; font-size:10px; color:var(--accent-red);" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); handleCancelCheckOutGED('${escapeHtml(doc.id)}')" title="Annuler le verrouillage">🔓</button>` :
                             `<button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); handleCheckOutGED('${escapeHtml(doc.id)}')" title="Verrouiller pour édition (Check-out)">🔒</button>`
                         }
-                        ${((doc.status === 'en_approbation_dt' || (v && !v.is_signed_dt)) && (typeof hasPermission !== 'function' || hasPermission('DOC_APPROVE_PDT'))) ?
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); openSignGEDDTModal('${escapeHtml(doc.id)}', '${v ? escapeHtml(v.id) : ''}', '${escapeHtml(doc.document_code)}', '${escapeHtml(doc.title_fr)}', '${escapeHtml(sha)}')" title="Signer électroniquement (PDT)">✍️</button>` : ''
+                        ${((doc.status === 'en_approbation_dt' || (v && !v.is_signed_dt)) && canSignGEDDocument(doc)) ?
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); openSignGEDDTModal('${escapeHtml(doc.id)}', '${v ? escapeHtml(v.id) : ''}', '${escapeHtml(doc.document_code)}', '${escapeHtml(doc.title_fr)}', '${escapeHtml(sha)}')" title="Signer électroniquement (PDT / DT Délégué)">✍️</button>` : ''
                         }
                     </td>
                 `;
@@ -650,7 +650,7 @@
                     <button class="btn-pill" style="width:100%;" onclick="openGEDVersionsModal('${doc.id}')">📜 Consulter les Versions &amp; Check-in</button>
                     ${doc.status === 'brouillon' ? `<button class="btn-pill" style="width:100%;" onclick="handleStatusChangeGED('${doc.id}', 'en_revue')">🔄 Soumettre pour Revue</button>` : ''}
                     ${doc.status === 'en_revue' ? `<button class="btn-pill" style="width:100%;" onclick="handleStatusChangeGED('${doc.id}', 'en_approbation_dt')">📤 Transmettre pour Approbation PDT</button>` : ''}
-                    ${doc.status === 'en_approbation_dt' && (typeof hasPermission !== 'function' || hasPermission('DOC_APPROVE_PDT')) ? `<button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none;" onclick="openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')">✍️ Signer et Mettre en Vigueur (PDT)</button>` : ''}
+                    ${doc.status === 'en_approbation_dt' && canSignGEDDocument(doc) ? `<button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none;" onclick="openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')">✍️ Signer et Mettre en Vigueur (PDT / DT Délégué)</button>` : ''}
                 </div>
             `;
         }
@@ -885,9 +885,24 @@
             }
         }
 
+        function canSignGEDDocument(doc) {
+            if (typeof hasPermission !== 'function' || hasPermission('DOC_APPROVE_PDT')) {
+                return true;
+            }
+            const userRole = (window.currentUser && window.currentUser.role) || '';
+            if (userRole === 'pharmacien_assistant') {
+                const tax = (doc && doc.taxonomy_path) || '';
+                return tax.startsWith('02_') || tax.startsWith('03_') || tax.startsWith('04_');
+            }
+            return false;
+        }
+
         function openSignGEDDTModal(docID, versionID, docCode, title, sha) {
-            // Guardrail client : Vérifier la permission DOC_APPROVE_PDT
-            if (typeof hasPermission === 'function' && !hasPermission('DOC_APPROVE_PDT')) {
+            const doc = (typeof currentGEDDocuments !== 'undefined' && Array.isArray(currentGEDDocuments))
+                ? currentGEDDocuments.find(d => d.id === docID)
+                : null;
+            // Guardrail client : PDT titulaire ou Pharmacien Assistant sur Qualité/Production (vérifié côté serveur)
+            if (!canSignGEDDocument(doc)) {
                 showNotifyModal(
                     "Accès Refusé (Exclusivité 1.A.7)",
                     `<div style="display:flex; flex-direction:column; gap:8px;">

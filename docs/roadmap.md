@@ -48,8 +48,9 @@ gantt
     Chiffrement Applicatif GED AES-256-GCM (2.12)   :p2_12, after p2_11, 3d
     Dossier de Validation CSV GAMP 5 (2.13)          :p2_13, after p2_12, 3d
     Salle d'Inspection Virtuelle ANPP (2.14)         :p2_14, after p2_13, 2d
+    Mode Démo Prospect Sécurisée & Protection PI (2.15):p2_15, after p2_14, 2d
     section Phase 3 : Extensions
-    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_14, 5d
+    Vigilance (Matériovigilance & Pharmacovigilance) :p3_1, after p2_15, 5d
     Intégrations d'Entreprise SSO / LDAP / iCal      :p3_2, after p3_1, 4d
     Passerelle Officielle API ANPP                   :p3_3, after p3_2, 4d
     Packaging On-Premise & Setup Windows Server (3.5):p3_5, after p3_3, 3d
@@ -468,12 +469,11 @@ gantt
   - Déconnexion automatique par inactivité réglementaire BPF (15 minutes) avec modale d'avertissement et redirection sécurisée vers l'écran d'authentification.
   - 100% de conformité aux tests d'intégration API (`TestCorporateAPI_FullWorkflow`).
 
-- [ ] **Évolution Réglementaire Complémentaire Jalon 2.7bis (Harmonisation Décret 21-82 & Arrêtés 2021-2026) :**
+- [x] **Évolution Réglementaire Complémentaire Jalon 2.7bis (Harmonisation Décret 21-82 & Arrêtés 2021-2026) :**
   - Ajout de la **5ᵉ catégorie réglementaire : Établissement Pharmaceutique d'Exportation** (codes CNRC 702103 / 702106, `eForm-MIPH-EXPORTATION`, checklist et filtrage UI dédié).
   - Généralisation systématique du **Titre de propriété notarié ou contrat de bail notarié enregistré (`[E]`)** dans les checklists d'Importation (`IMP.ADM.04`), Distribution en gros (`DIS.ADM.04`), Exploitation (`EXP.ADM.04`) et Exportation (`EXT.ADM.04`).
   - Dissociation explicite dans le modal de création des deux étapes d'agrément Fabrication (*Agrément Préalable de Réalisation* vs *Agrément d'Ouverture*).
-  - Contrôles métier : seuils de superficie Importation (300 m² / 90 m² / 390 m²), alerte de caducité à 2 ans (Art. 16) et alerte plafond d'intérim du PDT à 92 jours (Art. 24).
-  - Alimentation complète de la base de **Veille Juridique** (`regulatory_watch_items`) avec les 9 piliers réglementaires.
+  - Alimentation complète de la base de **Veille Juridique** (`regulatory_watch_items`) avec les 9 piliers réglementaires et déduplication SQL (`Migration 032`).
 
 ### Jalon 2.8 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
 - [ ] Indexation textuelle automatique des documents PDF, Word (.docx) et Excel (.xlsx) déposés en GED.
@@ -541,6 +541,19 @@ gantt
   - Vue inspecteur épurée en lecture seule : accès direct aux pièces CTD scellées, formules de fabrication, contrôles LCQ et audit trail circonscrit.
   - Masquage étanche de tous les autres dossiers, coûts de revient/prix (PCSU, FOB) et données transverses.
   - Générateur du Pack d'Inspection en 1 Clic : export instantané d'une archive officielle chiffrée scellée SHA-256 (agréments MIPH, décisions DE/DH, SOP et certificats de libération).
+
+### Jalon 2.15 : Mode « Démo Prospect Sécurisée » & Protection de la Propriété Intellectuelle (Avant-Vente)
+- [ ] **Cloisonnement Commercial & Anti-Clonage (`DEMO_PROTECTED_MODE`) :**
+  - Activation par variables d'environnement (`DEMO_PROTECTED_MODE=true`, `DEMO_PROSPECT_NAME`), désactivation forcée de `ENABLE_DEV_SWITCHER` et rotation du code d'accès `GATE_PASSCODE` par prospect.
+  - Hébergement exclusif sur serveur éditeur (aucune livraison On-Premise ou binaire avant contrat signé et paiement) avec expiration automatique des accès Sandbox (7 à 14 jours).
+- [ ] **Filigrane Dynamique Anti-Fuite (Watermark de Session) :**
+  - Incrustation discrète mais permanente en arrière-plan du nom du prospect, de l'adresse IP et de l'horodatage UTC+1 sur tous les écrans et visionneuses PDF.
+- [ ] **Mode « Démo Bridée » (Protection du Savoir-Faire Réglementaire) :**
+  - Restriction à un jeu de données fictif unique (1 dossier CTD exemple, 1 demande Corporate, 1 DM), masquage de la console `Admin Lab` et des paramètres internes.
+  - Désactivation des exports complets (ZIP CTD, classeurs XLSX, archive `.sanad`) et limitation de l'affichage exhaustif des matrices granulaires (checklists Décret 21-82 / 34 rubriques `LD-DEPP07/V01`).
+- [ ] **Protection Technique du Frontend & Antériorité Légale :**
+  - Pipeline de minification et obfuscation des scripts `web/js/*.js` sur l'instance de démonstration commerciale pour empêcher l'extraction du code et des dictionnaires réglementaires via DevTools (`F12`).
+  - Dépôt d'antériorité **ONDA** (code source, checklists, UI), protection de marque **INAPI** et validation préalable d'un **NDA** (avec clause de non-rétro-ingénierie) avant tout accès Sandbox.
 
 ---
 

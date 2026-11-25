@@ -7,7 +7,7 @@ let currentCorporateApplications = [];
 let currentCorporateLicenses = [];
 let selectedCorporateAppID = null;
 let currentCorporateApp = null;
-let currentCorporateFilter = 'ALL'; // ALL, FABRICATION, IMPORTATION, DISTRIBUTION, EXPLOITATION, LICENSES
+let currentCorporateFilter = 'ALL'; // ALL, FABRICATION, IMPORTATION, DISTRIBUTION, EXPLOITATION, EXPORTATION, LICENSES
 let currentCorporatePreviewTab = 'checklist';
 
 // ============================================================================
@@ -117,6 +117,11 @@ function renderCorporateTree() {
             <span>Exploitation de Spécialités</span>
             <span class="count-badge">Titulaire</span>
         </div>
+        <div class="tree-node ${currentCorporateFilter === 'EXPORTATION' ? 'selected' : ''}" onclick="selectCorporateFilter('EXPORTATION')">
+            <span class="chevron">🌍</span>
+            <span>Exportation Pharmaceutique</span>
+            <span class="count-badge">Art. 12</span>
+        </div>
         <div style="margin: 12px 8px 6px; border-top: 1px solid var(--border-color); padding-top: 8px;">
             <div style="font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px;">
                 Veille &amp; Titres Délivrés
@@ -157,14 +162,17 @@ function renderCorporateToolbar() {
 
     tb.innerHTML = `
         ${newBtn}
-        <button class="btn-table-icon" onclick="selectCorporateFilter('ALL')" title="Toutes les Demandes MIPH">📁</button>
-        <button class="btn-table-icon" onclick="selectCorporateFilter('LICENSES')" title="Registre des Agréments Ministériels Actifs">📜</button>
+        <button class="btn-pill tb-dropdown-trigger" onclick="toggleToolbarDropdown(this, 'tb-menu-corp-views')" title="Filtrer les vues Corporate">📁 Vues ▾</button>
+        <div class="tb-dropdown-menu" id="tb-menu-corp-views">
+            <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); selectCorporateFilter('ALL')">📁 Toutes les Demandes MIPH</button>
+            <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); selectCorporateFilter('LICENSES')">📜 Registre des Agréments Actifs</button>
+        </div>
         <button class="btn-table-icon" onclick="renderCorporateView()" title="Actualiser la liste">🔄</button>
         <button class="btn-table-icon" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
         ${privBtn}
         <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
-        <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
-            Passerelle Tabadol : <strong style="color:var(--accent-emerald);">Connectée &amp; Sécurisée</strong>
+        <div style="margin-left:auto; font-size:10.5px; color:var(--text-muted); white-space:nowrap;" id="corporate-progress" title="Passerelle Tabadol : Connectée &amp; Sécurisée">
+            Tabadol : <strong style="color:var(--accent-emerald);">Connecté</strong>
         </div>
     `;
 }
@@ -237,7 +245,7 @@ async function renderCorporateView(filter) {
                             Aucune demande d'agrément ministériel enregistrée
                         </div>
                         <div style="font-size:12px; color:var(--text-dim); max-width:480px; margin:0 auto 16px;">
-                            Conformément au Décret exécutif n° 21-82, constituez le dossier d'agrément de votre établissement pharmaceutique (Fabrication, Importation, Distribution ou Exploitation) avec télétransmission Tabadol.
+                            Conformément au Décret exécutif n° 21-82, constituez le dossier d'agrément de votre établissement pharmaceutique (Fabrication, Importation, Distribution, Exploitation ou Exportation) avec télétransmission Tabadol.
                         </div>
                         <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-weight:700;" onclick="openNewCorporateAppModal()">
                             ➕ Initier une Demande d'Agrément MIPH
@@ -282,12 +290,18 @@ async function renderCorporateView(filter) {
             else if (app.category === 'IMPORTATION') { catLabel = "Importation"; catIcon = "🚢"; }
             else if (app.category === 'DISTRIBUTION') { catLabel = "Distribution"; catIcon = "🚚"; }
             else if (app.category === 'EXPLOITATION') { catLabel = "Exploitation"; catIcon = "📑"; }
+            else if (app.category === 'EXPORTATION') { catLabel = "Exportation"; catIcon = "🌍"; }
 
             // Nature
             let natureLabel = app.nature;
-            if (app.nature === 'AGREMENT_INITIAL') natureLabel = "Agrément Initial";
+            if (app.nature === 'PREALABLE_REALISATION') natureLabel = "Préalable Réalisation (Étape 1)";
+            else if (app.nature === 'OUVERTURE_INITIALE') natureLabel = "Agrément d'Ouverture (Étape 2)";
+            else if (app.nature === 'AGREMENT_INITIAL') natureLabel = "Agrément Initial";
+            else if (app.nature === 'SOUS_TRAITANCE') natureLabel = "Sous-Traitance BPF";
+            else if (app.nature === 'EXERCICE_PDT') natureLabel = "Décision Exercice PDT";
+            else if (app.nature === 'EXERCICE_ASSISTANT') natureLabel = "Décision Assistant";
             else if (app.nature === 'RENOUVELLEMENT') natureLabel = "Renouvellement";
-            else if (app.nature === 'MODIFICATION_SUBSTANTIELLE') natureLabel = "Modif. Substantielle";
+            else if (app.nature === 'MODIFICATION_SUBSTANTIELLE' || app.nature === 'MODIF_SUBSTANTIELLE') natureLabel = "Modif. Substantielle";
             else if (app.nature === 'EXTENSION_LIGNES') natureLabel = "Extension Lignes";
             else if (app.nature === 'TRANSFERT_SITE') natureLabel = "Transfert de Site";
 
@@ -538,18 +552,27 @@ async function viewCorporateChecklist(appId) {
             const canManagePrivs = canManageUserPrivileges();
 
             tb.innerHTML = `
-                <button class="btn-table-icon" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">←</button>
-                ${canEdit ? `<button class="btn-table-icon" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕</button>` : ''}
-                ${canAttach ? `<button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '')" title="Téléverser directement un nouveau document">📤</button>` : ''}
-                ${canAttach ? `<button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>` : ''}
-                <button class="btn-table-icon" onclick="toggleAllCorporateSections()" title="Tout déplier / Tout replier les volets réglementaires">📑</button>
-                <button class="btn-table-icon" onclick="openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
-                <button class="btn-table-icon" onclick="downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
+                <button class="btn-pill" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">← Demandes</button>
+
+                <button class="btn-pill tb-dropdown-trigger" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="toggleToolbarDropdown(this, 'tb-menu-corp-docs')" title="Téléverser, rattacher ou organiser les pièces">📤 Pièces ▾</button>
+                <div class="tb-dropdown-menu" id="tb-menu-corp-docs">
+                    ${canAttach ? `<button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openCorporateUploadModal('${app.id}', '')">📤 Téléverser un nouveau document</button>` : ''}
+                    ${canAttach ? `<button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openGEDPickerForCorporateItem('${app.id}', '')">📎 Rattacher depuis le coffre GED</button>` : ''}
+                    <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); toggleAllCorporateSections()">📑 Tout déplier / Tout replier</button>
+                </div>
+
+                <button class="btn-pill tb-dropdown-trigger" onclick="toggleToolbarDropdown(this, 'tb-menu-corp-tabadol')" title="Audit, Archive Tabadol &amp; Nouvelles Demandes">🏛️ Tabadol ▾</button>
+                <div class="tb-dropdown-menu" id="tb-menu-corp-tabadol">
+                    <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openTabadolAuditModal('${app.id}')">🔍 Audit de conformité Tabadol</button>
+                    <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); downloadTabadolPackage('${app.id}')">📦 Télécharger Archive Tabadol (.zip)</button>
+                    ${canEdit ? `<div class="tb-dropdown-sep"></div><button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openNewCorporateAppModal()">➕ Nouvelle Demande MIPH</button>` : ''}
+                </div>
+
                 <button class="btn-table-icon" onclick="viewCorporateChecklist('${app.id}')" title="Actualiser la liste">🔄</button>
                 ${canManagePrivs ? `<button class="btn-table-icon" onclick="switchDomainModule('admin'); loadAdminSection('matrix');" title="Configurer les Privilèges &amp; Habilitations SoD (Console Admin)">🔐</button>` : ''}
                 <button class="btn-table-icon" onclick="togglePreviewPane()" title="Volet d'aperçu latéral (Alt+P)">👁️</button>
-                <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
-                    Complétude Dossier : <strong style="color:var(--accent-emerald);">${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length} pièces rattachées)</strong>
+                <div style="margin-left:auto; font-size:10.5px; color:var(--text-muted); white-space:nowrap;" id="corporate-progress" title="Complétude Dossier : ${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length} pièces rattachées)">
+                    Compl. : <strong style="color:var(--accent-emerald);">${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length})</strong>
                 </div>
             `;
         }
@@ -643,12 +666,14 @@ async function viewCorporateChecklist(appId) {
 
                 // Criticité
                 let reqBadge = `<span class="status-tag" style="background:#64748b; color:white; font-size:9px;">[S] Standard</span>`;
-                if (it.requirement_level === 'ELIMINATOIRE') {
-                    reqBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:9px; font-weight:800;">[E] Éliminatoire Tabadol</span>`;
-                } else if (it.requirement_level === 'COMPLEMENT') {
+                if (it.requirement_level === 'E' || it.requirement_level === 'ELIMINATOIRE') {
+                    reqBadge = `<span class="badge-eliminatoire-discret" title="Pièce éliminatoire [E] : indispensable pour la recevabilité et la soumission Tabadol">[E] Éliminatoire</span>`;
+                } else if (it.requirement_level === 'C' || it.requirement_level === 'COMPLEMENT') {
                     reqBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white; font-size:9px; font-weight:700;">[C] Complément</span>`;
-                } else if (it.requirement_level === 'FACULTATIF') {
+                } else if (it.requirement_level === 'F' || it.requirement_level === 'FACULTATIF') {
                     reqBadge = `<span class="status-tag" style="background:#0284c7; color:white; font-size:9px;">[F] Facultatif</span>`;
+                } else if (it.is_mandatory) {
+                    reqBadge += ` <span class="badge-eliminatoire-discret" title="Pièce éliminatoire : indispensable pour la recevabilité">Éliminatoire</span>`;
                 }
 
                 // Info GED rattaché
@@ -795,6 +820,7 @@ async function renderCorporateLicensesTable() {
             else if (lic.category === 'IMPORTATION') catIcon = "🚢";
             else if (lic.category === 'DISTRIBUTION') catIcon = "🚚";
             else if (lic.category === 'EXPLOITATION') catIcon = "📑";
+            else if (lic.category === 'EXPORTATION') catIcon = "🌍";
 
             tr.innerHTML = `
                 <td>${statusTag}</td>
@@ -840,20 +866,20 @@ async function renderCorporateAppPreview(appId) {
         const pct = app.completeness_percent || 0;
         const items = app.checklist_items || [];
 
-        // Boutons de changement de sous-onglets avec défilement horizontal fluide
+        // Boutons de changement de sous-onglets compacts sans débordement
         const tabsHtml = `
-            <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-card); padding:4px 8px; gap:4px; margin-bottom:12px; overflow-x:auto; white-space:nowrap; flex-wrap:nowrap; scrollbar-width:none;">
-                <button class="btn-pill ${currentCorporatePreviewTab === 'checklist' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'checklist')">
-                    📋 Checklist MIPH (${items.length})
+            <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-card); padding:4px; gap:3px; margin-bottom:12px; overflow-x:auto; white-space:nowrap; flex-wrap:nowrap; scrollbar-width:none;">
+                <button class="btn-pill ${currentCorporatePreviewTab === 'checklist' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'checklist')" title="Checklist MIPH (${items.length} exigences)">
+                    📋 Pièces (${items.length})
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'eform' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'eform')">
-                    📝 Formulaire e-Form
+                <button class="btn-pill ${currentCorporatePreviewTab === 'eform' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'eform')" title="Formulaire Officiel Smart e-Form">
+                    📝 e-Form
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'tabadol' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'tabadol')">
-                    🌐 Tabadol &amp; Visa PDT
+                <button class="btn-pill ${currentCorporatePreviewTab === 'tabadol' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'tabadol')" title="Passerelle Tabadol &amp; Visa PDT">
+                    🌐 Tabadol
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'miph' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'miph')">
-                    🏛️ Récépissé &amp; Arrêté
+                <button class="btn-pill ${currentCorporatePreviewTab === 'miph' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'miph')" title="Récépissé Bureau d'Ordre &amp; Arrêté MIPH">
+                    🏛️ MIPH
                 </button>
             </div>
         `;
@@ -998,12 +1024,14 @@ function renderChecklistTabHtml(app) {
         secItems.forEach(it => {
             // Badges de criticité
             let reqBadge = `<span class="status-tag" style="background:#64748b; color:white; font-size:9px;">[S] Standard</span>`;
-            if (it.requirement_level === 'ELIMINATOIRE') {
-                reqBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:9px; font-weight:800;">[E] Éliminatoire</span>`;
-            } else if (it.requirement_level === 'COMPLEMENT') {
+            if (it.requirement_level === 'E' || it.requirement_level === 'ELIMINATOIRE') {
+                reqBadge = `<span class="badge-eliminatoire-discret" title="Pièce éliminatoire [E] : indispensable pour la recevabilité et la soumission Tabadol">[E] Éliminatoire</span>`;
+            } else if (it.requirement_level === 'C' || it.requirement_level === 'COMPLEMENT') {
                 reqBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white; font-size:9px; font-weight:700;">[C] Complément</span>`;
-            } else if (it.requirement_level === 'FACULTATIF') {
+            } else if (it.requirement_level === 'F' || it.requirement_level === 'FACULTATIF') {
                 reqBadge = `<span class="status-tag" style="background:#0284c7; color:white; font-size:9px;">[F] Facultatif</span>`;
+            } else if (it.is_mandatory) {
+                reqBadge += ` <span class="badge-eliminatoire-discret" title="Pièce éliminatoire : indispensable pour la recevabilité">Éliminatoire</span>`;
             }
 
             // Statut de rattachement GED
@@ -2332,19 +2360,25 @@ async function openNewCorporateAppModal() {
             <div class="modal-body">
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <div>
-                        <label style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:3px;">Catégorie d'Établissement (Décret 21-82 Art. 4) :</label>
+                        <label style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:3px;">Catégorie d'Établissement (Décret 21-82 Art. 2) :</label>
                         <select id="new-corp-category" class="input-base" style="width:100%; font-size:11px; padding:6px;">
-                            <option value="FABRICATION">🏭 Fabrication de Produits Pharmaceutiques &amp; DM</option>
-                            <option value="IMPORTATION">🚢 Importation de Produits Pharmaceutiques &amp; DM</option>
-                            <option value="DISTRIBUTION">🚚 Distribution en Gros de Produits Pharmaceutiques</option>
-                            <option value="EXPLOITATION">📑 Exploitation de Spécialités Pharmaceutiques</option>
+                            <option value="FABRICATION">🏭 Fabrication de Produits Pharmaceutiques &amp; DM (Tabadol Intaj)</option>
+                            <option value="IMPORTATION">🚢 Importation de Produits Pharmaceutiques &amp; DM (Tabadol-J)</option>
+                            <option value="DISTRIBUTION">🚚 Distribution en Gros de Produits Pharmaceutiques (Tabadol-J)</option>
+                            <option value="EXPLOITATION">📑 Exploitation de Spécialités &amp; DM Homologués (Tabadol-J)</option>
+                            <option value="EXPORTATION">🌍 Exportation de Produits Pharmaceutiques &amp; DM (CNRC 702103/702106)</option>
                         </select>
                     </div>
 
                     <div>
                         <label style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:3px;">Nature de la Demande :</label>
                         <select id="new-corp-nature" class="input-base" style="width:100%; font-size:11px; padding:6px;">
-                            <option value="AGREMENT_INITIAL">Agrément Initial (Création)</option>
+                            <option value="PREALABLE_REALISATION">Agrément Préalable de Réalisation (Fabrication Étape 1 — Sur plans)</option>
+                            <option value="OUVERTURE_INITIALE">Agrément d'Ouverture Définitive (Fabrication Étape 2 — SMF &amp; Inspection)</option>
+                            <option value="AGREMENT_INITIAL">Agrément Initial (Importation / Distribution / Exploitation / Exportation)</option>
+                            <option value="SOUS_TRAITANCE">Agrément d'Ouverture en Sous-Traitance BPF</option>
+                            <option value="EXERCICE_PDT">Décision d'Exercice Pharmacien Directeur Technique (PDT)</option>
+                            <option value="EXERCICE_ASSISTANT">Décision d'Exercice Pharmacien Assistant</option>
                             <option value="RENOUVELLEMENT">Renouvellement Quinquennal (J-180)</option>
                             <option value="MODIFICATION_SUBSTANTIELLE">Modification Substantielle (Locaux / Équipements)</option>
                             <option value="EXTENSION_LIGNES">Extension de Gammes / Lignes de Production</option>

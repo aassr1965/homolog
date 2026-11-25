@@ -1193,6 +1193,167 @@ func (h *WorkflowHandler) RevokeDTDelegation(w http.ResponseWriter, r *http.Requ
 	})
 }
 
+// ListDTPermanentDelegations liste les délégations permanentes ciblées (hors intérim)
+func (h *WorkflowHandler) ListDTPermanentDelegations(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	list, err := h.workflowRepo.ListDTPermanentDelegations(r.Context(), user.OrganizationID)
+	if err != nil {
+		log.Printf("[ERROR] ListDTPermanentDelegations: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Impossible de charger les délégations permanentes")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"permanent_delegations": list,
+		"count":                 len(list),
+	})
+}
+
+// GetActiveDTPermanentDelegation renvoie la délégation permanente active pour l'utilisateur courant
+func (h *WorkflowHandler) GetActiveDTPermanentDelegation(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	del, err := h.workflowRepo.GetActiveDTPermanentDelegation(r.Context(), user.OrganizationID, user.UserID)
+	if err != nil {
+		log.Printf("[ERROR] GetActiveDTPermanentDelegation: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Erreur recherche délégation permanente")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"has_active_permanent_delegation": del != nil,
+		"permanent_delegation":            del,
+	})
+}
+
+// CreateDTPermanentDelegation crée une délégation permanente ciblée Qualité/Production (hors intérim)
+func (h *WorkflowHandler) CreateDTPermanentDelegation(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	normRole := strings.ToLower(user.Role)
+	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire peut accorder une délégation permanente")
+		return
+	}
+
+	var req domain.CreateDTPermanentDelegationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	if req.DelegateID == uuid.Nil {
+		writeJSONError(w, http.StatusBadRequest, "Le pharmacien assistant délégataire est requis")
+		return
+	}
+	if strings.TrimSpace(req.HabilitationRef) == "" {
+		writeJSONError(w, http.StatusBadRequest, "La référence de la note/matrice d'habilitation interne est obligatoire")
+		return
+	}
+
+	del, err := h.workflowRepo.CreateDTPermanentDelegation(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		req.DelegateID,
+		strings.TrimSpace(req.HabilitationRef),
+		req.AllowedTaxonomyPrefixes,
+		strings.TrimSpace(req.Notes),
+	)
+	if err != nil {
+		log.Printf("[ERROR] CreateDTPermanentDelegation: %v", err)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logAudit(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		user.Email,
+		user.Role,
+		"create_dt_permanent_delegation",
+		"dt_permanent_delegation",
+		del.ID.String(),
+		map[string]any{
+			"delegate_id":               req.DelegateID.String(),
+			"habilitation_ref":          del.HabilitationRef,
+			"allowed_taxonomy_prefixes": del.AllowedTaxonomyPrefixes,
+			"notes":                     del.Notes,
+		},
+	)
+
+	writeJSON(w, http.StatusCreated, del)
+}
+
+// RevokeDTPermanentDelegation révoque une délégation permanente ciblée
+func (h *WorkflowHandler) RevokeDTPermanentDelegation(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	normRole := strings.ToLower(user.Role)
+	if normRole != "directeur_technique" && normRole != "pharmacien_responsable" {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire peut révoquer une délégation permanente")
+		return
+	}
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/parapheur/permanent-delegations/")
+	idStr = strings.TrimSuffix(idStr, "/revoke")
+	delegationID, err := uuid.Parse(idStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "ID de délégation invalide")
+		return
+	}
+
+	var req domain.RevokeDTDelegationRequest
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		reason = "Révocation de l'habilitation permanente par le Directeur Technique"
+	}
+
+	if err := h.workflowRepo.RevokeDTPermanentDelegation(r.Context(), user.OrganizationID, delegationID, user.UserID, reason); err != nil {
+		log.Printf("[ERROR] RevokeDTPermanentDelegation: %v", err)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	h.logAudit(
+		r.Context(),
+		user.OrganizationID,
+		user.UserID,
+		user.Email,
+		user.Role,
+		"revoke_dt_permanent_delegation",
+		"dt_permanent_delegation",
+		delegationID.String(),
+		map[string]any{
+			"revoke_reason": reason,
+		},
+	)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"message": "Délégation permanente révoquée avec succès",
+	})
+}
+
 // GetAvailableAssistants liste STRICTEMENT les pharmaciens assistants éligibles pour un mandat de suppléance DT
 func (h *WorkflowHandler) GetAvailableAssistants(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())

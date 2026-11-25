@@ -1321,3 +1321,150 @@ func (r *WorkflowRepository) RevokeDTDelegation(ctx context.Context, orgID, dele
 	}
 	return nil
 }
+
+// ListDTPermanentDelegations liste toutes les délégations permanentes ciblées (hors intérim)
+func (r *WorkflowRepository) ListDTPermanentDelegations(ctx context.Context, orgID uuid.UUID) ([]domain.DTPermanentDelegation, error) {
+	query := `
+		SELECT p.id, p.organization_id, p.delegator_id,
+		       COALESCE(u_del.first_name || ' ' || u_del.last_name, '') AS delegator_name,
+		       p.delegate_id,
+		       COALESCE(u_asst.first_name || ' ' || u_asst.last_name, '') AS delegate_name,
+		       COALESCE(u_asst.email, '') AS delegate_email,
+		       p.habilitation_ref, p.allowed_taxonomy_prefixes, p.notes,
+		       p.is_active, p.revoked_at, p.revoked_by, p.revoke_reason,
+		       p.created_at, p.updated_at
+		FROM dt_permanent_delegations p
+		LEFT JOIN users u_del ON u_del.id = p.delegator_id
+		LEFT JOIN users u_asst ON u_asst.id = p.delegate_id
+		WHERE p.organization_id = $1
+		ORDER BY p.is_active DESC, p.created_at DESC
+	`
+	rows, err := r.pool.Query(ctx, query, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("erreur listage délégations permanentes DT : %w", err)
+	}
+	defer rows.Close()
+
+	var result []domain.DTPermanentDelegation
+	for rows.Next() {
+		var p domain.DTPermanentDelegation
+		if err := rows.Scan(
+			&p.ID, &p.OrganizationID, &p.DelegatorID, &p.DelegatorName,
+			&p.DelegateID, &p.DelegateName, &p.DelegateEmail,
+			&p.HabilitationRef, &p.AllowedTaxonomyPrefixes, &p.Notes,
+			&p.IsActive, &p.RevokedAt, &p.RevokedBy, &p.RevokeReason,
+			&p.CreatedAt, &p.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("erreur lecture délégation permanente DT : %w", err)
+		}
+		result = append(result, p)
+	}
+	return result, nil
+}
+
+// GetActiveDTPermanentDelegation renvoie la délégation permanente active d'un Pharmacien Assistant
+func (r *WorkflowRepository) GetActiveDTPermanentDelegation(ctx context.Context, orgID, delegateID uuid.UUID) (*domain.DTPermanentDelegation, error) {
+	query := `
+		SELECT p.id, p.organization_id, p.delegator_id,
+		       COALESCE(u_del.first_name || ' ' || u_del.last_name, '') AS delegator_name,
+		       p.delegate_id,
+		       COALESCE(u_asst.first_name || ' ' || u_asst.last_name, '') AS delegate_name,
+		       COALESCE(u_asst.email, '') AS delegate_email,
+		       p.habilitation_ref, p.allowed_taxonomy_prefixes, p.notes,
+		       p.is_active, p.revoked_at, p.revoked_by, p.revoke_reason,
+		       p.created_at, p.updated_at
+		FROM dt_permanent_delegations p
+		LEFT JOIN users u_del ON u_del.id = p.delegator_id
+		LEFT JOIN users u_asst ON u_asst.id = p.delegate_id
+		WHERE p.organization_id = $1 AND p.delegate_id = $2 AND p.is_active = TRUE AND p.revoked_at IS NULL
+		ORDER BY p.created_at DESC
+		LIMIT 1
+	`
+	var p domain.DTPermanentDelegation
+	err := r.pool.QueryRow(ctx, query, orgID, delegateID).Scan(
+		&p.ID, &p.OrganizationID, &p.DelegatorID, &p.DelegatorName,
+		&p.DelegateID, &p.DelegateName, &p.DelegateEmail,
+		&p.HabilitationRef, &p.AllowedTaxonomyPrefixes, &p.Notes,
+		&p.IsActive, &p.RevokedAt, &p.RevokedBy, &p.RevokeReason,
+		&p.CreatedAt, &p.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("erreur recherche délégation permanente DT : %w", err)
+	}
+	return &p, nil
+}
+
+// CreateDTPermanentDelegation crée une délégation permanente ciblée Qualité/Production (hors intérim)
+func (r *WorkflowRepository) CreateDTPermanentDelegation(ctx context.Context, orgID, delegatorID, delegateID uuid.UUID, habilitationRef string, prefixes []string, notes string) (*domain.DTPermanentDelegation, error) {
+	if delegatorID == delegateID {
+		return nil, fmt.Errorf("le Directeur Technique titulaire ne peut pas se déléguer à lui-même")
+	}
+	if len(prefixes) == 0 {
+		prefixes = []string{"02_", "03_", "04_"}
+	}
+	for _, pref := range prefixes {
+		if pref != "02_" && pref != "03_" && pref != "04_" {
+			return nil, fmt.Errorf("périmètre interdit (%s) : hors intérim, la délégation ciblée est strictement limitée aux dossiers Qualité (02_, 04_) et Production (03_)", pref)
+		}
+	}
+
+	var delegateRole string
+	err := r.pool.QueryRow(ctx, "SELECT role FROM users WHERE id = $1 AND organization_id = $2", delegateID, orgID).Scan(&delegateRole)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("le pharmacien assistant désigné n'appartient pas à votre établissement")
+		}
+		return nil, fmt.Errorf("erreur vérification délégataire : %w", err)
+	}
+	if delegateRole != string(domain.RolePharmacienAssistant) {
+		return nil, fmt.Errorf("seul un Pharmacien Assistant DT qualifié peut recevoir une délégation permanente ciblée")
+	}
+
+	query := `
+		INSERT INTO dt_permanent_delegations (organization_id, delegator_id, delegate_id, habilitation_ref, allowed_taxonomy_prefixes, notes, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+		RETURNING id, created_at, updated_at
+	`
+	var p domain.DTPermanentDelegation
+	p.OrganizationID = orgID
+	p.DelegatorID = delegatorID
+	p.DelegateID = delegateID
+	p.HabilitationRef = habilitationRef
+	p.AllowedTaxonomyPrefixes = prefixes
+	p.Notes = notes
+	p.IsActive = true
+
+	err = r.pool.QueryRow(ctx, query, orgID, delegatorID, delegateID, habilitationRef, prefixes, notes).Scan(&p.ID, &p.CreatedAt, &p.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("erreur insertion délégation permanente DT : %w", err)
+	}
+
+	_ = r.pool.QueryRow(ctx, "SELECT first_name || ' ' || last_name FROM users WHERE id = $1", delegatorID).Scan(&p.DelegatorName)
+	_ = r.pool.QueryRow(ctx, "SELECT first_name || ' ' || last_name, email FROM users WHERE id = $1", delegateID).Scan(&p.DelegateName, &p.DelegateEmail)
+
+	return &p, nil
+}
+
+// RevokeDTPermanentDelegation révoque une délégation permanente ciblée
+func (r *WorkflowRepository) RevokeDTPermanentDelegation(ctx context.Context, orgID, delegationID, revokedByID uuid.UUID, reason string) error {
+	query := `
+		UPDATE dt_permanent_delegations
+		SET is_active = FALSE,
+		    revoked_at = NOW(),
+		    revoked_by = $1,
+		    revoke_reason = $2,
+		    updated_at = NOW()
+		WHERE id = $3 AND organization_id = $4 AND is_active = TRUE
+	`
+	tag, err := r.pool.Exec(ctx, query, revokedByID, reason, delegationID, orgID)
+	if err != nil {
+		return fmt.Errorf("erreur révocation délégation permanente : %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("délégation permanente introuvable ou déjà révoquée")
+	}
+	return nil
+}
