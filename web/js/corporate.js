@@ -162,14 +162,17 @@ function renderCorporateToolbar() {
 
     tb.innerHTML = `
         ${newBtn}
-        <button class="btn-table-icon" onclick="selectCorporateFilter('ALL')" title="Toutes les Demandes MIPH">📁</button>
-        <button class="btn-table-icon" onclick="selectCorporateFilter('LICENSES')" title="Registre des Agréments Ministériels Actifs">📜</button>
+        <button class="btn-pill tb-dropdown-trigger" onclick="toggleToolbarDropdown(this, 'tb-menu-corp-views')" title="Filtrer les vues Corporate">📁 Vues ▾</button>
+        <div class="tb-dropdown-menu" id="tb-menu-corp-views">
+            <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); selectCorporateFilter('ALL')">📁 Toutes les Demandes MIPH</button>
+            <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); selectCorporateFilter('LICENSES')">📜 Registre des Agréments Actifs</button>
+        </div>
         <button class="btn-table-icon" onclick="renderCorporateView()" title="Actualiser la liste">🔄</button>
         <button class="btn-table-icon" onclick="openAuditModal()" title="Journal d'Audit Trail Réglementaire">🛡️</button>
         ${privBtn}
         <button class="btn-table-icon" onclick="togglePreviewPane()" title="Afficher / Masquer le volet latéral (Alt+P)">👁️</button>
-        <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
-            Passerelle Tabadol : <strong style="color:var(--accent-emerald);">Connectée &amp; Sécurisée</strong>
+        <div style="margin-left:auto; font-size:10.5px; color:var(--text-muted); white-space:nowrap;" id="corporate-progress" title="Passerelle Tabadol : Connectée &amp; Sécurisée">
+            Tabadol : <strong style="color:var(--accent-emerald);">Connecté</strong>
         </div>
     `;
 }
@@ -549,18 +552,27 @@ async function viewCorporateChecklist(appId) {
             const canManagePrivs = canManageUserPrivileges();
 
             tb.innerHTML = `
-                <button class="btn-table-icon" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">←</button>
-                ${canEdit ? `<button class="btn-table-icon" onclick="openNewCorporateAppModal()" title="Créer une nouvelle demande d'agrément (Décret 21-82)">➕</button>` : ''}
-                ${canAttach ? `<button class="btn-table-icon btn-table-icon-primary" onclick="openCorporateUploadModal('${app.id}', '')" title="Téléverser directement un nouveau document">📤</button>` : ''}
-                ${canAttach ? `<button class="btn-table-icon" onclick="openGEDPickerForCorporateItem('${app.id}', '')" title="Rattacher un document du coffre-fort GED">📎</button>` : ''}
-                <button class="btn-table-icon" onclick="toggleAllCorporateSections()" title="Tout déplier / Tout replier les volets réglementaires">📑</button>
-                <button class="btn-table-icon" onclick="openTabadolAuditModal('${app.id}')" title="Audit de conformité Tabadol (Décret 21-82)">🔍</button>
-                <button class="btn-table-icon" onclick="downloadTabadolPackage('${app.id}')" title="Télécharger l'Archive Tabadol (.zip)">📦</button>
+                <button class="btn-pill" onclick="renderCorporateView('ALL')" title="Retour aux Demandes">← Demandes</button>
+
+                <button class="btn-pill tb-dropdown-trigger" style="background:var(--accent-blue); color:white; border:none; font-weight:700;" onclick="toggleToolbarDropdown(this, 'tb-menu-corp-docs')" title="Téléverser, rattacher ou organiser les pièces">📤 Pièces ▾</button>
+                <div class="tb-dropdown-menu" id="tb-menu-corp-docs">
+                    ${canAttach ? `<button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openCorporateUploadModal('${app.id}', '')">📤 Téléverser un nouveau document</button>` : ''}
+                    ${canAttach ? `<button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openGEDPickerForCorporateItem('${app.id}', '')">📎 Rattacher depuis le coffre GED</button>` : ''}
+                    <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); toggleAllCorporateSections()">📑 Tout déplier / Tout replier</button>
+                </div>
+
+                <button class="btn-pill tb-dropdown-trigger" onclick="toggleToolbarDropdown(this, 'tb-menu-corp-tabadol')" title="Audit, Archive Tabadol &amp; Nouvelles Demandes">🏛️ Tabadol ▾</button>
+                <div class="tb-dropdown-menu" id="tb-menu-corp-tabadol">
+                    <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openTabadolAuditModal('${app.id}')">🔍 Audit de conformité Tabadol</button>
+                    <button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); downloadTabadolPackage('${app.id}')">📦 Télécharger Archive Tabadol (.zip)</button>
+                    ${canEdit ? `<div class="tb-dropdown-sep"></div><button class="tb-dropdown-item" onclick="closeAllToolbarDropdowns(); openNewCorporateAppModal()">➕ Nouvelle Demande MIPH</button>` : ''}
+                </div>
+
                 <button class="btn-table-icon" onclick="viewCorporateChecklist('${app.id}')" title="Actualiser la liste">🔄</button>
                 ${canManagePrivs ? `<button class="btn-table-icon" onclick="switchDomainModule('admin'); loadAdminSection('matrix');" title="Configurer les Privilèges &amp; Habilitations SoD (Console Admin)">🔐</button>` : ''}
                 <button class="btn-table-icon" onclick="togglePreviewPane()" title="Volet d'aperçu latéral (Alt+P)">👁️</button>
-                <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="corporate-progress">
-                    Complétude Dossier : <strong style="color:var(--accent-emerald);">${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length} pièces rattachées)</strong>
+                <div style="margin-left:auto; font-size:10.5px; color:var(--text-muted); white-space:nowrap;" id="corporate-progress" title="Complétude Dossier : ${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length} pièces rattachées)">
+                    Compl. : <strong style="color:var(--accent-emerald);">${pct}% (${items.filter(i => i.ged_document_id).length}/${items.length})</strong>
                 </div>
             `;
         }
@@ -854,20 +866,20 @@ async function renderCorporateAppPreview(appId) {
         const pct = app.completeness_percent || 0;
         const items = app.checklist_items || [];
 
-        // Boutons de changement de sous-onglets avec défilement horizontal fluide
+        // Boutons de changement de sous-onglets compacts sans débordement
         const tabsHtml = `
-            <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-card); padding:4px 8px; gap:4px; margin-bottom:12px; overflow-x:auto; white-space:nowrap; flex-wrap:nowrap; scrollbar-width:none;">
-                <button class="btn-pill ${currentCorporatePreviewTab === 'checklist' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'checklist')">
-                    📋 Checklist MIPH (${items.length})
+            <div style="display:flex; border-bottom:1px solid var(--border-color); background:var(--bg-card); padding:4px; gap:3px; margin-bottom:12px; overflow-x:auto; white-space:nowrap; flex-wrap:nowrap; scrollbar-width:none;">
+                <button class="btn-pill ${currentCorporatePreviewTab === 'checklist' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'checklist')" title="Checklist MIPH (${items.length} exigences)">
+                    📋 Pièces (${items.length})
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'eform' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'eform')">
-                    📝 Formulaire e-Form
+                <button class="btn-pill ${currentCorporatePreviewTab === 'eform' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'eform')" title="Formulaire Officiel Smart e-Form">
+                    📝 e-Form
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'tabadol' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'tabadol')">
-                    🌐 Tabadol &amp; Visa PDT
+                <button class="btn-pill ${currentCorporatePreviewTab === 'tabadol' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'tabadol')" title="Passerelle Tabadol &amp; Visa PDT">
+                    🌐 Tabadol
                 </button>
-                <button class="btn-pill ${currentCorporatePreviewTab === 'miph' ? 'active' : ''}" style="border:none; font-size:11px; padding:6px 10px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'miph')">
-                    🏛️ Récépissé &amp; Arrêté
+                <button class="btn-pill ${currentCorporatePreviewTab === 'miph' ? 'active' : ''}" style="border:none; font-size:10px; padding:4px 6px; flex-shrink:0;" onclick="switchCorporatePreviewTab('${app.id}', 'miph')" title="Récépissé Bureau d'Ordre &amp; Arrêté MIPH">
+                    🏛️ MIPH
                 </button>
             </div>
         `;
