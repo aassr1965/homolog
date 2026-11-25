@@ -805,11 +805,12 @@
         }
         .pane-preview.hidden { display: none; }
         .preview-header {
-            padding: 10px 14px;
+            padding: 8px 10px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 4px;
             font-weight: 600;
             background: var(--bg-header);
         }
@@ -832,6 +833,26 @@
             line-height: 1.5;
             min-height: 240px;
             border: 1px solid var(--pdf-border);
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .pdf-sim-page code,
+        .pdf-sim-page pre,
+        .pane-preview code {
+            white-space: normal !important;
+            word-break: break-all !important;
+            overflow-wrap: anywhere !important;
+            max-width: 100%;
+            display: inline-block;
+        }
+        .pdf-sim-page div,
+        .pdf-sim-page span,
+        .pdf-sim-page p {
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-wrap: anywhere;
         }
         .pdf-sim-header {
             text-align: center;
@@ -1278,6 +1299,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 4px;
         }
         .tree-dossier-code {
             font-family: monospace;
@@ -1287,6 +1310,9 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            min-width: 0;
+            max-width: 100%;
+            flex-wrap: wrap;
         }
         .tree-dossier-product {
             font-size: 11.5px;
@@ -1553,13 +1579,17 @@
             align-items: center;
             gap: 4px;
             flex: 1;
+            min-width: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+        .preview-tabs-nav::-webkit-scrollbar { display: none; }
         .pvt-btn {
             background: transparent;
             border: 1.5px solid transparent;
             border-radius: 4px;
-            padding: 4px 10px;
-            font-size: 11.5px;
+            padding: 4px 7px;
+            font-size: 11px;
             font-weight: 700;
             color: var(--text-muted);
             cursor: pointer;
@@ -1581,9 +1611,12 @@
             border: none;
             color: var(--text-dim);
             cursor: pointer;
-            font-size: 12px;
-            padding: 2px 6px;
+            font-size: 11px;
+            padding: 2px 4px;
             border-radius: 3px;
+            flex-shrink: 0;
+            margin-left: 4px;
+            white-space: nowrap;
         }
         .btn-close-pvt:hover {
             color: var(--text-main);
@@ -2719,6 +2752,61 @@ html[data-theme="dark"] .badge-gating-blocking {
 @keyframes spinRefresh {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+/* Infobulles réglementaires : intitulé officiel complet au survol */
+[data-reg-tooltip="true"] {
+    cursor: help;
+}
+span[data-reg-tooltip="true"]:not(.btn-pill),
+strong[data-reg-tooltip="true"] {
+    text-decoration: underline dotted rgba(3, 105, 161, 0.55);
+    text-underline-offset: 2px;
+}
+
+/* Colonnes redimensionnables dans l'Audit Trail */
+#audit-trail-table {
+    table-layout: fixed;
+    min-width: 100%;
+}
+#audit-trail-table th {
+    position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: none;
+    box-sizing: border-box;
+}
+#audit-trail-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+.audit-col-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 7px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 6;
+    border-right: 2px solid transparent;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+html[dir="rtl"] .audit-col-resizer {
+    right: auto;
+    left: 0;
+    border-right: none;
+    border-left: 2px solid transparent;
+}
+.audit-col-resizer:hover,
+.audit-col-resizer.resizing {
+    border-right-color: var(--accent-blue);
+    background: rgba(2, 132, 199, 0.14);
+}
+html[dir="rtl"] .audit-col-resizer:hover,
+html[dir="rtl"] .audit-col-resizer.resizing {
+    border-left-color: var(--accent-blue);
 }
 
 

@@ -1,19 +1,17 @@
 # Feuille de route du projet (Roadmap)
 ## Plateforme SANAD PHARMA — Gestion de l'Enregistrement des Médicaments, de l'Homologation des DM et GED Pharmaceutique en Algérie
 
-**Dernière mise à jour :** 23 novembre 2026  
-**Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP/MIPH, Chapitre 10 - Sanad Corporate & Chapitre 11 - Spécifications Exhaustives des États de Sortie)  
+**Dernière mise à jour :** 24 novembre 2026  
+**Document de référence :** [`docs/cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) (v1.0 - Harmonisation Réglementaire ANPP/MIPH, Section 1.3 Main Courante 9 Piliers, Chapitre 10 - Sanad Corporate & Chapitre 11 - Spécifications Exhaustives des États de Sortie)  
 **Textes réglementaires officiels algériens intégrés :**
-- **Décret exécutif n° 21-82 du 23 février 2021** relatif aux établissements pharmaceutiques et aux conditions de leur agrément.
-- **Arrêté du 22 septembre 2025** (Établissements de fabrication, éléments du dossier, traitement et liste des modifications substantielles).
-- **Arrêté du 30 septembre 2025** (Établissements de distribution en gros) & **Arrêtés du 1er octobre 2025** (Exploitation & Importation).
-- **Ligne directrice MIPH (Février 2026)** relative au dépôt et au traitement des modifications liées aux établissements de fabrication.
-- **Guide pour la soumission du Dossier Technique Commun (CTD)** destiné à l'enregistrement des produits pharmaceutiques à usage humain (DEPP/ANPP, Version 01, Date d'effet : 31/07/2025).
-- **Ligne directrice relative aux modifications des décisions d’enregistrement** des produits pharmaceutiques à usage de la médecine humaine (Code : `LD-DEPP07/V01`, Version 01, Date : 22/04/2026).
-- **Décret exécutif n° 20-325** du 22 novembre 2020 (Modalités d'enregistrement des médicaments).
-- **Arrêté du 3 octobre 2021** (Modalités de modification de la DE) & **Arrêté du 7 novembre 2021** (Article 09 : Regroupement de modifications / *Grouping*).
-- **Décret exécutif n° 20-324** et **Arrêté du 10 mai 2021** (Modalités d'homologation des dispositifs médicaux).  
-- **Arrêté BPF 2024 / ICH Q10 / 21 CFR Part 11** (Intégrité des données ALCOA+, Piste d'audit immuable et Signature électronique légale).
+- **Loi n° 18-11 du 2 juillet 2018** relative à la santé (modifiée par l'Ordonnance n° 20-02) & **Décret exécutif n° 19-190** (ANPP).
+- **Décret exécutif n° 21-82 du 23 février 2021** relatif aux établissements pharmaceutiques et aux conditions de leur agrément (5 catégories, PDT exclusif, intérim 3 mois Art. 24, caducité 2 ans Art. 16).
+- **Arrêtés sectoriels d'application (2021-2022) :** Arrêté du 22 juin 2021 (PDT Fabrication), Arrêté du 5 octobre 2021 (Distribution BPDG), Arrêtés des 14 & 30 novembre 2021 (Exploitation & PDT), Arrêtés du 20 décembre 2021 & 17 septembre 2022 (Importation & superficies 300/90/390 m²).
+- **Refonte réglementaire MIPH (2025-2026) :** Arrêté du 22 septembre 2025 (Fabrication en 2 étapes), Arrêté du 30 septembre 2025 (Distribution), Arrêtés du 1er octobre 2025 (Exploitation & Importation), Ligne directrice MIPH (Février 2026) et Télé-procédures Tabadol (*Tabadol-J* & *Tabadol Intaj*).
+- **Enregistrement Médicaments :** **Décret exécutif n° 20-325** (22/11/2020), **Arrêté du 27 décembre 2020** (format CTD), **Arrêté du 3 octobre 2021**, **Arrêté du 7 novembre 2021** (Grouping Art. 09), **Guide CTD ANPP** (31/07/2025) et **Ligne Directrice `LD-DEPP07/V01`** (22/04/2026).
+- **Homologation DM :** **Décret exécutif n° 20-324** (22/11/2020), **Arrêté du 10 mai 2021** (Dossier technique Classes I, IIa, IIb, III, DMDIV) et **Arrêté du 23 juin 2021** (Modifications DM).
+- **Bonnes Pratiques, Prix, Vigilance & Redevances :** **Décret exécutif n° 22-247 du 26 juin 2022** (BPF Algérie), **Décrets n° 20-326 / 23-105** (CEIM) & **n° 98-44** (Marges), **Décret n° 98-43** (CNPM), **Loi n° 04-18 / Décret n° 24-112** (Psychotropes) et **Décret n° 21-551** (Redevances ANPP).
+- **Intégrité des Données & Signature Électronique :** **Loi n° 15-04** (signature électronique), **Loi n° 18-07** (ANPDP), **FDA 21 CFR Part 11**, **EU GMP Annexe 11**, **GAMP 5** & **ALCOA+**.
 **Architecture cible :** Go 1.26+ | PostgreSQL 16+ (`pgx/v5`) | Frontend embarqué TypeScript/Tailwind (RTL FR/AR) | Mode Hybride (On-Premise & SaaS)
 
 ---
@@ -470,6 +468,13 @@ gantt
   - Déconnexion automatique par inactivité réglementaire BPF (15 minutes) avec modale d'avertissement et redirection sécurisée vers l'écran d'authentification.
   - 100% de conformité aux tests d'intégration API (`TestCorporateAPI_FullWorkflow`).
 
+- [ ] **Évolution Réglementaire Complémentaire Jalon 2.7bis (Harmonisation Décret 21-82 & Arrêtés 2021-2026) :**
+  - Ajout de la **5ᵉ catégorie réglementaire : Établissement Pharmaceutique d'Exportation** (codes CNRC 702103 / 702106, `eForm-MIPH-EXPORTATION`, checklist et filtrage UI dédié).
+  - Généralisation systématique du **Titre de propriété notarié ou contrat de bail notarié enregistré (`[E]`)** dans les checklists d'Importation (`IMP.ADM.04`), Distribution en gros (`DIS.ADM.04`), Exploitation (`EXP.ADM.04`) et Exportation (`EXT.ADM.04`).
+  - Dissociation explicite dans le modal de création des deux étapes d'agrément Fabrication (*Agrément Préalable de Réalisation* vs *Agrément d'Ouverture*).
+  - Contrôles métier : seuils de superficie Importation (300 m² / 90 m² / 390 m²), alerte de caducité à 2 ans (Art. 16) et alerte plafond d'intérim du PDT à 92 jours (Art. 24).
+  - Alimentation complète de la base de **Veille Juridique** (`regulatory_watch_items`) avec les 9 piliers réglementaires.
+
 ### Jalon 2.8 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
 - [ ] Indexation textuelle automatique des documents PDF, Word (.docx) et Excel (.xlsx) déposés en GED.
 - [ ] Moteur de recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant les requêtes en français et en arabe.
@@ -640,3 +645,21 @@ gantt
 | **États de Sortie & Reporting BPF** | Conforme Chapitre 11 CDC, Décret 21-82 & Ordonnance 21-07 | 28 états spécifiés (20 états réglementaires finaux couvrant CTD DEPP, Dispositifs Médicaux DDM et Contrôle Libératoire DCE + 8 états intermédiaires) | QR-code d'intégrité, PDF/A, XLSX/CSV, filigranes dynamiques & ALCOA+ ✅ |
 | **Qualification & Validation CSV** | Conforme GAMP 5 & 21 CFR Part 11 | Intégré à la roadmap (Jalon 2.13 - Pack URS, FS, IQ/OQ/PQ, RTM) | Livrable opposable pour inspections ANPP / BPF ⏳ |
 | **Copilote IA Réglementaire (Phase 3)** | Spécifié (RAG pgvector, SOP, Rédaction & Audit) | Consigné au CDC (Chapitre 12) & Architecture AI-Ready | 100% Souverain / Cloud sécurisé, Human-in-the-Loop & Traçabilité ALCOA+ ⏳ |
+
+---
+
+## Main Courante Réglementaire (Matrice de Suivi Législatif & Technique)
+
+*(Survolez chaque référence dans les tableaux compacts pour afficher son intitulé officiel complet).*
+
+| Pilier | Textes de Référence (Intitulé complet au survol) | Statut Applicatif | Jalon / Module Associé |
+|---|---|---|---|
+| **1. Gouvernance** | <abbr title="Loi n° 18-11 du 2 juillet 2018 relative à la santé (JORADP n° 46)">Loi n° 18-11</abbr>, <abbr title="Ordonnance n° 20-02 du 30 août 2020 modifiant et complétant la loi n° 18-11 relative à la santé">Ord. 20-02</abbr>, <abbr title="Décret exécutif n° 19-190 du 3 juillet 2019 fixant les missions, l'organisation et le fonctionnement de l'Agence nationale des produits pharmaceutiques">Décret 19-190</abbr>, <abbr title="Décret exécutif n° 20-271 du 29 septembre 2020 fixant les attributions du ministre de l'industrie pharmaceutique">Décret 20-271</abbr> | Intégré ✅ | Socle & Référentiel (`Jalon 1.3`) |
+| **2. Établissements** | <abbr title="Décret exécutif n° 21-82 du 23 février 2021 relatif aux établissements pharmaceutiques et aux conditions de leur agrément">Décret exécutif n° 21-82</abbr> + <abbr title="Arrêtés des 22/06/2021 (PDT Fabrication), 05/10/2021 (Distribution BPDG), 14 & 30/11/2021 (Exploitation & PDT), 20/12/2021 & 17/09/2022 (Importation)">Arrêtés 2021-2022</abbr> + <abbr title="Arrêté du 22/09/2025 (Fabrication en 2 étapes), Arrêté du 30/09/2025 (Distribution), Arrêtés du 01/10/2025 (Exploitation & Importation)">Refonte 2025/2026</abbr> | Implémenté (4 cat.) — Exportation & Baux généralisés planifiés (`2.7bis`) 🔄 | Sanad Corporate & Tabadol (`Jalon 2.7 / 2.7bis`) |
+| **3. Médicaments** | <abbr title="Décret exécutif n° 20-325 du 22 novembre 2020 relatif aux modalités d'enregistrement des produits pharmaceutiques">Décret n° 20-325</abbr>, <abbr title="Arrêté du 27 décembre 2020 fixant la composition du dossier d'enregistrement des médicaments à usage de la médecine humaine (format CTD)">Arrêté CTD 27/12/2020</abbr>, <abbr title="Guide pour la soumission du Dossier Technique Commun (CTD) DEPP/ANPP (juillet 2025)">Guide CTD 2025</abbr>, <abbr title="Ligne directrice relative aux modifications des décisions d'enregistrement des produits pharmaceutiques (LD-DEPP07/V01 - avril 2026)">LD-DEPP07/V01</abbr> | Intégré ✅ | CTD Studio & Variations (`Jalon 1.5 / 2.4`) |
+| **4. Dispositifs Médicaux** | <abbr title="Décret exécutif n° 20-324 du 22 novembre 2020 relatif aux modalités d'homologation des dispositifs médicaux à usage de la médecine humaine">Décret n° 20-324</abbr>, <abbr title="Arrêté du 10 mai 2021 fixant la composition du dossier technique d'homologation des dispositifs médicaux à usage de la médecine humaine">Arrêté 10/05/2021</abbr>, <abbr title="Arrêté du 23 juin 2021 fixant les modalités de modification de la décision d'homologation des dispositifs médicaux">Arrêté 23/06/2021</abbr> | Intégré ✅ | Régularisation & Homologation DM (`Jalon 2.6`) |
+| **5. Bonnes Pratiques** | <abbr title="Décret exécutif n° 22-247 du 26 juin 2022 fixant les règles de bonnes pratiques de fabrication des produits pharmaceutiques à usage de la médecine humaine">Décret n° 22-247 (BPF)</abbr>, <abbr title="Cahier des charges des Bonnes Pratiques de Distribution en Gros annexé à l'arrêté du 5 octobre 2021">BPDG (05/10/2021)</abbr>, BPL, BPC | Intégré ✅ | GED Coffre-Fort & Checklists (`Jalon 1.4 / 2.1`) |
+| **6. Prix & Économie** | <abbr title="Décret exécutif n° 20-326 du 22 novembre 2020 et Décret exécutif n° 23-105 du 7 mars 2023 relatifs au Comité économique intersectoriel des médicaments">Décrets 20-326 / 23-105</abbr>, <abbr title="Décret exécutif n° 98-44 du 1er février 1998 fixant les marges plafonds applicables à la production, au conditionnement et à la distribution des médicaments">Décret n° 98-44</abbr> | Intégré (Module Finance & Redevances) ✅ | Redevances & Pricing (`Jalon 2.3`) |
+| **7. Vigilance & Stocks** | <abbr title="Décret exécutif n° 98-43 du 1er février 1998 portant création du centre national de pharmacovigilance et de matériovigilance">Décret n° 98-43</abbr>, <abbr title="Loi n° 04-18 du 25 décembre 2004, Décret exécutif n° 19-379 du 31 décembre 2019 et Décret exécutif n° 24-112 du 13 mars 2024 relatifs aux stupéfiants et psychotropes">Loi 04-18 / Décret 24-112</abbr>, Stocks stratégiques | Veille intégrée (`1.7`) — Extension Vigilance Phase 3 (`3.1`) ⏳ | Veille Juridique & Phase 3 (`Jalon 1.7 / 3.1`) |
+| **8. Redevances ANPP** | <abbr title="Décret exécutif n° 21-551 du 30 décembre 2021 fixant les modalités de recouvrement et d'affectation du produit de la redevance des produits pharmaceutiques et des dispositifs médicaux">Décret n° 21-551</abbr> & <abbr title="Arrêté interministériel Finances / MIPH fixant le barème des redevances d'expertise, d'enregistrement, d'homologation et d'agrément">Barème Finances/MIPH</abbr> | Intégré ✅ | Redevances & Bordereaux BV1/BV2 (`Jalon 1.7 / 2.3`) |
+| **9. Data Integrity & CSV** | <abbr title="Loi n° 15-04 du 1er février 2015 fixant les règles générales relatives à la signature et à la certification électroniques">Loi 15-04</abbr>, <abbr title="Loi n° 18-07 du 10 juin 2018 relative à la protection des personnes physiques dans le traitement des données à caractère personnel">Loi 18-07</abbr>, 21 CFR Part 11, EU Annexe 11, GAMP 5, ALCOA+ | Intégré ✅ | Audit Trail SHA-256, 2FA & OQ/PQ (`Jalon 1.2 / 2.13`) |

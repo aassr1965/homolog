@@ -1351,6 +1351,89 @@ const mockAuditTrail = [
             return 'Accès Distant SSL/TLS Chiffré';
         }
 
+        function initAuditColumnResizers() {
+            const table = document.getElementById("audit-trail-table");
+            if (!table) return;
+            const headers = Array.from(table.querySelectorAll("thead th"));
+            if (headers.length === 0) return;
+
+            // Restaurer les largeurs enregistrées si présentes
+            try {
+                const saved = localStorage.getItem("sanad_audit_col_widths");
+                if (saved) {
+                    const widths = JSON.parse(saved);
+                    if (Array.isArray(widths) && widths.length === headers.length) {
+                        let total = 0;
+                        headers.forEach((th, idx) => {
+                            const w = Math.max(60, parseInt(widths[idx], 10) || 120);
+                            th.style.width = w + "px";
+                            total += w;
+                        });
+                        table.style.width = total + "px";
+                    }
+                }
+            } catch (_) {}
+
+            headers.forEach((th) => {
+                if (th.dataset.resizerInit === "1") return;
+                th.dataset.resizerInit = "1";
+
+                const resizer = document.createElement("div");
+                resizer.className = "audit-col-resizer";
+                resizer.title = "Glisser pour redimensionner la colonne (double-clic pour réinitialiser)";
+                th.appendChild(resizer);
+
+                let startX = 0;
+                let startWidth = 0;
+                let startTableWidth = 0;
+
+                const onMouseMove = (e) => {
+                    const isRtl = document.documentElement.dir === "rtl";
+                    const dx = isRtl ? (startX - e.clientX) : (e.clientX - startX);
+                    const newWidth = Math.max(60, startWidth + dx);
+                    const delta = newWidth - startWidth;
+                    th.style.width = newWidth + "px";
+                    table.style.width = Math.max(startTableWidth + delta, 100) + "px";
+                };
+
+                const onMouseUp = () => {
+                    resizer.classList.remove("resizing");
+                    document.body.style.cursor = "";
+                    document.removeEventListener("mousemove", onMouseMove);
+                    document.removeEventListener("mouseup", onMouseUp);
+                    try {
+                        const widths = headers.map(h => Math.round(h.getBoundingClientRect().width));
+                        localStorage.setItem("sanad_audit_col_widths", JSON.stringify(widths));
+                    } catch (_) {}
+                };
+
+                resizer.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startX = e.clientX;
+                    startWidth = th.getBoundingClientRect().width;
+                    startTableWidth = table.getBoundingClientRect().width;
+                    resizer.classList.add("resizing");
+                    document.body.style.cursor = "col-resize";
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
+                });
+
+                resizer.addEventListener("dblclick", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    let total = 0;
+                    headers.forEach(h => {
+                        const defW = parseInt(h.dataset.defaultWidth || "140", 10);
+                        h.style.width = defW + "px";
+                        total += defW;
+                    });
+                    table.style.width = "100%";
+                    try { localStorage.removeItem("sanad_audit_col_widths"); } catch (_) {}
+                });
+            });
+        }
+
         function switchAuditTab(tab) {
             currentAuditTab = tab || 'all';
             document.querySelectorAll('#audit-tabs-bar .audit-tab-btn').forEach(btn => {
@@ -1531,6 +1614,9 @@ const mockAuditTrail = [
                 }, 40);
             }
 
+            // Initialisation des colonnes redimensionnables de l'Audit Trail
+            initAuditColumnResizers();
+
             // Chargement initial des logs
             await fetchAndProcessAuditLogs(false);
 
@@ -1610,7 +1696,7 @@ const mockAuditTrail = [
                 tr.innerHTML = `
                     <td style="padding:6px 10px; font-family:monospace; font-size:10.5px; color:var(--text-muted);">${escapeHTML(item.ts)}</td>
                     <td style="padding:6px 10px;">
-                        <span style="background:rgba(2,132,199,0.08); border:1px solid ${tagColor}; color:${tagColor}; padding:1px 6px; border-radius:3px; font-weight:700; font-size:10px;">${escapeHTML(item.code)}</span> 
+                        <span style="display:inline-flex; align-items:center; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; background:rgba(2,132,199,0.08); border:1px solid ${tagColor}; color:${tagColor}; padding:1px 6px; border-radius:3px; font-weight:700; font-size:10px;" title="${escapeHTML(item.code)}">${escapeHTML(item.code)}</span> 
                         <div style="color:var(--text-main); font-weight:600; font-size:10.5px; margin-top:2px;">${escapeHTML(item.label)}</div>
                     </td>
                     <td style="padding:6px 10px;">

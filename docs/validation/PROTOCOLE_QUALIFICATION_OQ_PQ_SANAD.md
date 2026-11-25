@@ -508,13 +508,30 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 
 | Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
 | :---: | :--- | :--- | :--- |
-| 1 | Se connecter en Directeur Technique à la résolution 1920×1080 et naviguer sur le module **Dossiers d'Enregistrement (CTD)**. | Viewport 1920×1080 | • Carte de dossier : Le code dossier (`DOS-2026-PARAC-NF`), le délai (`J-48`) et le statut (`EN PRÉPARATION`) sont affichés sur une seule ligne sans scission de texte.<br>• Barre d'outils centrale : Alignée sur une seule ligne fluide.<br>• Frise Smart Planning : Les 6 jalons (`J-240` à `J-0`) forment un ruban chronologique continu.<br>• Volet d'Aperçu : Les onglets (`📄 Aperçu Pièce`, `📋 Fiche ANPP`, `🛠️ Atelier & Visa`) sont nets et alignés sur un seul rang. |
+| 1 | Se connecter en Directeur Technique à la résolution 1920×1080 et naviguer sur le module **Dossiers d'Enregistrement (CTD)**. | Viewport 1920×1080 | • Carte de dossier : Le code dossier (`DOS-2026-PARAC-NF`), le délai (`J-48`) et le statut (`EN PRÉPARATION`) sont affichés sur une seule ligne sans scission de texte.<br>• Barre d'outils centrale : Alignée sur une seule ligne fluide.<br>• Frise Smart Planning : Les 6 jalons (`J-240` à `J-0`) forment un ruban chronologique continu.<br>• Volet d'Aperçu : Les onglets (`📄 Pièce`, `📋 Fiche ANPP`, `🛠️ Atelier & Visa`) et le bouton `✕ Alt+P` sont nets et alignés sans chevauchement ni débordement.<br>• Cartes de paramétrage Admin Lab & aperçus GED (`.pdf-sim-page`) : Les textes longs et empreintes SHA-256 restent strictement confinés à l'intérieur de leur card sans déborder sur les cards adjacentes. |
 | 2 | Redimensionner le navigateur à la résolution Laptop Standard (**1366×768**). | Viewport 1366×768 | • Les boutons de barres d'outils restent strictement sur 1 rangée horizontale défilante (aucun empilement vertical parasite sur 3 ou 7 lignes).<br>• Aucun badge ou bouton ne subit de retour à la ligne au milieu d'un mot ou d'un chiffre. |
 | 3 | Naviguer vers le module **Dispositifs Médicaux (DDM)** et tester la résolution **1200×800**. | Viewport 1200×800 | • Les boutons de filtre de classe (`Classe I`, `Classe IIa`, `Classe IIb`, `Classe III`) sont affichés d'un seul bloc, sans coupure en syllabes (`CLAS` / `SE I`).<br>• Les badges du tableau (`Classe IIa`, `🏭 Fabrication Locale`, `En Enregistrement`) conservent leur intégrité visuelle sans retour à la ligne.<br>• Le volet d'aperçu latéral se convertit en **slide-over drawer** rétractable (`Alt+P`), préservant 100% de la largeur utile du tableau central. |
 | 4 | Tester la résolution **992×768** sur le module **Agréments Corporate (Décret 21-82)**. | Viewport 992×768 | • Le sélecteur de rôle démo se masque automatiquement pour éviter l'écrasement de la barre supérieure.<br>• Le pied de page masque les métriques secondaires pour ne conserver que l'heure UTC+1 d'Alger.<br>• Les badges `[S] Standard`, `[E] Éliminatoire Tabadol` et `J-180 / J-90` ne sont jamais coupés. |
 
 * **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
 * **Preuve Documentaire :** `SCR-OQ-UI-01-DESKTOP.png`, `SCR-OQ-UI-01-LAPTOP.png`, `SCR-OQ-UI-01-COMPACT.png`, `SCR-OQ-UI-01-TABLET.png`
+
+---
+
+#### Test Ref : `OQ-UI-02`
+* **Titre :** Vérification de l'affichage des intitulés réglementaires officiels complets au survol (Infobulles GxP).
+* **Exigence Réglementaire :** ALCOA+ (*Accurate / Exact* & *Legible / Lisible*) & GAMP 5 — Tout texte législatif ou réglementaire cité de façon compacte dans l'interface (badge, bouton, tableau, barre d'outils ou Veille Juridique) doit permettre à l'utilisateur de consulter son intitulé officiel intégral (numéro, dates hégirienne et grégorienne, référence JORADP) au survol sans encombrer l'espace de travail.
+* **Rôle Requis :** Pharmacien Directeur Technique (`pdt@pharma.dz`).
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Sur le module **Dossiers d'Enregistrement (CTD)**, survoler avec la souris un badge réglementaire dans l'arborescence ou le tableau (ex. `Décret 20-325`, `Arrêté 10 Mai`, `Décret 20-324`). | Curseur sur badge | • Le curseur prend l'aspect d'aide (`cursor: help`) et un soulignement pointillé discret apparaît.<br>• Une infobulle native (`title`) affiche l'intitulé officiel complet du texte ainsi que sa référence JORADP. |
+| 2 | Ouvrir la modale **📜 Veille Juridique** et survoler une référence légale dans la colonne *Texte & Référence*. | Clic sur `📜 Veille Juridique` | • Chaque ligne du corpus affiche la référence et son titre ; le survol de la référence révèle l'intitulé complet enrichi issu du référentiel `SANAD_REGULATORY_DICTIONARY`. |
+| 3 | Naviguer vers **Agréments Corporate (Décret 21-82)** et **Variations (LD-DEPP07/V01)** et survoler les mentions réglementaires. | Navigation onglets | • Les mentions dynamiques (`Décret 21-82`, `LD-DEPP07/V01`, `Arrêté 22/09/2025`, `21 CFR Part 11`) reçoivent automatiquement leur intitulé officiel complet au survol via le `MutationObserver`. |
+| 4 | Ouvrir la modale **🛡️ Audit Trail**, saisir la poignée droite d'un en-tête de colonne (`Horodatage UTC` ou `Cible / Entité`) et la faire glisser horizontalement, puis double-cliquer sur une poignée. | Clic-glisser sur `.audit-col-resizer` | • Le curseur passe en `col-resize` et la colonne s'élargit ou se rétrécit en temps réel (minimum 60px) avec persistance dans `localStorage`.<br>• Le double-clic sur une poignée réinitialise toutes les largeurs par défaut. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-OQ-UI-02-TOOLTIPS.png`
 
 ---
 
