@@ -764,3 +764,31 @@ type CreateDTDelegationRequest struct {
 type RevokeDTDelegationRequest struct {
 	Reason string `json:"reason"`
 }
+
+// DTPermanentDelegation représente une délégation permanente ciblée (hors intérim) pour les aspects Qualité & Production
+type DTPermanentDelegation struct {
+	ID                      uuid.UUID  `json:"id"`
+	OrganizationID          uuid.UUID  `json:"organization_id"`
+	DelegatorID             uuid.UUID  `json:"delegator_id"`
+	DelegatorName           string     `json:"delegator_name"`
+	DelegateID              uuid.UUID  `json:"delegate_id"`
+	DelegateName            string     `json:"delegate_name"`
+	DelegateEmail           string     `json:"delegate_email"`
+	HabilitationRef         string     `json:"habilitation_ref"`
+	AllowedTaxonomyPrefixes []string   `json:"allowed_taxonomy_prefixes"`
+	Notes                   string     `json:"notes"`
+	IsActive                bool       `json:"is_active"`
+	RevokedAt               *time.Time `json:"revoked_at,omitempty"`
+	RevokedBy               *uuid.UUID `json:"revoked_by,omitempty"`
+	RevokeReason            *string    `json:"revoke_reason,omitempty"`
+	CreatedAt               time.Time  `json:"created_at"`
+	UpdatedAt               time.Time  `json:"updated_at"`
+}
+
+// CreateDTPermanentDelegationRequest payload pour créer une délégation permanente ciblée Qualité/Production
+type CreateDTPermanentDelegationRequest struct {
+	DelegateID              uuid.UUID `json:"delegate_id"`
+	HabilitationRef         string    `json:"habilitation_ref"`
+	AllowedTaxonomyPrefixes []string  `json:"allowed_taxonomy_prefixes"`
+	Notes                   string    `json:"notes"`
+}

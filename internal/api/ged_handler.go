@@ -753,8 +753,11 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Seul le Pharmacien Directeur Technique titulaire (1.A.7) ou un Pharmacien Assistant sous mandat d'intérim DT actif (Qualité/Production) a ce pouvoir
+	// Seul le Pharmacien Directeur Technique titulaire (1.A.7), un Pharmacien Assistant sous mandat d'intérim DT actif (Qualité/Production),
+	// ou un Pharmacien Assistant titulaire d'une délégation permanente ciblée (hors intérim — Qualité/Production) a ce pouvoir
 	var activeInterimRef string
+	var activePermRef string
+	var permAllowedPrefixes []string
 	if user.Role == string(domain.RoleDirecteurTechnique) {
 		// PDT titulaire habilité sur l'ensemble du coffre-fort GED
 	} else if user.Role == "pharmacien_assistant" {
@@ -768,11 +771,22 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 			ORDER BY created_at DESC LIMIT 1
 		`, user.OrganizationID, user.UserID).Scan(&activeInterimRef)
 		if err != nil || activeInterimRef == "" {
-			writeJSONError(w, http.StatusForbidden, "Hors période d'intérim active, seul le Pharmacien Directeur Technique titulaire (1.A.7) est habilité à signer les documents GED")
-			return
+			// Hors intérim : vérifier si une délégation permanente ciblée Qualité/Production est active
+			permErr := h.pool.QueryRow(r.Context(), `
+				SELECT habilitation_ref, allowed_taxonomy_prefixes FROM dt_permanent_delegations
+				WHERE organization_id = $1
+				  AND delegate_id = $2
+				  AND is_active = TRUE
+				  AND revoked_at IS NULL
+				ORDER BY created_at DESC LIMIT 1
+			`, user.OrganizationID, user.UserID).Scan(&activePermRef, &permAllowedPrefixes)
+			if permErr != nil || activePermRef == "" {
+				writeJSONError(w, http.StatusForbidden, "Hors période d'intérim active et sans délégation permanente ciblée, seul le Pharmacien Directeur Technique titulaire (1.A.7) est habilité à signer les documents GED")
+				return
+			}
 		}
 	} else {
-		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire (1.A.7) ou un DT intérimaire habilité peut apposer ce visa légal")
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire (1.A.7) ou un DT intérimaire/délégué habilité peut apposer ce visa légal")
 		return
 	}
 
@@ -818,13 +832,25 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// En intérim DT, la signature GED est circonscrite aux aspects Qualité (02_, 04_) et Production (03_)
+	// En intérim DT ou en délégation permanente ciblée, la signature GED est circonscrite aux aspects Qualité (02_, 04_) et Production (03_)
 	if activeInterimRef != "" {
 		isQualityOrProd := strings.HasPrefix(doc.TaxonomyPath, "02_") ||
 			strings.HasPrefix(doc.TaxonomyPath, "03_") ||
 			strings.HasPrefix(doc.TaxonomyPath, "04_")
 		if !isQualityOrProd {
 			writeJSONError(w, http.StatusForbidden, "En période d'intérim DT, la signature GED est limitée aux documents Qualité (AQ/CQ) et Production (Décret 21-82 Art. 24 & Arrêté du 22 juin 2021)")
+			return
+		}
+	} else if activePermRef != "" {
+		allowed := false
+		for _, pref := range permAllowedPrefixes {
+			if (pref == "02_" || pref == "03_" || pref == "04_") && strings.HasPrefix(doc.TaxonomyPath, pref) {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			writeJSONError(w, http.StatusForbidden, "Hors intérim, votre délégation permanente ciblée ne couvre pas ce dossier GED (strictement limité aux périmètres Qualité/Production habilités)")
 			return
 		}
 	}
@@ -883,6 +909,8 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 	}
 	if activeInterimRef != "" {
 		declaration = fmt.Sprintf("%s [Intérim DT — Mandat %s]", declaration, activeInterimRef)
+	} else if activePermRef != "" {
+		declaration = fmt.Sprintf("%s [Par délégation permanente DT — Réf. %s]", declaration, activePermRef)
 	}
 
 	now := time.Now().UTC()

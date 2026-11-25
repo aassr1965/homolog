@@ -4107,6 +4107,66 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Section Délégation Permanente Ciblée (Hors Intérim — Qualité & Production) -->
+                <div style="border-top:2px dashed var(--border-color); padding-top:14px; margin-top:4px; display:flex; flex-direction:column; gap:12px;">
+                    <div id="dt-perm-delegation-create-card" style="background:var(--bg-surface); border:1px solid var(--border-color); border-left:4px solid #0ea5e9; border-radius:6px; padding:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-size:12px; font-weight:800; color:var(--text-main);">🔏 Délégation Permanente Ciblée (Hors Intérim — Qualité &amp; Production)</span>
+                            <span style="font-size:10px; color:#0ea5e9; font-weight:600;">Habilitation interne BPF • Hors Affaires Réglementaires (01_)</span>
+                        </div>
+                        <form id="form-create-perm-delegation" onsubmit="handleCreatePermDelegationSubmit(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <div>
+                                <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Pharmacien Assistant Habilité :</label>
+                                <select id="perm-delegate-select" required style="width:100%; padding:6px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                                    <option value="">Sélectionnez un Pharmacien Assistant...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Réf. Note / Matrice d'Habilitation GED :</label>
+                                <input type="text" id="perm-hab-ref" placeholder="Ex: NOTE-HAB-DT-2026-01" required style="width:100%; padding:6px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                            <div style="grid-column:1 / -1;">
+                                <label style="display:block; font-size:11px; font-weight:700; margin-bottom:4px;">Périmètre GED Autorisé (Qualité &amp; Production uniquement) :</label>
+                                <div style="display:flex; flex-wrap:wrap; gap:14px; font-size:11.5px;">
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" name="perm-prefix" value="02_" checked> 02_Assurance_Qualite (AQ)</label>
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" name="perm-prefix" value="03_" checked> 03_Developpement_Production</label>
+                                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" name="perm-prefix" value="04_" checked> 04_Controle_Qualite (CQ)</label>
+                                </div>
+                            </div>
+                            <div style="grid-column:1 / -1;">
+                                <label style="display:block; font-size:11px; font-weight:700; margin-bottom:3px;">Observations / Limites d'Attribution :</label>
+                                <input type="text" id="perm-notes" placeholder="Ex: Signature SOP internes, protocoles AQ/CQ et dossiers de production" style="width:100%; padding:6px 8px; font-size:11.5px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                            </div>
+                            <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:8px; margin-top:2px;">
+                                <button type="submit" class="btn-pill" style="background:#0ea5e9; color:white; border:none; font-weight:700; font-size:11.5px; padding:6px 14px;">
+                                    🔏 Activer l'Habilitation Permanente Ciblée
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div>
+                        <div style="font-size:12px; font-weight:800; color:var(--text-main); margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+                            <span>📜 Habilitations Permanentes Ciblées (Hors Intérim)</span>
+                            <span id="dt-perm-delegations-count" style="font-size:11px; color:var(--text-dim);">0 habilitation(s)</span>
+                        </div>
+                        <table style="width:100%; border-collapse:collapse; font-size:11.5px; text-align:left;">
+                            <thead>
+                                <tr style="background:var(--bg-sub); border-bottom:1.5px solid var(--border-color);">
+                                    <th style="padding:8px;">Pharmacien Assistant</th>
+                                    <th style="padding:8px;">Réf. Habilitation</th>
+                                    <th style="padding:8px;">Périmètre GED</th>
+                                    <th style="padding:8px;">Statut</th>
+                                    <th style="padding:8px; text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dt-perm-delegations-tbody">
+                                <tr><td colspan="5" style="padding:12px; text-align:center; color:var(--text-muted);">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer" style="padding:10px 16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">

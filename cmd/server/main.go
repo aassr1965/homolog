@@ -585,6 +585,10 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/parapheur/assistants", workflowHandler.GetAvailableAssistants)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermRefEdit)).Post("/api/v1/parapheur/delegations", workflowHandler.CreateDTDelegation)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermRefEdit)).Post("/api/v1/parapheur/delegations/{id}/revoke", workflowHandler.RevokeDTDelegation)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/parapheur/permanent-delegations", workflowHandler.ListDTPermanentDelegations)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/parapheur/permanent-delegation/active", workflowHandler.GetActiveDTPermanentDelegation)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermRefEdit)).Post("/api/v1/parapheur/permanent-delegations", workflowHandler.CreateDTPermanentDelegation)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermRefEdit)).Post("/api/v1/parapheur/permanent-delegations/{id}/revoke", workflowHandler.RevokeDTPermanentDelegation)
 			}
 
 			// Moteur de Reporting Réglementaire BPF & Référentiel des 28 États Documentaires (Jalon 2.2)

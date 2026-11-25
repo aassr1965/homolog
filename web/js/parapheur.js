@@ -913,6 +913,7 @@
             if (m) m.classList.add('active');
         }
         loadDTDelegations();
+        loadDTPermanentDelegations();
         loadAssistantSelect();
     };
 
@@ -1124,6 +1125,129 @@
         } catch (err) {
             console.error('Erreur révocation:', err);
             alert("Erreur réseau lors de la révocation du mandat.");
+        }
+    };
+
+    window.loadDTPermanentDelegations = async function () {
+        const tbody = document.getElementById('dt-perm-delegations-tbody');
+        const countSpan = document.getElementById('dt-perm-delegations-count');
+        const permSel = document.getElementById('perm-delegate-select');
+        if (permSel && permSel.options.length <= 1) {
+            try {
+                const aRes = await fetch('/api/v1/parapheur/assistants');
+                if (aRes.ok) {
+                    const aData = await aRes.json();
+                    const list = aData.assistants || [];
+                    permSel.innerHTML = '<option value="">Sélectionnez un Pharmacien Assistant...</option>' +
+                        list.map(u => `<option value="${escapeHtml(u.id)}">${escapeHtml(u.full_name || (u.first_name + ' ' + u.last_name))} (${escapeHtml(u.email)})</option>`).join('');
+                }
+            } catch (_) {}
+        }
+        if (!tbody) return;
+
+        try {
+            const res = await fetch('/api/v1/parapheur/permanent-delegations');
+            if (!res.ok) {
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:12px; text-align:center; color:var(--accent-red);">Impossible de charger les habilitations permanentes.</td></tr>`;
+                return;
+            }
+            const data = await res.json();
+            const list = data.permanent_delegations || [];
+            if (countSpan) countSpan.textContent = `${list.length} habilitation(s)`;
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:14px; text-align:center; color:var(--text-muted);">Aucune délégation permanente ciblée enregistrée.</td></tr>`;
+                return;
+            }
+
+            const prefixLabels = { '02_': '02_AQ', '03_': '03_Prod', '04_': '04_CQ' };
+            tbody.innerHTML = list.map(p => {
+                const isActive = p.is_active && !p.revoked_at;
+                const badge = isActive
+                    ? `<span style="background:rgba(14,165,233,0.15); color:#0284c7; padding:2px 7px; border-radius:10px; font-weight:700; font-size:10.5px;">🟢 Active</span>`
+                    : `<span style="background:rgba(239,68,68,0.15); color:#dc2626; padding:2px 7px; border-radius:10px; font-weight:700; font-size:10.5px;">🔴 Révoquée</span>`;
+                const scopes = (p.allowed_taxonomy_prefixes || []).map(x => prefixLabels[x] || x).join(', ');
+                return `
+                    <tr style="border-bottom:1px solid var(--border-color);">
+                        <td style="padding:8px;">
+                            <div style="font-weight:700;">${escapeHtml(p.delegate_name)}</div>
+                            <div style="font-size:10.5px; color:var(--text-dim);">${escapeHtml(p.delegate_email)}</div>
+                        </td>
+                        <td style="padding:8px; font-family:monospace; font-size:11px;">${escapeHtml(p.habilitation_ref)}</td>
+                        <td style="padding:8px; font-size:11px;">${escapeHtml(scopes)}</td>
+                        <td style="padding:8px;">${badge}</td>
+                        <td style="padding:8px; text-align:right;">
+                            ${isActive ? `<button type="button" class="btn-pill" style="color:#ef4444; border-color:#ef4444; font-size:10.5px; padding:2px 8px;" onclick="revokeDTPermanentDelegation('${p.id}')">Révoquer</button>` : '<span style="color:var(--text-dim); font-size:10.5px;">—</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } catch (err) {
+            console.error('Erreur chargement délégations permanentes:', err);
+        }
+    };
+
+    window.handleCreatePermDelegationSubmit = async function (e) {
+        e.preventDefault();
+        const delegateId = document.getElementById('perm-delegate-select')?.value;
+        const habRef = document.getElementById('perm-hab-ref')?.value?.trim();
+        const notes = document.getElementById('perm-notes')?.value?.trim() || '';
+        const prefixes = Array.from(document.querySelectorAll('input[name="perm-prefix"]:checked')).map(el => el.value);
+
+        if (!delegateId || !habRef) {
+            alert("Veuillez sélectionner un Pharmacien Assistant et saisir la référence d'habilitation.");
+            return;
+        }
+        if (prefixes.length === 0) {
+            alert("Veuillez cocher au moins un périmètre Qualité ou Production.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/v1/parapheur/permanent-delegations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    delegate_id: delegateId,
+                    habilitation_ref: habRef,
+                    allowed_taxonomy_prefixes: prefixes,
+                    notes: notes
+                })
+            });
+            if (!res.ok) {
+                const errData = await res.json();
+                alert("Erreur : " + (errData.error || errData.message || res.statusText));
+                return;
+            }
+            alert("Habilitation permanente ciblée activée (Qualité / Production).");
+            document.getElementById('form-create-perm-delegation')?.reset();
+            document.querySelectorAll('input[name="perm-prefix"]').forEach(el => { el.checked = true; });
+            loadDTPermanentDelegations();
+        } catch (err) {
+            console.error('Erreur création délégation permanente:', err);
+            alert("Erreur réseau lors de l'enregistrement.");
+        }
+    };
+
+    window.revokeDTPermanentDelegation = async function (id) {
+        if (!confirm("Révoquer cette habilitation permanente ciblée ?")) return;
+        const reason = prompt("Motif de révocation :", "Révocation par le Directeur Technique");
+        if (reason === null) return;
+        try {
+            const res = await fetch(`/api/v1/parapheur/permanent-delegations/${id}/revoke`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+            if (!res.ok) {
+                const errData = await res.json();
+                alert("Erreur : " + (errData.error || errData.message || res.statusText));
+                return;
+            }
+            alert("Habilitation permanente révoquée.");
+            loadDTPermanentDelegations();
+        } catch (err) {
+            console.error('Erreur révocation délégation permanente:', err);
         }
     };
 
