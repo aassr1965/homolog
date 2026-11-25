@@ -224,6 +224,34 @@ func (sm *SessionManager) loadEffectivePermissions(ctx context.Context, userID u
 	if perms == nil {
 		perms = []string{}
 	}
+
+	// Règle GxP / Décret 21-82 Art. 24 : Le Pharmacien Assistant n'accède à l'Audit Trail
+	// global que durant sa période d'intérim DT active.
+	if role == "pharmacien_assistant" {
+		var hasActiveInterim bool
+		err := sm.pool.QueryRow(ctx, `
+			SELECT EXISTS (
+				SELECT 1 FROM dt_delegations
+				WHERE delegate_id = $1
+				  AND is_active = TRUE
+				  AND revoked_at IS NULL
+				  AND NOW() BETWEEN start_date AND end_date
+			)
+		`, userID).Scan(&hasActiveInterim)
+		if err == nil && hasActiveInterim {
+			alreadyHas := false
+			for _, p := range perms {
+				if p == "AUDIT_VIEW" {
+					alreadyHas = true
+					break
+				}
+			}
+			if !alreadyHas {
+				perms = append(perms, "AUDIT_VIEW")
+			}
+		}
+	}
+
 	return perms
 }
 

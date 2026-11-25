@@ -405,6 +405,29 @@ func (h *AdminHandler) getUserPermissions(ctx context.Context, userID uuid.UUID,
 	if perms == nil {
 		perms = []domain.Permission{}
 	}
+	if role == "pharmacien_assistant" {
+		var hasActiveInterim bool
+		if err := h.pool.QueryRow(ctx, `
+			SELECT EXISTS (
+				SELECT 1 FROM dt_delegations
+				WHERE delegate_id = $1
+				  AND is_active = TRUE
+				  AND revoked_at IS NULL
+				  AND NOW() BETWEEN start_date AND end_date
+			)
+		`, userID).Scan(&hasActiveInterim); err == nil && hasActiveInterim {
+			alreadyHas := false
+			for _, p := range perms {
+				if p == domain.PermAuditView {
+					alreadyHas = true
+					break
+				}
+			}
+			if !alreadyHas {
+				perms = append(perms, domain.PermAuditView)
+			}
+		}
+	}
 	return perms
 }
 

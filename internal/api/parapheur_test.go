@@ -728,4 +728,53 @@ func TestPharmacienAssistantAndDTDelegations(t *testing.T) {
 			t.Fatalf("Après révocation, attendu 403 Forbidden pour Assistant, reçu: %d", rrCheck.Code)
 		}
 	})
+
+	t.Run("AuditTrail_Assistant_Uniquement_Durant_Interim", func(t *testing.T) {
+		sm := auth.NewSessionManager(db.Pool, 60, 15)
+		rawToken, err := sm.CreateSession(ctx, assistantID, "127.0.0.1", "TestAgent")
+		if err != nil {
+			t.Fatalf("Erreur création session Assistant: %v", err)
+		}
+
+		// 1. Hors intérim (révoqué) : AUDIT_VIEW doit être refusé
+		uNoInterim, err := sm.ValidateSession(ctx, rawToken)
+		if err != nil {
+			t.Fatalf("Erreur validation session: %v", err)
+		}
+		if uNoInterim.HasPermission(string(domain.PermAuditView)) {
+			t.Fatalf("Hors période d'intérim, le Pharmacien Assistant ne doit pas avoir AUDIT_VIEW")
+		}
+
+		// 2. Durant un mandat d'intérim actif : AUDIT_VIEW doit être accordé
+		delID := uuid.New()
+		_, err = db.Pool.Exec(ctx, `
+			INSERT INTO dt_delegations (id, organization_id, delegator_id, delegate_id, miph_notification_ref, reason, start_date, end_date, is_active)
+			VALUES ($1, $2, $3, $4, 'MIPH-TEST-AUDIT', 'Intérim test', NOW() - INTERVAL '1 hour', NOW() + INTERVAL '24 hours', TRUE)
+		`, delID, testOrgID, pdtID, assistantID)
+		if err != nil {
+			t.Fatalf("Erreur insertion délégation test: %v", err)
+		}
+
+		uActiveInterim, err := sm.ValidateSession(ctx, rawToken)
+		if err != nil {
+			t.Fatalf("Erreur validation session pendant intérim: %v", err)
+		}
+		if !uActiveInterim.HasPermission(string(domain.PermAuditView)) {
+			t.Fatalf("Durant un intérim actif, le Pharmacien Assistant doit avoir AUDIT_VIEW")
+		}
+
+		// 3. Après révocation du mandat : AUDIT_VIEW doit être immédiatement retiré
+		_, err = db.Pool.Exec(ctx, `UPDATE dt_delegations SET is_active = FALSE, revoked_at = NOW() WHERE id = $1`, delID)
+		if err != nil {
+			t.Fatalf("Erreur révocation délégation test: %v", err)
+		}
+
+		uRevoked, err := sm.ValidateSession(ctx, rawToken)
+		if err != nil {
+			t.Fatalf("Erreur validation session après révocation: %v", err)
+		}
+		if uRevoked.HasPermission(string(domain.PermAuditView)) {
+			t.Fatalf("Après révocation de l'intérim, le Pharmacien Assistant ne doit plus avoir AUDIT_VIEW")
+		}
+	})
 }
