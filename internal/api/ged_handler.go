@@ -753,9 +753,26 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Seul le Pharmacien Directeur Technique titulaire de la décision 1.A.7 a ce pouvoir légal
-	if user.Role != string(domain.RoleDirecteurTechnique) {
-		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire de la décision ministérielle (1.A.7) est habilité à apposer ce visa légal")
+	// Seul le Pharmacien Directeur Technique titulaire (1.A.7) ou un Pharmacien Assistant sous mandat d'intérim DT actif (Qualité/Production) a ce pouvoir
+	var activeInterimRef string
+	if user.Role == string(domain.RoleDirecteurTechnique) {
+		// PDT titulaire habilité sur l'ensemble du coffre-fort GED
+	} else if user.Role == "pharmacien_assistant" {
+		err := h.pool.QueryRow(r.Context(), `
+			SELECT miph_notification_ref FROM dt_delegations
+			WHERE organization_id = $1
+			  AND delegate_id = $2
+			  AND is_active = TRUE
+			  AND revoked_at IS NULL
+			  AND NOW() BETWEEN start_date AND end_date
+			ORDER BY created_at DESC LIMIT 1
+		`, user.OrganizationID, user.UserID).Scan(&activeInterimRef)
+		if err != nil || activeInterimRef == "" {
+			writeJSONError(w, http.StatusForbidden, "Hors période d'intérim active, seul le Pharmacien Directeur Technique titulaire (1.A.7) est habilité à signer les documents GED")
+			return
+		}
+	} else {
+		writeJSONError(w, http.StatusForbidden, "Seul le Pharmacien Directeur Technique titulaire (1.A.7) ou un DT intérimaire habilité peut apposer ce visa légal")
 		return
 	}
 
@@ -795,6 +812,23 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	doc, docErr := h.repo.GetDocumentByID(r.Context(), user.OrganizationID, docID)
+	if docErr != nil {
+		writeJSONError(w, http.StatusNotFound, "Document introuvable")
+		return
+	}
+
+	// En intérim DT, la signature GED est circonscrite aux aspects Qualité (02_, 04_) et Production (03_)
+	if activeInterimRef != "" {
+		isQualityOrProd := strings.HasPrefix(doc.TaxonomyPath, "02_") ||
+			strings.HasPrefix(doc.TaxonomyPath, "03_") ||
+			strings.HasPrefix(doc.TaxonomyPath, "04_")
+		if !isQualityOrProd {
+			writeJSONError(w, http.StatusForbidden, "En période d'intérim DT, la signature GED est limitée aux documents Qualité (AQ/CQ) et Production (Décret 21-82 Art. 24 & Arrêté du 22 juin 2021)")
+			return
+		}
+	}
+
 	var versionID uuid.UUID
 	if req.VersionID != "" {
 		versionID, err = uuid.Parse(req.VersionID)
@@ -803,8 +837,7 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		doc, err := h.repo.GetDocumentByID(r.Context(), user.OrganizationID, docID)
-		if err != nil || doc.LatestVersion == nil {
+		if doc.LatestVersion == nil {
 			writeJSONError(w, http.StatusNotFound, "Aucune version trouvée à signer")
 			return
 		}
@@ -847,6 +880,9 @@ func (h *GEDHandler) SignDocumentDT(w http.ResponseWriter, r *http.Request) {
 	declaration := req.Declaration
 	if declaration == "" {
 		declaration = domain.SolemnPDTDeclarationGED
+	}
+	if activeInterimRef != "" {
+		declaration = fmt.Sprintf("%s [Intérim DT — Mandat %s]", declaration, activeInterimRef)
 	}
 
 	now := time.Now().UTC()

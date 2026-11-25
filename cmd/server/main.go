@@ -467,8 +467,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDocLockCheckout)).Post("/api/v1/ged/documents/{id}/cancel-checkout", gedHandler.CancelCheckOut)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview, domain.PermDocArchive)).Post("/api/v1/ged/documents/{id}/status", gedHandler.UpdateStatus)
 
-				// Signature électronique officielle du Pharmacien Directeur Technique (PDT - 1.A.7)
-				protected.With(api.RequirePermission(auditService, domain.PermDocApprovePDT)).Post("/api/v1/ged/documents/{id}/sign-dt", gedHandler.SignDocumentDT)
+				// Signature électronique officielle du Pharmacien Directeur Technique (PDT - 1.A.7) ou DT Intérimaire (Qualité & Production)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDocApprovePDT, domain.PermDocCheckReview)).Post("/api/v1/ged/documents/{id}/sign-dt", gedHandler.SignDocumentDT)
 			}
 
 			// Moteur de Dossiers ANPP & Checklists Dynamiques (Jalon 1.5 - Guide CTD Juillet 2025)

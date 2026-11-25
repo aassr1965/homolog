@@ -777,4 +777,85 @@ func TestPharmacienAssistantAndDTDelegations(t *testing.T) {
 			t.Fatalf("Après révocation de l'intérim, le Pharmacien Assistant ne doit plus avoir AUDIT_VIEW")
 		}
 	})
+
+	t.Run("GED_SignDocumentDT_Interim_Qualite_Production", func(t *testing.T) {
+		gedRepo := repository.NewGEDRepository(db.Pool)
+		gedH := NewGEDHandler(gedRepo, nil, audit.NewService(db.Pool), db.Pool)
+
+		docRegID := uuid.New()
+		docQualID := uuid.New()
+		verRegID := uuid.New()
+		verQualID := uuid.New()
+
+		_, err := db.Pool.Exec(ctx, `
+			INSERT INTO ged_documents (id, organization_id, taxonomy_path, title_fr, document_code, document_type, status, current_version, created_by)
+			VALUES
+			  ($1, $3, '01_Affaires_Reglementaires/01_01_Agrements_Etablissement', 'Note Affaires Réglementaires', 'DOC-REG-INT-01', 'document_administratif', 'en_approbation_dt', 'v1.0', $4),
+			  ($2, $3, '02_Assurance_Qualite/02_01_SOP', 'SOP Assurance Qualité BPF', 'DOC-QA-INT-01', 'procedure_sop', 'en_approbation_dt', 'v1.0', $4)
+		`, docRegID, docQualID, testOrgID, makerID)
+		if err != nil {
+			t.Fatalf("Erreur insertion documents GED test: %v", err)
+		}
+
+		_, err = db.Pool.Exec(ctx, `
+			INSERT INTO ged_versions (id, document_id, version_label, revision_summary, file_sha256, file_size_bytes, mime_type, original_filename, storage_path, author_id)
+			VALUES
+			  ($1, $3, 'v1.0', 'Version initiale test', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 1200, 'application/pdf', 'reg.pdf', '/tmp/reg.pdf', $5),
+			  ($2, $4, 'v1.0', 'Version initiale test', 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 1200, 'application/pdf', 'qa.pdf', '/tmp/qa.pdf', $5)
+		`, verRegID, verQualID, docRegID, docQualID, makerID)
+		if err != nil {
+			t.Fatalf("Erreur insertion versions GED test: %v", err)
+		}
+
+		gedRouter := chi.NewRouter()
+		gedRouter.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				u := &auth.SessionUser{
+					UserID:         assistantID,
+					OrganizationID: testOrgID,
+					Email:          "assistant.interim@test.dz",
+					Role:           "pharmacien_assistant",
+					Permissions:    []string{string(domain.PermDocCheckReview)},
+				}
+				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), UserContextKey, u)))
+			})
+		})
+		gedRouter.With(RequireAnyPermission(nil, domain.PermDocApprovePDT, domain.PermDocCheckReview)).Post("/api/v1/ged/documents/{id}/sign-dt", gedH.SignDocumentDT)
+
+		signBody, _ := json.Marshal(map[string]string{"password": "Pass123!#"})
+
+		// 1. Hors intérim -> 403
+		req1 := httptest.NewRequest("POST", "/api/v1/ged/documents/"+docQualID.String()+"/sign-dt", bytes.NewReader(signBody))
+		rr1 := httptest.NewRecorder()
+		gedRouter.ServeHTTP(rr1, req1)
+		if rr1.Code != http.StatusForbidden {
+			t.Fatalf("Hors intérim, attendu 403 Forbidden pour signature GED Qualité, reçu: %d (%s)", rr1.Code, rr1.Body.String())
+		}
+
+		// 2. Activer un mandat d'intérim
+		delID := uuid.New()
+		_, err = db.Pool.Exec(ctx, `
+			INSERT INTO dt_delegations (id, organization_id, delegator_id, delegate_id, miph_notification_ref, reason, start_date, end_date, is_active)
+			VALUES ($1, $2, $3, $4, 'MIPH-INT-GED-01', 'Intérim Qualité/Prod', NOW() - INTERVAL '1 hour', NOW() + INTERVAL '24 hours', TRUE)
+		`, delID, testOrgID, pdtID, assistantID)
+		if err != nil {
+			t.Fatalf("Erreur insertion délégation test: %v", err)
+		}
+
+		// 3. Durant intérim sur document Affaires Réglementaires (01_) -> 403
+		req2 := httptest.NewRequest("POST", "/api/v1/ged/documents/"+docRegID.String()+"/sign-dt", bytes.NewReader(signBody))
+		rr2 := httptest.NewRecorder()
+		gedRouter.ServeHTTP(rr2, req2)
+		if rr2.Code != http.StatusForbidden {
+			t.Fatalf("Durant intérim sur 01_Affaires_Reglementaires, attendu 403 Forbidden, reçu: %d (%s)", rr2.Code, rr2.Body.String())
+		}
+
+		// 4. Durant intérim sur document Assurance Qualité (02_) -> 200 OK
+		req3 := httptest.NewRequest("POST", "/api/v1/ged/documents/"+docQualID.String()+"/sign-dt", bytes.NewReader(signBody))
+		rr3 := httptest.NewRecorder()
+		gedRouter.ServeHTTP(rr3, req3)
+		if rr3.Code != http.StatusOK {
+			t.Fatalf("Durant intérim sur 02_Assurance_Qualite, attendu 200 OK, reçu: %d (%s)", rr3.Code, rr3.Body.String())
+		}
+	})
 }
