@@ -463,6 +463,42 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 
 ---
 
+#### Test Ref : `OQ-AUD-04`
+* **Titre :** Modale d'Audit Trail Redimensionnable (Bords & Coins OS), Agrandissement Centré Plein Écran (⛶ / 🗗) et Split-View avec Inspecteur ALCOA+.
+* **Exigence Réglementaire :** ALCOA+ (*Available & Legible* / 21 CFR §11.10(b) — Capacité de revue lisible et exhaustive des enregistrements d'audit sans contrainte d'espace ni débordement d'affichage).
+* **Rôle Requis :** Pharmacien Directeur Technique ou tout rôle habilité `AUDIT_VIEW`.
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Cliquer sur le bouton **Audit Trail** dans la barre supérieure ou la barre de statut. | Clic bouton | La modale `#modal-audit-dialog` s'ouvre au centre de l'écran avec une disposition Split-View : grille des logs à gauche, panneau d'inspection ALCOA+ à droite. |
+| 2 | Positionner le curseur sur les bords et les 4 coins de la boîte de dialogue d'Audit Trail. | Survol des bords | Le curseur adopte dynamiquement les curseurs de redimensionnement de type système d'exploitation (`ns-resize`, `ew-resize`, `nwse-resize`, `nesw-resize`). |
+| 3 | Cliquer et glisser sur un bord latéral ou un coin pour étirer la fenêtre. | Glisser-déposer | La modale s'ajuste fluidement en temps réel aux dimensions souhaitées (avec limites minimales de sécurité `min-width: 540px; min-height: 420px`). |
+| 4 | Cliquer sur le bouton d'agrandissement plein écran **`⛶`** dans l'en-tête de la modale. | Clic sur `.btn-modal-expand` | 1. La modale passe en classe `.modal-fullscreen`.<br>2. La fenêtre est **strictement centrée** sur la surface disponible avec un espacement symétrique de 2vw (gauche/droite) et 2vh (haut/bas), sans décalage hors de l'écran.<br>3. L'icône se transforme en bouton de restauration **`🗗`**.<br>4. Les poignées de redimensionnement sont masquées pour éviter toute interférence. |
+| 5 | Cliquer sur le bouton de restauration **`🗗`**. | Clic bouton | La modale quitte le mode plein écran et reprend exactement sa position et ses dimensions précédentes. |
+| 6 | Cliquer sur une ligne d'événement dans le tableau de gauche. | Sélection ligne | 1. La ligne sélectionnée est mise en évidence visuelle.<br>2. L'inspecteur ALCOA+ à droite affiche la fiche d'audit détaillée : Identifiant d'événement, Horodatage strict UTC et local, Opérateur et rôle, Empreinte réseau (Adresse IP client & User-Agent), Hash SHA-256 complet avec bouton de copie en un clic, et Charge utile JSON formatée. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-OQ-AUD-04-RESIZE-FULLSCREEN.png`
+
+---
+
+#### Test Ref : `OQ-AUD-05`
+* **Titre :** Navigation par Onglets Métier Catégorisés (7 Catégories BPF), Filtrage Multi-Critères (dont Adresse IP) et Export CSV RFC 4180 avec UTF-8 BOM.
+* **Exigence Réglementaire :** 21 CFR §11.10(b), §11.10(e) (Filtrage opérationnel des flux et génération de copies exportables conformes pour inspection).
+* **Rôle Requis :** Pharmacien Directeur Technique ou tout rôle habilité `AUDIT_VIEW`.
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Observer la barre d'onglets supérieure `#audit-tabs-bar` de la modale. | Observation visuelle | 7 onglets thématiques sont affichés avec leurs badges de comptage dynamique :<br>• `🌐 Tous`<br>• `🔐 Sécurité & Accès`<br>• `✍️ Visas & Signatures DT`<br>• `📋 Dossiers CTD & Gating`<br>• `🏛️ Agréments MIPH & Tabadol`<br>• `🔄 Variations & Compléments`<br>• `🛡️ Coffre-fort CAS & Système` |
+| 2 | Cliquer successivement sur chaque onglet thématique (ex. `✍️ Visas & Signatures DT`). | Clic onglet | Le tableau filtre instantanément les événements de la catégorie correspondante et met à jour l'indicateur de volume scellé (`X événement(s) scellé(s)`). |
+| 3 | Saisir une adresse IP (ex. `192.168.1.45` ou `127.0.0.1`) dans le champ de recherche textuelle `#audit-filter-input`. | Saisie adresse IP | Le tableau filtre en temps réel et n'affiche que les actions initiées depuis cette adresse IP. La colonne dédiée **« Adresse IP »** met en évidence l'adresse en typographie monospace bleue. |
+| 4 | Cliquer sur le bouton **`📥 Exporter la vue (CSV)`**. | Clic bouton export | Un fichier CSV certifié RFC 4180 est téléchargé, encodé en UTF-8 avec BOM (`\uFEFF`) pour compatibilité Excel, contenant les colonnes : `Horodatage_ISO, Horodatage_Local, Code_Action, Intitule_Action, Categorie, Operateur, Email_Operateur, Role, Type_Entite, Cible_Entite, Empreinte_SHA256, Statut_Immuable, Adresse_IP`. |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-OQ-AUD-05-TABS-IP-CSV.png`
+
+---
+
 ### MODULE 11 : SIGNATURE ÉLECTRONIQUE 21 CFR PART 11 & CARTOUCHE VISUELLE
 
 #### Test Ref : `OQ-SIG-01`
