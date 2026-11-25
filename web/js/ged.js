@@ -578,7 +578,7 @@
                             `<button class="btn-pill" style="padding:2px 6px; font-size:10px;" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); handleCheckOutGED('${escapeHtml(doc.id)}')" title="Verrouiller pour édition (Check-out)">🔒</button>`
                         }
                         ${((doc.status === 'en_approbation_dt' || (v && !v.is_signed_dt)) && canSignGEDDocument(doc)) ?
-                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); openSignGEDDTModal('${escapeHtml(doc.id)}', '${v ? escapeHtml(v.id) : ''}', '${escapeHtml(doc.document_code)}', '${escapeHtml(doc.title_fr)}', '${escapeHtml(sha)}')" title="Signer électroniquement (PDT / DT Délégué)">✍️</button>` : ''
+                            `<button class="btn-pill" style="padding:2px 6px; font-size:10px; background:rgba(16,185,129,0.15); color:var(--accent-emerald);" onclick="selectGEDDocument('${escapeHtml(doc.id)}'); openSignGEDDTModal('${escapeHtml(doc.id)}', '${v ? escapeHtml(v.id) : ''}')" title="Signer électroniquement (PDT / DT Délégué)">✍️</button>` : ''
                         }
                     </td>
                 `;
@@ -650,7 +650,7 @@
                     <button class="btn-pill" style="width:100%;" onclick="openGEDVersionsModal('${doc.id}')">📜 Consulter les Versions &amp; Check-in</button>
                     ${doc.status === 'brouillon' ? `<button class="btn-pill" style="width:100%;" onclick="handleStatusChangeGED('${doc.id}', 'en_revue')">🔄 Soumettre pour Revue</button>` : ''}
                     ${doc.status === 'en_revue' ? `<button class="btn-pill" style="width:100%;" onclick="handleStatusChangeGED('${doc.id}', 'en_approbation_dt')">📤 Transmettre pour Approbation PDT</button>` : ''}
-                    ${doc.status === 'en_approbation_dt' && canSignGEDDocument(doc) ? `<button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none;" onclick="openSignGEDDTModal('${doc.id}', '${v ? v.id : ''}', '${doc.document_code}', '${doc.title_fr}', '${sha}')">✍️ Signer et Mettre en Vigueur (PDT / DT Délégué)</button>` : ''}
+                    ${doc.status === 'en_approbation_dt' && canSignGEDDocument(doc) ? `<button class="btn-pill" style="width:100%; background:var(--accent-emerald); color:white; border:none;" onclick="openSignGEDDTModal('${escapeHtml(doc.id)}', '${v ? escapeHtml(v.id) : ''}')">✍️ Signer et Mettre en Vigueur (PDT / DT Délégué)</button>` : ''}
                 </div>
             `;
         }
@@ -920,10 +920,13 @@
             }
 
             selectGEDDocument(docID);
+            const resolvedCode = docCode || (doc && doc.document_code) || '';
+            const resolvedTitle = title || (doc && doc.title_fr) || '';
+            const resolvedSha = sha || (doc && doc.latest_version && doc.latest_version.file_sha256) || '';
             document.getElementById('sign-ged-doc-id').value = docID;
             document.getElementById('sign-ged-version-id').value = versionID;
-            document.getElementById('sign-ged-doc-name').value = `[${docCode}] ${title}`;
-            document.getElementById('sign-ged-sha').value = sha;
+            document.getElementById('sign-ged-doc-name').value = `[${resolvedCode}] ${resolvedTitle}`;
+            document.getElementById('sign-ged-sha').value = resolvedSha;
             document.getElementById('sign-ged-password').value = '';
             document.getElementById('modal-sign-ged-dt').classList.add('open');
         }
