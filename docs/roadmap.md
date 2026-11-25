@@ -468,12 +468,11 @@ gantt
   - Déconnexion automatique par inactivité réglementaire BPF (15 minutes) avec modale d'avertissement et redirection sécurisée vers l'écran d'authentification.
   - 100% de conformité aux tests d'intégration API (`TestCorporateAPI_FullWorkflow`).
 
-- [ ] **Évolution Réglementaire Complémentaire Jalon 2.7bis (Harmonisation Décret 21-82 & Arrêtés 2021-2026) :**
+- [x] **Évolution Réglementaire Complémentaire Jalon 2.7bis (Harmonisation Décret 21-82 & Arrêtés 2021-2026) :**
   - Ajout de la **5ᵉ catégorie réglementaire : Établissement Pharmaceutique d'Exportation** (codes CNRC 702103 / 702106, `eForm-MIPH-EXPORTATION`, checklist et filtrage UI dédié).
   - Généralisation systématique du **Titre de propriété notarié ou contrat de bail notarié enregistré (`[E]`)** dans les checklists d'Importation (`IMP.ADM.04`), Distribution en gros (`DIS.ADM.04`), Exploitation (`EXP.ADM.04`) et Exportation (`EXT.ADM.04`).
   - Dissociation explicite dans le modal de création des deux étapes d'agrément Fabrication (*Agrément Préalable de Réalisation* vs *Agrément d'Ouverture*).
-  - Contrôles métier : seuils de superficie Importation (300 m² / 90 m² / 390 m²), alerte de caducité à 2 ans (Art. 16) et alerte plafond d'intérim du PDT à 92 jours (Art. 24).
-  - Alimentation complète de la base de **Veille Juridique** (`regulatory_watch_items`) avec les 9 piliers réglementaires.
+  - Alimentation complète de la base de **Veille Juridique** (`regulatory_watch_items`) avec les 9 piliers réglementaires et déduplication SQL (`Migration 032`).
 
 ### Jalon 2.8 : Moteur de Recherche Plein Texte Bilingue (PostgreSQL FTS)
 - [ ] Indexation textuelle automatique des documents PDF, Word (.docx) et Excel (.xlsx) déposés en GED.

@@ -535,6 +535,24 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 
 ---
 
+#### Test Ref : `OQ-CORP-02`
+* **Titre :** Vérification de l'alignement réglementaire Décret exécutif n° 21-82 (5ᵉ catégorie Exportation, parcours Fabrication en 2 étapes, baux notariés généralisés et Veille Juridique 9 Piliers).
+* **Exigence Réglementaire :** Décret exécutif n° 21-82 (Art. 2, 12, 14, 16, 24), Arrêtés d'application 2021–2025/2026 (Importation 300 m²/90 m²/390 m², Distribution BPDG, Exploitation, Fabrication 2 étapes) & ALCOA+.
+* **Rôle Requis :** Pharmacien Directeur Technique (`pdt@pharma.dz`).
+
+| Étape | Action de l'Auditeur (Navigation UI) | Données d'Entrée | Résultat Attendu (Acceptance Criteria) |
+| :---: | :--- | :--- | :--- |
+| 1 | Ouvrir le module **Agréments Corporate (Décret 21-82)** et vérifier l'arborescence de gauche. | Clic sur `🏛️ Agréments MIPH` | • Les 5 catégories officielles sont présentes : `Fabrication`, `Importation`, `Distribution`, `Exploitation`, et `🌍 Exportation Pharmaceutique (Art. 12)`. |
+| 2 | Cliquer sur `➕ Nouvelle Demande` et inspecter les sélecteurs **Catégorie** et **Nature de la Demande**. | Modale Création | • La catégorie `EXPORTATION` (`CNRC 702103/702106`) est sélectionnable.<br>• Les démarches Fabrication en 2 étapes (`Agrément Préalable de Réalisation` vs `Agrément d'Ouverture Définitive`) ainsi que `Décision d'Exercice PDT` et `Assistant` sont présentes. |
+| 3 | Créer une demande `EXPORTATION` (`AGREMENT_INITIAL`) et ouvrir sa checklist. | Création dossier Export | • Le formulaire est `eForm-MIPH-EXPORTATION`.<br>• La checklist génère 7 exigences bloquantes `[E]` dont `EXT.ADM.01` (CNRC 702103/702106) et `EXT.ADM.04` (*Titre de propriété notarié ou contrat de bail notarié enregistré*). |
+| 4 | Ouvrir ou créer un dossier `IMPORTATION` ou `DISTRIBUTION` et vérifier la présence de la pièce bail/propriété. | Dossier Import / Dist | • Les items `IMP.ADM.04` (avec seuils 300 m²/90 m²/390 m²), `DIS.ADM.04` et `EXP.ADM.04` sont présents en niveau `[E]` (obligatoire). |
+| 5 | Ouvrir la modale **📜 Veille Juridique**. | Clic `📜 Veille Juridique` | • Le corpus affiche sans doublons les textes officiels des **9 Piliers** (Loi 18-11, Décret 21-82, Arrêtés 2021–2026, Décret 22-247 BPF, Décret 21-551, `LD-DEPP07/V01`, etc.). |
+
+* **Résultat de l'Auditeur :** [ ] PASS  |  [ ] FAIL  |  [ ] DÉVIATION
+* **Preuve Documentaire :** `SCR-OQ-CORP-02-EXPORT.png`, `SCR-OQ-CORP-02-VEILLE.png`
+
+---
+
 ## 5. GESTION DES ANOMALIES, DÉVIATIONS & FICHES D'INCIDENT
 
 Tout écart constaté lors de l'exécution d'un test doit être consigné dans la fiche de déviation ci-dessous :

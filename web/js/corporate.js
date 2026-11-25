@@ -7,7 +7,7 @@ let currentCorporateApplications = [];
 let currentCorporateLicenses = [];
 let selectedCorporateAppID = null;
 let currentCorporateApp = null;
-let currentCorporateFilter = 'ALL'; // ALL, FABRICATION, IMPORTATION, DISTRIBUTION, EXPLOITATION, LICENSES
+let currentCorporateFilter = 'ALL'; // ALL, FABRICATION, IMPORTATION, DISTRIBUTION, EXPLOITATION, EXPORTATION, LICENSES
 let currentCorporatePreviewTab = 'checklist';
 
 // ============================================================================
@@ -116,6 +116,11 @@ function renderCorporateTree() {
             <span class="chevron">📑</span>
             <span>Exploitation de Spécialités</span>
             <span class="count-badge">Titulaire</span>
+        </div>
+        <div class="tree-node ${currentCorporateFilter === 'EXPORTATION' ? 'selected' : ''}" onclick="selectCorporateFilter('EXPORTATION')">
+            <span class="chevron">🌍</span>
+            <span>Exportation Pharmaceutique</span>
+            <span class="count-badge">Art. 12</span>
         </div>
         <div style="margin: 12px 8px 6px; border-top: 1px solid var(--border-color); padding-top: 8px;">
             <div style="font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px;">
@@ -237,7 +242,7 @@ async function renderCorporateView(filter) {
                             Aucune demande d'agrément ministériel enregistrée
                         </div>
                         <div style="font-size:12px; color:var(--text-dim); max-width:480px; margin:0 auto 16px;">
-                            Conformément au Décret exécutif n° 21-82, constituez le dossier d'agrément de votre établissement pharmaceutique (Fabrication, Importation, Distribution ou Exploitation) avec télétransmission Tabadol.
+                            Conformément au Décret exécutif n° 21-82, constituez le dossier d'agrément de votre établissement pharmaceutique (Fabrication, Importation, Distribution, Exploitation ou Exportation) avec télétransmission Tabadol.
                         </div>
                         <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none; padding:8px 16px; font-weight:700;" onclick="openNewCorporateAppModal()">
                             ➕ Initier une Demande d'Agrément MIPH
@@ -282,12 +287,18 @@ async function renderCorporateView(filter) {
             else if (app.category === 'IMPORTATION') { catLabel = "Importation"; catIcon = "🚢"; }
             else if (app.category === 'DISTRIBUTION') { catLabel = "Distribution"; catIcon = "🚚"; }
             else if (app.category === 'EXPLOITATION') { catLabel = "Exploitation"; catIcon = "📑"; }
+            else if (app.category === 'EXPORTATION') { catLabel = "Exportation"; catIcon = "🌍"; }
 
             // Nature
             let natureLabel = app.nature;
-            if (app.nature === 'AGREMENT_INITIAL') natureLabel = "Agrément Initial";
+            if (app.nature === 'PREALABLE_REALISATION') natureLabel = "Préalable Réalisation (Étape 1)";
+            else if (app.nature === 'OUVERTURE_INITIALE') natureLabel = "Agrément d'Ouverture (Étape 2)";
+            else if (app.nature === 'AGREMENT_INITIAL') natureLabel = "Agrément Initial";
+            else if (app.nature === 'SOUS_TRAITANCE') natureLabel = "Sous-Traitance BPF";
+            else if (app.nature === 'EXERCICE_PDT') natureLabel = "Décision Exercice PDT";
+            else if (app.nature === 'EXERCICE_ASSISTANT') natureLabel = "Décision Assistant";
             else if (app.nature === 'RENOUVELLEMENT') natureLabel = "Renouvellement";
-            else if (app.nature === 'MODIFICATION_SUBSTANTIELLE') natureLabel = "Modif. Substantielle";
+            else if (app.nature === 'MODIFICATION_SUBSTANTIELLE' || app.nature === 'MODIF_SUBSTANTIELLE') natureLabel = "Modif. Substantielle";
             else if (app.nature === 'EXTENSION_LIGNES') natureLabel = "Extension Lignes";
             else if (app.nature === 'TRANSFERT_SITE') natureLabel = "Transfert de Site";
 
@@ -795,6 +806,7 @@ async function renderCorporateLicensesTable() {
             else if (lic.category === 'IMPORTATION') catIcon = "🚢";
             else if (lic.category === 'DISTRIBUTION') catIcon = "🚚";
             else if (lic.category === 'EXPLOITATION') catIcon = "📑";
+            else if (lic.category === 'EXPORTATION') catIcon = "🌍";
 
             tr.innerHTML = `
                 <td>${statusTag}</td>
@@ -2332,19 +2344,25 @@ async function openNewCorporateAppModal() {
             <div class="modal-body">
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <div>
-                        <label style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:3px;">Catégorie d'Établissement (Décret 21-82 Art. 4) :</label>
+                        <label style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:3px;">Catégorie d'Établissement (Décret 21-82 Art. 2) :</label>
                         <select id="new-corp-category" class="input-base" style="width:100%; font-size:11px; padding:6px;">
-                            <option value="FABRICATION">🏭 Fabrication de Produits Pharmaceutiques &amp; DM</option>
-                            <option value="IMPORTATION">🚢 Importation de Produits Pharmaceutiques &amp; DM</option>
-                            <option value="DISTRIBUTION">🚚 Distribution en Gros de Produits Pharmaceutiques</option>
-                            <option value="EXPLOITATION">📑 Exploitation de Spécialités Pharmaceutiques</option>
+                            <option value="FABRICATION">🏭 Fabrication de Produits Pharmaceutiques &amp; DM (Tabadol Intaj)</option>
+                            <option value="IMPORTATION">🚢 Importation de Produits Pharmaceutiques &amp; DM (Tabadol-J)</option>
+                            <option value="DISTRIBUTION">🚚 Distribution en Gros de Produits Pharmaceutiques (Tabadol-J)</option>
+                            <option value="EXPLOITATION">📑 Exploitation de Spécialités &amp; DM Homologués (Tabadol-J)</option>
+                            <option value="EXPORTATION">🌍 Exportation de Produits Pharmaceutiques &amp; DM (CNRC 702103/702106)</option>
                         </select>
                     </div>
 
                     <div>
                         <label style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:3px;">Nature de la Demande :</label>
                         <select id="new-corp-nature" class="input-base" style="width:100%; font-size:11px; padding:6px;">
-                            <option value="AGREMENT_INITIAL">Agrément Initial (Création)</option>
+                            <option value="PREALABLE_REALISATION">Agrément Préalable de Réalisation (Fabrication Étape 1 — Sur plans)</option>
+                            <option value="OUVERTURE_INITIALE">Agrément d'Ouverture Définitive (Fabrication Étape 2 — SMF &amp; Inspection)</option>
+                            <option value="AGREMENT_INITIAL">Agrément Initial (Importation / Distribution / Exploitation / Exportation)</option>
+                            <option value="SOUS_TRAITANCE">Agrément d'Ouverture en Sous-Traitance BPF</option>
+                            <option value="EXERCICE_PDT">Décision d'Exercice Pharmacien Directeur Technique (PDT)</option>
+                            <option value="EXERCICE_ASSISTANT">Décision d'Exercice Pharmacien Assistant</option>
                             <option value="RENOUVELLEMENT">Renouvellement Quinquennal (J-180)</option>
                             <option value="MODIFICATION_SUBSTANTIELLE">Modification Substantielle (Locaux / Équipements)</option>
                             <option value="EXTENSION_LIGNES">Extension de Gammes / Lignes de Production</option>

@@ -15,6 +15,7 @@ const (
 	CategoryImportation  EstablishmentCategory = "IMPORTATION"
 	CategoryDistribution EstablishmentCategory = "DISTRIBUTION"
 	CategoryExploitation EstablishmentCategory = "EXPLOITATION"
+	CategoryExportation  EstablishmentCategory = "EXPORTATION"
 )
 
 // ApplicationNature représente la nature de la démarche ministérielle auprès du MIPH
@@ -262,6 +263,7 @@ func GenerateCorporateChecklist(category EstablishmentCategory, nature Applicati
 		add("IMP.ADM.01", "Statuts notariés et Registre du Commerce électronique CNRC (code activité importation pharmaceutique)", "ADMINISTRATIF", "E", true, "")
 		add("IMP.ADM.02", "Extrait de rôle fiscal apuré (validité < 3 mois) et attestations CNAS/CASNOS à jour", "ADMINISTRATIF", "E", true, "")
 		add("IMP.ADM.03", "Programme prévisionnel d'importation annuel visé par la Direction de la Pharmacie MIPH", "ADMINISTRATIF", "E", true, "")
+		add("IMP.ADM.04", "Titre de propriété notarié ou contrat de bail notarié enregistré des locaux et entrepôts de stockage (300 m² min. médicaments / 90 m² min. DM / 390 m² mixte)", "ADMINISTRATIF", "E", true, "")
 		add("IMP.PDT.01", "Diplôme d'État de Docteur en Pharmacie et inscription Ordre CNOP du Pharmacien DT", "PHARMACIEN_DT", "E", true, "")
 		add("IMP.PDT.02", "Contrat de travail à temps plein exclusif et décision nominative d'exercice du Pharmacien DT", "PHARMACIEN_DT", "E", true, "")
 		add("IMP.TEC.01", "Descriptif des magasins de stockage sous température contrôlée et zones sécurisées (quarantaine/rejet sous clé)", "CONDITIONS_TECHNIQUES", "E", true, "")
@@ -273,19 +275,30 @@ func GenerateCorporateChecklist(category EstablishmentCategory, nature Applicati
 		add("DIS.ADM.01", "Statuts notariés et Registre du Commerce électronique CNRC (code distribution en gros)", "ADMINISTRATIF", "E", true, "")
 		add("DIS.ADM.02", "Extrait de rôle fiscal apuré (< 3 mois) et attestations CNAS/CASNOS à jour", "ADMINISTRATIF", "E", true, "")
 		add("DIS.ADM.03", "Cahier des charges de distribution en gros paraphé et engagement d'approvisionnement continu du marché", "ADMINISTRATIF", "E", true, "")
+		add("DIS.ADM.04", "Titre de propriété notarié ou contrat de bail notarié enregistré des locaux et entrepôts de distribution", "ADMINISTRATIF", "E", true, "")
 		add("DIS.PDT.01", "Dossier nominatif du Pharmacien DT (Diplôme, Inscription Ordre CNOP, Contrat exclusif)", "PHARMACIEN_DT", "E", true, "")
-		add("DIS.TEC.01", "Plans et descriptif des entrepôts selon les Bonnes Pratiques de Distribution en Gros (BPDG)", "CONDITIONS_TECHNIQUES", "E", true, "")
+		add("DIS.TEC.01", "Plans et descriptif des entrepôts au 1/100e selon les Bonnes Pratiques de Distribution en Gros (BPDG)", "CONDITIONS_TECHNIQUES", "E", true, "")
 		add("DIS.TEC.02", "Inventaire de la flotte logistique et certificats d'étalonnage périodique des enregistreurs de température", "CONDITIONS_TECHNIQUES", "E", true, "")
 		add("DIS.BPF.01", "Système informatique validé de traçabilité des lots et procédure de rappel d'urgence (ICH Q10)", "ORGANISATION_BPF", "E", true, "")
 
 	case CategoryExploitation:
-		add("EXP.ADM.01", "Statuts et Registre de Commerce d'exploitant titulaire de décisions d'enregistrement ANPP", "ADMINISTRATIF", "E", true, "")
+		add("EXP.ADM.01", "Statuts et Registre de Commerce d'exploitant titulaire de décisions d'enregistrement ANPP et/ou d'homologation DM", "ADMINISTRATIF", "E", true, "")
 		add("EXP.ADM.02", "Extrait de rôle fiscal apuré (< 3 mois) et attestations CNAS/CASNOS en cours de validité", "ADMINISTRATIF", "E", true, "")
 		add("EXP.ADM.03", "Cahier des conditions techniques à l'exploitation paraphé avec engagement déontologique", "ADMINISTRATIF", "E", true, "")
+		add("EXP.ADM.04", "Titre de propriété notarié ou contrat de bail notarié enregistré du siège et des installations de l'exploitant", "ADMINISTRATIF", "E", true, "")
 		add("EXP.PDT.01", "Dossier et décision d'exercice nominative du Pharmacien DT Responsable de l'Exploitation", "PHARMACIEN_DT", "E", true, "")
 		add("EXP.PV.01", "Désignation officielle de la Personne Responsable de la Pharmacovigilance (QPPV) et système d'alerte 24/7", "ORGANISATION_BPF", "E", true, "")
 		add("EXP.BPF.01", "Procédure de contrôle et validation de l'information médicale/scientifique par le Pharmacien DT", "ORGANISATION_BPF", "E", true, "")
 		add("EXP.TRC.01", "Système de suivi de la traçabilité des lots sur le marché national et procédure de rappel de lots", "ORGANISATION_BPF", "E", true, "")
+
+	case CategoryExportation:
+		add("EXT.ADM.01", "Statuts notariés et Registre du Commerce électronique CNRC (codes 702103 médicaments / 702106 DM)", "ADMINISTRATIF", "E", true, "")
+		add("EXT.ADM.02", "Extrait de rôle fiscal apuré (< 3 mois) et attestations CNAS/CASNOS à jour", "ADMINISTRATIF", "E", true, "")
+		add("EXT.ADM.03", "Cahier des charges à l'exportation paraphé et engagement de conformité réglementaire (Décret 21-82 Art. 12)", "ADMINISTRATIF", "E", true, "")
+		add("EXT.ADM.04", "Titre de propriété notarié ou contrat de bail notarié enregistré des locaux et aires d'entreposage sous douane/export", "ADMINISTRATIF", "E", true, "")
+		add("EXT.PDT.01", "Dossier nominatif du Pharmacien DT (Diplôme d'État, Inscription CNOP, Contrat exclusif temps plein)", "PHARMACIEN_DT", "E", true, "")
+		add("EXT.TEC.01", "Descriptif des magasins de stockage sous température contrôlée et conventions de sourcing avec les fabricants locaux", "CONDITIONS_TECHNIQUES", "E", true, "")
+		add("EXT.TRC.01", "Système informatisé de traçabilité des lots exportés et procédure de délivrance des certificats d'exportation", "ORGANISATION_BPF", "E", true, "")
 	}
 
 	return items
@@ -315,6 +328,8 @@ func GetFormTypeForApplication(cat EstablishmentCategory, nat ApplicationNature)
 		return "eForm-MIPH-DISTRIBUTION"
 	case CategoryExploitation:
 		return "eForm-MIPH-EXPLOITATION"
+	case CategoryExportation:
+		return "eForm-MIPH-EXPORTATION"
 	default:
 		return fmt.Sprintf("eForm-MIPH-%s", cat)
 	}
