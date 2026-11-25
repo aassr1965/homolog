@@ -17,10 +17,10 @@
 - **Règles de compilation** : Toute modification de fichiers sous `web/` nécessite une recompilation de `server.exe` (`go build -o server.exe ./cmd/server`) avant redémarrage du service.
 - **Conformité Réglementaire** : 21 CFR Part 11, EU GMP Annexe 11, GAMP 5, exigences ANPP (Algérie). Traçabilité immuable, signature électronique à double authentification, Audit Trail chaîné en SHA-256 avec géolocalisation haute précision (commune/daïra).
 
-## 3. Règle Permanente : Formatage (`gofmt`) & Commit Git Systématique en Fin de Phase
+## 3. Règle Permanente : Qualité (`verify.ps1` / `gofmt`) & Commit Git Systématique en Fin de Phase
 > [!IMPORTANT]
 > **Traçabilité et gestion de configuration (GAMP 5) :**
 > À chaque fois qu'une phase de travail, un jalon ou un lot de modifications fonctionnelles/UI est terminé et vérifié :
-> 1. Exécuter systématiquement **`gofmt -w .`** sur le code Go afin de garantir un formatage strict et uniforme.
+> 1. Exécuter systématiquement le script de pré-validation **`powershell -ExecutionPolicy Bypass -File scripts/verify.ps1`** (qui enchaîne `gofmt -w .`, `go vet ./...`, `node --check web/js/*.js`, `go test ./...` et un `go build` de contrôle).
 > 2. Vous devez **systématiquement exécuter un `git commit`** propre et descriptif incluant l'ensemble des fichiers modifiés (code source, documentation `cahier_des_charges.md`, `roadmap.md`, et protocole `PROTOCOLE_QUALIFICATION_OQ_PQ_SANAD.md`).
 > 3. Vérifier l'état du dépôt avec `git status` avant et après le commit afin de ne laisser aucun changement non commité en fin de phase.
