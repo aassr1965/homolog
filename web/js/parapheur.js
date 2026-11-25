@@ -1016,21 +1016,23 @@
      * Charge la liste des assistants pour le sélecteur
      */
     window.loadAssistantSelect = async function () {
-        const select = document.getElementById('deleg-delegate-select');
-        if (!select) return;
+        const selects = [
+            document.getElementById('deleg-delegate-select'),
+            document.getElementById('perm-delegate-select')
+        ].filter(Boolean);
+        if (selects.length === 0) return;
 
         try {
             const res = await fetch('/api/v1/parapheur/assistants');
             if (!res.ok) return;
             const assistants = await res.json();
 
-            if (!assistants || assistants.length === 0) {
-                select.innerHTML = '<option value="">Aucun Pharmacien Assistant trouvé dans l\'établissement</option>';
-                return;
-            }
+            const html = (!assistants || assistants.length === 0)
+                ? '<option value="">Aucun Pharmacien Assistant trouvé dans l\'établissement</option>'
+                : '<option value="">Sélectionnez un Pharmacien Assistant...</option>' +
+                  assistants.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.first_name + ' ' + a.last_name)} (${escapeHtml(a.email)})</option>`).join('');
 
-            select.innerHTML = '<option value="">Sélectionnez un Pharmacien Assistant...</option>' + 
-                assistants.map(a => `<option value="${a.id}">${escapeHtml(a.first_name + ' ' + a.last_name)} (${a.email})</option>`).join('');
+            selects.forEach(sel => { sel.innerHTML = html; });
         } catch (e) {
             console.error('Erreur chargement assistants:', e);
         }
@@ -1131,18 +1133,6 @@
     window.loadDTPermanentDelegations = async function () {
         const tbody = document.getElementById('dt-perm-delegations-tbody');
         const countSpan = document.getElementById('dt-perm-delegations-count');
-        const permSel = document.getElementById('perm-delegate-select');
-        if (permSel && permSel.options.length <= 1) {
-            try {
-                const aRes = await fetch('/api/v1/parapheur/assistants');
-                if (aRes.ok) {
-                    const aData = await aRes.json();
-                    const list = aData.assistants || [];
-                    permSel.innerHTML = '<option value="">Sélectionnez un Pharmacien Assistant...</option>' +
-                        list.map(u => `<option value="${escapeHtml(u.id)}">${escapeHtml(u.full_name || (u.first_name + ' ' + u.last_name))} (${escapeHtml(u.email)})</option>`).join('');
-                }
-            } catch (_) {}
-        }
         if (!tbody) return;
 
         try {
