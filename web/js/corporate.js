@@ -654,12 +654,14 @@ async function viewCorporateChecklist(appId) {
 
                 // Criticité
                 let reqBadge = `<span class="status-tag" style="background:#64748b; color:white; font-size:9px;">[S] Standard</span>`;
-                if (it.requirement_level === 'ELIMINATOIRE') {
-                    reqBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:9px; font-weight:800;">[E] Éliminatoire Tabadol</span>`;
-                } else if (it.requirement_level === 'COMPLEMENT') {
+                if (it.requirement_level === 'E' || it.requirement_level === 'ELIMINATOIRE') {
+                    reqBadge = `<span class="badge-eliminatoire-discret" title="Pièce éliminatoire [E] : indispensable pour la recevabilité et la soumission Tabadol">[E] Éliminatoire</span>`;
+                } else if (it.requirement_level === 'C' || it.requirement_level === 'COMPLEMENT') {
                     reqBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white; font-size:9px; font-weight:700;">[C] Complément</span>`;
-                } else if (it.requirement_level === 'FACULTATIF') {
+                } else if (it.requirement_level === 'F' || it.requirement_level === 'FACULTATIF') {
                     reqBadge = `<span class="status-tag" style="background:#0284c7; color:white; font-size:9px;">[F] Facultatif</span>`;
+                } else if (it.is_mandatory) {
+                    reqBadge += ` <span class="badge-eliminatoire-discret" title="Pièce éliminatoire : indispensable pour la recevabilité">Éliminatoire</span>`;
                 }
 
                 // Info GED rattaché
@@ -1010,12 +1012,14 @@ function renderChecklistTabHtml(app) {
         secItems.forEach(it => {
             // Badges de criticité
             let reqBadge = `<span class="status-tag" style="background:#64748b; color:white; font-size:9px;">[S] Standard</span>`;
-            if (it.requirement_level === 'ELIMINATOIRE') {
-                reqBadge = `<span class="status-tag status-req" style="background:#dc2626; color:white; font-size:9px; font-weight:800;">[E] Éliminatoire</span>`;
-            } else if (it.requirement_level === 'COMPLEMENT') {
+            if (it.requirement_level === 'E' || it.requirement_level === 'ELIMINATOIRE') {
+                reqBadge = `<span class="badge-eliminatoire-discret" title="Pièce éliminatoire [E] : indispensable pour la recevabilité et la soumission Tabadol">[E] Éliminatoire</span>`;
+            } else if (it.requirement_level === 'C' || it.requirement_level === 'COMPLEMENT') {
                 reqBadge = `<span class="status-tag status-rev" style="background:#d97706; color:white; font-size:9px; font-weight:700;">[C] Complément</span>`;
-            } else if (it.requirement_level === 'FACULTATIF') {
+            } else if (it.requirement_level === 'F' || it.requirement_level === 'FACULTATIF') {
                 reqBadge = `<span class="status-tag" style="background:#0284c7; color:white; font-size:9px;">[F] Facultatif</span>`;
+            } else if (it.is_mandatory) {
+                reqBadge += ` <span class="badge-eliminatoire-discret" title="Pièce éliminatoire : indispensable pour la recevabilité">Éliminatoire</span>`;
             }
 
             // Statut de rattachement GED

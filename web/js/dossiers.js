@@ -1336,7 +1336,7 @@
                         const isCommercialClassified = it.security_classification === 'SECRET_COMMERCIAL' || ['1.A.4', '1.H.4', '1.H.5'].includes(it.item_code);
                         const isIndustrialClassified = it.security_classification === 'SECRET_INDUSTRIEL' || ['3.2.S', '3.2.P'].includes(it.sub_module);
 
-                        let reqBadge = `<span class="badge-req-e">[E] Exigé</span>`;
+                        let reqBadge = `<span class="badge-req-e">[E] Exigé</span>` + (it.is_mandatory ? ` <span class="badge-eliminatoire-discret" title="Pièce éliminatoire : son absence bloque la recevabilité du dossier à l'ANPP">Éliminatoire</span>` : '');
                         if (it.requirement_level === 'F') reqBadge = `<span class="badge-req-f">[F] Facultatif</span>`;
                         else if (it.requirement_level === 'P') reqBadge = `<span class="badge-req-p">[P] Partiel</span>`;
                         else if (it.requirement_level === 'NA') reqBadge = `<span class="badge-req-na">[NA] Non Appl.</span>`;

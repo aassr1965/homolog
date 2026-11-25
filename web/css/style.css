@@ -2809,6 +2809,24 @@ html[dir="rtl"] .audit-col-resizer.resizing {
     border-left-color: var(--accent-blue);
 }
 
+/* Badge discret pour les pièces éliminatoires dans toutes les checklists */
+.badge-eliminatoire-discret {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: rgba(220, 38, 38, 0.08);
+    color: #b91c1c;
+    border: 1px solid rgba(220, 38, 38, 0.28);
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: help;
+}
+
 
 
 
