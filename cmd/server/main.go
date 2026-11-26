@@ -120,7 +120,7 @@ func main() {
 		gedHandler = api.NewGEDHandler(gedRepo, storageProvider, auditService, db.Pool)
 
 		dossierRepo := repository.NewDossierRepository(db.Pool)
-		dossierHandler = api.NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditService, db.Pool)
+		dossierHandler = api.NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditService, db.Pool).WithStorage(storageProvider)
 
 		deficiencyRepo := repository.NewDeficiencyRepository(db.Pool)
 		deficiencyHandler = api.NewDeficiencyHandler(deficiencyRepo, dossierRepo, auditService, db.Pool)

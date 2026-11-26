@@ -17,15 +17,23 @@ import (
 	"homolog/internal/domain"
 	"homolog/internal/reporting"
 	"homolog/internal/repository"
+	"homolog/internal/storage"
 )
 
 // DossierHandler gère les endpoints REST du moteur de dossiers ANPP et checklists CTD
 type DossierHandler struct {
-	repo         *repository.DossierRepository
-	pharmaRepo   *repository.PharmaRepository
-	gedRepo      *repository.GEDRepository
-	auditService *audit.Service
-	pool         *pgxpool.Pool
+	repo            *repository.DossierRepository
+	pharmaRepo      *repository.PharmaRepository
+	gedRepo         *repository.GEDRepository
+	auditService    *audit.Service
+	pool            *pgxpool.Pool
+	storageProvider storage.StorageProvider
+}
+
+// WithStorage rattache le fournisseur de stockage CAS au DossierHandler pour l'archivage GED automatique.
+func (h *DossierHandler) WithStorage(storageProvider storage.StorageProvider) *DossierHandler {
+	h.storageProvider = storageProvider
+	return h
 }
 
 // NewDossierHandler initialise le gestionnaire d'API des dossiers
@@ -935,7 +943,30 @@ func (h *DossierHandler) DownloadOfficialDEPPForm(w http.ResponseWriter, r *http
 		return
 	}
 
-	filename := fmt.Sprintf("ANPP-DEPP02-%s-%s.docx", strings.ToUpper(formType), dossier.DossierCode)
+	prefix := "ANPP-DEPP02-" + strings.ToUpper(formType)
+	if formType == "pre-soumission" || formType == "structure-prix" || formType == "recepisse-pp" {
+		prefix = "ANPP-DEPP-" + strings.ToUpper(formType)
+	}
+	filename := fmt.Sprintf("%s-%s.docx", prefix, dossier.DossierCode)
+
+	if formType != "structure-prix" {
+		if gedDocID, gedDocCode := archiveGeneratedDocInGED(r, user, h.gedRepo, h.storageProvider, h.auditService, gedArchiveSpec{
+			CodePrefix:      "DEPP",
+			TitleFR:         fmt.Sprintf("Formulaire Officiel ANPP (%s) — %s", strings.ToUpper(formType), dossier.DossierCode),
+			TaxonomyPath:    "01_Affaires_Reglementaires/01_06_Correspondances_ANPP",
+			DocumentType:    "FORMULAIRE_ANPP",
+			Department:      "affaires_reglementaires",
+			Tags:            []string{"ANPP", "DEPP", formType, dossier.DossierCode},
+			RevisionSummary: "Formulaire officiel DEPP généré — En attente de signature PDT / dépôt ANPP",
+			MimeType:        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			Filename:        filename,
+			SourceTag:       "depp_form_auto_archive",
+		}, docBytes); gedDocID != "" {
+			w.Header().Set("X-GED-Document-Id", gedDocID)
+			w.Header().Set("X-GED-Document-Code", gedDocCode)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	_, _ = w.Write(docBytes)

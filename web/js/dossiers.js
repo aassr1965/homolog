@@ -1133,6 +1133,15 @@
                             <button class="btn-pill" style="background:#0284c7; color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="downloadOfficialDEPPForm('${dossier.id}')" title="Télécharger le formulaire officiel DEPP02 (.docx) pré-rempli ANPP">
                                 📥 DEPP02 (.docx)
                             </button>
+                            <button class="btn-pill" style="background:#0369a1; color:white; font-weight:700; border:none; font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'pre-soumission')" title="Formulaire officiel de pré-soumission PP (.docx)">
+                                📥 Pré-soumission (.docx)
+                            </button>
+                            <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'structure-prix')" title="Modèle structure de prix fabrication locale (.docx)">
+                                🧾 Structure Prix (.docx)
+                            </button>
+                            <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'recepisse-pp')" title="Récépissé de dépôt dossier produit pharmaceutique (.docx)">
+                                📋 Récépissé PP (.docx)
+                            </button>
                             <button class="btn-pill" style="background:var(--accent-emerald); color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openMasterTemplatesModal()">
                                 📚 Templates Maîtres BPF
                             </button>
@@ -3272,7 +3281,12 @@
 function downloadOfficialDEPPForm(dossierId, type) {
     if (!dossierId) return;
     const qs = type ? `?type=${encodeURIComponent(type)}` : '';
-    window.location.href = `/api/v1/dossiers/${encodeURIComponent(dossierId)}/official-form${qs}`;
+    const url = `/api/v1/dossiers/${encodeURIComponent(dossierId)}/official-form${qs}`;
+    if (typeof downloadFormWithGEDFeedback === 'function') {
+        downloadFormWithGEDFeedback(url, `ANPP-DEPP-${type || 'DEPP02'}.docx`);
+    } else {
+        window.location.href = url;
+    }
 }
 window.downloadOfficialDEPPForm = downloadOfficialDEPPForm;
 

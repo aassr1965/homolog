@@ -216,8 +216,9 @@ func GenerateDDMBordereauDOCX(kind string, org *domain.Organization, dm *domain.
 	})
 }
 
-// GenerateDEPPFormDOCX pré-remplit les formulaires officiels DEPP02-A/B/C/D/E/F-V02 pour un dossier CTD.
+// GenerateDEPPFormDOCX pré-remplit les formulaires officiels DEPP (.docx) pour un dossier CTD.
 func GenerateDEPPFormDOCX(kind string, dossier *domain.Dossier, org *domain.Organization) ([]byte, error) {
+	k := strings.ToLower(strings.TrimSpace(kind))
 	tplMap := map[string]string{
 		"enregistrement": "depp02_a_enregistrement.docx",
 		"modification":   "depp02_b_modification.docx",
@@ -225,8 +226,11 @@ func GenerateDEPPFormDOCX(kind string, dossier *domain.Dossier, org *domain.Orga
 		"transfert":      "depp02_d_transfert.docx",
 		"recepisse":      "depp02_e_recepisse.docx",
 		"echantillons":   "depp02_f_echantillons.docx",
+		"pre-soumission": "depp_pre_soumission.docx",
+		"structure-prix": "depp_modele_structure.docx",
+		"recepisse-pp":   "depp_recepisse_depot_pp.docx",
 	}
-	tplName, ok := tplMap[strings.ToLower(strings.TrimSpace(kind))]
+	tplName, ok := tplMap[k]
 	if !ok {
 		return nil, fmt.Errorf("type de formulaire DEPP inconnu: %s", kind)
 	}
@@ -236,33 +240,82 @@ func GenerateDEPPFormDOCX(kind string, dossier *domain.Dossier, org *domain.Orga
 	}
 
 	brand, dci, dosage, form, _, _ := extractProductDetails(dossier)
-	orgName := ""
+	orgName, orgAddr, orgLicense, pdtName := "", "", "", ""
 	if org != nil {
 		orgName = org.LegalName
+		orgAddr = org.Address
+		orgLicense = org.MIPHLicenseNumber
+		pdtName = org.TechnicalDirectorName
 	}
 
 	labels := map[string]string{
-		"dénomination commerciale":            brand,
-		"dénomination commune internationale": dci,
-		"commune internationale":              dci,
-		"forme pharmaceutique":                form,
-		"dosage":                              dosage,
-		"nom/raison sociale":                  orgName,
-		"dénomination commerciale /dci":       strings.TrimSpace(brand + " / " + dci),
-		"forme/dosage/présentation":           strings.TrimSpace(form + " " + dosage),
+		"dénomination commerciale":                        brand,
+		"dénomination commune internationale":             dci,
+		"commune internationale":                          dci,
+		"forme pharmaceutique":                            form,
+		"dosage":                                          dosage,
+		"nom/raison sociale":                              orgName,
+		"établissement pharmaceutique demandeur":          orgName,
+		"nom et prénom du pharmacien directeur technique": pdtName,
+		"dénomination commerciale /dci":                   strings.TrimSpace(brand + " / " + dci),
+		"forme/dosage/présentation":                       strings.TrimSpace(form + " " + dosage),
 	}
 
 	textRepl := map[string]string{}
+	var strikeTerms []string
+	var cellUpdates []TableCellCoord
+
+	if k == "pre-soumission" {
+		if brand != "" {
+			textRepl["Dénomination commerciale\u00a0:"] = "Dénomination commerciale : " + brand
+		}
+		if dci != "" {
+			textRepl["Dénomination commune internationale (DCI)\u00a0:"] = "Dénomination commune internationale (DCI) : " + dci
+		}
+		if form != "" {
+			textRepl["Forme pharmaceutique :"] = "Forme pharmaceutique : " + form
+		}
+		if dosage != "" {
+			textRepl["Dosage\u00a0:"] = "Dosage : " + dosage
+		}
+		if orgName != "" || orgAddr != "" {
+			textRepl["Nom et adresse de l’établissement pharmaceutique demandeur:"] = "Nom et adresse de l’établissement pharmaceutique demandeur : " + strings.TrimSpace(orgName+" — "+orgAddr)
+		}
+		if orgLicense != "" {
+			textRepl["Numéro et date de l’agrément de l’établissement pharmaceutique demandeur\u00a0:"] = "Numéro et date de l’agrément de l’établissement pharmaceutique demandeur : " + orgLicense
+		}
+		if pdtName != "" {
+			textRepl["Nom et prénom du pharmacien directeur technique\u00a0:"] = "Nom et prénom du pharmacien directeur technique : " + pdtName
+		}
+	}
+
+	if k == "recepisse-pp" {
+		cellUpdates = []TableCellCoord{
+			{TableIndex: 3, RowIndex: 1, ColIndex: 1, Value: brand},
+			{TableIndex: 3, RowIndex: 2, ColIndex: 1, Value: dci},
+			{TableIndex: 3, RowIndex: 3, ColIndex: 1, Value: form},
+			{TableIndex: 3, RowIndex: 4, ColIndex: 1, Value: dosage},
+			{TableIndex: 3, RowIndex: 6, ColIndex: 1, Value: orgName},
+			{TableIndex: 3, RowIndex: 7, ColIndex: 1, Value: pdtName},
+		}
+	}
+
 	if dossier != nil {
 		proc := strings.ToUpper(string(dossier.ProcedureCode))
 		switch proc {
 		case "NF", "RF", "MF":
 			textRepl["Fabrication locale ☐"] = "Fabrication locale ☑"
 			textRepl["Fabrication☐"] = "Fabrication☑"
+			if k == "recepisse-pp" {
+				strikeTerms = append(strikeTerms, "Importation")
+			}
 		case "NI", "RI", "MI":
 			textRepl["Importation ☐"] = "Importation ☑"
 			textRepl["Importation\u00a0  ☐"] = "Importation ☑"
 			textRepl["Importation☐"] = "Importation☑"
+			if k == "recepisse-pp" {
+				strikeTerms = append(strikeTerms, "Fabrication locale")
+			}
 		}
 		if proc == "NI" || proc == "NF" {
 			textRepl["Nouvel Enregistrement☐"] = "Nouvel Enregistrement☑"
@@ -280,6 +333,8 @@ func GenerateDEPPFormDOCX(kind string, dossier *domain.Dossier, org *domain.Orga
 	return FillDOCXTemplate(tpl, DOCXFillOptions{
 		LabelValues:      labels,
 		TextReplacements: textRepl,
+		StrikeTerms:      strikeTerms,
+		CellUpdates:      cellUpdates,
 	})
 }
 

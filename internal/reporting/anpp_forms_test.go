@@ -364,4 +364,28 @@ func TestGenerateAllAdditionalDCEForms(t *testing.T) {
 	if err != nil || !strings.Contains(extractXMLText(readZipEntry(t, srOut, "word/document.xml")), "Biocare Algérie") {
 		t.Fatalf("GenerateDCETemplateCASRSecondaireDOCX invalide: err=%v", err)
 	}
+
+	dossier := &domain.Dossier{
+		DossierCode:   "DOS-2026-DEPP",
+		ProcedureCode: domain.ProcedureCode("NI"),
+		Medicine: &domain.Medicine{
+			BrandNameFR:          "Biomox 1g",
+			DCIFR:                "Amoxicilline",
+			DosageFR:             "1g",
+			PharmaceuticalFormFR: "Comprimé pelliculé",
+		},
+	}
+	for _, kind := range []string{"pre-soumission", "structure-prix", "recepisse-pp"} {
+		out, err := GenerateDEPPFormDOCX(kind, dossier, org)
+		if err != nil {
+			t.Fatalf("GenerateDEPPFormDOCX(%s) erreur: %v", kind, err)
+		}
+		txt := extractXMLText(readZipEntry(t, out, "word/document.xml"))
+		if kind != "structure-prix" && !strings.Contains(txt, "Biomox 1g") {
+			t.Errorf("GenerateDEPPFormDOCX(%s): Biomox 1g absent", kind)
+		}
+		if kind == "recepisse-pp" && !strings.Contains(readZipEntry(t, out, "word/document.xml"), "<w:strike/>") {
+			t.Errorf("GenerateDEPPFormDOCX(recepisse-pp): <w:strike/> attendu sur Fabrication locale")
+		}
+	}
 }
