@@ -8,7 +8,6 @@ ai_timeout = 360
 glob = [
   "docs/**",
   "*.md",
-  "brochure_print.html",
   "web/presentation.html"
 ]
 
