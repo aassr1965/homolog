@@ -9,7 +9,7 @@ import (
 
 // GenerateDDMHomologationDOCX pré-remplit le formulaire officiel ANPP « FORMULAIRE DE DEMANDE D’HOMOLOGATION.docx ».
 func GenerateDDMHomologationDOCX(org *domain.Organization, dm *domain.MedicalDevice) ([]byte, error) {
-	tpl, err := GetANPPTemplate("ddm_demande_homologation.docx")
+	tpl, err := getOrgANPPTemplate(org, "ddm_demande_homologation.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func GenerateDDMHomologationDOCX(org *domain.Organization, dm *domain.MedicalDev
 
 // GenerateDDMRecepisseDOCX pré-remplit le gabarit officiel « RECEPISSE DE DEPOT DES DOSSIERS SOUMIS A L’HOMOLOGATION.docx ».
 func GenerateDDMRecepisseDOCX(org *domain.Organization, dm *domain.MedicalDevice, eval *domain.DMRecevabiliteEvaluation) ([]byte, error) {
-	tpl, err := GetANPPTemplate("ddm_recepisse_depot.docx")
+	tpl, err := getOrgANPPTemplate(org, "ddm_recepisse_depot.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func GenerateDDMRecepisseDOCX(org *domain.Organization, dm *domain.MedicalDevice
 
 // GenerateDMCanevasNonHomologuesXLSX pré-remplit le fichier Excel officiel « CANEVAS DECLARATION DM NON HOMOLOGUES.xlsx ».
 func GenerateDMCanevasNonHomologuesXLSX(org *domain.Organization, regs []domain.DMRegularization) ([]byte, error) {
-	tpl, err := GetANPPTemplate("ddm_canevas_non_homologues.xlsx")
+	tpl, err := getOrgANPPTemplate(org, "ddm_canevas_non_homologues.xlsx")
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func GenerateDDMBordereauDOCX(kind string, org *domain.Organization, dm *domain.
 	case "transfert":
 		tplName = "ddm_bv_transfert.docx"
 	}
-	tpl, err := GetANPPTemplate(tplName)
+	tpl, err := getOrgANPPTemplate(org, tplName)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func GenerateDEPPFormDOCX(kind string, dossier *domain.Dossier, org *domain.Orga
 	if !ok {
 		return nil, fmt.Errorf("type de formulaire DEPP inconnu: %s", kind)
 	}
-	tpl, err := GetANPPTemplate(tplName)
+	tpl, err := getOrgANPPTemplate(org, tplName)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +374,7 @@ func checkYesNo(v bool) string {
 
 // GenerateDCEDMLotReceptionDOCX pré-remplit le gabarit officiel « Formulaire de réception des DM importés soumis au contrôle de libération de lot ».
 func GenerateDCEDMLotReceptionDOCX(org *domain.Organization, lot *domain.ImportLotRelease) ([]byte, error) {
-	tpl, err := GetANPPTemplate("dce_reception_dm_importes.docx")
+	tpl, err := getOrgANPPTemplate(org, "dce_reception_dm_importes.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +439,7 @@ func GenerateDCEDMLotReceptionDOCX(org *domain.Organization, lot *domain.ImportL
 
 // GenerateDCEPPLotReceptionDOCX pré-remplit le gabarit officiel « Formulaire de réception des PP importés soumis au contrôle de libération de lot ».
 func GenerateDCEPPLotReceptionDOCX(org *domain.Organization, lot *domain.ImportLotRelease) ([]byte, error) {
-	tpl, err := GetANPPTemplate("dce_reception_pp_importes.docx")
+	tpl, err := getOrgANPPTemplate(org, "dce_reception_pp_importes.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +485,11 @@ func GenerateDCEPPLotReceptionDOCX(org *domain.Organization, lot *domain.ImportL
 
 // GenerateDCECertificatLiberationPPDOCX pré-remplit le « certificat de libération de lot du produit pharmaceutique.docx ».
 func GenerateDCECertificatLiberationPPDOCX(lot *domain.ImportLotRelease) ([]byte, error) {
-	tpl, err := GetANPPTemplate("dce_certificat_liberation_pp.docx")
+	orgID := ""
+	if lot != nil {
+		orgID = lot.OrganizationID.String()
+	}
+	tpl, err := GetANPPTemplateForOrg(orgID, "dce_certificat_liberation_pp.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -520,7 +524,7 @@ func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, as
 
 // GenerateDVTIVBasePDTQPPVDOCXWithDraft pré-remplit le formulaire DVTIV en fusionnant un éventuel brouillon QPPV/PSMF.
 func GenerateDVTIVBasePDTQPPVDOCXWithDraft(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User, qppvDraft *domain.DVTIVQPPVDraft, marketedCount int, hasPSMF, hasPSMFNational bool, estTypes ...string) ([]byte, error) {
-	tpl, err := GetANPPTemplate("dvtiv_base_pdt_qppv.docx")
+	tpl, err := getOrgANPPTemplate(org, "dvtiv_base_pdt_qppv.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -641,7 +645,7 @@ func GenerateDVTIVBasePDTQPPVDOCXWithDraft(org *domain.Organization, pdt *domain
 
 // GenerateDCECompositionDossierDOCX retourne la fiche officielle ANPP « composition-du-dossier-de-liberation-de-lot.docx ».
 func GenerateDCECompositionDossierDOCX() ([]byte, error) {
-	tpl, err := GetANPPTemplate("dce_composition_dossier_liberation.docx")
+	tpl, err := GetANPPTemplateForOrg("", "dce_composition_dossier_liberation.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -650,7 +654,7 @@ func GenerateDCECompositionDossierDOCX() ([]byte, error) {
 
 // GenerateDCECanevasCertificatLiberationDOCX pré-remplit le canevas générique « canevas-de-certificat-de-liberation-de-lot.docx ».
 func GenerateDCECanevasCertificatLiberationDOCX(org *domain.Organization, lot *domain.ImportLotRelease) ([]byte, error) {
-	tpl, err := GetANPPTemplate("dce_canevas_certificat_liberation.docx")
+	tpl, err := getOrgANPPTemplate(org, "dce_canevas_certificat_liberation.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -705,7 +709,7 @@ func GenerateDCEDeclarationQuotidienneWithDraftDOCX(kind string, org *domain.Org
 	if isDM {
 		tplName = "dce_decl_quotidienne_dm.docx"
 	}
-	tpl, err := GetANPPTemplate(tplName)
+	tpl, err := getOrgANPPTemplate(org, tplName)
 	if err != nil {
 		return nil, err
 	}
@@ -806,7 +810,7 @@ func GenerateDCEDeclarationJournaliereWithDraftXLSX(kind string, org *domain.Org
 		tplName = "ddm_decl_journaliere_dm.xlsx"
 		startRow = 14
 	}
-	tpl, err := GetANPPTemplate(tplName)
+	tpl, err := getOrgANPPTemplate(org, tplName)
 	if err != nil {
 		return nil, err
 	}
@@ -916,7 +920,7 @@ func GenerateDCETemplateCASRSecondaireDOCX(org *domain.Organization) ([]byte, er
 
 // GenerateDCETemplateCASRSecondaireWithDraftDOCX pré-remplit le prototype Certificat d'analyse SR secondaire depuis un brouillon.
 func GenerateDCETemplateCASRSecondaireWithDraftDOCX(org *domain.Organization, draft *domain.CASRSecondaireDraft) ([]byte, error) {
-	tpl, err := GetANPPTemplate("dce_template_ca_sr_secondaire.docx")
+	tpl, err := getOrgANPPTemplate(org, "dce_template_ca_sr_secondaire.docx")
 	if err != nil {
 		return nil, err
 	}
@@ -984,8 +988,15 @@ func GenerateDCETemplateCASRSecondaireWithDraftDOCX(org *domain.Organization, dr
 }
 
 // GenerateDEPPStructurePrixWithDraftDOCX pré-remplit le modèle Structure de prix à la fabrication locale depuis un brouillon.
-func GenerateDEPPStructurePrixWithDraftDOCX(draft *domain.StructurePrixDraft) ([]byte, error) {
-	tpl, err := GetANPPTemplate("depp_modele_structure.docx")
+func getOrgANPPTemplate(org *domain.Organization, filename string) ([]byte, error) {
+	if org != nil {
+		return GetANPPTemplateForOrg(org.ID.String(), filename)
+	}
+	return GetANPPTemplateForOrg("", filename)
+}
+
+func GenerateDEPPStructurePrixWithDraftDOCX(org *domain.Organization, draft *domain.StructurePrixDraft) ([]byte, error) {
+	tpl, err := getOrgANPPTemplate(org, "depp_modele_structure.docx")
 	if err != nil {
 		return nil, err
 	}

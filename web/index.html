@@ -3105,7 +3105,10 @@
                     <span>📜</span>
                     <span>Veille Réglementaire &amp; Corpus Juridique Pharmaceutique (JORADP / ANPP)</span>
                 </div>
-                <button class="close-btn" onclick="closeModal('modal-regulatory-watch')">✕</button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="btn-pill" onclick="openANPPTemplatesModal()" title="Consulter ou mettre à jour les 28 gabarits officiels ANPP (.docx / .xlsx) sans recompiler" style="font-size:11px; padding:3px 10px; background:var(--bg-sub); border:1px solid var(--border-color); font-weight:600;">📄 Gabarits ANPP (.docx/.xlsx)</button>
+                    <button class="close-btn" onclick="closeModal('modal-regulatory-watch')">✕</button>
+                </div>
             </div>
             <div class="modal-body" style="overflow-y:auto; flex:1;">
                 <!-- KPI Bar -->
@@ -4289,6 +4292,37 @@
                             </tr>
                         </thead>
                         <tbody id="lot-recalls-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gestionnaire des Gabarits Officiels ANPP (Surcharge sans recompilation) -->
+    <div class="modal-overlay" id="modal-anpp-templates-manager" onclick="if(event.target === this) closeModal('modal-anpp-templates-manager')">
+        <div class="modal" style="width:920px; max-width:calc(100vw - 24px); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #0284c7; background:rgba(2,132,199,0.06); padding:10px 16px;">
+                <div>
+                    <div class="modal-title" style="font-weight:800; font-size:13.5px;">📄 Gabarits Officiels ANPP (.docx / .xlsx) — Surcharge Dynamique</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                        Le PDT, le Responsable Affaires Réglementaires ou l'Admin Système peuvent remplacer un modèle officiel sans recompiler. Les modèles embarqués restent actifs par défaut.
+                    </div>
+                </div>
+                <button type="button" class="close-btn" onclick="closeModal('modal-anpp-templates-manager')">✕</button>
+            </div>
+            <div style="padding:14px 16px; overflow-y:auto; flex:1; font-size:12px;">
+                <input type="file" id="anpp-template-file-input" style="display:none" accept=".docx,.xlsx">
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                        <thead>
+                            <tr style="border-bottom:2px solid var(--border-color); text-align:left;">
+                                <th style="padding:8px;">Fichier Gabarit</th>
+                                <th style="padding:8px;">Source Active</th>
+                                <th style="padding:8px;">Version &amp; Traçabilité</th>
+                                <th style="padding:8px; text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="anpp-templates-tbody"></tbody>
                     </table>
                 </div>
             </div>

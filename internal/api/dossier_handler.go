@@ -941,7 +941,7 @@ func (h *DossierHandler) DownloadOfficialDEPPForm(w http.ResponseWriter, r *http
 	if formType == "structure-prix" {
 		var spDraft domain.StructurePrixDraft
 		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "structure_prix", dossier.ID, &spDraft) {
-			docBytes, err = reporting.GenerateDEPPStructurePrixWithDraftDOCX(&spDraft)
+			docBytes, err = reporting.GenerateDEPPStructurePrixWithDraftDOCX(&org, &spDraft)
 		} else {
 			docBytes, err = reporting.GenerateDEPPFormDOCX(formType, dossier, &org)
 		}

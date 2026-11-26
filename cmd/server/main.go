@@ -74,6 +74,7 @@ func main() {
 	var recallHandler *api.RecallHandler
 	var inspectionHandler *api.InspectionHandler
 	var anppDraftHandler *api.ANPPDraftHandler
+	var anppTemplateHandler *api.ANPPTemplateHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -156,6 +157,7 @@ func main() {
 		recallHandler = api.NewRecallHandler(db.Pool, auditService, gedRepo, storageProvider)
 		inspectionHandler = api.NewInspectionHandler(db.Pool, auditService, gedRepo, storageProvider)
 		anppDraftHandler = api.NewANPPDraftHandler(db.Pool, auditService)
+		anppTemplateHandler = api.NewANPPTemplateHandler(db.Pool, auditService)
 
 		dmRepo := repository.NewDMRepository(db.Pool)
 		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService).WithGED(gedRepo, storageProvider)
@@ -685,6 +687,14 @@ func main() {
 			if anppDraftHandler != nil {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/anpp-drafts/{kind}", anppDraftHandler.GetDraft)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocApprovePDT)).Put("/api/v1/anpp-drafts/{kind}", anppDraftHandler.SaveDraft)
+			}
+
+			// Gestion dynamique & surcharge des gabarits officiels ANPP (.docx / .xlsx) sans recompilation
+			if anppTemplateHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/anpp-templates", anppTemplateHandler.ListTemplates)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/anpp-templates/{name}/download", anppTemplateHandler.DownloadTemplate)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Post("/api/v1/anpp-templates/{name}", anppTemplateHandler.UploadTemplate)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Delete("/api/v1/anpp-templates/{name}", anppTemplateHandler.DeleteOverride)
 			}
 
 			if dmModHandler != nil {

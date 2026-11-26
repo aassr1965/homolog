@@ -740,3 +740,126 @@ async function saveANPPDraft(e, generateAfter) {
     }
 }
 window.saveANPPDraft = saveANPPDraft;
+
+async function openANPPTemplatesModal() {
+    openModal('modal-anpp-templates-manager');
+    await loadANPPTemplatesList();
+}
+window.openANPPTemplatesModal = openANPPTemplatesModal;
+
+async function loadANPPTemplatesList() {
+    const tbody = document.getElementById('anpp-templates-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:12px; color:var(--text-muted);">Chargement des gabarits ANPP...</td></tr>';
+    try {
+        const res = await fetch('/api/v1/anpp-templates');
+        if (!res.ok) {
+            tbody.innerHTML = '<tr><td colspan="4" style="padding:12px; color:#dc2626;">Erreur chargement des gabarits ANPP.</td></tr>';
+            return;
+        }
+        const data = await res.json();
+        const items = data.templates || [];
+        const canUploadOrg = !!data.can_upload_org;
+        const canUploadGlobal = !!data.can_upload_global;
+
+        tbody.innerHTML = items.map((t) => {
+            let sourceBadge = '<span class="badge" style="background:var(--bg-sub); color:var(--text-muted); padding:2px 6px; border-radius:4px;">📦 Embarqué (défaut)</span>';
+            if (t.source === 'organization') {
+                sourceBadge = '<span class="badge" style="background:rgba(2,132,199,0.12); color:#0284c7; padding:2px 6px; border-radius:4px; font-weight:700;">🏢 Établissement</span>';
+            } else if (t.source === 'global') {
+                sourceBadge = '<span class="badge" style="background:rgba(16,185,129,0.12); color:#059669; padding:2px 6px; border-radius:4px; font-weight:700;">🌐 Global Plateforme</span>';
+            }
+            const traceText = t.source === 'embedded'
+                ? `SHA-256 : <code>${escapeHTML((t.sha256 || '').slice(0, 12))}...</code> (${Math.round((t.size_bytes || 0) / 1024)} Ko)`
+                : `v${t.version} par ${escapeHTML(t.uploaded_by_name || '—')} • ${t.updated_at ? new Date(t.updated_at).toLocaleString('fr-FR') : ''}${t.notes ? `<br><span style="color:var(--text-muted);">${escapeHTML(t.notes)}</span>` : ''}`;
+
+            const uploadBtn = canUploadOrg
+                ? `<button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px;" onclick="triggerANPPTemplateUpload('${escapeHTML(t.name)}', false)">⬆️ Remplacer</button>`
+                : '';
+            const globalBtn = canUploadGlobal
+                ? `<button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px;" onclick="triggerANPPTemplateUpload('${escapeHTML(t.name)}', true)" title="Remplacer globalement pour toute l'instance">🌐 Global</button>`
+                : '';
+            const revertBtn = (t.source !== 'embedded' && ((t.source === 'organization' && canUploadOrg) || (t.source === 'global' && canUploadGlobal)))
+                ? `<button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; color:#dc2626;" onclick="revertANPPTemplate('${escapeHTML(t.name)}', '${t.source}')">↩️ Défaut</button>`
+                : '';
+
+            return `<tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:7px 8px; font-weight:700;">${escapeHTML(t.name)}</td>
+                <td style="padding:7px 8px;">${sourceBadge}</td>
+                <td style="padding:7px 8px; font-size:11px;">${traceText}</td>
+                <td style="padding:7px 8px; text-align:right; white-space:nowrap; display:flex; justify-content:flex-end; gap:4px;">
+                    <a class="btn-pill" style="font-size:10.5px; padding:2px 8px; text-decoration:none;" href="/api/v1/anpp-templates/${encodeURIComponent(t.name)}/download">📥 Télécharger</a>
+                    ${uploadBtn}
+                    ${globalBtn}
+                    ${revertBtn}
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="padding:12px; color:#dc2626;">Erreur réseau : ${escapeHTML(err.message)}</td></tr>`;
+    }
+}
+window.loadANPPTemplatesList = loadANPPTemplatesList;
+
+function triggerANPPTemplateUpload(name, isGlobal) {
+    const input = document.getElementById('anpp-template-file-input');
+    if (!input) return;
+    input.value = '';
+    input.onchange = async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const notes = await showPromptModal(
+            'Mise à jour gabarit ANPP',
+            `Motif ou référence de mise à jour pour ${name} (${isGlobal ? 'Global' : 'Établissement'}) :`,
+            'Mise à jour officielle anpp.dz',
+            { required: false }
+        );
+        if (notes === null) return;
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('notes', notes || '');
+        fd.append('scope', isGlobal ? 'global' : 'organization');
+
+        try {
+            const res = await fetch(`/api/v1/anpp-templates/${encodeURIComponent(name)}`, {
+                method: 'POST',
+                body: fd
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                showToast(data.error || 'Erreur upload gabarit ANPP', 'error');
+                return;
+            }
+            showToast(`✅ Gabarit ${name} mis à jour (v${data.version}) sans recompilation.`, 'success');
+            await loadANPPTemplatesList();
+        } catch (err) {
+            showToast('Erreur réseau : ' + err.message, 'error');
+        }
+    };
+    input.click();
+}
+window.triggerANPPTemplateUpload = triggerANPPTemplateUpload;
+
+async function revertANPPTemplate(name, scope) {
+    const ok = await showConfirmModal(
+        'Restaurer le gabarit embarqué',
+        `Supprimer la surcharge (${scope}) de ${name} et revenir au gabarit officiel embarqué ?`
+    );
+    if (!ok) return;
+    try {
+        const res = await fetch(`/api/v1/anpp-templates/${encodeURIComponent(name)}?scope=${encodeURIComponent(scope)}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || 'Erreur suppression surcharge', 'error');
+            return;
+        }
+        showToast(`↩️ ${name} restauré sur le gabarit embarqué par défaut.`, 'info');
+        await loadANPPTemplatesList();
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.revertANPPTemplate = revertANPPTemplate;

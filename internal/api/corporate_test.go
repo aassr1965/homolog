@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -775,5 +776,92 @@ func TestANPPFormDraftsEditableAndDOCXInjection(t *testing.T) {
 	}
 	if wDoc.Body.Len() < 100 || wDoc.Body.Bytes()[0] != 'P' || wDoc.Body.Bytes()[1] != 'K' {
 		t.Fatalf("fichier DOCX invalide (taille=%d)", wDoc.Body.Len())
+	}
+}
+
+func TestANPPTemplateUploadOverrideAndRevert(t *testing.T) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
+	}
+	ctx := context.Background()
+	db, err := database.Connect(ctx, dbURL)
+	if err != nil {
+		t.Skipf("PostgreSQL non disponible, test ignoré : %v", err)
+		return
+	}
+	defer db.Close()
+
+	testOrgID := uuid.New()
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), "DELETE FROM organizations WHERE id = $1", testOrgID)
+	}()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO organizations (id, slug, legal_name, is_active) VALUES ($1, $2, 'Labo Template Test', true)`, testOrgID, "lab-tpl-"+testOrgID.String()[:8]); err != nil {
+		t.Fatalf("création org: %v", err)
+	}
+
+	raID := uuid.New()
+	hashedPwd, _ := auth.HashPassword("TestTpl2026!", auth.DefaultArgon2Params)
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, is_active) VALUES ($1, $2, 'ra-tpl@test.dz', $3, 'RA', 'Tpl', 'responsable_affaires_reglementaires', true)`, raID, testOrgID, hashedPwd); err != nil {
+		t.Fatalf("création user: %v", err)
+	}
+
+	auditSvc := audit.NewService(db.Pool)
+	tplHandler := NewANPPTemplateHandler(db.Pool, auditSvc)
+
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{UserID: raID, OrganizationID: testOrgID, Email: "ra-tpl@test.dz", Role: "responsable_affaires_reglementaires"}
+			next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), UserContextKey, su)))
+		})
+	})
+	r.Get("/api/v1/anpp-templates", tplHandler.ListTemplates)
+	r.Get("/api/v1/anpp-templates/{name}/download", tplHandler.DownloadTemplate)
+	r.Post("/api/v1/anpp-templates/{name}", tplHandler.UploadTemplate)
+	r.Delete("/api/v1/anpp-templates/{name}", tplHandler.DeleteOverride)
+
+	// 1. Télécharger le gabarit embarqué par défaut
+	reqDl := httptest.NewRequest("GET", "/api/v1/anpp-templates/depp_modele_structure.docx/download", nil)
+	wDl := httptest.NewRecorder()
+	r.ServeHTTP(wDl, reqDl)
+	if wDl.Code != http.StatusOK || wDl.Body.Len() < 100 {
+		t.Fatalf("téléchargement défaut échoué: code=%d len=%d", wDl.Code, wDl.Body.Len())
+	}
+
+	// 2. Uploader une surcharge établissement via multipart/form-data
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	fw, err := mw.CreateFormFile("file", "depp_modele_structure.docx")
+	if err != nil {
+		t.Fatalf("CreateFormFile: %v", err)
+	}
+	customBytes := append([]byte{}, wDl.Body.Bytes()...)
+	_, _ = fw.Write(customBytes)
+	_ = mw.WriteField("notes", "MAJ ANPP Test 2026")
+	_ = mw.WriteField("scope", "organization")
+	_ = mw.Close()
+
+	reqUp := httptest.NewRequest("POST", "/api/v1/anpp-templates/depp_modele_structure.docx", &body)
+	reqUp.Header.Set("Content-Type", mw.FormDataContentType())
+	wUp := httptest.NewRecorder()
+	r.ServeHTTP(wUp, reqUp)
+	if wUp.Code != http.StatusOK || !strings.Contains(wUp.Body.String(), `"source":"organization"`) {
+		t.Fatalf("upload surcharge attendu 200 organization, reçu %d: %s", wUp.Code, wUp.Body.String())
+	}
+
+	// 3. Vérifier la liste et la restauration sur le défaut embarqué
+	reqList := httptest.NewRequest("GET", "/api/v1/anpp-templates", nil)
+	wList := httptest.NewRecorder()
+	r.ServeHTTP(wList, reqList)
+	if wList.Code != http.StatusOK || !strings.Contains(wList.Body.String(), `"MAJ ANPP Test 2026"`) {
+		t.Fatalf("liste gabarits sans surcharge: %s", wList.Body.String())
+	}
+
+	reqDel := httptest.NewRequest("DELETE", "/api/v1/anpp-templates/depp_modele_structure.docx?scope=organization", nil)
+	wDel := httptest.NewRecorder()
+	r.ServeHTTP(wDel, reqDel)
+	if wDel.Code != http.StatusOK {
+		t.Fatalf("DELETE surcharge attendu 200, reçu %d: %s", wDel.Code, wDel.Body.String())
 	}
 }
