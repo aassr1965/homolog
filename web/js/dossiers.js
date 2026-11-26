@@ -1130,6 +1130,9 @@
                             <button class="btn-pill" style="background:#7e22ce; color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openDossierReportsModal('${dossier.id}')">
                                 📄 États Réglementaires Officiels
                             </button>
+                            <button class="btn-pill" style="background:#0284c7; color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="downloadOfficialDEPPForm('${dossier.id}')" title="Télécharger le formulaire officiel DEPP02 (.docx) pré-rempli ANPP">
+                                📥 DEPP02 (.docx)
+                            </button>
                             <button class="btn-pill" style="background:var(--accent-emerald); color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openMasterTemplatesModal()">
                                 📚 Templates Maîtres BPF
                             </button>
@@ -3265,6 +3268,13 @@
                 showNotifyModal("Erreur", e.message, "⚠️");
             }
         }
+
+function downloadOfficialDEPPForm(dossierId, type) {
+    if (!dossierId) return;
+    const qs = type ? `?type=${encodeURIComponent(type)}` : '';
+    window.location.href = `/api/v1/dossiers/${encodeURIComponent(dossierId)}/official-form${qs}`;
+}
+window.downloadOfficialDEPPForm = downloadOfficialDEPPForm;
 
         async function syncSmartPlanningDueDates() {
             if (!selectedDossierId) return;

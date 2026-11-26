@@ -15,6 +15,7 @@ import (
 	"homolog/internal/audit"
 	"homolog/internal/auth"
 	"homolog/internal/domain"
+	"homolog/internal/reporting"
 	"homolog/internal/repository"
 )
 
@@ -887,4 +888,55 @@ func (h *DossierHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 		"status":  "ok",
 		"message": "Affectation révoquée avec succès",
 	})
+}
+
+// DownloadOfficialDEPPForm génère et télécharge le formulaire officiel .docx ANPP (DEPP02-A/B/C/D/E/F-V02) pré-rempli.
+func (h *DossierHandler) DownloadOfficialDEPPForm(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	dossier, err := h.repo.GetDossierByID(r.Context(), user.OrganizationID, dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+		return
+	}
+
+	var org domain.Organization
+	_ = h.pool.QueryRow(r.Context(), `
+		SELECT id, slug, legal_name, COALESCE(miph_license_number, ''), COALESCE(technical_director_name, ''),
+		       COALESCE(address, ''), COALESCE(phone, ''), COALESCE(email, '')
+		FROM organizations WHERE id = $1
+	`, user.OrganizationID).Scan(&org.ID, &org.Slug, &org.LegalName, &org.MIPHLicenseNumber, &org.TechnicalDirectorName, &org.Address, &org.Phone, &org.Email)
+
+	formType := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("type")))
+	if formType == "" {
+		switch strings.ToUpper(string(dossier.ProcedureCode)) {
+		case "RI", "RF":
+			formType = "renouvellement"
+		case "MI", "MF":
+			formType = "modification"
+		default:
+			formType = "enregistrement"
+		}
+	}
+
+	docBytes, err := reporting.GenerateDEPPFormDOCX(formType, dossier, &org)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Erreur génération formulaire officiel DEPP: "+err.Error())
+		return
+	}
+
+	filename := fmt.Sprintf("ANPP-DEPP02-%s-%s.docx", strings.ToUpper(formType), dossier.DossierCode)
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	_, _ = w.Write(docBytes)
 }

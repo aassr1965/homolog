@@ -476,6 +476,7 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers", dossierHandler.ListDossiers)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierCreate)).Post("/api/v1/dossiers", dossierHandler.CreateDossier)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}", dossierHandler.GetDossier)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/official-form", dossierHandler.DownloadOfficialDEPPForm)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/status", dossierHandler.UpdateItemStatus)
@@ -641,6 +642,7 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/dm-regularizations", dmHandler.CreateDMRegularization)
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/dm-regularizations/{id}", dmHandler.UpdateDMRegularization)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-regularizations/export/canevas", dmHandler.ExportDMCanevas)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices/{id}/official-form", dmHandler.DownloadOfficialDMForm)
 			}
 
 			if dmModHandler != nil {

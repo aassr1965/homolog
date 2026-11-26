@@ -195,6 +195,7 @@ function renderDMDevicesTable() {
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-right:4px;" onclick="openDMHomologationModal('${d.id}')" title="Éditer et vérifier les 6 sections techniques">📋 6 Sections</button>
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-right:4px;" onclick="openDMRecevabiliteModal('${d.id}')" title="Grille des 13 points de recevabilité et signature PDT">📑 Recevabilité (13 pts)</button>
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px;" onclick="previewDMReport('ES-REG-02-DM', '${d.id}')" title="Générer et prévisualiser ES-REG-02-DM">👁️ ES-02</button>
+                        <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-left:4px; background:#0ea5e9; color:white; border:none;" onclick="downloadOfficialDMForm('${d.id}', 'homologation')" title="Télécharger le formulaire officiel ANPP (.docx)">📥 ANPP (.docx)</button>
                     </td>
                 </tr>
             `;
@@ -735,6 +736,11 @@ function filterDMRegStatus(st) {
 
 function exportDMCanevasXLSX() {
     window.location.href = '/api/v1/dm-regularizations/export/canevas';
+}
+
+function downloadOfficialDMForm(deviceId, type) {
+    if (!deviceId) return;
+    window.location.href = `/api/v1/medical-devices/${encodeURIComponent(deviceId)}/official-form?type=${encodeURIComponent(type || 'homologation')}`;
 }
 
 // ============================================================================
