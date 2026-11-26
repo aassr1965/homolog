@@ -285,3 +285,215 @@ func safeDMField(dm *domain.MedicalDevice, fn func(*domain.MedicalDevice) string
 	}
 	return fn(dm)
 }
+
+func formatLotDates(lot *domain.ImportLotRelease) string {
+	if lot == nil {
+		return ""
+	}
+	parts := []string{}
+	if lot.LotNumber != "" {
+		parts = append(parts, "Lot: "+lot.LotNumber)
+	}
+	if lot.SerialNumber != "" {
+		parts = append(parts, "Série: "+lot.SerialNumber)
+	}
+	if lot.DDF != nil {
+		parts = append(parts, "DDF: "+lot.DDF.Format("2006-01-02"))
+	}
+	if lot.DDP != nil {
+		parts = append(parts, "DDP: "+lot.DDP.Format("2006-01-02"))
+	}
+	return strings.Join(parts, " / ")
+}
+
+func checkYesNo(v bool) string {
+	if v {
+		return "Oui ☑                                  Non ☐"
+	}
+	return "Oui ☐                                  Non ☑"
+}
+
+// GenerateDCEDMLotReceptionDOCX pré-remplit le gabarit officiel « Formulaire de réception des DM importés soumis au contrôle de libération de lot ».
+func GenerateDCEDMLotReceptionDOCX(org *domain.Organization, lot *domain.ImportLotRelease) ([]byte, error) {
+	tpl, err := GetANPPTemplate("dce_reception_dm_importes.docx")
+	if err != nil {
+		return nil, err
+	}
+
+	orgAddr, email, phone, pdtName := "", "", "", ""
+	if org != nil {
+		orgAddr = strings.TrimSpace(org.LegalName + " — " + org.Address)
+		email = org.Email
+		phone = org.Phone
+		pdtName = org.TechnicalDirectorName
+	}
+
+	var cellUpdates []TableCellCoord
+	cellUpdates = append(cellUpdates,
+		TableCellCoord{TableIndex: 0, RowIndex: 0, ColIndex: 1, Value: orgAddr},
+		TableCellCoord{TableIndex: 0, RowIndex: 1, ColIndex: 1, Value: fmt.Sprintf("E-mail : %s   N° tél : %s", email, phone)},
+	)
+	if lot != nil {
+		customsInv := strings.TrimSpace(strings.Join([]string{lot.CustomsDeclNumber, lot.InvoiceNumber}, " / "))
+		customsInv = strings.Trim(customsInv, " /")
+		cellUpdates = append(cellUpdates,
+			TableCellCoord{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: lot.CommercialName},
+			TableCellCoord{TableIndex: 1, RowIndex: 2, ColIndex: 1, Value: lot.Designation},
+			TableCellCoord{TableIndex: 1, RowIndex: 3, ColIndex: 1, Value: lot.FormAspect},
+			TableCellCoord{TableIndex: 1, RowIndex: 4, ColIndex: 1, Value: formatLotDates(lot)},
+			TableCellCoord{TableIndex: 1, RowIndex: 5, ColIndex: 1, Value: lot.SalesUnits},
+			TableCellCoord{TableIndex: 1, RowIndex: 6, ColIndex: 1, Value: lot.HomologationOrDERef},
+			TableCellCoord{TableIndex: 1, RowIndex: 8, ColIndex: 1, Value: lot.HolderOrExploiter},
+			TableCellCoord{TableIndex: 1, RowIndex: 9, ColIndex: 1, Value: checkYesNo(lot.ImportProgramAttached)},
+			TableCellCoord{TableIndex: 1, RowIndex: 10, ColIndex: 1, Value: lot.ProductionSite},
+			TableCellCoord{TableIndex: 1, RowIndex: 11, ColIndex: 1, Value: lot.QCSite},
+			TableCellCoord{TableIndex: 1, RowIndex: 12, ColIndex: 1, Value: lot.ReleaseSite},
+			TableCellCoord{TableIndex: 1, RowIndex: 13, ColIndex: 1, Value: customsInv},
+			TableCellCoord{TableIndex: 1, RowIndex: 14, ColIndex: 1, Value: checkYesNo(lot.OriginCertAttached)},
+			TableCellCoord{TableIndex: 1, RowIndex: 15, ColIndex: 1, Value: checkYesNo(lot.TechFormAttached)},
+			TableCellCoord{TableIndex: 1, RowIndex: 16, ColIndex: 1, Value: checkYesNo(lot.SamplingPlanAttached)},
+		)
+	}
+	if pdtName != "" {
+		cellUpdates = append(cellUpdates, TableCellCoord{TableIndex: 2, RowIndex: 1, ColIndex: 0, Value: pdtName})
+	}
+
+	textRepl := map[string]string{}
+	if lot != nil {
+		switch strings.ToUpper(strings.TrimSpace(lot.DMClass)) {
+		case "I":
+			textRepl["I  ☐"] = "I  ☑"
+		case "IIA":
+			textRepl["IIa  ☐"] = "IIa  ☑"
+		case "IIB":
+			textRepl["IIb  ☐"] = "IIb  ☑"
+		case "III":
+			textRepl["III  ☐"] = "III  ☑"
+		}
+	}
+
+	return FillDOCXTemplate(tpl, DOCXFillOptions{
+		CellUpdates:      cellUpdates,
+		TextReplacements: textRepl,
+	})
+}
+
+// GenerateDCEPPLotReceptionDOCX pré-remplit le gabarit officiel « Formulaire de réception des PP importés soumis au contrôle de libération de lot ».
+func GenerateDCEPPLotReceptionDOCX(org *domain.Organization, lot *domain.ImportLotRelease) ([]byte, error) {
+	tpl, err := GetANPPTemplate("dce_reception_pp_importes.docx")
+	if err != nil {
+		return nil, err
+	}
+
+	orgAddr, email, phone, pdtName := "", "", "", ""
+	if org != nil {
+		orgAddr = strings.TrimSpace(org.LegalName + " — " + org.Address)
+		email = org.Email
+		phone = org.Phone
+		pdtName = org.TechnicalDirectorName
+	}
+
+	var cellUpdates []TableCellCoord
+	cellUpdates = append(cellUpdates,
+		TableCellCoord{TableIndex: 0, RowIndex: 0, ColIndex: 1, Value: orgAddr},
+		TableCellCoord{TableIndex: 0, RowIndex: 1, ColIndex: 1, Value: fmt.Sprintf("E-mail : %s   N° tél : %s", email, phone)},
+	)
+	if lot != nil {
+		customsInv := strings.Trim(strings.Join([]string{lot.CustomsDeclNumber, lot.InvoiceNumber}, " / "), " /")
+		cellUpdates = append(cellUpdates,
+			TableCellCoord{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: lot.CommercialName},
+			TableCellCoord{TableIndex: 1, RowIndex: 2, ColIndex: 1, Value: lot.Designation},
+			TableCellCoord{TableIndex: 1, RowIndex: 3, ColIndex: 1, Value: lot.FormAspect},
+			TableCellCoord{TableIndex: 1, RowIndex: 4, ColIndex: 1, Value: formatLotDates(lot)},
+			TableCellCoord{TableIndex: 1, RowIndex: 5, ColIndex: 1, Value: lot.SalesUnits},
+			TableCellCoord{TableIndex: 1, RowIndex: 6, ColIndex: 1, Value: lot.HomologationOrDERef},
+			TableCellCoord{TableIndex: 1, RowIndex: 7, ColIndex: 1, Value: lot.HolderOrExploiter},
+			TableCellCoord{TableIndex: 1, RowIndex: 8, ColIndex: 1, Value: checkYesNo(lot.ImportProgramAttached)},
+			TableCellCoord{TableIndex: 1, RowIndex: 9, ColIndex: 1, Value: lot.ProductionSite},
+			TableCellCoord{TableIndex: 1, RowIndex: 10, ColIndex: 1, Value: lot.QCSite},
+			TableCellCoord{TableIndex: 1, RowIndex: 11, ColIndex: 1, Value: lot.ReleaseSite},
+			TableCellCoord{TableIndex: 1, RowIndex: 12, ColIndex: 1, Value: customsInv},
+			TableCellCoord{TableIndex: 1, RowIndex: 15, ColIndex: 1, Value: checkYesNo(lot.TechFormAttached)},
+			TableCellCoord{TableIndex: 1, RowIndex: 17, ColIndex: 1, Value: checkYesNo(lot.SamplingPlanAttached)},
+		)
+	}
+	if pdtName != "" {
+		cellUpdates = append(cellUpdates, TableCellCoord{TableIndex: 2, RowIndex: 1, ColIndex: 0, Value: pdtName})
+	}
+
+	return FillDOCXTemplate(tpl, DOCXFillOptions{CellUpdates: cellUpdates})
+}
+
+// GenerateDCECertificatLiberationPPDOCX pré-remplit le « certificat de libération de lot du produit pharmaceutique.docx ».
+func GenerateDCECertificatLiberationPPDOCX(lot *domain.ImportLotRelease) ([]byte, error) {
+	tpl, err := GetANPPTemplate("dce_certificat_liberation_pp.docx")
+	if err != nil {
+		return nil, err
+	}
+	if lot == nil {
+		return tpl, nil
+	}
+	ddfStr, ddpStr := "", ""
+	if lot.DDF != nil {
+		ddfStr = lot.DDF.Format("2006-01-02")
+	}
+	if lot.DDP != nil {
+		ddpStr = lot.DDP.Format("2006-01-02")
+	}
+	cellUpdates := []TableCellCoord{
+		{TableIndex: 0, RowIndex: 1, ColIndex: 0, Value: lot.CommercialName},
+		{TableIndex: 0, RowIndex: 1, ColIndex: 1, Value: lot.Designation},
+		{TableIndex: 0, RowIndex: 1, ColIndex: 2, Value: lot.FormAspect},
+		{TableIndex: 0, RowIndex: 1, ColIndex: 4, Value: lot.SalesUnits},
+		{TableIndex: 1, RowIndex: 1, ColIndex: 0, Value: lot.LotNumber},
+		{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: ddfStr},
+		{TableIndex: 1, RowIndex: 1, ColIndex: 2, Value: ddpStr},
+		{TableIndex: 1, RowIndex: 1, ColIndex: 3, Value: lot.HomologationOrDERef},
+		{TableIndex: 1, RowIndex: 1, ColIndex: 4, Value: lot.SalesUnits},
+	}
+	return FillDOCXTemplate(tpl, DOCXFillOptions{CellUpdates: cellUpdates})
+}
+
+// GenerateDVTIVBasePDTQPPVDOCX pré-remplit le formulaire DVTIV « FORMULAIRE-DRAFT- Base de données centralisées des PDT et QPPV.docx ».
+func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User) ([]byte, error) {
+	tpl, err := GetANPPTemplate("dvtiv_base_pdt_qppv.docx")
+	if err != nil {
+		return nil, err
+	}
+
+	pdtName, pdtEmail, pdtPhone, pdtOrdre := "", "", "", ""
+	if pdt != nil {
+		pdtName = strings.TrimSpace(pdt.FirstName + " " + pdt.LastName)
+		pdtEmail = pdt.Email
+	}
+	if org != nil {
+		if pdtName == "" {
+			pdtName = org.TechnicalDirectorName
+		}
+		if pdtEmail == "" {
+			pdtEmail = org.Email
+		}
+		pdtPhone = org.Phone
+		pdtOrdre = org.MIPHLicenseNumber
+	}
+	asstName := ""
+	if assistant != nil {
+		asstName = strings.TrimSpace(assistant.FirstName + " " + assistant.LastName)
+	}
+	qppvName, qppvEmail := "", ""
+	if qppv != nil {
+		qppvName = strings.TrimSpace(qppv.FirstName + " " + qppv.LastName)
+		qppvEmail = qppv.Email
+	}
+
+	cellUpdates := []TableCellCoord{
+		{TableIndex: 0, RowIndex: 1, ColIndex: 1, Value: pdtName},
+		{TableIndex: 0, RowIndex: 2, ColIndex: 1, Value: pdtOrdre},
+		{TableIndex: 0, RowIndex: 3, ColIndex: 1, Value: pdtEmail},
+		{TableIndex: 0, RowIndex: 4, ColIndex: 1, Value: pdtPhone},
+		{TableIndex: 0, RowIndex: 5, ColIndex: 1, Value: asstName},
+		{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: qppvName},
+		{TableIndex: 1, RowIndex: 2, ColIndex: 1, Value: qppvEmail},
+	}
+	return FillDOCXTemplate(tpl, DOCXFillOptions{CellUpdates: cellUpdates})
+}

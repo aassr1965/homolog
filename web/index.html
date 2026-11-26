@@ -4196,8 +4196,86 @@
                 <div style="font-size:11px; color:var(--text-dim);">
                     ⚖️ Décret exécutif n° 21-82 Art. 24 : En cas d'absence &gt; 3 mois, un nouveau DT doit être nommé auprès du MIPH.
                 </div>
-                <button type="button" class="btn-pill" onclick="closeDTDelegationsModal()">Fermer</button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn-pill" style="background:#0284c7; color:white; border:none; font-size:11px;" onclick="window.location.href='/api/v1/dvtiv/pdt-qppv-form'">📥 Fiche Base PDT/QPPV (DVTIV .docx)</button>
+                    <button type="button" class="btn-pill" onclick="closeDTDelegationsModal()">Fermer</button>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Libération de Lot DM Importé (DCE — Arrêtés 14/02/2021 & 20/02/2025) -->
+    <div class="modal-overlay" id="modal-dm-lot-release" onclick="if(event.target === this) closeModal('modal-dm-lot-release')">
+        <div class="modal" style="width:680px; max-width:calc(100vw - 24px); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #0284c7; background:rgba(2,132,199,0.06); padding:10px 16px;">
+                <div class="modal-title" style="font-weight:800; font-size:13.5px;">📦 Libération de Lot DM Importé (Formulaire Officiel DCE ANPP)</div>
+                <button type="button" class="close-btn" onclick="closeModal('modal-dm-lot-release')">✕</button>
+            </div>
+            <form id="form-dm-lot-release" onsubmit="submitDMLotRelease(event)" style="padding:14px 16px; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:11.5px;">
+                <input type="hidden" id="lot-rel-dm-id">
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Dénomination commerciale :</label>
+                    <input type="text" id="lot-rel-name" required style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Classe DM :</label>
+                    <input type="text" id="lot-rel-class" readonly style="width:100%; padding:6px 8px; background:var(--bg-sub); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div style="grid-column:1 / -1;">
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Désignation :</label>
+                    <input type="text" id="lot-rel-designation" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Forme et aspect (taille, couleur) :</label>
+                    <input type="text" id="lot-rel-aspect" placeholder="Ex: Boîte stérile transparente" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">N° Lot * :</label>
+                    <input type="text" id="lot-rel-number" required placeholder="Ex: LOT-2026-881" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">DDF (Date fabrication) :</label>
+                    <input type="date" id="lot-rel-ddf" style="width:100%; padding:5px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">DDP (Date péremption) :</label>
+                    <input type="date" id="lot-rel-ddp" style="width:100%; padding:5px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Unités de vente :</label>
+                    <input type="text" id="lot-rel-units" placeholder="Ex: 5 000 boîtes de 50" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">N°/Date Décision Homologation (ou AR) :</label>
+                    <input type="text" id="lot-rel-homolog-ref" placeholder="Ex: DH-2025-114 / AR-DDM-..." style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Site de production :</label>
+                    <input type="text" id="lot-rel-prod-site" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Site de contrôle qualité :</label>
+                    <input type="text" id="lot-rel-qc-site" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">Site de libération de lot :</label>
+                    <input type="text" id="lot-rel-release-site" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:3px;">N° Dédouanement / N° Facture :</label>
+                    <input type="text" id="lot-rel-customs" placeholder="Ex: D10-2026-441 / FAC-902" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div style="grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:14px; padding-top:4px;">
+                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="lot-rel-prog" checked> Programme d'importation joint</label>
+                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="lot-rel-cert" checked> Certification pays d'origine</label>
+                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="lot-rel-tech" checked> Formulaire technico-réglementaire</label>
+                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="lot-rel-samp" checked> Plan d'échantillonnage</label>
+                </div>
+                <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--border-color); padding-top:10px;">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-dm-lot-release')">Annuler</button>
+                    <button type="submit" class="btn-pill" style="background:#0284c7; color:white; border:none; font-weight:700;">💾 Enregistrer &amp; Télécharger Bordereau DCE (.docx)</button>
+                </div>
+            </form>
         </div>
     </div>
 

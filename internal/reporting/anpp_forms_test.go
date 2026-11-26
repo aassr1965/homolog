@@ -180,3 +180,71 @@ func TestGenerateDDMBordereauAndDEPPDOCX(t *testing.T) {
 		_ = readZipEntry(t, b, "word/document.xml")
 	}
 }
+
+func TestGenerateDCELotAndDVTIVDOCX(t *testing.T) {
+	org := &domain.Organization{
+		LegalName:             "Biocare Importation",
+		Address:               "Rouiba, Alger",
+		Email:                 "import@biocare.dz",
+		Phone:                 "+213 23 00 11 22",
+		TechnicalDirectorName: "Dr. Yacine Benkhalid",
+	}
+	ddf := time.Date(2026, 1, 10, 0, 0, 0, 0, time.UTC)
+	ddp := time.Date(2029, 1, 10, 0, 0, 0, 0, time.UTC)
+	lot := &domain.ImportLotRelease{
+		ProductKind:           "dm",
+		CommercialName:        "Cathéter Veineux 20G",
+		Designation:           "Abord veineux périphérique",
+		FormAspect:            "Boîte stérile rose 20G",
+		LotNumber:             "LOT-2026-881",
+		DDF:                   &ddf,
+		DDP:                   &ddp,
+		SalesUnits:            "5000 unités",
+		HomologationOrDERef:   "DH-2025-114",
+		DMClass:               "IIa",
+		ImportProgramAttached: true,
+		ProductionSite:        "MedTech GmbH",
+		QCSite:                "Labo QC GmbH",
+		ReleaseSite:           "Biocare Alger",
+		CustomsDeclNumber:     "D10-2026-441",
+		OriginCertAttached:    true,
+		TechFormAttached:      true,
+		SamplingPlanAttached:  true,
+	}
+
+	dmOut, err := GenerateDCEDMLotReceptionDOCX(org, lot)
+	if err != nil {
+		t.Fatalf("GenerateDCEDMLotReceptionDOCX erreur: %v", err)
+	}
+	dmXML := readZipEntry(t, dmOut, "word/document.xml")
+	for _, want := range []string{"Biocare Importation", "Cathéter Veineux 20G", "LOT-2026-881", "IIa  ☑", "Oui ☑"} {
+		if !strings.Contains(dmXML, want) {
+			t.Errorf("dce_reception_dm_importes.docx: attendu %q", want)
+		}
+	}
+
+	ppOut, err := GenerateDCEPPLotReceptionDOCX(org, lot)
+	if err != nil {
+		t.Fatalf("GenerateDCEPPLotReceptionDOCX erreur: %v", err)
+	}
+	_ = readZipEntry(t, ppOut, "word/document.xml")
+
+	certOut, err := GenerateDCECertificatLiberationPPDOCX(lot)
+	if err != nil {
+		t.Fatalf("GenerateDCECertificatLiberationPPDOCX erreur: %v", err)
+	}
+	if !strings.Contains(readZipEntry(t, certOut, "word/document.xml"), "LOT-2026-881") {
+		t.Errorf("dce_certificat_liberation_pp.docx: LOT-2026-881 absent")
+	}
+
+	pdt := &domain.User{FirstName: "Dr. Yacine", LastName: "Benkhalid", Email: "pdt@pharma.dz"}
+	asst := &domain.User{FirstName: "Dr. Lynda", LastName: "Amrani"}
+	dvtivOut, err := GenerateDVTIVBasePDTQPPVDOCX(org, pdt, asst, nil)
+	if err != nil {
+		t.Fatalf("GenerateDVTIVBasePDTQPPVDOCX erreur: %v", err)
+	}
+	dvtivXML := readZipEntry(t, dvtivOut, "word/document.xml")
+	if !strings.Contains(dvtivXML, "Dr. Yacine Benkhalid") || !strings.Contains(dvtivXML, "Dr. Lynda Amrani") {
+		t.Errorf("dvtiv_base_pdt_qppv.docx: noms PDT/Assistant absents")
+	}
+}

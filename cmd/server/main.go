@@ -68,6 +68,7 @@ func main() {
 	var reportHandler *api.ReportHandler
 	var variationHandler *api.VariationHandler
 	var dmHandler *api.DMHandler
+	var lotReleaseHandler *api.LotReleaseHandler
 	var dmModHandler *api.DMModificationHandler
 	var corpHandler *api.CorporateHandler
 
@@ -149,6 +150,7 @@ func main() {
 
 		dmRepo := repository.NewDMRepository(db.Pool)
 		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService)
+		lotReleaseHandler = api.NewLotReleaseHandler(db.Pool, auditService)
 
 		dmModRepo := repository.NewDMModificationRepository(db.Pool)
 		dmModHandler = api.NewDMModificationHandler(dmModRepo, dmRepo, auditService)
@@ -643,6 +645,14 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/dm-regularizations/{id}", dmHandler.UpdateDMRegularization)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-regularizations/export/canevas", dmHandler.ExportDMCanevas)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices/{id}/official-form", dmHandler.DownloadOfficialDMForm)
+			}
+
+			// Libération de Lots Importés (DCE) & Base PDT/QPPV (DVTIV)
+			if lotReleaseHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases", lotReleaseHandler.ListLotReleases)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/lot-releases", lotReleaseHandler.CreateLotRelease)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases/{id}/official-form", lotReleaseHandler.DownloadOfficialLotReleaseDOCX)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dvtiv/pdt-qppv-form", lotReleaseHandler.DownloadDVTIVPDTQPPVForm)
 			}
 
 			if dmModHandler != nil {
