@@ -12,9 +12,10 @@ import (
 
 // XLSXCellUpdate définit une valeur à écrire dans une cellule Excel (ex: "C4", "A11").
 type XLSXCellUpdate struct {
-	CellRef  string
-	Value    string
-	IsNumber bool
+	SheetPath string // Optionnel : défaut "xl/worksheets/sheet1.xml"
+	CellRef   string
+	Value     string
+	IsNumber  bool
 }
 
 var reRowRef = regexp.MustCompile(`^([A-Z]+)([0-9]+)$`)
@@ -24,6 +25,15 @@ func FillXLSXTemplate(templateBytes []byte, updates []XLSXCellUpdate) ([]byte, e
 	zr, err := zip.NewReader(bytes.NewReader(templateBytes), int64(len(templateBytes)))
 	if err != nil {
 		return nil, fmt.Errorf("lecture archive xlsx impossible: %w", err)
+	}
+
+	bySheet := make(map[string][]XLSXCellUpdate)
+	for _, u := range updates {
+		sp := u.SheetPath
+		if sp == "" {
+			sp = "xl/worksheets/sheet1.xml"
+		}
+		bySheet[sp] = append(bySheet[sp], u)
 	}
 
 	var outBuf bytes.Buffer
@@ -42,8 +52,8 @@ func FillXLSXTemplate(templateBytes []byte, updates []XLSXCellUpdate) ([]byte, e
 			return nil, fmt.Errorf("lecture entrée xlsx %s: %w", f.Name, err)
 		}
 
-		if f.Name == "xl/worksheets/sheet1.xml" {
-			content = []byte(applyXLSXUpdates(string(content), updates))
+		if sheetUpdates := bySheet[f.Name]; len(sheetUpdates) > 0 {
+			content = []byte(applyXLSXUpdates(string(content), sheetUpdates))
 		}
 
 		hdr := f.FileHeader

@@ -265,3 +265,89 @@ func TestGenerateDCELotAndDVTIVDOCX(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateAllAdditionalDCEForms(t *testing.T) {
+	org := &domain.Organization{
+		LegalName:         "Biocare Algérie",
+		Address:           "Rouiba, Alger",
+		Phone:             "+213 21 00 11 22",
+		MIPHLicenseNumber: "MIPH-2026-01",
+	}
+	ddf := time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
+	ddp := time.Date(2029, 2, 1, 0, 0, 0, 0, time.UTC)
+	lots := []*domain.ImportLotRelease{
+		{
+			ProductKind:         "pp",
+			CommercialName:      "Biomox 1g",
+			Designation:         "Amoxicilline",
+			FormAspect:          "Comprimé pelliculé",
+			LotNumber:           "LOT-PP-01",
+			DDF:                 &ddf,
+			DDP:                 &ddp,
+			SalesUnits:          "10000 boites",
+			HomologationOrDERef: "DE-2026-001",
+			ProductionSite:      "Site Prod Alger",
+			QCSite:              "LCQ Alger",
+			ReleaseSite:         "Site Libération Rouiba",
+			CreatedAt:           ddf,
+		},
+		{
+			ProductKind:         "dm",
+			CommercialName:      "StentBio",
+			Designation:         "Stent coronaire",
+			FormAspect:          "Boite stérile",
+			LotNumber:           "LOT-DM-02",
+			DDF:                 &ddf,
+			DDP:                 &ddp,
+			SalesUnits:          "500 unités",
+			HomologationOrDERef: "DH-2026-002",
+			DMClass:             "III",
+			ProductionSite:      "Site DM Oran",
+			QCSite:              "LCQ Oran",
+			ReleaseSite:         "Site Libération Oran",
+			CreatedAt:           ddf,
+		},
+	}
+
+	compOut, err := GenerateDCECompositionDossierDOCX()
+	if err != nil || !strings.Contains(readZipEntry(t, compOut, "word/document.xml"), "<w:keepNext/>") {
+		t.Fatalf("GenerateDCECompositionDossierDOCX invalide: err=%v", err)
+	}
+
+	canOut, err := GenerateDCECanevasCertificatLiberationDOCX(org, lots[0])
+	if err != nil || !strings.Contains(extractXMLText(readZipEntry(t, canOut, "word/document.xml")), "LOT-PP-01") {
+		t.Fatalf("GenerateDCECanevasCertificatLiberationDOCX invalide: err=%v", err)
+	}
+
+	for _, kind := range []string{"pp", "dm"} {
+		dqOut, err := GenerateDCEDeclarationQuotidienneDOCX(kind, org, lots)
+		if err != nil {
+			t.Fatalf("GenerateDCEDeclarationQuotidienneDOCX(%s) erreur: %v", kind, err)
+		}
+		txt := extractXMLText(readZipEntry(t, dqOut, "word/document.xml"))
+		if !strings.Contains(txt, "Biocare Algérie") {
+			t.Errorf("decl quotidienne (%s): org absent", kind)
+		}
+	}
+
+	xlsxPP, err := GenerateDCEDeclarationJournaliereXLSX("pp", org, lots)
+	if err != nil || !strings.Contains(readZipEntry(t, xlsxPP, "xl/worksheets/sheet1.xml"), "LOT-PP-01") {
+		t.Fatalf("GenerateDCEDeclarationJournaliereXLSX(pp) invalide: err=%v", err)
+	}
+
+	xlsxBoth, err := GenerateDCEDeclarationJournaliereXLSX("pp_dm", org, lots)
+	if err != nil {
+		t.Fatalf("GenerateDCEDeclarationJournaliereXLSX(pp_dm) erreur: %v", err)
+	}
+	if !strings.Contains(readZipEntry(t, xlsxBoth, "xl/worksheets/sheet1.xml"), "LOT-PP-01") {
+		t.Errorf("decl journaliere pp_dm sheet1: LOT-PP-01 absent")
+	}
+	if !strings.Contains(readZipEntry(t, xlsxBoth, "xl/worksheets/sheet2.xml"), "LOT-DM-02") {
+		t.Errorf("decl journaliere pp_dm sheet2: LOT-DM-02 absent")
+	}
+
+	srOut, err := GenerateDCETemplateCASRSecondaireDOCX(org)
+	if err != nil || !strings.Contains(extractXMLText(readZipEntry(t, srOut, "word/document.xml")), "Biocare Algérie") {
+		t.Fatalf("GenerateDCETemplateCASRSecondaireDOCX invalide: err=%v", err)
+	}
+}

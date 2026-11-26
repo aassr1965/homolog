@@ -652,6 +652,7 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases", lotReleaseHandler.ListLotReleases)
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/lot-releases", lotReleaseHandler.CreateLotRelease)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases/{id}/official-form", lotReleaseHandler.DownloadOfficialLotReleaseDOCX)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases/dce-forms/{formType}", lotReleaseHandler.DownloadDCEForm)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dvtiv/pdt-qppv-form", lotReleaseHandler.DownloadDVTIVPDTQPPVForm)
 			}
 

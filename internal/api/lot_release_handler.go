@@ -525,3 +525,143 @@ func (h *LotReleaseHandler) linkDVTIVToChecklists(ctx context.Context, orgID, ge
 	}
 	return linkedCount
 }
+
+// DownloadDCEForm génère et télécharge les formulaires et canevas officiels DCE de l'ANPP pré-remplis.
+func (h *LotReleaseHandler) DownloadDCEForm(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	formType := strings.ToLower(strings.TrimSpace(chi.URLParam(r, "formType")))
+	org := h.loadOrganizationEnriched(r.Context(), user.OrganizationID)
+	lots := h.loadOrganizationLotReleases(r.Context(), user.OrganizationID, 20)
+
+	var (
+		outBytes    []byte
+		err         error
+		filename    string
+		contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	)
+
+	switch formType {
+	case "composition-dossier":
+		outBytes, err = reporting.GenerateDCECompositionDossierDOCX()
+		filename = "ANPP-DCE-Composition-Dossier-Liberation.docx"
+	case "canevas-certificat":
+		var selected *domain.ImportLotRelease
+		if lotIDStr := strings.TrimSpace(r.URL.Query().Get("lot_id")); lotIDStr != "" {
+			if lid, parseErr := uuid.Parse(lotIDStr); parseErr == nil {
+				for _, l := range lots {
+					if l.ID == lid {
+						selected = l
+						break
+					}
+				}
+			}
+		} else if len(lots) > 0 {
+			selected = lots[0]
+		}
+		outBytes, err = reporting.GenerateDCECanevasCertificatLiberationDOCX(org, selected)
+		filename = "ANPP-DCE-Canevas-Certificat-Liberation.docx"
+	case "declaration-quotidienne-pp":
+		outBytes, err = reporting.GenerateDCEDeclarationQuotidienneDOCX("pp", org, lots)
+		filename = fmt.Sprintf("ANPP-DCE-Declaration-Quotidienne-PP_%s.docx", time.Now().Format("2006-01-02"))
+	case "declaration-quotidienne-dm":
+		outBytes, err = reporting.GenerateDCEDeclarationQuotidienneDOCX("dm", org, lots)
+		filename = fmt.Sprintf("ANPP-DCE-Declaration-Quotidienne-DM_%s.docx", time.Now().Format("2006-01-02"))
+	case "declaration-journaliere-pp":
+		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("pp", org, lots)
+		filename = fmt.Sprintf("ANPP-DCE-Declaration-Journaliere-PP_%s.xlsx", time.Now().Format("2006-01-02"))
+		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case "declaration-journaliere-pp-dm":
+		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("pp_dm", org, lots)
+		filename = fmt.Sprintf("ANPP-DCE-Declaration-Journaliere-PP-DM_%s.xlsx", time.Now().Format("2006-01-02"))
+		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case "ca-sr-secondaire":
+		outBytes, err = reporting.GenerateDCETemplateCASRSecondaireDOCX(org)
+		filename = "ANPP-DCE-Prototype-CA-SR-Secondaire.docx"
+	default:
+		writeJSONError(w, http.StatusBadRequest, "Type de formulaire DCE inconnu")
+		return
+	}
+
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Erreur génération formulaire DCE: "+err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	_, _ = w.Write(outBytes)
+}
+
+func (h *LotReleaseHandler) loadOrganizationEnriched(ctx context.Context, orgID uuid.UUID) *domain.Organization {
+	var org domain.Organization
+	_ = h.pool.QueryRow(ctx, `
+		SELECT id, slug, legal_name, COALESCE(miph_license_number, ''), COALESCE(technical_director_name, ''),
+		       COALESCE(address, ''), COALESCE(phone, ''), COALESCE(email, '')
+		FROM organizations WHERE id = $1
+	`, orgID).Scan(&org.ID, &org.Slug, &org.LegalName, &org.MIPHLicenseNumber, &org.TechnicalDirectorName, &org.Address, &org.Phone, &org.Email)
+
+	var eAddr, eWilaya, ePhone, eEmail, eLicense, ePDT string
+	if h.pool.QueryRow(ctx, `
+		SELECT COALESCE(address_fr, ''), COALESCE(wilaya, ''), COALESCE(phone, ''),
+		       COALESCE(email, ''), COALESCE(miph_license_number, ''), COALESCE(technical_director_name, '')
+		FROM establishments
+		WHERE organization_id = $1 AND is_active = TRUE
+		ORDER BY created_at ASC
+		LIMIT 1
+	`, orgID).Scan(&eAddr, &eWilaya, &ePhone, &eEmail, &eLicense, &ePDT) == nil {
+		if org.Address == "" && eAddr != "" {
+			if eWilaya != "" && !strings.Contains(strings.ToLower(eAddr), strings.ToLower(eWilaya)) {
+				org.Address = eAddr + ", " + eWilaya
+			} else {
+				org.Address = eAddr
+			}
+		}
+		if org.Phone == "" && ePhone != "" {
+			org.Phone = ePhone
+		}
+		if org.Email == "" && eEmail != "" {
+			org.Email = eEmail
+		}
+		if org.MIPHLicenseNumber == "" && eLicense != "" {
+			org.MIPHLicenseNumber = eLicense
+		}
+		if org.TechnicalDirectorName == "" && ePDT != "" {
+			org.TechnicalDirectorName = ePDT
+		}
+	}
+	return &org
+}
+
+func (h *LotReleaseHandler) loadOrganizationLotReleases(ctx context.Context, orgID uuid.UUID, limit int) []*domain.ImportLotRelease {
+	rows, err := h.pool.Query(ctx, `
+		SELECT id, organization_id, product_kind, commercial_name, designation, form_aspect,
+		       lot_number, ddf, ddp, sales_units, homologation_or_de_ref, dm_class,
+		       production_site, qc_site, release_site, created_at
+		FROM import_lot_releases
+		WHERE organization_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2
+	`, orgID, limit)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	var list []*domain.ImportLotRelease
+	for rows.Next() {
+		var it domain.ImportLotRelease
+		if rows.Scan(
+			&it.ID, &it.OrganizationID, &it.ProductKind, &it.CommercialName, &it.Designation, &it.FormAspect,
+			&it.LotNumber, &it.DDF, &it.DDP, &it.SalesUnits, &it.HomologationOrDERef, &it.DMClass,
+			&it.ProductionSite, &it.QCSite, &it.ReleaseSite, &it.CreatedAt,
+		) == nil {
+			list = append(list, &it)
+		}
+	}
+	return list
+}

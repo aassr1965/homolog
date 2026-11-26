@@ -552,3 +552,230 @@ func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, as
 		CellStrikeTerms:  cellStrikeTerms,
 	})
 }
+
+// GenerateDCECompositionDossierDOCX retourne la fiche officielle ANPP « composition-du-dossier-de-liberation-de-lot.docx ».
+func GenerateDCECompositionDossierDOCX() ([]byte, error) {
+	tpl, err := GetANPPTemplate("dce_composition_dossier_liberation.docx")
+	if err != nil {
+		return nil, err
+	}
+	return FillDOCXTemplate(tpl, DOCXFillOptions{})
+}
+
+// GenerateDCECanevasCertificatLiberationDOCX pré-remplit le canevas générique « canevas-de-certificat-de-liberation-de-lot.docx ».
+func GenerateDCECanevasCertificatLiberationDOCX(org *domain.Organization, lot *domain.ImportLotRelease) ([]byte, error) {
+	tpl, err := GetANPPTemplate("dce_canevas_certificat_liberation.docx")
+	if err != nil {
+		return nil, err
+	}
+	var cellUpdates []TableCellCoord
+	textRepl := map[string]string{}
+	if lot != nil {
+		ddfStr, ddpStr := "", ""
+		if lot.DDF != nil {
+			ddfStr = lot.DDF.Format("2006-01-02")
+		}
+		if lot.DDP != nil {
+			ddpStr = lot.DDP.Format("2006-01-02")
+		}
+		cellUpdates = []TableCellCoord{
+			{TableIndex: 0, RowIndex: 1, ColIndex: 0, Value: lot.CommercialName},
+			{TableIndex: 0, RowIndex: 1, ColIndex: 1, Value: lot.Designation},
+			{TableIndex: 0, RowIndex: 1, ColIndex: 2, Value: lot.FormAspect},
+			{TableIndex: 0, RowIndex: 1, ColIndex: 4, Value: lot.SalesUnits},
+			{TableIndex: 1, RowIndex: 1, ColIndex: 0, Value: lot.LotNumber},
+			{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: ddfStr},
+			{TableIndex: 1, RowIndex: 1, ColIndex: 2, Value: ddpStr},
+			{TableIndex: 1, RowIndex: 1, ColIndex: 3, Value: lot.HomologationOrDERef},
+			{TableIndex: 1, RowIndex: 1, ColIndex: 4, Value: lot.SalesUnits},
+		}
+		if lot.ProductionSite != "" {
+			textRepl["………………………………………………………………………………………………."] = lot.ProductionSite
+		}
+		if lot.QCSite != "" {
+			textRepl["………………………………………………………………………………………………"] = lot.QCSite
+		}
+		if lot.ReleaseSite != "" {
+			textRepl["…………………………………………………………………………………………………"] = lot.ReleaseSite
+		}
+	} else if org != nil && org.LegalName != "" {
+		textRepl["…………………………………………………………………………………………………"] = fmt.Sprintf("%s — %s (Agrément %s)", org.LegalName, org.Address, org.MIPHLicenseNumber)
+	}
+	return FillDOCXTemplate(tpl, DOCXFillOptions{
+		CellUpdates:      cellUpdates,
+		TextReplacements: textRepl,
+	})
+}
+
+// GenerateDCEDeclarationQuotidienneDOCX pré-remplit les déclarations quotidiennes DCE (.docx) pour PP ou DM.
+func GenerateDCEDeclarationQuotidienneDOCX(kind string, org *domain.Organization, lots []*domain.ImportLotRelease) ([]byte, error) {
+	isDM := strings.EqualFold(strings.TrimSpace(kind), "dm")
+	tplName := "dce_decl_quotidienne_pp.docx"
+	if isDM {
+		tplName = "dce_decl_quotidienne_dm.docx"
+	}
+	tpl, err := GetANPPTemplate(tplName)
+	if err != nil {
+		return nil, err
+	}
+
+	var cellUpdates []TableCellCoord
+	if org != nil {
+		header := strings.TrimSpace(fmt.Sprintf("%s | %s | Tél: %s | Agrément MIPH: %s", org.LegalName, org.Address, org.Phone, org.MIPHLicenseNumber))
+		cellUpdates = append(cellUpdates, TableCellCoord{TableIndex: 0, RowIndex: 0, ColIndex: 0, Value: header})
+	}
+
+	rowIdx := 1
+	for _, lot := range lots {
+		if lot == nil || rowIdx > 6 {
+			continue
+		}
+		if isDM && lot.ProductKind != "dm" {
+			continue
+		}
+		if !isDM && lot.ProductKind != "pp" {
+			continue
+		}
+		if rowIdx == 1 {
+			cellUpdates = append(cellUpdates,
+				TableCellCoord{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: lot.ProductionSite},
+				TableCellCoord{TableIndex: 1, RowIndex: 1, ColIndex: 2, Value: lot.QCSite},
+				TableCellCoord{TableIndex: 1, RowIndex: 3, ColIndex: 1, Value: lot.ReleaseSite},
+			)
+		}
+		ddfStr, ddpStr := "", ""
+		if lot.DDF != nil {
+			ddfStr = lot.DDF.Format("2006-01-02")
+		}
+		if lot.DDP != nil {
+			ddpStr = lot.DDP.Format("2006-01-02")
+		}
+		relDate := lot.CreatedAt.Format("2006-01-02")
+		if isDM {
+			cellUpdates = append(cellUpdates,
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 0, Value: relDate},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 1, Value: lot.CommercialName},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 2, Value: lot.Designation},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 3, Value: lot.FormAspect},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 4, Value: lot.HomologationOrDERef},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 5, Value: lot.LotNumber},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 6, Value: ddfStr},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 7, Value: ddpStr},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 8, Value: lot.SalesUnits},
+			)
+		} else {
+			cellUpdates = append(cellUpdates,
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 0, Value: relDate},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 1, Value: lot.CommercialName},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 2, Value: lot.Designation},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 3, Value: lot.FormAspect},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 5, Value: lot.HomologationOrDERef},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 6, Value: lot.LotNumber},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 7, Value: ddfStr},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 8, Value: ddpStr},
+				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 9, Value: lot.SalesUnits},
+			)
+		}
+		rowIdx++
+	}
+
+	return FillDOCXTemplate(tpl, DOCXFillOptions{CellUpdates: cellUpdates})
+}
+
+// GenerateDCEDeclarationJournaliereXLSX pré-remplit les canevas Excel de déclaration journalière DCE (« pp » ou « pp_dm »).
+func GenerateDCEDeclarationJournaliereXLSX(kind string, org *domain.Organization, lots []*domain.ImportLotRelease) ([]byte, error) {
+	isCombined := strings.EqualFold(strings.TrimSpace(kind), "pp_dm")
+	tplName := "dce_decl_journaliere_pp.xlsx"
+	startRow := 14
+	if isCombined {
+		tplName = "dce_decl_journaliere_pp_dm.xlsx"
+		startRow = 15
+	}
+	tpl, err := GetANPPTemplate(tplName)
+	if err != nil {
+		return nil, err
+	}
+
+	var updates []XLSXCellUpdate
+	if org != nil {
+		header := strings.TrimSpace(fmt.Sprintf("%s — %s — Agrément %s", org.LegalName, org.Address, org.MIPHLicenseNumber))
+		updates = append(updates,
+			XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: "A1", Value: header},
+			XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: "C4", Value: org.LegalName},
+			XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: "D4", Value: org.Address},
+			XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: "E4", Value: org.MIPHLicenseNumber},
+		)
+		if isCombined {
+			updates = append(updates,
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: "A1", Value: header},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: "C4", Value: org.LegalName},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: "D4", Value: org.Address},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: "E4", Value: org.MIPHLicenseNumber},
+			)
+		}
+	}
+
+	ppRow, dmRow := startRow, startRow
+	for _, lot := range lots {
+		if lot == nil {
+			continue
+		}
+		ddfStr, ddpStr := "", ""
+		if lot.DDF != nil {
+			ddfStr = lot.DDF.Format("2006-01-02")
+		}
+		if lot.DDP != nil {
+			ddpStr = lot.DDP.Format("2006-01-02")
+		}
+		relDate := lot.CreatedAt.Format("2006-01-02")
+
+		if lot.ProductKind == "dm" {
+			if !isCombined {
+				continue
+			}
+			r := dmRow
+			updates = append(updates,
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("A%d", r), Value: relDate},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("B%d", r), Value: lot.CommercialName},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("C%d", r), Value: lot.Designation},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("D%d", r), Value: lot.FormAspect},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("F%d", r), Value: lot.HomologationOrDERef},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("G%d", r), Value: lot.DMClass},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("H%d", r), Value: lot.LotNumber},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("I%d", r), Value: ddfStr},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("J%d", r), Value: ddpStr},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("K%d", r), Value: lot.SalesUnits},
+			)
+			dmRow++
+		} else {
+			r := ppRow
+			updates = append(updates,
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("A%d", r), Value: relDate},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("B%d", r), Value: lot.CommercialName},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("C%d", r), Value: lot.Designation},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("D%d", r), Value: lot.FormAspect},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("F%d", r), Value: lot.HomologationOrDERef},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("H%d", r), Value: lot.LotNumber},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("I%d", r), Value: ddfStr},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("J%d", r), Value: ddpStr},
+				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("K%d", r), Value: lot.SalesUnits},
+			)
+			ppRow++
+		}
+	}
+
+	return FillXLSXTemplate(tpl, updates)
+}
+
+// GenerateDCETemplateCASRSecondaireDOCX pré-remplit le prototype Certificat d'analyse SR secondaire.
+func GenerateDCETemplateCASRSecondaireDOCX(org *domain.Organization) ([]byte, error) {
+	tpl, err := GetANPPTemplate("dce_template_ca_sr_secondaire.docx")
+	if err != nil {
+		return nil, err
+	}
+	textRepl := map[string]string{}
+	if org != nil && strings.TrimSpace(org.LegalName) != "" {
+		textRepl["Nom du fabricant/fournisseur :"] = "Nom du fabricant/fournisseur : " + strings.TrimSpace(org.LegalName)
+	}
+	return FillDOCXTemplate(tpl, DOCXFillOptions{TextReplacements: textRepl})
+}
