@@ -808,6 +808,7 @@ async function loadANPPTemplatesList() {
                 <td style="padding:7px 8px; font-size:11px;">${traceText}</td>
                 <td style="padding:7px 8px; text-align:right; white-space:nowrap;">
                     <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px; flex-wrap:nowrap;">
+                        <button type="button" class="btn-pill" style="font-size:10.5px; padding:3px 9px; white-space:nowrap;" onclick="previewANPPTemplate('${escapeHTML(t.name)}')">👁️ Visualiser</button>
                         <a class="btn-pill" style="font-size:10.5px; padding:3px 9px; text-decoration:none; white-space:nowrap;" href="/api/v1/anpp-templates/${encodeURIComponent(t.name)}/download">📥 Télécharger</a>
                         ${uploadBtn}
                         ${globalBtn}
@@ -861,6 +862,70 @@ function triggerANPPTemplateUpload(name, isGlobal) {
     input.click();
 }
 window.triggerANPPTemplateUpload = triggerANPPTemplateUpload;
+
+async function previewANPPTemplate(name) {
+    const titleEl = document.getElementById('anpp-preview-title');
+    const bodyEl = document.getElementById('anpp-preview-body');
+    const dlLink = document.getElementById('anpp-preview-download-link');
+    if (!bodyEl) return;
+
+    if (titleEl) titleEl.textContent = `👁️ Aperçu — ${name}`;
+    if (dlLink) dlLink.href = `/api/v1/anpp-templates/${encodeURIComponent(name)}/download`;
+    bodyEl.innerHTML = '<div style="color:var(--text-muted);">Extraction de l\'aperçu en cours...</div>';
+    openModal('modal-anpp-template-preview');
+
+    try {
+        const res = await fetch(`/api/v1/anpp-templates/${encodeURIComponent(name)}/preview`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            bodyEl.innerHTML = `<div style="color:#dc2626;">${escapeHTML(data.error || 'Impossible de charger l\'aperçu.')}</div>`;
+            return;
+        }
+
+        if (data.kind === 'docx') {
+            const blocks = data.blocks || [];
+            if (!blocks.length) {
+                bodyEl.innerHTML = '<div style="color:var(--text-muted);">Document vide ou uniquement graphique.</div>';
+                return;
+            }
+            bodyEl.innerHTML = blocks.map((b) => {
+                if (b.type === 'paragraph') {
+                    return `<p style="margin:0 0 8px 0; white-space:pre-wrap;">${escapeHTML(b.text || '')}</p>`;
+                }
+                if (b.type === 'table') {
+                    const rowsHtml = (b.rows || []).map((row, idx) => {
+                        const cellTag = idx === 0 ? 'th' : 'td';
+                        const bg = idx === 0 ? 'background:var(--bg-sub); font-weight:700;' : '';
+                        const cells = row.map((c) => `<${cellTag} style="border:1px solid var(--border-color); padding:6px 8px; vertical-align:top; text-align:left; white-space:pre-wrap; ${bg}">${escapeHTML(c || '')}</${cellTag}>`).join('');
+                        return `<tr>${cells}</tr>`;
+                    }).join('');
+                    return `<div style="overflow-x:auto; margin:10px 0 14px 0;"><table style="width:100%; border-collapse:collapse; font-size:11.5px;">${rowsHtml}</table></div>`;
+                }
+                return '';
+            }).join('');
+        } else if (data.kind === 'xlsx') {
+            const sheets = data.sheets || [];
+            if (!sheets.length) {
+                bodyEl.innerHTML = '<div style="color:var(--text-muted);">Classeur vide.</div>';
+                return;
+            }
+            bodyEl.innerHTML = sheets.map((s) => {
+                const rowsHtml = (s.rows || []).map((row, idx) => {
+                    const bg = idx === 0 ? 'background:var(--bg-sub); font-weight:700;' : '';
+                    const cells = row.map((c) => `<td style="border:1px solid var(--border-color); padding:5px 8px; white-space:pre-wrap; ${bg}">${escapeHTML(c || '')}</td>`).join('');
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+                return `<div style="margin-bottom:18px;">
+                    <div style="font-weight:800; font-size:12px; margin-bottom:6px; color:#0284c7;">📊 Feuille : ${escapeHTML(s.name || '')}</div>
+                    <div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11.5px;">${rowsHtml}</table></div>
+                </div>`;
+            }).join('');
+        }
+    } catch (err) {
+        bodyEl.innerHTML = `<div style="color:#dc2626;">Erreur réseau : ${escapeHTML(err.message)}</div>`;
+    }
+}
+window.previewANPPTemplate = previewANPPTemplate;
 
 async function revertANPPTemplate(name, scope) {
     const ok = await showConfirmModal(

@@ -4335,6 +4335,23 @@
         </div>
     </div>
 
+    <!-- Modal Aperçu Gabarit ANPP (.docx / .xlsx) -->
+    <div class="modal-overlay" id="modal-anpp-template-preview" onclick="if(event.target === this) closeModal('modal-anpp-template-preview')">
+        <div class="modal" style="width:min(1080px, calc(100vw - 24px)); height:84vh; min-width:640px; min-height:360px; max-width:calc(100vw - 16px); max-height:94vh; resize:both; overflow:hidden; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #0284c7; background:rgba(2,132,199,0.06); padding:10px 16px;">
+                <div>
+                    <div class="modal-title" id="anpp-preview-title" style="font-weight:800; font-size:13.5px;">👁️ Aperçu du Gabarit ANPP</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Structure officielle active (paragraphes, tableaux ou feuilles Excel)</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <a class="btn-pill" id="anpp-preview-download-link" href="#" style="font-size:11px; padding:3px 10px; text-decoration:none; background:#0284c7; color:white; font-weight:700;">📥 Télécharger</a>
+                    <button type="button" class="close-btn" onclick="closeModal('modal-anpp-template-preview')">✕</button>
+                </div>
+            </div>
+            <div id="anpp-preview-body" style="padding:18px 22px; overflow:auto; flex:1; font-size:12.5px; line-height:1.5; background:var(--bg-panel);"></div>
+        </div>
+    </div>
+
     <!-- Modal Brouillon Éditable Formulaires ANPP -->
     <div class="modal-overlay" id="modal-anpp-draft-editor" onclick="if(event.target === this) closeModal('modal-anpp-draft-editor')">
         <div class="modal" style="width:700px; max-width:calc(100vw - 24px); max-height:90vh; display:flex; flex-direction:column;">

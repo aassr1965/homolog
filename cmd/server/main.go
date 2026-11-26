@@ -693,6 +693,7 @@ func main() {
 			if anppTemplateHandler != nil {
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates", anppTemplateHandler.ListTemplates)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates/{name}/download", anppTemplateHandler.DownloadTemplate)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates/{name}/preview", anppTemplateHandler.PreviewTemplate)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Post("/api/v1/anpp-templates/{name}", anppTemplateHandler.UploadTemplate)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Delete("/api/v1/anpp-templates/{name}", anppTemplateHandler.DeleteOverride)
 			}

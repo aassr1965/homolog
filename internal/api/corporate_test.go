@@ -884,8 +884,23 @@ func TestANPPTemplateUploadOverrideAndRevert(t *testing.T) {
 		})
 	})
 	rSA.With(RequireAnyPermission(auditSvc, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates", tplHandler.ListTemplates)
+	rSA.With(RequireAnyPermission(auditSvc, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates/{name}/preview", tplHandler.PreviewTemplate)
 	rSA.With(RequireAnyPermission(auditSvc, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Post("/api/v1/anpp-templates/{name}", tplHandler.UploadTemplate)
 	rSA.With(RequireAnyPermission(auditSvc, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Delete("/api/v1/anpp-templates/{name}", tplHandler.DeleteOverride)
+
+	reqPrevDocx := httptest.NewRequest("GET", "/api/v1/anpp-templates/depp_modele_structure.docx/preview", nil)
+	wPrevDocx := httptest.NewRecorder()
+	rSA.ServeHTTP(wPrevDocx, reqPrevDocx)
+	if wPrevDocx.Code != http.StatusOK || !strings.Contains(wPrevDocx.Body.String(), `"kind":"docx"`) {
+		t.Fatalf("preview docx SuperAdmin attendu 200 docx, reçu %d: %s", wPrevDocx.Code, wPrevDocx.Body.String())
+	}
+
+	reqPrevXlsx := httptest.NewRequest("GET", "/api/v1/anpp-templates/ddm_canevas_non_homologues.xlsx/preview", nil)
+	wPrevXlsx := httptest.NewRecorder()
+	rSA.ServeHTTP(wPrevXlsx, reqPrevXlsx)
+	if wPrevXlsx.Code != http.StatusOK || !strings.Contains(wPrevXlsx.Body.String(), `"kind":"xlsx"`) {
+		t.Fatalf("preview xlsx SuperAdmin attendu 200 xlsx, reçu %d: %s", wPrevXlsx.Code, wPrevXlsx.Body.String())
+	}
 
 	var bodyG bytes.Buffer
 	mwG := multipart.NewWriter(&bodyG)

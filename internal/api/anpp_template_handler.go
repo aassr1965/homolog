@@ -209,6 +209,32 @@ func (h *ANPPTemplateHandler) DownloadTemplate(w http.ResponseWriter, r *http.Re
 	_, _ = w.Write(data)
 }
 
+// PreviewTemplate retourne un aperçu structuré JSON (paragraphes, tableaux Word ou feuilles Excel) pour affichage en modale.
+func (h *ANPPTemplateHandler) PreviewTemplate(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(UserContextKey).(*auth.SessionUser)
+	if !ok || user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+	name := path.Base(chi.URLParam(r, "name"))
+	if !isValidKnownANPPTemplate(name) {
+		writeJSONError(w, http.StatusNotFound, "Gabarit ANPP inconnu")
+		return
+	}
+	data, err := reporting.GetANPPTemplateForOrg(user.OrganizationID.String(), name)
+	if err != nil {
+		writeJSONError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	preview, err := reporting.ExtractANPPTemplatePreview(name, data)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Erreur lecture aperçu gabarit: "+err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(preview)
+}
+
 // UploadTemplate permet au PDT, RA ou Admin Système de remplacer un gabarit officiel ANPP sans recompiler.
 func (h *ANPPTemplateHandler) UploadTemplate(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(UserContextKey).(*auth.SessionUser)
