@@ -266,11 +266,13 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 		FROM organizations WHERE id = $1
 	`, user.OrganizationID).Scan(&org.ID, &org.Slug, &org.LegalName, &org.MIPHLicenseNumber, &org.TechnicalDirectorName, &org.Address, &org.Phone, &org.Email)
 
-	var pdt, assistant *domain.User
+	var pdt, assistant, qppv *domain.User
 	rows, err := h.pool.Query(r.Context(), `
 		SELECT first_name, last_name, email, role
 		FROM users
-		WHERE organization_id = $1 AND is_active = TRUE AND role IN ('directeur_technique', 'pharmacien_assistant')
+		WHERE organization_id = $1 AND is_active = TRUE
+		  AND (role IN ('directeur_technique', 'pharmacien_assistant', 'qppv')
+		       OR LOWER(email) LIKE '%qppv%' OR LOWER(last_name) LIKE '%qppv%')
 		ORDER BY created_at ASC
 	`, user.OrganizationID)
 	if err == nil {
@@ -284,47 +286,91 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 				} else if u.Role == "pharmacien_assistant" && assistant == nil {
 					cp := u
 					assistant = &cp
+				} else if (u.Role == "qppv" || strings.Contains(strings.ToLower(u.Email+u.LastName), "qppv")) && qppv == nil {
+					cp := u
+					qppv = &cp
 				}
 			}
 		}
 	}
 
-	// Enrichir depuis establishments si adresse/téléphone manquants sur organizations + récupérer types d'établissement
-	var estTypes []string
+	// Enrichir depuis establishments (adresse, wilaya, téléphone, email, agrément, PDT)
 	var primaryEstID *uuid.UUID
-	estRows, estErr := h.pool.Query(r.Context(), `
-		SELECT id, COALESCE(establishment_type, ''), COALESCE(address_fr, ''), COALESCE(phone, '')
+	var eid uuid.UUID
+	var eAddr, eWilaya, ePhone, eEmail, eLicense, ePDT string
+	if h.pool.QueryRow(r.Context(), `
+		SELECT id, COALESCE(address_fr, ''), COALESCE(wilaya, ''), COALESCE(phone, ''),
+		       COALESCE(email, ''), COALESCE(miph_license_number, ''), COALESCE(technical_director_name, '')
 		FROM establishments
 		WHERE organization_id = $1 AND is_active = TRUE
 		ORDER BY created_at ASC
+		LIMIT 1
+	`, user.OrganizationID).Scan(&eid, &eAddr, &eWilaya, &ePhone, &eEmail, &eLicense, &ePDT) == nil {
+		primaryEstID = &eid
+		if org.Address == "" && eAddr != "" {
+			if eWilaya != "" && !strings.Contains(strings.ToLower(eAddr), strings.ToLower(eWilaya)) {
+				org.Address = eAddr + ", " + eWilaya
+			} else {
+				org.Address = eAddr
+			}
+		}
+		if org.Phone == "" && ePhone != "" {
+			org.Phone = ePhone
+		}
+		if org.Email == "" && eEmail != "" {
+			org.Email = eEmail
+		}
+		if org.MIPHLicenseNumber == "" && eLicense != "" {
+			org.MIPHLicenseNumber = eLicense
+		}
+		if org.TechnicalDirectorName == "" && ePDT != "" {
+			org.TechnicalDirectorName = ePDT
+		}
+	}
+
+	// Déduire les statuts (Fabricant, Importateur, Exploitant de DE) depuis les agréments Corporate ou dossiers
+	var estTypes []string
+	catRows, catErr := h.pool.Query(r.Context(), `
+		SELECT DISTINCT category FROM corporate_applications WHERE organization_id = $1
 	`, user.OrganizationID)
-	if estErr == nil {
-		defer estRows.Close()
-		for estRows.Next() {
-			var eid uuid.UUID
-			var et, ea, ep string
-			if estRows.Scan(&eid, &et, &ea, &ep) == nil {
-				if primaryEstID == nil {
-					cp := eid
-					primaryEstID = &cp
-				}
-				if et != "" {
-					estTypes = append(estTypes, et)
-				}
-				if org.Address == "" && ea != "" {
-					org.Address = ea
-				}
-				if org.Phone == "" && ep != "" {
-					org.Phone = ep
+	if catErr == nil {
+		defer catRows.Close()
+		for catRows.Next() {
+			var cat string
+			if catRows.Scan(&cat) == nil && cat != "" {
+				estTypes = append(estTypes, cat)
+			}
+		}
+	}
+	if len(estTypes) == 0 {
+		procRows, procErr := h.pool.Query(r.Context(), `
+			SELECT DISTINCT procedure_code FROM dossiers WHERE organization_id = $1
+		`, user.OrganizationID)
+		if procErr == nil {
+			defer procRows.Close()
+			for procRows.Next() {
+				var pc string
+				if procRows.Scan(&pc) == nil {
+					p := strings.ToUpper(pc)
+					if strings.HasSuffix(p, "F") {
+						estTypes = append(estTypes, "FABRICATION")
+					} else if strings.HasSuffix(p, "I") {
+						estTypes = append(estTypes, "IMPORTATION")
+					}
 				}
 			}
+		}
+		var dmCount int
+		_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM medical_devices WHERE organization_id = $1`, user.OrganizationID).Scan(&dmCount)
+		if dmCount > 0 {
+			estTypes = append(estTypes, "EXPLOITANT")
 		}
 	}
 
 	var marketedCount int
 	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM medicines WHERE organization_id = $1`, user.OrganizationID).Scan(&marketedCount)
 
-	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCX(&org, pdt, assistant, nil, marketedCount, estTypes...)
+	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCX(&org, pdt, assistant, qppv, marketedCount, estTypes...)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur génération formulaire DVTIV: "+err.Error())
 		return

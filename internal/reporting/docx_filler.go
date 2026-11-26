@@ -24,6 +24,8 @@ type DOCXFillOptions struct {
 	LabelValues map[string]string
 	// TextReplacements remplace des motifs exacts dans le texte des paragraphes/cellules (ex: "N°.…", "☐ Classe I").
 	TextReplacements map[string]string
+	// StrikeTerms barre (w:strike) les mentions exactes inutiles dans les paragraphes (ex: statuts non applicables).
+	StrikeTerms []string
 	// CellUpdates écrit des valeurs dans des coordonnées exactes (TableIndex, RowIndex, ColIndex).
 	CellUpdates []TableCellCoord
 }
@@ -211,7 +213,7 @@ func FillDOCXTemplate(templateBytes []byte, opts DOCXFillOptions) ([]byte, error
 		}
 
 		if f.Name == "word/document.xml" {
-			content = []byte(transformDocumentXML(string(content), normLabels, opts.TextReplacements, coordMap))
+			content = []byte(transformDocumentXML(string(content), normLabels, opts.TextReplacements, opts.StrikeTerms, coordMap))
 		}
 
 		hdr := f.FileHeader
@@ -234,49 +236,177 @@ func FillDOCXTemplate(templateBytes []byte, opts DOCXFillOptions) ([]byte, error
 	return outBuf.Bytes(), nil
 }
 
-func transformDocumentXML(docXML string, normLabels map[string]string, textRepl map[string]string, coordMap map[[3]int]string) string {
+func transformDocumentXML(docXML string, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, coordMap map[[3]int]string) string {
 	tblRanges := findTagRanges(docXML, "w:tbl")
 	var out strings.Builder
 	last := 0
 
 	for ti, tr := range tblRanges {
-		// Paragraphes hors tableaux avant ce tableau
+		// Paragraphes hors tableaux avant ce tableau (anti-titre orphelin activé)
 		segment := docXML[last:tr[0]]
-		if len(textRepl) > 0 {
-			segment = transformParagraphsInSegment(segment, textRepl)
-		}
+		segment = transformParagraphsInSegment(segment, textRepl, strikeTerms, true)
 		out.WriteString(segment)
 
-		tblXML := transformTableXML(docXML[tr[0]:tr[1]], ti, normLabels, textRepl, coordMap)
+		tblXML := transformTableXML(docXML[tr[0]:tr[1]], ti, normLabels, textRepl, strikeTerms, coordMap)
 		out.WriteString(tblXML)
 		last = tr[1]
 	}
 
 	tail := docXML[last:]
-	if len(textRepl) > 0 {
-		tail = transformParagraphsInSegment(tail, textRepl)
-	}
+	tail = transformParagraphsInSegment(tail, textRepl, strikeTerms, false)
 	out.WriteString(tail)
 	return out.String()
 }
 
-func transformParagraphsInSegment(seg string, textRepl map[string]string) string {
+func transformParagraphsInSegment(seg string, textRepl map[string]string, strikeTerms []string, beforeTable bool) string {
 	pRanges := findTagRanges(seg, "w:p")
 	if len(pRanges) == 0 {
 		return seg
 	}
+	// Repérer le dernier paragraphe non vide avant un tableau pour éviter un titre orphelin
+	lastNonEmptyIdx := -1
+	if beforeTable {
+		for i := len(pRanges) - 1; i >= 0; i-- {
+			if strings.TrimSpace(extractXMLText(seg[pRanges[i][0]:pRanges[i][1]])) != "" {
+				lastNonEmptyIdx = i
+				break
+			}
+		}
+	}
 	var out strings.Builder
 	last := 0
-	for _, pr := range pRanges {
+	for i, pr := range pRanges {
 		out.WriteString(seg[last:pr[0]])
-		out.WriteString(applyTextReplacementsToElement(seg[pr[0]:pr[1]], textRepl))
+		pXML := seg[pr[0]:pr[1]]
+		if len(textRepl) > 0 {
+			pXML = applyTextReplacementsToElement(pXML, textRepl)
+		}
+		if len(strikeTerms) > 0 {
+			pXML = applyStrikeTermsToParagraph(pXML, strikeTerms)
+		}
+		if isHeadingParagraph(pXML) || i == lastNonEmptyIdx {
+			pXML = ensureKeepNext(pXML)
+		}
+		out.WriteString(pXML)
 		last = pr[1]
 	}
 	out.WriteString(seg[last:])
 	return out.String()
 }
 
-func transformTableXML(tblXML string, tblIdx int, normLabels map[string]string, textRepl map[string]string, coordMap map[[3]int]string) string {
+var reFirstRPr = regexp.MustCompile(`(?s)<w:rPr>.*?</w:rPr>`)
+
+// applyStrikeTermsToParagraph barre (w:strike) uniquement les termes listés dans strikeTerms tout en conservant le reste du paragraphe intact.
+func applyStrikeTermsToParagraph(pXML string, strikeTerms []string) string {
+	plain := extractXMLText(pXML)
+	if plain == "" {
+		return pXML
+	}
+	var active []string
+	for _, t := range strikeTerms {
+		if t != "" && strings.Contains(plain, t) {
+			active = append(active, t)
+		}
+	}
+	if len(active) == 0 {
+		return pXML
+	}
+
+	// Récupérer le <w:rPr> du premier run pour préserver la police/taille/couleur
+	baseRPr := ""
+	if m := reFirstRPr.FindString(pXML); m != "" {
+		baseRPr = m
+	}
+	strikeRPr := `<w:rPr><w:strike/></w:rPr>`
+	if baseRPr != "" {
+		if strings.Contains(baseRPr, "<w:strike") {
+			strikeRPr = baseRPr
+		} else {
+			strikeRPr = strings.Replace(baseRPr, "</w:rPr>", "<w:strike/></w:rPr>", 1)
+		}
+	}
+
+	// Découper plain en segments normaux / barrés
+	type seg struct {
+		text   string
+		struck bool
+	}
+	segs := []seg{{text: plain, struck: false}}
+	for _, term := range active {
+		var next []seg
+		for _, s := range segs {
+			if s.struck || !strings.Contains(s.text, term) {
+				next = append(next, s)
+				continue
+			}
+			parts := strings.Split(s.text, term)
+			for idx, part := range parts {
+				if part != "" {
+					next = append(next, seg{text: part, struck: false})
+				}
+				if idx < len(parts)-1 {
+					next = append(next, seg{text: term, struck: true})
+				}
+			}
+		}
+		segs = next
+	}
+
+	var runsBuilder strings.Builder
+	for _, s := range segs {
+		rPr := baseRPr
+		if s.struck {
+			rPr = strikeRPr
+		}
+		runsBuilder.WriteString(`<w:r>`)
+		runsBuilder.WriteString(rPr)
+		runsBuilder.WriteString(`<w:t xml:space="preserve">`)
+		runsBuilder.WriteString(escapeXMLText(s.text))
+		runsBuilder.WriteString(`</w:t></w:r>`)
+	}
+
+	// Remplacer tous les <w:r>...</w:r> du paragraphe tout en conservant <w:p ...><w:pPr>...</w:pPr> et </w:p>
+	rRanges := findTagRanges(pXML, "w:r")
+	if len(rRanges) == 0 {
+		return pXML
+	}
+	var out strings.Builder
+	out.WriteString(pXML[:rRanges[0][0]])
+	out.WriteString(runsBuilder.String())
+	out.WriteString(pXML[rRanges[len(rRanges)-1][1]:])
+	return out.String()
+}
+
+func isHeadingParagraph(pXML string) bool {
+	txt := strings.TrimSpace(extractXMLText(pXML))
+	if txt == "" || len([]rune(txt)) > 180 {
+		return false
+	}
+	if strings.Contains(pXML, `w:val="Heading`) || strings.Contains(pXML, `w:val="Titre`) || strings.Contains(pXML, `w:val="Title`) {
+		return true
+	}
+	// Titre court en gras (ex: "Informations générales...", "1. Identification...") ne se terminant pas par ":" ou "."
+	if strings.Contains(pXML, "<w:b") && !strings.HasSuffix(txt, ":") && !strings.HasSuffix(txt, ".") {
+		return true
+	}
+	return false
+}
+
+func ensureKeepNext(pXML string) string {
+	if strings.Contains(pXML, "<w:keepNext") {
+		return pXML
+	}
+	if strings.Contains(pXML, "<w:pPr>") {
+		return strings.Replace(pXML, "<w:pPr>", "<w:pPr><w:keepNext/><w:keepLines/>", 1)
+	}
+	idx := strings.Index(pXML, ">")
+	if idx == -1 {
+		return pXML
+	}
+	return pXML[:idx+1] + "<w:pPr><w:keepNext/><w:keepLines/></w:pPr>" + pXML[idx+1:]
+}
+
+func transformTableXML(tblXML string, tblIdx int, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, coordMap map[[3]int]string) string {
 	rowRanges := findTagRanges(tblXML, "w:tr")
 	if len(rowRanges) == 0 {
 		return tblXML
@@ -285,14 +415,14 @@ func transformTableXML(tblXML string, tblIdx int, normLabels map[string]string, 
 	last := 0
 	for ri, rr := range rowRanges {
 		out.WriteString(tblXML[last:rr[0]])
-		out.WriteString(transformRowXML(tblXML[rr[0]:rr[1]], tblIdx, ri, normLabels, textRepl, coordMap))
+		out.WriteString(transformRowXML(tblXML[rr[0]:rr[1]], tblIdx, ri, normLabels, textRepl, strikeTerms, coordMap))
 		last = rr[1]
 	}
 	out.WriteString(tblXML[last:])
 	return out.String()
 }
 
-func transformRowXML(rowXML string, tblIdx, rowIdx int, normLabels map[string]string, textRepl map[string]string, coordMap map[[3]int]string) string {
+func transformRowXML(rowXML string, tblIdx, rowIdx int, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, coordMap map[[3]int]string) string {
 	cellRanges := findTagRanges(rowXML, "w:tc")
 	if len(cellRanges) == 0 {
 		return rowXML
@@ -303,10 +433,10 @@ func transformRowXML(rowXML string, tblIdx, rowIdx int, normLabels map[string]st
 		cells[ci] = rowXML[cr[0]:cr[1]]
 	}
 
-	// 1. Remplacements textuels dans chaque cellule (ex: cases à cocher)
-	if len(textRepl) > 0 {
+	// 1. Remplacements textuels et mentions barrées dans chaque cellule
+	if len(textRepl) > 0 || len(strikeTerms) > 0 {
 		for ci := range cells {
-			cells[ci] = transformParagraphsInSegment(cells[ci], textRepl)
+			cells[ci] = transformParagraphsInSegment(cells[ci], textRepl, strikeTerms, false)
 		}
 	}
 

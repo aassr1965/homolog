@@ -511,19 +511,32 @@ func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, as
 		textRepl["Le nombre de produits pharmaceutiques commercialisés en Algérie : …."] = fmt.Sprintf("Le nombre de produits pharmaceutiques commercialisés en Algérie : %d", marketedCount)
 		textRepl["Le nombre de produits pharmaceutiques commercialisés en Algérie\u00a0: …."] = fmt.Sprintf("Le nombre de produits pharmaceutiques commercialisés en Algérie : %d", marketedCount)
 	}
+	var strikeTerms []string
 	joinedTypes := strings.ToLower(strings.Join(estTypes, " "))
-	if strings.Contains(joinedTypes, "fabric") {
-		textRepl["Fabricant"] = "Fabricant ☑"
-	}
-	if strings.Contains(joinedTypes, "import") {
-		textRepl["Importateur"] = "Importateur ☑"
-	}
-	if strings.Contains(joinedTypes, "exploit") {
-		textRepl["Exploitant de DE"] = "Exploitant de DE ☑"
+	if strings.TrimSpace(joinedTypes) != "" {
+		hasDet := strings.Contains(joinedTypes, "detenteur")
+		hasExp := strings.Contains(joinedTypes, "exploit")
+		hasFab := strings.Contains(joinedTypes, "fabric")
+		hasImp := strings.Contains(joinedTypes, "import")
+		if hasDet || hasExp || hasFab || hasImp {
+			if !hasDet {
+				strikeTerms = append(strikeTerms, "Détenteur de DE")
+			}
+			if !hasExp {
+				strikeTerms = append(strikeTerms, "Exploitant de DE")
+			}
+			if !hasFab {
+				strikeTerms = append(strikeTerms, "Fabricant")
+			}
+			if !hasImp {
+				strikeTerms = append(strikeTerms, "Importateur")
+			}
+		}
 	}
 
 	return FillDOCXTemplate(tpl, DOCXFillOptions{
 		CellUpdates:      cellUpdates,
 		TextReplacements: textRepl,
+		StrikeTerms:      strikeTerms,
 	})
 }
