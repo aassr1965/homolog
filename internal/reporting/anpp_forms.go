@@ -455,18 +455,20 @@ func GenerateDCECertificatLiberationPPDOCX(lot *domain.ImportLotRelease) ([]byte
 }
 
 // GenerateDVTIVBasePDTQPPVDOCX pré-remplit le formulaire DVTIV « FORMULAIRE-DRAFT- Base de données centralisées des PDT et QPPV.docx ».
-func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User) ([]byte, error) {
+func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User, marketedCount int, estTypes ...string) ([]byte, error) {
 	tpl, err := GetANPPTemplate("dvtiv_base_pdt_qppv.docx")
 	if err != nil {
 		return nil, err
 	}
 
-	pdtName, pdtEmail, pdtPhone, pdtOrdre := "", "", "", ""
+	orgName, orgAddr, pdtName, pdtEmail, pdtPhone, pdtOrdre := "", "", "", "", "", ""
 	if pdt != nil {
 		pdtName = strings.TrimSpace(pdt.FirstName + " " + pdt.LastName)
 		pdtEmail = pdt.Email
 	}
 	if org != nil {
+		orgName = org.LegalName
+		orgAddr = org.Address
 		if pdtName == "" {
 			pdtName = org.TechnicalDirectorName
 		}
@@ -495,5 +497,33 @@ func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, as
 		{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: qppvName},
 		{TableIndex: 1, RowIndex: 2, ColIndex: 1, Value: qppvEmail},
 	}
-	return FillDOCXTemplate(tpl, DOCXFillOptions{CellUpdates: cellUpdates})
+
+	textRepl := map[string]string{}
+	if orgName != "" {
+		textRepl["Nom de l’établissement pharmaceutique :"] = "Nom de l’établissement pharmaceutique : " + orgName
+		textRepl["Nom de l’établissement pharmaceutique\u00a0:"] = "Nom de l’établissement pharmaceutique : " + orgName
+	}
+	if orgAddr != "" {
+		textRepl["Adresse :"] = "Adresse : " + orgAddr
+		textRepl["Adresse\u00a0:"] = "Adresse : " + orgAddr
+	}
+	if marketedCount > 0 {
+		textRepl["Le nombre de produits pharmaceutiques commercialisés en Algérie : …."] = fmt.Sprintf("Le nombre de produits pharmaceutiques commercialisés en Algérie : %d", marketedCount)
+		textRepl["Le nombre de produits pharmaceutiques commercialisés en Algérie\u00a0: …."] = fmt.Sprintf("Le nombre de produits pharmaceutiques commercialisés en Algérie : %d", marketedCount)
+	}
+	joinedTypes := strings.ToLower(strings.Join(estTypes, " "))
+	if strings.Contains(joinedTypes, "fabric") {
+		textRepl["Fabricant"] = "Fabricant ☑"
+	}
+	if strings.Contains(joinedTypes, "import") {
+		textRepl["Importateur"] = "Importateur ☑"
+	}
+	if strings.Contains(joinedTypes, "exploit") {
+		textRepl["Exploitant de DE"] = "Exploitant de DE ☑"
+	}
+
+	return FillDOCXTemplate(tpl, DOCXFillOptions{
+		CellUpdates:      cellUpdates,
+		TextReplacements: textRepl,
+	})
 }

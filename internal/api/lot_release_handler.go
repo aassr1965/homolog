@@ -274,7 +274,36 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 		}
 	}
 
-	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCX(&org, pdt, assistant, nil)
+	// Enrichir depuis establishments si adresse/téléphone manquants sur organizations + récupérer types d'établissement
+	var estTypes []string
+	estRows, estErr := h.pool.Query(r.Context(), `
+		SELECT COALESCE(establishment_type, ''), COALESCE(address_fr, ''), COALESCE(phone, '')
+		FROM establishments
+		WHERE organization_id = $1 AND is_active = TRUE
+		ORDER BY created_at ASC
+	`, user.OrganizationID)
+	if estErr == nil {
+		defer estRows.Close()
+		for estRows.Next() {
+			var et, ea, ep string
+			if estRows.Scan(&et, &ea, &ep) == nil {
+				if et != "" {
+					estTypes = append(estTypes, et)
+				}
+				if org.Address == "" && ea != "" {
+					org.Address = ea
+				}
+				if org.Phone == "" && ep != "" {
+					org.Phone = ep
+				}
+			}
+		}
+	}
+
+	var marketedCount int
+	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM medicines WHERE organization_id = $1`, user.OrganizationID).Scan(&marketedCount)
+
+	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCX(&org, pdt, assistant, nil, marketedCount, estTypes...)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur génération formulaire DVTIV: "+err.Error())
 		return

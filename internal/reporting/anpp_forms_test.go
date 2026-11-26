@@ -239,12 +239,14 @@ func TestGenerateDCELotAndDVTIVDOCX(t *testing.T) {
 
 	pdt := &domain.User{FirstName: "Dr. Yacine", LastName: "Benkhalid", Email: "pdt@pharma.dz"}
 	asst := &domain.User{FirstName: "Dr. Lynda", LastName: "Amrani"}
-	dvtivOut, err := GenerateDVTIVBasePDTQPPVDOCX(org, pdt, asst, nil)
+	dvtivOut, err := GenerateDVTIVBasePDTQPPVDOCX(org, pdt, asst, nil, 4, "fabricant_local", "importateur")
 	if err != nil {
 		t.Fatalf("GenerateDVTIVBasePDTQPPVDOCX erreur: %v", err)
 	}
 	dvtivXML := readZipEntry(t, dvtivOut, "word/document.xml")
-	if !strings.Contains(dvtivXML, "Dr. Yacine Benkhalid") || !strings.Contains(dvtivXML, "Dr. Lynda Amrani") {
-		t.Errorf("dvtiv_base_pdt_qppv.docx: noms PDT/Assistant absents")
+	for _, want := range []string{"Biocare Importation", "Rouiba, Alger", "Dr. Yacine Benkhalid", "Dr. Lynda Amrani", "Fabricant ☑", "Importateur ☑"} {
+		if !strings.Contains(dvtivXML, want) {
+			t.Errorf("dvtiv_base_pdt_qppv.docx: attendu %q", want)
+		}
 	}
 }
