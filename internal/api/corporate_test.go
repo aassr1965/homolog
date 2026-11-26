@@ -353,6 +353,7 @@ func TestDownloadDVTIVArchivesGEDAndLinksChecklist(t *testing.T) {
 		})
 	})
 	r.Get("/api/v1/dvtiv/pdt-qppv-form", lotHandler.DownloadDVTIVPDTQPPVForm)
+	r.Get("/api/v1/lot-releases/dce-forms/{formType}", lotHandler.DownloadDCEForm)
 
 	req := httptest.NewRequest("GET", "/api/v1/dvtiv/pdt-qppv-form", nil)
 	w := httptest.NewRecorder()
@@ -402,5 +403,20 @@ func TestDownloadDVTIVArchivesGEDAndLinksChecklist(t *testing.T) {
 	}
 	if !foundExpPV01 {
 		t.Fatalf("item EXP.PV.01 introuvable sur la demande Exploitation")
+	}
+
+	// Vérifier l'archivage GED des déclarations DCE et la non-archivage des simples modèles
+	reqDecl := httptest.NewRequest("GET", "/api/v1/lot-releases/dce-forms/declaration-journaliere-dm", nil)
+	wDecl := httptest.NewRecorder()
+	r.ServeHTTP(wDecl, reqDecl)
+	if wDecl.Code != http.StatusOK || wDecl.Header().Get("X-GED-Document-Id") == "" {
+		t.Fatalf("declaration-journaliere-dm doit être archivée en GED: code=%d ged=%q", wDecl.Code, wDecl.Header().Get("X-GED-Document-Id"))
+	}
+
+	reqComp := httptest.NewRequest("GET", "/api/v1/lot-releases/dce-forms/composition-dossier", nil)
+	wComp := httptest.NewRecorder()
+	r.ServeHTTP(wComp, reqComp)
+	if wComp.Code != http.StatusOK || wComp.Header().Get("X-GED-Document-Id") != "" {
+		t.Fatalf("composition-dossier ne doit pas être archivé en GED: code=%d ged=%q", wComp.Code, wComp.Header().Get("X-GED-Document-Id"))
 	}
 }

@@ -14,13 +14,16 @@ import (
 	"homolog/internal/domain"
 	"homolog/internal/reporting"
 	"homolog/internal/repository"
+	"homolog/internal/storage"
 )
 
 // DMHandler gère les endpoints REST pour l'homologation 6 sections, la recevabilité et la régularisation des DM
 type DMHandler struct {
-	dmRepo      *repository.DMRepository
-	dossierRepo *repository.DossierRepository
-	auditSvc    *audit.Service
+	dmRepo          *repository.DMRepository
+	dossierRepo     *repository.DossierRepository
+	auditSvc        *audit.Service
+	gedRepo         *repository.GEDRepository
+	storageProvider storage.StorageProvider
 }
 
 // NewDMHandler initialise une nouvelle instance de DMHandler
@@ -30,6 +33,13 @@ func NewDMHandler(dmRepo *repository.DMRepository, dossierRepo *repository.Dossi
 		dossierRepo: dossierRepo,
 		auditSvc:    auditSvc,
 	}
+}
+
+// WithGED rattache la GED et le stockage CAS au DMHandler pour l'archivage automatique des bordereaux officiels.
+func (h *DMHandler) WithGED(gedRepo *repository.GEDRepository, storageProvider storage.StorageProvider) *DMHandler {
+	h.gedRepo = gedRepo
+	h.storageProvider = storageProvider
+	return h
 }
 
 // GetMedicalDeviceHomologation renvoie les données complètes des 6 sections techniques d'un DM
@@ -558,6 +568,25 @@ func (h *DMHandler) DownloadOfficialDMForm(w http.ResponseWriter, r *http.Reques
 	}
 
 	filename := fmt.Sprintf("%s_%s.docx", filePrefix, time.Now().Format("2006-01-02"))
+	if strings.HasPrefix(formType, "bv-") {
+		if gedDocID, gedDocCode := archiveGeneratedDocInGED(r, user, h.gedRepo, h.storageProvider, h.auditSvc, gedArchiveSpec{
+			CodePrefix:      "DM-BV",
+			TitleFR:         fmt.Sprintf("Bordereau de Versement ANPP (%s) — %s", strings.TrimPrefix(formType, "bv-"), dm.CommercialNameFR),
+			TaxonomyPath:    "01_Affaires_Reglementaires/01_06_Correspondances_ANPP",
+			DocumentType:    "BORDEREAU_VERSEMENT",
+			Department:      "affaires_reglementaires",
+			Tags:            []string{"ANPP", "DDM", "Redevance", formType},
+			RevisionSummary: "Bordereau de versement DM généré — En attente de paiement / quittance",
+			MimeType:        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			Filename:        filename,
+			SourceTag:       "dm_bv_auto_archive",
+			EstablishmentID: dm.EstablishmentID,
+			MedicalDeviceID: &dm.ID,
+		}, docBytes); gedDocID != "" {
+			w.Header().Set("X-GED-Document-Id", gedDocID)
+			w.Header().Set("X-GED-Document-Code", gedDocCode)
+		}
+	}
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	_, _ = w.Write(docBytes)

@@ -246,6 +246,22 @@ func (h *LotReleaseHandler) DownloadOfficialLotReleaseDOCX(w http.ResponseWriter
 	}
 
 	filename := fmt.Sprintf("%s_%s.docx", prefix, it.LotNumber)
+	if gedDocID, gedDocCode := archiveGeneratedDocInGED(r, user, h.gedRepo, h.storageProvider, h.auditSvc, gedArchiveSpec{
+		CodePrefix:      "DCE-LOT",
+		TitleFR:         fmt.Sprintf("%s — Lot %s (%s)", prefix, it.LotNumber, it.CommercialName),
+		TaxonomyPath:    "02_Assurance_Qualite_BPF/02_02_Certificats_BPF_ISO",
+		DocumentType:    "FORMULAIRE_ANPP",
+		Department:      "assurance_qualite",
+		Tags:            []string{"ANPP", "DCE", "LiberationLot", it.LotNumber},
+		RevisionSummary: "Bordereau / certificat officiel DCE généré — En attente de visa PDT",
+		MimeType:        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		Filename:        filename,
+		SourceTag:       "dce_lot_auto_archive",
+		MedicalDeviceID: it.MedicalDeviceID,
+	}, docBytes); gedDocID != "" {
+		w.Header().Set("X-GED-Document-Id", gedDocID)
+		w.Header().Set("X-GED-Document-Code", gedDocCode)
+	}
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	_, _ = w.Write(docBytes)
@@ -395,66 +411,77 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 	_, _ = w.Write(docBytes)
 }
 
-// archiveDVTIVInGEDAndLinkChecklists archive la fiche DVTIV générée en GED (statut BROUILLON)
-// et la pré-rattache aux items de checklist concernés (ex: EXP.PV.01) sans les valider automatiquement.
-func (h *LotReleaseHandler) archiveDVTIVInGEDAndLinkChecklists(
+type gedArchiveSpec struct {
+	CodePrefix      string
+	TitleFR         string
+	TaxonomyPath    string
+	DocumentType    string
+	Department      string
+	Tags            []string
+	RevisionSummary string
+	MimeType        string
+	Filename        string
+	SourceTag       string
+	EstablishmentID *uuid.UUID
+	MedicalDeviceID *uuid.UUID
+}
+
+// archiveGeneratedDocInGED sauvegarde un document officiel généré dans le stockage CAS + GED (statut BROUILLON) et trace dans l'Audit Trail.
+func archiveGeneratedDocInGED(
 	r *http.Request,
 	user *auth.SessionUser,
-	org *domain.Organization,
-	estID *uuid.UUID,
-	filename string,
-	docBytes []byte,
-) (string, string, int) {
-	if h.gedRepo == nil || h.storageProvider == nil || len(docBytes) == 0 {
-		return "", "", 0
+	gedRepo *repository.GEDRepository,
+	store storage.StorageProvider,
+	auditSvc *audit.Service,
+	spec gedArchiveSpec,
+	fileBytes []byte,
+) (string, string) {
+	if gedRepo == nil || store == nil || user == nil || len(fileBytes) == 0 {
+		return "", ""
 	}
 
 	ctx := r.Context()
-	fileSHA256, sizeBytes, storagePath, err := h.storageProvider.Save(ctx, bytes.NewReader(docBytes))
+	fileSHA256, sizeBytes, storagePath, err := store.Save(ctx, bytes.NewReader(fileBytes))
 	if err != nil {
-		return "", "", 0
+		return "", ""
 	}
 
-	docCode := fmt.Sprintf("DVTIV-%s-%s", time.Now().Format("20060102-150405"), uuid.NewString()[:4])
-	titleFR := "Fiche Officielle ANPP DVTIV — Base PDT & QPPV"
-	if org != nil && strings.TrimSpace(org.LegalName) != "" {
-		titleFR = fmt.Sprintf("%s (%s)", titleFR, strings.TrimSpace(org.LegalName))
-	}
-
+	docCode := fmt.Sprintf("%s-%s-%s", spec.CodePrefix, time.Now().Format("20060102-150405"), uuid.NewString()[:4])
 	doc := &domain.GEDDocumentDetailed{
 		ID:              uuid.New(),
 		OrganizationID:  user.OrganizationID,
-		TaxonomyPath:    "04_Vigilance_Post_Market/04_01_Pharmacovigilance",
-		TitleFR:         titleFR,
+		TaxonomyPath:    spec.TaxonomyPath,
+		TitleFR:         spec.TitleFR,
 		DocumentCode:    docCode,
-		DocumentType:    "FORMULAIRE_ANPP",
-		Department:      "pharmacovigilance",
-		Tags:            []string{"ANPP", "DVTIV", "PDT", "QPPV", "Pharmacovigilance"},
+		DocumentType:    spec.DocumentType,
+		Department:      spec.Department,
+		Tags:            spec.Tags,
 		Status:          domain.GEDStatusBrouillon,
 		CurrentVersion:  "v0.1",
-		EstablishmentID: estID,
+		EstablishmentID: spec.EstablishmentID,
+		MedicalDeviceID: spec.MedicalDeviceID,
 		CreatedBy:       &user.UserID,
 	}
 	initialVersion := &domain.GEDVersionDetail{
 		ID:               uuid.New(),
 		VersionLabel:     "v0.1",
 		IsMajorVersion:   false,
-		RevisionSummary:  "Génération automatique depuis le Parapheur DT — En attente de signature (PDT/QPPV) et validation qualité",
+		RevisionSummary:  spec.RevisionSummary,
 		FileSHA256:       fileSHA256,
 		FileSizeBytes:    sizeBytes,
-		MimeType:         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		OriginalFilename: filename,
+		MimeType:         spec.MimeType,
+		OriginalFilename: spec.Filename,
 		StoragePath:      storagePath,
 		AuthorID:         &user.UserID,
 	}
 
-	createdDoc, err := h.gedRepo.CreateDocument(ctx, doc, initialVersion)
+	createdDoc, err := gedRepo.CreateDocument(ctx, doc, initialVersion)
 	if err != nil {
-		return "", "", 0
+		return "", ""
 	}
 
-	if h.auditSvc != nil {
-		_, _ = h.auditSvc.Log(ctx, &audit.Entry{
+	if auditSvc != nil {
+		_, _ = auditSvc.Log(ctx, &audit.Entry{
 			OrganizationID: user.OrganizationID,
 			UserID:         &user.UserID,
 			UserEmail:      user.Email,
@@ -470,15 +497,48 @@ func (h *LotReleaseHandler) archiveDVTIVInGEDAndLinkChecklists(
 				"file_sha256":   initialVersion.FileSHA256,
 				"file_size":     initialVersion.FileSizeBytes,
 				"original_file": initialVersion.OriginalFilename,
-				"source":        "dvtiv_auto_archive",
+				"source":        spec.SourceTag,
 			},
 			IPAddress: getClientIP(r),
 			UserAgent: r.UserAgent(),
 		})
 	}
+	return createdDoc.ID.String(), createdDoc.DocumentCode
+}
 
-	linkedCount := h.linkDVTIVToChecklists(ctx, user.OrganizationID, createdDoc.ID)
-	return createdDoc.ID.String(), createdDoc.DocumentCode, linkedCount
+// archiveDVTIVInGEDAndLinkChecklists archive la fiche DVTIV générée en GED (statut BROUILLON)
+// et la pré-rattache aux items de checklist concernés (ex: EXP.PV.01) sans les valider automatiquement.
+func (h *LotReleaseHandler) archiveDVTIVInGEDAndLinkChecklists(
+	r *http.Request,
+	user *auth.SessionUser,
+	org *domain.Organization,
+	estID *uuid.UUID,
+	filename string,
+	docBytes []byte,
+) (string, string, int) {
+	titleFR := "Fiche Officielle ANPP DVTIV — Base PDT & QPPV"
+	if org != nil && strings.TrimSpace(org.LegalName) != "" {
+		titleFR = fmt.Sprintf("%s (%s)", titleFR, strings.TrimSpace(org.LegalName))
+	}
+	docIDStr, docCode := archiveGeneratedDocInGED(r, user, h.gedRepo, h.storageProvider, h.auditSvc, gedArchiveSpec{
+		CodePrefix:      "DVTIV",
+		TitleFR:         titleFR,
+		TaxonomyPath:    "04_Vigilance_Post_Market/04_01_Pharmacovigilance",
+		DocumentType:    "FORMULAIRE_ANPP",
+		Department:      "pharmacovigilance",
+		Tags:            []string{"ANPP", "DVTIV", "PDT", "QPPV", "Pharmacovigilance"},
+		RevisionSummary: "Génération automatique depuis le Parapheur DT — En attente de signature (PDT/QPPV) et validation qualité",
+		MimeType:        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		Filename:        filename,
+		SourceTag:       "dvtiv_auto_archive",
+		EstablishmentID: estID,
+	}, docBytes)
+	if docIDStr == "" {
+		return "", "", 0
+	}
+	docUUID, _ := uuid.Parse(docIDStr)
+	linkedCount := h.linkDVTIVToChecklists(r.Context(), user.OrganizationID, docUUID)
+	return docIDStr, docCode, linkedCount
 }
 
 func (h *LotReleaseHandler) linkDVTIVToChecklists(ctx context.Context, orgID, gedDocID uuid.UUID) int {
@@ -594,6 +654,25 @@ func (h *LotReleaseHandler) DownloadDCEForm(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur génération formulaire DCE: "+err.Error())
 		return
+	}
+
+	// Archiver en GED les certificats et déclarations réglementaires (pas les simples modèles/aides-mémoire)
+	if formType != "composition-dossier" && formType != "ca-sr-secondaire" {
+		if gedDocID, gedDocCode := archiveGeneratedDocInGED(r, user, h.gedRepo, h.storageProvider, h.auditSvc, gedArchiveSpec{
+			CodePrefix:      "DCE-DECL",
+			TitleFR:         fmt.Sprintf("Déclaration / Certificat DCE (%s)", formType),
+			TaxonomyPath:    "01_Affaires_Reglementaires/01_06_Correspondances_ANPP",
+			DocumentType:    "FORMULAIRE_ANPP",
+			Department:      "affaires_reglementaires",
+			Tags:            []string{"ANPP", "DCE", formType},
+			RevisionSummary: "Document DCE généré — En attente de signature / dépôt ANPP",
+			MimeType:        contentType,
+			Filename:        filename,
+			SourceTag:       "dce_form_auto_archive",
+		}, outBytes); gedDocID != "" {
+			w.Header().Set("X-GED-Document-Id", gedDocID)
+			w.Header().Set("X-GED-Document-Code", gedDocCode)
+		}
 	}
 
 	w.Header().Set("Content-Type", contentType)

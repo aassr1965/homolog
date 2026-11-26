@@ -740,9 +740,54 @@ function exportDMCanevasXLSX() {
     window.location.href = '/api/v1/dm-regularizations/export/canevas';
 }
 
+async function downloadFormWithGEDFeedback(url, fallbackFilename) {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) {
+            showToast("Erreur lors de la génération du document officiel.", "error");
+            return;
+        }
+        const gedCode = res.headers.get('X-GED-Document-Code') || '';
+        const disp = res.headers.get('Content-Disposition') || '';
+        const match = disp.match(/filename="?([^"]+)"?/i);
+        const filename = match ? match[1] : fallbackFilename;
+
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+
+        if (gedCode) {
+            showToast(`✅ Document téléchargé et archivé en GED (${gedCode}, statut Brouillon).`, "success");
+        } else {
+            showToast("✅ Document officiel téléchargé.", "success");
+        }
+    } catch (err) {
+        showToast("Erreur réseau lors du téléchargement : " + err.message, "error");
+    }
+}
+
 function downloadOfficialDMForm(deviceId, type) {
     if (!deviceId) return;
-    window.location.href = `/api/v1/medical-devices/${encodeURIComponent(deviceId)}/official-form?type=${encodeURIComponent(type || 'homologation')}`;
+    const t = type || 'homologation';
+    downloadFormWithGEDFeedback(
+        `/api/v1/medical-devices/${encodeURIComponent(deviceId)}/official-form?type=${encodeURIComponent(t)}`,
+        `ANPP-DDM-${t}.docx`
+    );
+}
+
+function downloadDCEOfficialForm(formType) {
+    if (!formType) return;
+    const ext = formType.startsWith('declaration-journaliere') ? 'xlsx' : 'docx';
+    downloadFormWithGEDFeedback(
+        `/api/v1/lot-releases/dce-forms/${encodeURIComponent(formType)}`,
+        `ANPP-DCE-${formType}.${ext}`
+    );
 }
 
 function openDMLotReleaseModal(deviceId) {

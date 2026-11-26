@@ -152,7 +152,7 @@ func main() {
 		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
 
 		dmRepo := repository.NewDMRepository(db.Pool)
-		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService)
+		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService).WithGED(gedRepo, storageProvider)
 		lotReleaseHandler = api.NewLotReleaseHandler(db.Pool, auditService, gedRepo, corpRepo, storageProvider)
 
 		dmModRepo := repository.NewDMModificationRepository(db.Pool)
