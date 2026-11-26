@@ -344,6 +344,9 @@
                         <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openRegulatoryWatchModal(); toggleUserDropdown();">
                             📜 Veille Réglementaire &amp; JORADP
                         </button>
+                        <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px;" onclick="openLotRecallsModal(); toggleUserDropdown();">
+                            🚨 Rappels de Lots 24h (ANPP)
+                        </button>
                         <button class="addr-item" style="width:100%; border:none; text-align:left; background:none; padding:8px; color:#ef4444;" onclick="executeLogout()">
                             🚪 Se déconnecter (Révocation de session)
                         </button>
@@ -4200,6 +4203,50 @@
                     ⚖️ Décret exécutif n° 21-82 Art. 24 : En cas d'absence &gt; 3 mois, un nouveau DT doit être nommé auprès du MIPH.
                 </div>
                 <button type="button" class="btn-pill" onclick="closeDTDelegationsModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Registre des Rappels de Lots & Retraits 24h (Guidelines ANPP) -->
+    <div class="modal-overlay" id="modal-lot-recalls" onclick="if(event.target === this) closeModal('modal-lot-recalls')">
+        <div class="modal" style="width:820px; max-width:calc(100vw - 24px); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #dc2626; background:rgba(220,38,38,0.06); padding:10px 16px;">
+                <div class="modal-title" style="font-weight:800; font-size:13.5px;">🚨 Rappels de Lots &amp; Retraits PP/DM Non Conformes (Alerte 24h ANPP)</div>
+                <button type="button" class="close-btn" onclick="closeModal('modal-lot-recalls')">✕</button>
+            </div>
+            <div style="padding:14px 16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; font-size:12px;">
+                <form onsubmit="createLotRecall(event)" style="display:grid; grid-template-columns:1fr 2fr 1.5fr 1fr; gap:8px; background:var(--bg-sub); padding:10px; border-radius:6px; border:1px solid var(--border-color);">
+                    <select id="recall-kind" style="padding:6px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        <option value="pp">Produit Pharmaceutique</option>
+                        <option value="dm">Dispositif Médical</option>
+                    </select>
+                    <input type="text" id="recall-product" required placeholder="Dénomination du produit *" style="padding:6px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                    <input type="text" id="recall-lots" required placeholder="N° Lot(s) impacté(s) *" style="padding:6px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                    <select id="recall-severity" style="padding:6px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        <option value="CLASSE_I">Classe I (Urgent)</option>
+                        <option value="CLASSE_II">Classe II</option>
+                        <option value="CLASSE_III">Classe III</option>
+                    </select>
+                    <input type="text" id="recall-reason" placeholder="Motif de non-conformité / retrait" style="grid-column:1 / 3; padding:6px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="checkbox" id="recall-mock"> Exercice à blanc annuel
+                    </label>
+                    <button type="submit" class="btn-pill" style="background:#dc2626; color:white; border:none; font-weight:700;">🚨 Déclarer Rappel</button>
+                </form>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                        <thead>
+                            <tr style="border-bottom:2px solid var(--border-color); text-align:left;">
+                                <th style="padding:8px;">Référence</th>
+                                <th style="padding:8px;">Produit &amp; Lots</th>
+                                <th style="padding:8px;">Classe / Type</th>
+                                <th style="padding:8px;">SLA 24h &amp; Statut</th>
+                                <th style="padding:8px; text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lot-recalls-tbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

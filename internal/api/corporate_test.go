@@ -504,3 +504,74 @@ func TestReliancePathwayDossierAndLotRelease(t *testing.T) {
 		t.Fatalf("Reliance labo absent de la liste des lots: %s", wList.Body.String())
 	}
 }
+
+func TestLotRecall24hWorkflowAndGEDClose(t *testing.T) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
+	}
+	ctx := context.Background()
+	db, err := database.Connect(ctx, dbURL)
+	if err != nil {
+		t.Skipf("PostgreSQL non disponible, test ignoré : %v", err)
+		return
+	}
+	defer db.Close()
+
+	testOrgID := uuid.New()
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), "DELETE FROM organizations WHERE id = $1", testOrgID)
+	}()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO organizations (id, slug, legal_name, is_active) VALUES ($1, $2, 'Labo Recall Test', true)`, testOrgID, "lab-rcl-"+testOrgID.String()[:8]); err != nil {
+		t.Fatalf("création org: %v", err)
+	}
+
+	userID := uuid.New()
+	hashedPwd, _ := auth.HashPassword("TestRecall2026!", auth.DefaultArgon2Params)
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, is_active) VALUES ($1, $2, 'pdt-rcl@test.dz', $3, 'Dr.', 'Recall', 'directeur_technique', true)`, userID, testOrgID, hashedPwd); err != nil {
+		t.Fatalf("création user: %v", err)
+	}
+
+	gedRepo := repository.NewGEDRepository(db.Pool)
+	auditSvc := audit.NewService(db.Pool)
+	store, _ := storage.NewLocalCASStorage(t.TempDir())
+	recallHandler := NewRecallHandler(db.Pool, auditSvc, gedRepo, store)
+
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{UserID: userID, OrganizationID: testOrgID, Email: "pdt-rcl@test.dz", Role: "directeur_technique"}
+			next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), UserContextKey, su)))
+		})
+	})
+	r.Post("/api/v1/recalls", recallHandler.CreateRecall)
+	r.Post("/api/v1/recalls/{id}/notify-anpp", recallHandler.NotifyANPP)
+	r.Post("/api/v1/recalls/{id}/close", recallHandler.CloseRecall)
+	r.Get("/api/v1/recalls", recallHandler.ListRecalls)
+
+	req := httptest.NewRequest("POST", "/api/v1/recalls", bytes.NewBufferString(`{"product_kind":"pp","product_name":"Biomox 1g","lot_numbers":"LOT-RCL-01","severity_class":"CLASSE_I","is_mock_drill":true,"reason":"Exercice à blanc annuel"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("POST recalls attendu 201, reçu %d: %s", w.Code, w.Body.String())
+	}
+	var created map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &created)
+	recallID, _ := created["id"].(string)
+
+	reqN := httptest.NewRequest("POST", "/api/v1/recalls/"+recallID+"/notify-anpp", nil)
+	wN := httptest.NewRecorder()
+	r.ServeHTTP(wN, reqN)
+	if wN.Code != http.StatusOK || !strings.Contains(wN.Body.String(), `"within_24h_sla":true`) {
+		t.Fatalf("notify-anpp échoué: code=%d body=%s", wN.Code, wN.Body.String())
+	}
+
+	reqC := httptest.NewRequest("POST", "/api/v1/recalls/"+recallID+"/close", bytes.NewBufferString(`{"resolution_notes":"100% récupéré"}`))
+	reqC.Header.Set("Content-Type", "application/json")
+	wC := httptest.NewRecorder()
+	r.ServeHTTP(wC, reqC)
+	if wC.Code != http.StatusOK || !strings.Contains(wC.Body.String(), `"ged_pv_doc_code":"PV-RCL-`) {
+		t.Fatalf("close recall échoué: code=%d body=%s", wC.Code, wC.Body.String())
+	}
+}

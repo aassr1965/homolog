@@ -96,6 +96,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/037_import_lot_releases.sql",
 		"migrations/038_regulatory_watch_embedded_pdfs.sql",
 		"migrations/039_reliance_pathway.sql",
+		"migrations/040_lot_recalls.sql",
 	}
 
 	for _, file := range migrationFiles {

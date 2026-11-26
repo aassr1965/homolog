@@ -71,6 +71,7 @@ func main() {
 	var lotReleaseHandler *api.LotReleaseHandler
 	var dmModHandler *api.DMModificationHandler
 	var corpHandler *api.CorporateHandler
+	var recallHandler *api.RecallHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -150,6 +151,7 @@ func main() {
 
 		corpRepo := repository.NewCorporateRepository(db.Pool)
 		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
+		recallHandler = api.NewRecallHandler(db.Pool, auditService, gedRepo, storageProvider)
 
 		dmRepo := repository.NewDMRepository(db.Pool)
 		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService).WithGED(gedRepo, storageProvider)
@@ -656,6 +658,14 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases/{id}/official-form", lotReleaseHandler.DownloadOfficialLotReleaseDOCX)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases/dce-forms/{formType}", lotReleaseHandler.DownloadDCEForm)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dvtiv/pdt-qppv-form", lotReleaseHandler.DownloadDVTIVPDTQPPVForm)
+			}
+
+			// Rappels de Lots & Retraits PP/DM Non Conformes (24h ANPP)
+			if recallHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/recalls", recallHandler.ListRecalls)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/recalls", recallHandler.CreateRecall)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/recalls/{id}/notify-anpp", recallHandler.NotifyANPP)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/recalls/{id}/close", recallHandler.CloseRecall)
 			}
 
 			if dmModHandler != nil {

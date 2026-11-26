@@ -304,3 +304,126 @@ async function executeCreateRegulatoryWatch(e) {
         showToast("Erreur lors de l'enregistrement : " + err.message, "error");
     }
 }
+
+// ============================================================================
+// MODULE RAPPELS DE LOTS & RETRAITS 24H (GUIDES ANPP)
+// ============================================================================
+
+function openLotRecallsModal() {
+    const m = document.getElementById('modal-lot-recalls');
+    if (m) m.classList.add('open');
+    loadLotRecalls();
+}
+window.openLotRecallsModal = openLotRecallsModal;
+
+async function loadLotRecalls() {
+    const tbody = document.getElementById('lot-recalls-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; text-align:center;">Chargement...</td></tr>';
+    try {
+        const res = await fetch('/api/v1/recalls');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const list = data.recalls || [];
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:16px; text-align:center; color:var(--text-dim);">Aucun rappel de lot ou exercice à blanc enregistré.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(it => {
+            const slaBadge = it.within_24h_sla
+                ? '<span style="background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:8px; font-weight:700; font-size:10px;">SLA 24h OK</span>'
+                : '<span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:8px; font-weight:700; font-size:10px;">Hors 24h</span>';
+            const drillBadge = it.is_mock_drill ? ' <span style="background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:8px; font-size:10px;">Exercice à blanc</span>' : '';
+            const actions = [];
+            if (it.status === 'ouvert') {
+                actions.push(`<button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:#d97706; color:white; border:none;" onclick="notifyANPPRecall('${it.id}')">📢 Notifier ANPP (24h)</button>`);
+            }
+            if (it.status !== 'cloture') {
+                actions.push(`<button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:#059669; color:white; border:none;" onclick="closeLotRecall('${it.id}')">🔒 Clôturer &amp; PV GED</button>`);
+            } else {
+                actions.push('<span style="color:#059669; font-weight:700;">✅ Clôturé (PV GED)</span>');
+            }
+            return `
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:8px; font-family:monospace; font-weight:700;">${escapeHTML(it.recall_reference)}${drillBadge}</td>
+                    <td style="padding:8px;"><strong>${escapeHTML(it.product_name)}</strong><div style="font-size:10.5px; color:var(--text-dim);">Lots : ${escapeHTML(it.lot_numbers)}</div></td>
+                    <td style="padding:8px;">${escapeHTML(it.severity_class)} (${escapeHTML((it.product_kind || '').toUpperCase())})</td>
+                    <td style="padding:8px;">${slaBadge} <span style="font-size:10.5px; margin-left:4px;">${escapeHTML(it.status)}</span></td>
+                    <td style="padding:8px; text-align:right; display:flex; gap:6px; justify-content:flex-end;">${actions.join('')}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:14px; text-align:center; color:#dc2626;">Erreur : ${escapeHTML(err.message)}</td></tr>`;
+    }
+}
+
+async function createLotRecall(e) {
+    e.preventDefault();
+    const payload = {
+        product_kind: document.getElementById('recall-kind').value,
+        product_name: document.getElementById('recall-product').value.trim(),
+        lot_numbers: document.getElementById('recall-lots').value.trim(),
+        severity_class: document.getElementById('recall-severity').value,
+        is_mock_drill: document.getElementById('recall-mock').checked,
+        reason: document.getElementById('recall-reason').value.trim()
+    };
+    try {
+        const res = await fetch('/api/v1/recalls', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Erreur création rappel', 'error');
+            return;
+        }
+        showToast(`🚨 Rappel ${data.recall_reference} enregistré (SLA 24h démarré).`, 'success');
+        e.target.reset();
+        loadLotRecalls();
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.createLotRecall = createLotRecall;
+
+async function notifyANPPRecall(id) {
+    try {
+        const res = await fetch(`/api/v1/recalls/${encodeURIComponent(id)}/notify-anpp`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Erreur notification ANPP', 'error');
+            return;
+        }
+        showToast(data.within_24h_sla ? '📢 ANPP notifiée dans le délai 24h.' : '⚠️ ANPP notifiée hors délai 24h.', 'success');
+        loadLotRecalls();
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.notifyANPPRecall = notifyANPPRecall;
+
+async function closeLotRecall(id) {
+    const notes = typeof showPromptModal === 'function'
+        ? await showPromptModal('Clôture du Rappel & PV de Destruction', 'Saisissez les conclusions / quantités récupérées ou détruites :', 'Lots récupérés à 100 % et détruits selon SOP.')
+        : 'Lots récupérés et détruits.';
+    if (notes === null) return;
+    try {
+        const res = await fetch(`/api/v1/recalls/${encodeURIComponent(id)}/close`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolution_notes: notes })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Erreur clôture rappel', 'error');
+            return;
+        }
+        showToast(`✅ Rappel clôturé — PV archivé en GED (${data.ged_pv_doc_code || '04.03'}).`, 'success');
+        loadLotRecalls();
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.closeLotRecall = closeLotRecall;
