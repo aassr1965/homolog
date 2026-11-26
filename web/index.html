@@ -4204,6 +4204,50 @@
         </div>
     </div>
 
+    <!-- Modal Parcours Reliance Dossier CTD (ANPP Confiance Réglementaire) -->
+    <div class="modal-overlay" id="modal-dossier-reliance" onclick="if(event.target === this) closeModal('modal-dossier-reliance')">
+        <div class="modal" style="width:480px; max-width:calc(100vw - 24px);">
+            <div class="modal-header" style="border-bottom:2px solid #059669; background:rgba(16,185,129,0.06); padding:10px 16px;">
+                <div class="modal-title" style="font-weight:800; font-size:13.5px;">🤝 Parcours Confiance Réglementaire (Reliance ANPP)</div>
+                <button type="button" class="close-btn" onclick="closeModal('modal-dossier-reliance')">✕</button>
+            </div>
+            <form onsubmit="saveDossierReliance(event)" style="padding:14px 16px; display:flex; flex-direction:column; gap:10px; font-size:12px;">
+                <input type="hidden" id="rel-dossier-id">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:700; cursor:pointer;">
+                    <input type="checkbox" id="rel-is-reliance"> Activer le parcours Reliance &amp; Reconnaissance
+                </label>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:4px;">Autorité Réglementaire Stricte (SRA / WLA) :</label>
+                    <select id="rel-authority" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        <option value="">— Sélectionner —</option>
+                        <option value="EMA">EMA (Agence Européenne)</option>
+                        <option value="FDA">US FDA</option>
+                        <option value="PMDA">PMDA (Japon)</option>
+                        <option value="Swissmedic">Swissmedic</option>
+                        <option value="MHRA">MHRA (Royaume-Uni)</option>
+                        <option value="OMS">OMS (Préqualification)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:4px;">Volet Reliance ANPP :</label>
+                    <select id="rel-type" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        <option value="enregistrement">Enregistrement / AMM</option>
+                        <option value="modification">Modification DE</option>
+                        <option value="inspection_bpf">Inspection BPF</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; font-weight:700; margin-bottom:4px;">Référence AMM / Rapport d'évaluation SRA :</label>
+                    <input type="text" id="rel-reference" placeholder="Ex: EMEA/H/C/001234 ou NDA-21500" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--border-color); padding-top:10px;">
+                    <button type="button" class="btn-pill" onclick="closeModal('modal-dossier-reliance')">Annuler</button>
+                    <button type="submit" class="btn-pill" style="background:#059669; color:white; border:none; font-weight:700;">💾 Enregistrer Reliance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Libération de Lot DM Importé (DCE — Arrêtés 14/02/2021 & 20/02/2025) -->
     <div class="modal-overlay" id="modal-dm-lot-release" onclick="if(event.target === this) closeModal('modal-dm-lot-release')">
         <div class="modal" style="width:680px; max-width:calc(100vw - 24px); max-height:90vh; display:flex; flex-direction:column;">
@@ -4270,6 +4314,18 @@
                     <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="lot-rel-cert" checked> Certification pays d'origine</label>
                     <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="lot-rel-tech" checked> Formulaire technico-réglementaire</label>
                     <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="lot-rel-samp" checked> Plan d'échantillonnage</label>
+                </div>
+                <div style="grid-column:1 / -1; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.28); border-radius:6px; padding:8px 10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center;">
+                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:#047857;"><input type="checkbox" id="lot-rel-reliance"> 🤝 Reliance Tests Labo (ANPP)</label>
+                    <select id="lot-rel-reliance-auth" style="padding:5px 7px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
+                        <option value="">Autorité de référence...</option>
+                        <option value="EMA">EMA (Europe)</option>
+                        <option value="FDA">US FDA</option>
+                        <option value="EDQM">EDQM / OMCL</option>
+                        <option value="Swissmedic">Swissmedic</option>
+                        <option value="OMS">OMS (Préqualification)</option>
+                    </select>
+                    <input type="text" id="lot-rel-reliance-ref" placeholder="Réf. certificat / lot OMCL" style="padding:5px 7px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px;">
                 </div>
                 <div style="grid-column:1 / -1; background:rgba(2,132,199,0.04); border:1px solid var(--border-color); border-radius:6px; padding:8px 10px;">
                     <div style="font-weight:700; font-size:11px; margin-bottom:6px; color:var(--text-main);">📥 Autres Formulaires &amp; Canevas Officiels DCE (ANPP) :</div>

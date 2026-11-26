@@ -57,7 +57,8 @@ func (h *LotReleaseHandler) ListLotReleases(w http.ResponseWriter, r *http.Reque
 		       ddf, ddp, sales_units, homologation_or_de_ref, dm_class, holder_or_exploiter,
 		       import_program_attached, production_site, qc_site, release_site,
 		       customs_decl_number, invoice_number, origin_cert_attached, tech_form_attached,
-		       sampling_plan_attached, status, created_by, signed_by_pdt_id, signed_at, created_at, updated_at
+		       sampling_plan_attached, is_reliance_lab, COALESCE(reliance_lab_authority, ''), COALESCE(reliance_lab_reference, ''),
+		       status, created_by, signed_by_pdt_id, signed_at, created_at, updated_at
 		FROM import_lot_releases
 		WHERE organization_id = $1
 	`
@@ -84,7 +85,8 @@ func (h *LotReleaseHandler) ListLotReleases(w http.ResponseWriter, r *http.Reque
 			&it.DDF, &it.DDP, &it.SalesUnits, &it.HomologationOrDERef, &it.DMClass, &it.HolderOrExploiter,
 			&it.ImportProgramAttached, &it.ProductionSite, &it.QCSite, &it.ReleaseSite,
 			&it.CustomsDeclNumber, &it.InvoiceNumber, &it.OriginCertAttached, &it.TechFormAttached,
-			&it.SamplingPlanAttached, &it.Status, &it.CreatedBy, &it.SignedByPDTID, &it.SignedAt, &it.CreatedAt, &it.UpdatedAt,
+			&it.SamplingPlanAttached, &it.IsRelianceLab, &it.RelianceLabAuthority, &it.RelianceLabReference,
+			&it.Status, &it.CreatedBy, &it.SignedByPDTID, &it.SignedAt, &it.CreatedAt, &it.UpdatedAt,
 		); err == nil {
 			items = append(items, it)
 		}
@@ -138,11 +140,12 @@ func (h *LotReleaseHandler) CreateLotRelease(w http.ResponseWriter, r *http.Requ
 			ddf, ddp, sales_units, homologation_or_de_ref, dm_class, holder_or_exploiter,
 			import_program_attached, production_site, qc_site, release_site,
 			customs_decl_number, invoice_number, origin_cert_attached, tech_form_attached,
-			sampling_plan_attached, status, created_by
+			sampling_plan_attached, is_reliance_lab, reliance_lab_authority, reliance_lab_reference,
+			status, created_by
 		) VALUES (
 			$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
 			$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-			$21,$22,$23,$24,$25,'brouillon',$26
+			$21,$22,$23,$24,$25,$26,$27,$28,'brouillon',$29
 		)
 	`, id, user.OrganizationID, kind, req.MedicalDeviceID, req.MedicineID,
 		strings.TrimSpace(req.CommercialName), strings.TrimSpace(req.Designation), strings.TrimSpace(req.FormAspect),
@@ -151,7 +154,9 @@ func (h *LotReleaseHandler) CreateLotRelease(w http.ResponseWriter, r *http.Requ
 		strings.TrimSpace(req.DMClass), strings.TrimSpace(req.HolderOrExploiter),
 		req.ImportProgramAttached, strings.TrimSpace(req.ProductionSite), strings.TrimSpace(req.QCSite),
 		strings.TrimSpace(req.ReleaseSite), strings.TrimSpace(req.CustomsDeclNumber), strings.TrimSpace(req.InvoiceNumber),
-		req.OriginCertAttached, req.TechFormAttached, req.SamplingPlanAttached, user.UserID,
+		req.OriginCertAttached, req.TechFormAttached, req.SamplingPlanAttached,
+		req.IsRelianceLab, strings.TrimSpace(req.RelianceLabAuthority), strings.TrimSpace(req.RelianceLabReference),
+		user.UserID,
 	)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur enregistrement libération de lot: "+err.Error())

@@ -971,3 +971,71 @@ func (h *DossierHandler) DownloadOfficialDEPPForm(w http.ResponseWriter, r *http
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	_, _ = w.Write(docBytes)
 }
+
+// UpdateDossierReliance active ou met à jour le parcours Confiance Réglementaire (Reliance) sur un dossier CTD.
+func (h *DossierHandler) UpdateDossierReliance(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	var req struct {
+		IsReliance        bool   `json:"is_reliance"`
+		RelianceAuthority string `json:"reliance_authority"`
+		RelianceType      string `json:"reliance_type"`
+		RelianceReference string `json:"reliance_reference"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	if err := h.repo.UpdateDossierReliance(
+		r.Context(), user.OrganizationID, dossierID,
+		req.IsReliance,
+		strings.TrimSpace(req.RelianceAuthority),
+		strings.TrimSpace(req.RelianceType),
+		strings.TrimSpace(req.RelianceReference),
+	); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
+		writeJSONError(w, http.StatusInternalServerError, "Erreur mise à jour parcours Reliance")
+		return
+	}
+
+	if h.auditService != nil {
+		_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         "DOSSIER_RELIANCE_UPDATED",
+			EntityType:     "dossier",
+			EntityID:       dossierID.String(),
+			Details: map[string]any{
+				"is_reliance":        req.IsReliance,
+				"reliance_authority": req.RelianceAuthority,
+				"reliance_type":      req.RelianceType,
+				"reliance_reference": req.RelianceReference,
+			},
+			IPAddress: getClientIP(r),
+			UserAgent: r.UserAgent(),
+		})
+	}
+
+	updated, err := h.repo.GetDossierByID(r.Context(), user.OrganizationID, dossierID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
+}

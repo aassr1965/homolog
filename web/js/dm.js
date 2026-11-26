@@ -825,7 +825,10 @@ async function submitDMLotRelease(e) {
         import_program_attached: document.getElementById('lot-rel-prog').checked,
         origin_cert_attached: document.getElementById('lot-rel-cert').checked,
         tech_form_attached: document.getElementById('lot-rel-tech').checked,
-        sampling_plan_attached: document.getElementById('lot-rel-samp').checked
+        sampling_plan_attached: document.getElementById('lot-rel-samp').checked,
+        is_reliance_lab: !!document.getElementById('lot-rel-reliance')?.checked,
+        reliance_lab_authority: document.getElementById('lot-rel-reliance-auth')?.value || '',
+        reliance_lab_reference: (document.getElementById('lot-rel-reliance-ref')?.value || '').trim()
     };
     try {
         const res = await fetch('/api/v1/lot-releases', {

@@ -33,6 +33,9 @@ type ImportLotRelease struct {
 	OriginCertAttached    bool       `json:"origin_cert_attached"`
 	TechFormAttached      bool       `json:"tech_form_attached"`
 	SamplingPlanAttached  bool       `json:"sampling_plan_attached"`
+	IsRelianceLab         bool       `json:"is_reliance_lab"`
+	RelianceLabAuthority  string     `json:"reliance_lab_authority,omitempty"`
+	RelianceLabReference  string     `json:"reliance_lab_reference,omitempty"`
 	Status                string     `json:"status"`
 	CreatedBy             *uuid.UUID `json:"created_by,omitempty"`
 	SignedByPDTID         *uuid.UUID `json:"signed_by_pdt_id,omitempty"`
@@ -66,4 +69,7 @@ type CreateImportLotReleaseRequest struct {
 	OriginCertAttached    bool       `json:"origin_cert_attached"`
 	TechFormAttached      bool       `json:"tech_form_attached"`
 	SamplingPlanAttached  bool       `json:"sampling_plan_attached"`
+	IsRelianceLab         bool       `json:"is_reliance_lab"`
+	RelianceLabAuthority  string     `json:"reliance_lab_authority,omitempty"`
+	RelianceLabReference  string     `json:"reliance_lab_reference,omitempty"`
 }

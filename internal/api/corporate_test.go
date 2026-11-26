@@ -420,3 +420,87 @@ func TestDownloadDVTIVArchivesGEDAndLinksChecklist(t *testing.T) {
 		t.Fatalf("composition-dossier ne doit pas être archivé en GED: code=%d ged=%q", wComp.Code, wComp.Header().Get("X-GED-Document-Id"))
 	}
 }
+
+func TestReliancePathwayDossierAndLotRelease(t *testing.T) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
+	}
+	ctx := context.Background()
+	db, err := database.Connect(ctx, dbURL)
+	if err != nil {
+		t.Skipf("PostgreSQL non disponible, test ignoré : %v", err)
+		return
+	}
+	defer db.Close()
+
+	testOrgID := uuid.New()
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), "DELETE FROM organizations WHERE id = $1", testOrgID)
+	}()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO organizations (id, slug, legal_name, is_active) VALUES ($1, $2, 'Labo Reliance Test', true)`, testOrgID, "lab-rel-"+testOrgID.String()[:8]); err != nil {
+		t.Fatalf("création org: %v", err)
+	}
+
+	userID := uuid.New()
+	hashedPwd, _ := auth.HashPassword("TestReliance2026!", auth.DefaultArgon2Params)
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, is_active) VALUES ($1, $2, 'pdt-rel@test.dz', $3, 'Dr.', 'Reliance', 'directeur_technique', true)`, userID, testOrgID, hashedPwd); err != nil {
+		t.Fatalf("création user: %v", err)
+	}
+
+	dossierID := uuid.New()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO dossiers (id, organization_id, product_type, dossier_code, procedure_code, internal_reference, status) VALUES ($1, $2, 'medicament', 'DOS-REL-001', 'NI', 'REF-REL-001', 'en_constitution')`, dossierID, testOrgID); err != nil {
+		t.Fatalf("création dossier: %v", err)
+	}
+
+	dossierRepo := repository.NewDossierRepository(db.Pool)
+	pharmaRepo := repository.NewPharmaRepository(db.Pool)
+	gedRepo := repository.NewGEDRepository(db.Pool)
+	corpRepo := repository.NewCorporateRepository(db.Pool)
+	auditSvc := audit.NewService(db.Pool)
+	store, _ := storage.NewLocalCASStorage(t.TempDir())
+
+	dossierHandler := NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditSvc, db.Pool).WithStorage(store)
+	lotHandler := NewLotReleaseHandler(db.Pool, auditSvc, gedRepo, corpRepo, store)
+
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{UserID: userID, OrganizationID: testOrgID, Email: "pdt-rel@test.dz", Role: "directeur_technique"}
+			next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), UserContextKey, su)))
+		})
+	})
+	r.Put("/api/v1/dossiers/{id}/reliance", dossierHandler.UpdateDossierReliance)
+	r.Post("/api/v1/lot-releases", lotHandler.CreateLotRelease)
+	r.Get("/api/v1/lot-releases", lotHandler.ListLotReleases)
+
+	// 1. Activer Reliance sur le dossier CTD
+	req := httptest.NewRequest("PUT", "/api/v1/dossiers/"+dossierID.String()+"/reliance", bytes.NewBufferString(`{"is_reliance":true,"reliance_authority":"EMA","reliance_type":"enregistrement","reliance_reference":"EMEA/H/C/005432"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("PUT reliance attendu 200, reçu %d: %s", w.Code, w.Body.String())
+	}
+	var updated domain.Dossier
+	_ = json.Unmarshal(w.Body.Bytes(), &updated)
+	if !updated.IsReliance || updated.RelianceAuthority != "EMA" || updated.RelianceReference != "EMEA/H/C/005432" {
+		t.Fatalf("champs Reliance non persistés: %+v", updated)
+	}
+
+	// 2. Créer un lot DCE avec Reliance Tests Labo
+	reqLot := httptest.NewRequest("POST", "/api/v1/lot-releases", bytes.NewBufferString(`{"product_kind":"pp","commercial_name":"Biomox Rel","lot_number":"LOT-REL-99","is_reliance_lab":true,"reliance_lab_authority":"EDQM","reliance_lab_reference":"OMCL-2026-77"}`))
+	reqLot.Header.Set("Content-Type", "application/json")
+	wLot := httptest.NewRecorder()
+	r.ServeHTTP(wLot, reqLot)
+	if wLot.Code != http.StatusCreated {
+		t.Fatalf("POST lot-releases attendu 201, reçu %d: %s", wLot.Code, wLot.Body.String())
+	}
+
+	reqList := httptest.NewRequest("GET", "/api/v1/lot-releases", nil)
+	wList := httptest.NewRecorder()
+	r.ServeHTTP(wList, reqList)
+	if !strings.Contains(wList.Body.String(), `"is_reliance_lab":true`) || !strings.Contains(wList.Body.String(), `"EDQM"`) {
+		t.Fatalf("Reliance labo absent de la liste des lots: %s", wList.Body.String())
+	}
+}

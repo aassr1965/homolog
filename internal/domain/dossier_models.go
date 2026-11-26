@@ -88,6 +88,10 @@ type Dossier struct {
 	PDTSignedBy           *uuid.UUID            `json:"pdt_signed_by,omitempty"`
 	PDTSignatureSeal      *string               `json:"pdt_signature_seal,omitempty"`
 	PDTSignatureRole      *string               `json:"pdt_signature_role,omitempty"`
+	IsReliance            bool                  `json:"is_reliance"`
+	RelianceAuthority     string                `json:"reliance_authority,omitempty"`
+	RelianceType          string                `json:"reliance_type,omitempty"`
+	RelianceReference     string                `json:"reliance_reference,omitempty"`
 	ChecklistData         []ChecklistItem       `json:"checklist_data,omitempty"`
 	Items                 []ChecklistItem       `json:"items,omitempty"`
 	Medicine              *Medicine             `json:"medicine,omitempty"`

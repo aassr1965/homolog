@@ -162,6 +162,7 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 			COALESCE(d.submission_notes, ''), d.status, d.responsible_id, COALESCE(d.completeness_percent, 0),
 			COALESCE(d.is_locked_for_deposit, false), d.locked_by_dt_id, d.locked_at,
 			d.pdt_signed_at, d.pdt_signed_by, COALESCE(d.pdt_signature_seal, ''), COALESCE(d.pdt_signature_role, ''),
+			COALESCE(d.is_reliance, false), COALESCE(d.reliance_authority, ''), COALESCE(d.reliance_type, ''), COALESCE(d.reliance_reference, ''),
 			d.created_at, d.updated_at
 		FROM dossiers d
 		WHERE d.id = $1 AND d.organization_id = $2
@@ -178,6 +179,7 @@ func (r *DossierRepository) GetDossierByID(ctx context.Context, orgID, dossierID
 		&d.SubmissionNotes, &statusStr, &d.ResponsibleID, &d.CompletenessPercent,
 		&d.IsLockedForDeposit, &d.LockedByDTID, &d.LockedAt,
 		&d.PDTSignedAt, &d.PDTSignedBy, &d.PDTSignatureSeal, &d.PDTSignatureRole,
+		&d.IsReliance, &d.RelianceAuthority, &d.RelianceType, &d.RelianceReference,
 		&d.CreatedAt, &d.UpdatedAt,
 	)
 	if err != nil {
@@ -380,6 +382,7 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 			COALESCE(d.submission_notes, ''), d.status, d.responsible_id, COALESCE(d.completeness_percent, 0),
 			COALESCE(d.is_locked_for_deposit, false), d.locked_by_dt_id, d.locked_at,
 			d.pdt_signed_at, d.pdt_signed_by, COALESCE(d.pdt_signature_seal, ''), COALESCE(d.pdt_signature_role, ''),
+			COALESCE(d.is_reliance, false), COALESCE(d.reliance_authority, ''), COALESCE(d.reliance_type, ''), COALESCE(d.reliance_reference, ''),
 			d.created_at, d.updated_at,
 			m.brand_name_fr, m.dci_fr, m.dosage_fr,
 			dm.commercial_name_fr, dm.dm_class
@@ -436,6 +439,7 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 			&d.SubmissionNotes, &statusStr, &d.ResponsibleID, &d.CompletenessPercent,
 			&d.IsLockedForDeposit, &d.LockedByDTID, &d.LockedAt,
 			&d.PDTSignedAt, &d.PDTSignedBy, &d.PDTSignatureSeal, &d.PDTSignatureRole,
+			&d.IsReliance, &d.RelianceAuthority, &d.RelianceType, &d.RelianceReference,
 			&d.CreatedAt, &d.UpdatedAt,
 			&medBrand, &medDCI, &medDosage,
 			&dmComm, &dmClass,
@@ -532,6 +536,26 @@ func (r *DossierRepository) ListDossiers(ctx context.Context, orgID uuid.UUID, r
 	}
 
 	return dossiers, nil
+}
+
+// UpdateDossierReliance met à jour le parcours Confiance Réglementaire (Reliance) d'un dossier CTD.
+func (r *DossierRepository) UpdateDossierReliance(ctx context.Context, orgID, dossierID uuid.UUID, isReliance bool, authority, relType, ref string) error {
+	tag, err := r.pool.Exec(ctx, `
+		UPDATE dossiers
+		SET is_reliance = $1,
+		    reliance_authority = $2,
+		    reliance_type = $3,
+		    reliance_reference = $4,
+		    updated_at = NOW()
+		WHERE id = $5 AND organization_id = $6
+	`, isReliance, authority, relType, ref, dossierID, orgID)
+	if err != nil {
+		return fmt.Errorf("échec mise à jour Reliance dossier: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // AttachGEDDocument associe un document approuvé du coffre-fort GED à une exigence de checklist
