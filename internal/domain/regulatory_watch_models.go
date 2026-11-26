@@ -39,23 +39,27 @@ const (
 
 // RegulatoryWatchItem texte officiel du corpus juridique pharmaceutique algérien
 type RegulatoryWatchItem struct {
-	ID               uuid.UUID                  `json:"id"`
-	OrganizationID   uuid.UUID                  `json:"organization_id"`
-	TitleFR          string                     `json:"title_fr"`
-	TitleAR          string                     `json:"title_ar,omitempty"`
-	LegalReference   string                     `json:"legal_reference"`         // ex: Décret Exécutif N° 20-325
-	JORADPNumber     string                     `json:"joradp_number,omitempty"` // ex: JORADP N° 78 du 28/11/2020
-	PublishedDate    time.Time                  `json:"published_date"`
-	EffectiveDate    time.Time                  `json:"effective_date"`
-	Category         RegulatoryCategory         `json:"category"`
-	ImpactLevel      ImpactLevel                `json:"impact_level"`
-	SummaryFR        string                     `json:"summary_fr"`
-	ImpactAnalysis   string                     `json:"impact_analysis,omitempty"`
-	ComplianceStatus RegulatoryComplianceStatus `json:"compliance_status"`
-	SourceURL        string                     `json:"source_url,omitempty"`
-	CreatedBy        *uuid.UUID                 `json:"created_by,omitempty"`
-	CreatedAt        time.Time                  `json:"created_at"`
-	UpdatedAt        time.Time                  `json:"updated_at"`
+	ID                uuid.UUID                  `json:"id"`
+	OrganizationID    uuid.UUID                  `json:"organization_id"`
+	TitleFR           string                     `json:"title_fr"`
+	TitleAR           string                     `json:"title_ar,omitempty"`
+	LegalReference    string                     `json:"legal_reference"`         // ex: Décret Exécutif N° 20-325
+	JORADPNumber      string                     `json:"joradp_number,omitempty"` // ex: JORADP N° 78 du 28/11/2020
+	PublishedDate     time.Time                  `json:"published_date"`
+	EffectiveDate     time.Time                  `json:"effective_date"`
+	Category          RegulatoryCategory         `json:"category"`
+	ImpactLevel       ImpactLevel                `json:"impact_level"`
+	SummaryFR         string                     `json:"summary_fr"`
+	ImpactAnalysis    string                     `json:"impact_analysis,omitempty"`
+	ComplianceStatus  RegulatoryComplianceStatus `json:"compliance_status"`
+	SourceURL         string                     `json:"source_url,omitempty"`
+	DocumentFilename  string                     `json:"document_filename,omitempty"`
+	DocumentSHA256    string                     `json:"document_sha256,omitempty"`
+	DocumentSizeBytes int64                      `json:"document_size_bytes,omitempty"`
+	HasEmbeddedPDF    bool                       `json:"has_embedded_pdf"`
+	CreatedBy         *uuid.UUID                 `json:"created_by,omitempty"`
+	CreatedAt         time.Time                  `json:"created_at"`
+	UpdatedAt         time.Time                  `json:"updated_at"`
 }
 
 // IsEffective vérifie si le texte est entré en vigueur

@@ -551,6 +551,7 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch", regulatoryWatchHandler.ListRegulatoryWatch)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermUserManage)).Post("/api/v1/regulatory-watch", regulatoryWatchHandler.CreateRegulatoryWatchItem)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}", regulatoryWatchHandler.GetRegulatoryWatchItem)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}/pdf", regulatoryWatchHandler.DownloadRegulatoryWatchPDF)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Put("/api/v1/regulatory-watch/{itemId}/analysis", regulatoryWatchHandler.UpdateRegulatoryWatchAnalysis)
 			}
 

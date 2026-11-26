@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	"homolog/internal/audit"
 	"homolog/internal/auth"
+	"homolog/internal/database"
 	"homolog/internal/domain"
 	"homolog/internal/repository"
 )
@@ -216,4 +218,79 @@ func TestAppointmentAndRegulatoryWatchAPI(t *testing.T) {
 		t.Errorf("Test 5: statut attendu conforme, reçu %s", updatedReg.ComplianceStatus)
 	}
 	t.Logf("Test 5 PASS: Analyse d'impact mise à jour et statut passé à conforme")
+}
+
+func TestRegulatoryWatchEmbeddedPDFsSyncAndServe(t *testing.T) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
+	}
+
+	ctx := context.Background()
+	db, err := database.Connect(ctx, dbURL)
+	if err != nil {
+		t.Skipf("PostgreSQL non disponible, test ignoré : %v", err)
+		return
+	}
+	defer db.Close()
+
+	testOrgID := uuid.New()
+	orgSlug := "lab-pdf-" + testOrgID.String()[:8]
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), "DELETE FROM organizations WHERE id = $1", testOrgID)
+	}()
+
+	_, err = db.Pool.Exec(ctx, `INSERT INTO organizations (id, slug, legal_name, is_active) VALUES ($1, $2, 'Labo PDF Veille', true)`, testOrgID, orgSlug)
+	if err != nil {
+		t.Fatalf("création org: %v", err)
+	}
+
+	// Simuler une ligne insérée par la migration 038 puis synchroniser le PDF binaire en base
+	var itemID uuid.UUID
+	err = db.Pool.QueryRow(ctx, `
+		INSERT INTO regulatory_watch_items (
+			organization_id, title_fr, legal_reference, published_date, effective_date,
+			category, impact_level, summary_fr, compliance_status, document_filename
+		) VALUES (
+			$1, 'Ligne Directrice Inspections (LD-DVIV04/V01)', 'LD-DVIV04/V01', '2024-09-01', '2024-09-01',
+			'bpf_inspection', 'critique', 'Test PDF embarqué en base', 'en_vigueur', 'ld_dviv04_inspections.pdf'
+		) RETURNING id
+	`, testOrgID).Scan(&itemID)
+	if err != nil {
+		t.Fatalf("insertion item veille: %v", err)
+	}
+
+	database.SyncGuidelinePDFsToDB(ctx, db.Pool)
+
+	regRepo := repository.NewRegulatoryWatchRepository(db.Pool)
+	regHandler := NewRegulatoryWatchHandler(regRepo, audit.NewService(db.Pool))
+
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{
+				UserID:         uuid.New(),
+				OrganizationID: testOrgID,
+				Email:          "pdt@test.dz",
+				Role:           "directeur_technique",
+			}
+			next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), UserContextKey, su)))
+		})
+	})
+	r.Get("/api/v1/regulatory-watch", regHandler.ListRegulatoryWatch)
+	r.Get("/api/v1/regulatory-watch/{itemId}/pdf", regHandler.DownloadRegulatoryWatchPDF)
+
+	req := httptest.NewRequest("GET", "/api/v1/regulatory-watch/"+itemID.String()+"/pdf", nil)
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("statut attendu 200, reçu %d: %s", rr.Code, rr.Body.String())
+	}
+	if ct := rr.Header().Get("Content-Type"); ct != "application/pdf" {
+		t.Fatalf("Content-Type attendu application/pdf, reçu %q", ct)
+	}
+	if !bytes.HasPrefix(rr.Body.Bytes(), []byte("%PDF-")) {
+		t.Fatalf("signature PDF manquante dans la réponse (%d octets)", rr.Body.Len())
+	}
 }

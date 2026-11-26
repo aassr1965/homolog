@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -254,4 +255,33 @@ func (h *RegulatoryWatchHandler) UpdateRegulatoryWatchAnalysis(w http.ResponseWr
 	})
 
 	writeJSON(w, http.StatusOK, updated)
+}
+
+// DownloadRegulatoryWatchPDF sert le fichier PDF complet stocké en base de données (BYTEA) pour une guideline ANPP.
+func (h *RegulatoryWatchHandler) DownloadRegulatoryWatchPDF(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	itemID, err := uuid.Parse(chi.URLParam(r, "itemId"))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de texte invalide")
+		return
+	}
+
+	pdfBytes, filename, err := h.repo.GetRegulatoryWatchItemPDF(r.Context(), user.OrganizationID, itemID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Document PDF non disponible pour ce texte")
+			return
+		}
+		writeJSONError(w, http.StatusInternalServerError, "Erreur lecture PDF réglementaire")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", filename))
+	_, _ = w.Write(pdfBytes)
 }

@@ -221,7 +221,10 @@ function renderRegulatoryWatchTable(items) {
                 <td style="padding:10px;">
                     <div style="font-weight:700; font-size:12px; color:var(--text-main);" title="${escapeHTML(fullRefTitle)}">${escapeHTML(it.title_fr)}</div>
                     ${it.title_ar ? `<div style="font-size:11px; color:var(--text-dim); direction:rtl; margin-top:2px;">${escapeHTML(it.title_ar)}</div>` : ''}
-                    <div style="font-size:10px; color:var(--accent-blue); font-weight:600; margin-top:3px; font-family:monospace;" data-reg-tooltip="true" title="${escapeHTML(fullRefTitle)}">${escapeHTML(it.legal_reference)}</div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:3px;">
+                        <span style="font-size:10px; color:var(--accent-blue); font-weight:600; font-family:monospace;" data-reg-tooltip="true" title="${escapeHTML(fullRefTitle)}">${escapeHTML(it.legal_reference)}</span>
+                        ${it.has_embedded_pdf ? `<button type="button" class="btn-pill" style="font-size:10px; padding:1px 7px; background:#0284c7; color:white; border:none;" onclick="window.open('/api/v1/regulatory-watch/${encodeURIComponent(it.id)}/pdf', '_blank')" title="Ouvrir le PDF officiel stocké en base de données (${Math.max(1, Math.round((it.document_size_bytes || 0) / 1024))} Ko)">📄 PDF (${Math.max(1, Math.round((it.document_size_bytes || 0) / 1024))} Ko)</button>` : ''}
+                    </div>
                 </td>
                 <td style="padding:10px; font-size:11px;">
                     <div style="font-weight:600; color:var(--text-main);">${escapeHTML(it.joradp_number || 'Bulletin ANPP')}</div>
