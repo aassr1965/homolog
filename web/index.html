@@ -3813,6 +3813,9 @@
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
+                    <button type="button" class="btn-pill" id="btn-dvtiv-pdt-qppv" onclick="window.location.href='/api/v1/dvtiv/pdt-qppv-form'" title="Télécharger la fiche officielle ANPP DVTIV (Base centralisée PDT & QPPV .docx)" style="font-size:11px; padding:2px 8px; height:26px; background:#0284c7; color:white; border:none; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                        <span>📥</span> <span>Fiche DVTIV PDT/QPPV (.docx)</span>
+                    </button>
                     <button type="button" class="btn-pill" id="btn-parapheur-delegations" onclick="openDTDelegationsModal()" title="Consulter ou établir un mandat d'intérim / suppléance (Décret 21-82 Art. 24)" style="font-size:11px; padding:2px 8px; height:26px; color:#d97706; border-color:#d97706; display:flex; align-items:center; gap:4px; cursor:pointer;">
                         <span>🛡️</span> <span>Intérim DT (Décret 21-82)</span>
                     </button>
@@ -4196,10 +4199,7 @@
                 <div style="font-size:11px; color:var(--text-dim);">
                     ⚖️ Décret exécutif n° 21-82 Art. 24 : En cas d'absence &gt; 3 mois, un nouveau DT doit être nommé auprès du MIPH.
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <button type="button" class="btn-pill" style="background:#0284c7; color:white; border:none; font-size:11px;" onclick="window.location.href='/api/v1/dvtiv/pdt-qppv-form'">📥 Fiche Base PDT/QPPV (DVTIV .docx)</button>
-                    <button type="button" class="btn-pill" onclick="closeDTDelegationsModal()">Fermer</button>
-                </div>
+                <button type="button" class="btn-pill" onclick="closeDTDelegationsModal()">Fermer</button>
             </div>
         </div>
     </div>
