@@ -748,6 +748,7 @@ window.escapeHTML = escapeHtml;
                     <button class="btn-pill" style="background:var(--accent-blue); color:white; border:none;" onclick="loadSystemMetrics()">🔄 Actualiser Métriques</button>
                     <button class="btn-pill" style="background:var(--accent-emerald); color:white; border:none;" onclick="triggerSystemBackup()">💾 Instantané Sauvegarde</button>
                     <button class="btn-pill" onclick="triggerCASIntegrityCheck()">🔍 Contrôle Intégrité CAS</button>
+                    <button class="btn-pill" onclick="openANPPTemplatesModal()" title="Gérer les 28 gabarits officiels ANPP (.docx / .xlsx) sans recompiler">📄 Gabarits ANPP</button>
                     <button class="btn-pill" style="border-color:#ef4444; color:#ef4444;" onclick="openEmergencyLockdownModal()">🚨 Verrouillage Urgence</button>
                     <button class="btn-pill" onclick="togglePreviewPane()">👁️ Volet Aperçu (Alt+P)</button>
                     <div style="margin-left:auto; font-size:11px; color:var(--text-muted);" id="dossier-progress">

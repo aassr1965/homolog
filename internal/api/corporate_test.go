@@ -864,4 +864,48 @@ func TestANPPTemplateUploadOverrideAndRevert(t *testing.T) {
 	if wDel.Code != http.StatusOK {
 		t.Fatalf("DELETE surcharge attendu 200, reçu %d: %s", wDel.Code, wDel.Body.String())
 	}
+
+	// 4. Tester le SuperAdmin Éditeur SaaS (SYS_MAINT uniquement) en surcharge globale
+	saID := uuid.New()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, is_active) VALUES ($1, $2, 'sa-tpl@test.dz', $3, 'SA', 'SaaS', 'super_admin_editeur', true)`, saID, testOrgID, hashedPwd); err != nil {
+		t.Fatalf("création super_admin_editeur: %v", err)
+	}
+	rSA := chi.NewRouter()
+	rSA.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{
+				UserID:         saID,
+				OrganizationID: testOrgID,
+				Email:          "sa-tpl@test.dz",
+				Role:           "super_admin_editeur",
+				Permissions:    []string{string(domain.PermSysMaint)},
+			}
+			next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), UserContextKey, su)))
+		})
+	})
+	rSA.With(RequireAnyPermission(auditSvc, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates", tplHandler.ListTemplates)
+	rSA.With(RequireAnyPermission(auditSvc, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Post("/api/v1/anpp-templates/{name}", tplHandler.UploadTemplate)
+	rSA.With(RequireAnyPermission(auditSvc, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Delete("/api/v1/anpp-templates/{name}", tplHandler.DeleteOverride)
+
+	var bodyG bytes.Buffer
+	mwG := multipart.NewWriter(&bodyG)
+	fwG, _ := mwG.CreateFormFile("file", "depp_modele_structure.docx")
+	_, _ = fwG.Write(customBytes)
+	_ = mwG.WriteField("scope", "global")
+	_ = mwG.WriteField("notes", "MAJ Globale SaaS")
+	_ = mwG.Close()
+
+	reqUpG := httptest.NewRequest("POST", "/api/v1/anpp-templates/depp_modele_structure.docx", &bodyG)
+	reqUpG.Header.Set("Content-Type", mwG.FormDataContentType())
+	wUpG := httptest.NewRecorder()
+	rSA.ServeHTTP(wUpG, reqUpG)
+	if wUpG.Code != http.StatusOK || !strings.Contains(wUpG.Body.String(), `"source":"global"`) {
+		t.Fatalf("upload global SuperAdmin attendu 200 global, reçu %d: %s", wUpG.Code, wUpG.Body.String())
+	}
+	reqDelG := httptest.NewRequest("DELETE", "/api/v1/anpp-templates/depp_modele_structure.docx?scope=global", nil)
+	wDelG := httptest.NewRecorder()
+	rSA.ServeHTTP(wDelG, reqDelG)
+	if wDelG.Code != http.StatusOK {
+		t.Fatalf("DELETE global SuperAdmin attendu 200, reçu %d: %s", wDelG.Code, wDelG.Body.String())
+	}
 }

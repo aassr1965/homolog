@@ -691,8 +691,8 @@ func main() {
 
 			// Gestion dynamique & surcharge des gabarits officiels ANPP (.docx / .xlsx) sans recompilation
 			if anppTemplateHandler != nil {
-				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/anpp-templates", anppTemplateHandler.ListTemplates)
-				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/anpp-templates/{name}/download", anppTemplateHandler.DownloadTemplate)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates", anppTemplateHandler.ListTemplates)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates/{name}/download", anppTemplateHandler.DownloadTemplate)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Post("/api/v1/anpp-templates/{name}", anppTemplateHandler.UploadTemplate)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Delete("/api/v1/anpp-templates/{name}", anppTemplateHandler.DeleteOverride)
 			}
