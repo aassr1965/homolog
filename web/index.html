@@ -4303,15 +4303,18 @@
 
     <!-- Modal Gestionnaire des Gabarits Officiels ANPP (Surcharge sans recompilation) -->
     <div class="modal-overlay" id="modal-anpp-templates-manager" onclick="if(event.target === this) closeModal('modal-anpp-templates-manager')">
-        <div class="modal" style="width:920px; max-width:calc(100vw - 24px); max-height:90vh; display:flex; flex-direction:column;">
+        <div class="modal" id="anpp-templates-modal-box" style="width:min(1260px, calc(100vw - 24px)); height:78vh; min-width:720px; min-height:380px; max-width:calc(100vw - 16px); max-height:94vh; resize:both; overflow:hidden; display:flex; flex-direction:column;">
             <div class="modal-header" style="border-bottom:2px solid #0284c7; background:rgba(2,132,199,0.06); padding:10px 16px;">
                 <div>
                     <div class="modal-title" style="font-weight:800; font-size:13.5px;">📄 Gabarits Officiels ANPP (.docx / .xlsx) — Surcharge Dynamique</div>
                     <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-                        Le PDT, le Responsable Affaires Réglementaires ou l'Admin Système peuvent remplacer un modèle officiel sans recompiler. Les modèles embarqués restent actifs par défaut.
+                        Le PDT, le Responsable Affaires Réglementaires ou l'Admin Système peuvent remplacer un modèle officiel sans recompiler. Fenêtre redimensionnable (coin inférieur droit).
                     </div>
                 </div>
-                <button type="button" class="close-btn" onclick="closeModal('modal-anpp-templates-manager')">✕</button>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button type="button" class="btn-pill" id="btn-anpp-tpl-maximize" onclick="toggleMaximizeANPPTemplatesModal()" title="Agrandir / Restaurer" style="font-size:12px; padding:2px 8px; height:26px; line-height:1;">⛶</button>
+                    <button type="button" class="close-btn" onclick="closeModal('modal-anpp-templates-manager')">✕</button>
+                </div>
             </div>
             <div style="padding:14px 16px; overflow-y:auto; flex:1; font-size:12px;">
                 <input type="file" id="anpp-template-file-input" style="display:none" accept=".docx,.xlsx">

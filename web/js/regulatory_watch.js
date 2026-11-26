@@ -747,6 +747,25 @@ async function openANPPTemplatesModal() {
 }
 window.openANPPTemplatesModal = openANPPTemplatesModal;
 
+function toggleMaximizeANPPTemplatesModal() {
+    const box = document.getElementById('anpp-templates-modal-box');
+    const btn = document.getElementById('btn-anpp-tpl-maximize');
+    if (!box) return;
+    const isMax = box.dataset.maximized === '1';
+    if (isMax) {
+        box.style.width = 'min(1260px, calc(100vw - 24px))';
+        box.style.height = '78vh';
+        box.dataset.maximized = '0';
+        if (btn) btn.textContent = '⛶';
+    } else {
+        box.style.width = 'calc(100vw - 16px)';
+        box.style.height = '94vh';
+        box.dataset.maximized = '1';
+        if (btn) btn.textContent = '🗗';
+    }
+}
+window.toggleMaximizeANPPTemplatesModal = toggleMaximizeANPPTemplatesModal;
+
 async function loadANPPTemplatesList() {
     const tbody = document.getElementById('anpp-templates-tbody');
     if (!tbody) return;
@@ -784,14 +803,16 @@ async function loadANPPTemplatesList() {
                 : '';
 
             return `<tr style="border-bottom:1px solid var(--border-color);">
-                <td style="padding:7px 8px; font-weight:700;">${escapeHTML(t.name)}</td>
-                <td style="padding:7px 8px;">${sourceBadge}</td>
+                <td style="padding:7px 8px; font-weight:700; white-space:nowrap;">${escapeHTML(t.name)}</td>
+                <td style="padding:7px 8px; white-space:nowrap;">${sourceBadge}</td>
                 <td style="padding:7px 8px; font-size:11px;">${traceText}</td>
-                <td style="padding:7px 8px; text-align:right; white-space:nowrap; display:flex; justify-content:flex-end; gap:4px;">
-                    <a class="btn-pill" style="font-size:10.5px; padding:2px 8px; text-decoration:none;" href="/api/v1/anpp-templates/${encodeURIComponent(t.name)}/download">📥 Télécharger</a>
-                    ${uploadBtn}
-                    ${globalBtn}
-                    ${revertBtn}
+                <td style="padding:7px 8px; text-align:right; white-space:nowrap;">
+                    <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px; flex-wrap:nowrap;">
+                        <a class="btn-pill" style="font-size:10.5px; padding:3px 9px; text-decoration:none; white-space:nowrap;" href="/api/v1/anpp-templates/${encodeURIComponent(t.name)}/download">📥 Télécharger</a>
+                        ${uploadBtn}
+                        ${globalBtn}
+                        ${revertBtn}
+                    </div>
                 </td>
             </tr>`;
         }).join('');
