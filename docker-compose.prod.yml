@@ -28,6 +28,8 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-saas}
     ports:
       - "8090:8090"
     volumes:
