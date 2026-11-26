@@ -545,3 +545,198 @@ async function closeInspectionFinding(id) {
     }
 }
 window.closeInspectionFinding = closeInspectionFinding;
+
+const ANPP_DRAFT_SCHEMAS = {
+    structure_prix: {
+        title: '🧾 Brouillon — Structure de Prix Fabrication Locale (DEPP)',
+        downloadHint: (entityId) => {
+            if (typeof downloadOfficialDEPPForm === 'function' && entityId) {
+                downloadOfficialDEPPForm(entityId, 'structure-prix');
+            }
+        },
+        fields: [
+            { key: 'substance_active', label: '1. Substance Active (DCI / coût)', placeholder: 'Ex: Paracétamol — 450 DZD/kg', full: true },
+            { key: 'matieres_importees', label: '2. Matières premières & AC importés', placeholder: 'Ex: 120.00 DZD' },
+            { key: 'matieres_locales', label: '3. Matières premières & AC locaux', placeholder: 'Ex: 45.00 DZD' },
+            { key: 'services_importes', label: '4. Services & prestations importés', placeholder: 'Ex: 15.00 DZD' },
+            { key: 'services_locaux', label: '5. Services & prestations locaux', placeholder: 'Ex: 22.00 DZD' },
+            { key: 'frais_personnel', label: '6. Frais de personnel', placeholder: 'Ex: 38.00 DZD' },
+            { key: 'taxes', label: '7. Impôts & taxes', placeholder: 'Ex: 12.00 DZD' },
+            { key: 'frais_financiers', label: '8. Frais financiers', placeholder: 'Ex: 8.50 DZD' },
+            { key: 'amortissements', label: '9. Dotations aux amortissements', placeholder: 'Ex: 19.00 DZD' },
+            { key: 'autres_charges', label: '10. Autres charges', placeholder: 'Ex: 6.00 DZD' },
+            { key: 'prix_revient', label: '11. Prix de revient unitaire', placeholder: 'Ex: 285.50 DZD' },
+            { key: 'pcsu', label: '12. PCSU proposé', placeholder: 'Ex: 340.00 DZD' },
+            { key: 'taux_exportation', label: '13. Taux d’exportation prévu (%)', placeholder: 'Ex: 10 %' },
+            { key: 'taux_integration', label: '14. Taux d’intégration locale (%)', placeholder: 'Ex: 42 %' },
+            { key: 'taux_change', label: 'Taux de change de référence (EUR/USD -> DZD)', placeholder: 'Ex: 1 EUR = 145.20 DZD', full: true }
+        ]
+    },
+    ca_sr_secondaire: {
+        title: '🧪 Brouillon — Certificat d’Analyse SR Secondaire (DCE)',
+        downloadHint: () => {
+            if (typeof downloadDCEOfficialForm === 'function') {
+                downloadDCEOfficialForm('ca-sr-secondaire');
+            }
+        },
+        fields: [
+            { key: 'standard_name', label: 'Nom du Standard de Référence Secondaire', placeholder: 'Ex: SRS Paracétamol' },
+            { key: 'lot_code', label: 'Code / N° Lot SR Secondaire', placeholder: 'Ex: SRS-2026-01' },
+            { key: 'expiry_date', label: 'Date de péremption / rétest', placeholder: 'Ex: 2028-12-31' },
+            { key: 'manufacturer', label: 'Fabricant / Origine', placeholder: 'Ex: SANAD PHARMA CQ' },
+            { key: 'method_ref', label: 'Référence méthode analytique', placeholder: 'Ex: Ph. Eur. 2.2.29 / HPLC' },
+            { key: 'primary_lot_number', label: 'N° Lot SR Primaire rattaché', placeholder: 'Ex: CRS-EP-1234' },
+            { key: 'weighing', label: 'Conditions de pesée', placeholder: 'Ex: Pesée précise sous atmosphère contrôlée' },
+            { key: 'storage_conditions', label: 'Conditions de stockage', placeholder: 'Ex: 2°C - 8°C à l’abri de la lumière' },
+            { key: 'safety_instructions', label: 'Consignes de sécurité', placeholder: 'Ex: Port EPI, FDS disponible', full: true },
+            { key: 'stability_validated', label: 'Validation stabilité effectuée', type: 'checkbox' },
+            { key: 'equip_qualified', label: 'Équipements CQ qualifiés', type: 'checkbox' },
+            { key: 'desc_spec', label: 'Aspect — Spécification', placeholder: 'Poudre cristalline blanche' },
+            { key: 'desc_result', label: 'Aspect — Résultat', placeholder: 'Conforme' },
+            { key: 'ident_spec', label: 'Identification — Spécification', placeholder: 'Spectre IR conforme au SR primaire' },
+            { key: 'ident_result', label: 'Identification — Résultat', placeholder: 'Conforme' },
+            { key: 'assay_spec', label: 'Dosage / Teneur — Spécification', placeholder: '99.0 % - 101.0 %' },
+            { key: 'assay_result', label: 'Dosage / Teneur — Résultat', placeholder: '99.7 %' },
+            { key: 'purity_spec', label: 'Pureté chromatographique — Spécification', placeholder: 'Impureté totale <= 0.1 %' },
+            { key: 'purity_result', label: 'Pureté chromatographique — Résultat', placeholder: '0.03 % (Conforme)' },
+            { key: 'water_spec', label: 'Teneur en eau (KF) — Spécification', placeholder: '<= 0.5 %' },
+            { key: 'water_result', label: 'Teneur en eau (KF) — Résultat', placeholder: '0.18 %' },
+            { key: 'prepared_by', label: 'Préparé par (Analyste CQ)', placeholder: 'Nom & fonction' },
+            { key: 'verified_by', label: 'Vérifié par (Responsable CQ)', placeholder: 'Nom & fonction' },
+            { key: 'approved_by', label: 'Approuvé par (Directeur Technique)', placeholder: 'Nom & fonction', full: true }
+        ]
+    },
+    dvtiv_qppv: {
+        title: '🩺 Brouillon — Complément QPPV / RLPV & PSMF (DVTIV)',
+        downloadHint: () => {
+            if (typeof downloadDVTIVFormAndArchive === 'function') {
+                downloadDVTIVFormAndArchive();
+            }
+        },
+        fields: [
+            { key: 'qppv_name', label: 'Nom & Prénom du QPPV / RLPV', placeholder: 'Ex: Dr. Amira Benali', full: true },
+            { key: 'qppv_email', label: 'Email QPPV / Pharmacovigilance', placeholder: 'pv@sanad-pharma.dz' },
+            { key: 'qppv_phone', label: 'Téléphone d’astreinte PV (24/7)', placeholder: '+213 550 00 00 00' },
+            { key: 'qppv_deputy', label: 'Suppléant / Adjoint QPPV désigné', placeholder: 'Ex: Dr. Karim Mansouri', full: true },
+            { key: 'has_psmf', label: 'PSMF Global disponible et tenu à jour', type: 'checkbox' },
+            { key: 'has_psmf_national', label: 'Annexe Nationale PSMF (Algérie / ANPP) disponible', type: 'checkbox' }
+        ]
+    },
+    dce_sa_complement: {
+        title: '📦 Brouillon — Complément Substance Active & 1er Lot (DCE)',
+        downloadHint: () => {
+            if (typeof downloadDCEOfficialForm === 'function') {
+                downloadDCEOfficialForm('declaration-quotidienne-pp');
+            }
+        },
+        fields: [
+            { key: 'sa_name', label: 'Dénomination Substance Active (DCI)', placeholder: 'Ex: Amoxicilline Trihydratée' },
+            { key: 'sa_lot_number', label: 'N° Lot Substance Active', placeholder: 'Ex: SA-2026-884' },
+            { key: 'sa_ddf', label: 'Date de Fabrication (DDF SA)', placeholder: 'YYYY-MM-DD' },
+            { key: 'sa_ddp', label: 'Date de Péremption / Rétest (DDP SA)', placeholder: 'YYYY-MM-DD' },
+            { key: 'sa_manufacturer', label: 'Fabricant Substance Active (Site / Pays)', placeholder: 'Ex: Sandoz GmbH (Autriche)', full: true },
+            { key: 'first_marketed_lot', label: '1er Lot Commercialisé (OUI/NON ou N°)', placeholder: 'Ex: OUI — 1er lot commercialisé' },
+            { key: 'channel_allocation', label: 'Circuit / Répartition (Officinal / Hospitalier)', placeholder: 'Ex: Grossistes répartiteurs & PCH' }
+        ]
+    }
+};
+
+async function openANPPDraftModal(kind, entityId = '') {
+    const schema = ANPP_DRAFT_SCHEMAS[kind];
+    if (!schema) {
+        showToast('Type de brouillon ANPP inconnu', 'error');
+        return;
+    }
+    const titleEl = document.getElementById('anpp-draft-modal-title');
+    const kindEl = document.getElementById('anpp-draft-kind');
+    const entityEl = document.getElementById('anpp-draft-entity-id');
+    const container = document.getElementById('anpp-draft-fields');
+    const noteEl = document.getElementById('anpp-draft-status-note');
+    if (!container || !kindEl || !entityEl) return;
+
+    titleEl.textContent = schema.title;
+    kindEl.value = kind;
+    entityEl.value = entityId || '';
+    container.innerHTML = '<div style="grid-column:1 / -1; color:var(--text-muted);">Chargement du brouillon...</div>';
+    openModal('modal-anpp-draft-editor');
+
+    let payload = {};
+    let updatedAt = '';
+    try {
+        const qs = entityId ? `?entity_id=${encodeURIComponent(entityId)}` : '';
+        const res = await fetch(`/api/v1/anpp-drafts/${encodeURIComponent(kind)}${qs}`);
+        if (res.ok) {
+            const data = await res.json();
+            payload = data.payload || {};
+            updatedAt = data.updated_at ? new Date(data.updated_at).toLocaleString('fr-FR') : '';
+        }
+    } catch (_) {
+        // Garde un formulaire vierge si premier brouillon
+    }
+
+    noteEl.textContent = updatedAt
+        ? `Statut : brouillon éditable (dernière sauvegarde : ${updatedAt})`
+        : 'Statut : nouveau brouillon éditable';
+
+    container.innerHTML = schema.fields.map((f) => {
+        const val = payload[f.key];
+        const spanStyle = f.full ? 'grid-column: 1 / -1;' : '';
+        if (f.type === 'checkbox') {
+            return `<label style="${spanStyle} display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--bg-sub); border:1px solid var(--border-color); border-radius:4px; cursor:pointer; font-weight:600;">
+                <input type="checkbox" data-draft-key="${f.key}" ${val ? 'checked' : ''}>
+                <span>${escapeHTML(f.label)}</span>
+            </label>`;
+        }
+        const safeVal = val !== undefined && val !== null ? escapeHTML(String(val)) : '';
+        return `<div style="${spanStyle}">
+            <label style="display:block; font-weight:700; margin-bottom:3px; font-size:11px;">${escapeHTML(f.label)}</label>
+            <input type="text" data-draft-key="${f.key}" value="${safeVal}" placeholder="${escapeHTML(f.placeholder || '')}" style="width:100%; padding:6px 8px; background:var(--bg-panel); color:var(--text-main); border:1px solid var(--border-color); border-radius:4px; font-size:12px;">
+        </div>`;
+    }).join('');
+}
+window.openANPPDraftModal = openANPPDraftModal;
+
+async function saveANPPDraft(e, generateAfter) {
+    if (e) e.preventDefault();
+    const kind = document.getElementById('anpp-draft-kind')?.value;
+    const entityId = document.getElementById('anpp-draft-entity-id')?.value || '';
+    const schema = ANPP_DRAFT_SCHEMAS[kind];
+    if (!schema) return;
+
+    const payload = {};
+    document.querySelectorAll('#anpp-draft-fields [data-draft-key]').forEach((el) => {
+        const key = el.getAttribute('data-draft-key');
+        if (el.type === 'checkbox') {
+            payload[key] = !!el.checked;
+        } else {
+            payload[key] = el.value.trim();
+        }
+    });
+
+    try {
+        const qs = entityId ? `?entity_id=${encodeURIComponent(entityId)}` : '';
+        const res = await fetch(`/api/v1/anpp-drafts/${encodeURIComponent(kind)}${qs}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            showToast(errData.error || 'Erreur enregistrement brouillon ANPP', 'error');
+            return;
+        }
+        const saved = await res.json();
+        const noteEl = document.getElementById('anpp-draft-status-note');
+        if (noteEl) {
+            noteEl.textContent = `Statut : brouillon éditable (enregistré à ${new Date().toLocaleTimeString('fr-FR')})`;
+        }
+        showToast('💾 Brouillon ANPP enregistré (reste éditable).', 'success');
+        if (generateAfter && typeof schema.downloadHint === 'function') {
+            closeModal('modal-anpp-draft-editor');
+            schema.downloadHint(saved.entity_id || entityId);
+        }
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.saveANPPDraft = saveANPPDraft;

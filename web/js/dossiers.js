@@ -1139,6 +1139,9 @@
                             <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'structure-prix')" title="Modèle structure de prix fabrication locale (.docx)">
                                 🧾 Structure Prix (.docx)
                             </button>
+                            <button class="btn-pill" style="font-size:11px; padding:4px 10px; border:1px dashed #0284c7; color:#0284c7; font-weight:600;" onclick="openANPPDraftModal('structure_prix', '${dossier.id}')" title="Saisir ou modifier les 14 lignes économiques du brouillon Structure de Prix">
+                                ✏️ Saisir Structure Prix
+                            </button>
                             <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'recepisse-pp')" title="Récépissé de dépôt dossier produit pharmaceutique (.docx)">
                                 📋 Récépissé PP (.docx)
                             </button>

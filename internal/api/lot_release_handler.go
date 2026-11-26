@@ -419,7 +419,13 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 			EXISTS(SELECT 1 FROM ged_documents WHERE organization_id = $1 AND (LOWER(title_fr) LIKE '%psmf national%' OR LOWER(title_fr) LIKE '%psmf_national%' OR LOWER(document_code) LIKE '%psmf-nat%' OR 'PSMF_NATIONAL' = ANY(tags)))
 	`, user.OrganizationID).Scan(&hasPSMF, &hasPSMFNational)
 
-	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCX(&org, pdt, assistant, qppv, marketedCount, hasPSMF, hasPSMFNational, estTypes...)
+	var qppvDraft domain.DVTIVQPPVDraft
+	var qppvDraftPtr *domain.DVTIVQPPVDraft
+	if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "dvtiv_qppv", user.OrganizationID, &qppvDraft) {
+		qppvDraftPtr = &qppvDraft
+	}
+
+	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCXWithDraft(&org, pdt, assistant, qppv, qppvDraftPtr, marketedCount, hasPSMF, hasPSMFNational, estTypes...)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur génération formulaire DVTIV: "+err.Error())
 		return
@@ -652,25 +658,55 @@ func (h *LotReleaseHandler) DownloadDCEForm(w http.ResponseWriter, r *http.Reque
 		outBytes, err = reporting.GenerateDCECanevasCertificatLiberationDOCX(org, selected)
 		filename = "ANPP-DCE-Canevas-Certificat-Liberation.docx"
 	case "declaration-quotidienne-pp":
-		outBytes, err = reporting.GenerateDCEDeclarationQuotidienneDOCX("pp", org, lots)
+		var saDraft domain.DCESAComplementDraft
+		var saPtr *domain.DCESAComplementDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "dce_sa_complement", user.OrganizationID, &saDraft) {
+			saPtr = &saDraft
+		}
+		outBytes, err = reporting.GenerateDCEDeclarationQuotidienneWithDraftDOCX("pp", org, lots, saPtr)
 		filename = fmt.Sprintf("ANPP-DCE-Declaration-Quotidienne-PP_%s.docx", time.Now().Format("2006-01-02"))
 	case "declaration-quotidienne-dm":
-		outBytes, err = reporting.GenerateDCEDeclarationQuotidienneDOCX("dm", org, lots)
+		var saDraft domain.DCESAComplementDraft
+		var saPtr *domain.DCESAComplementDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "dce_sa_complement", user.OrganizationID, &saDraft) {
+			saPtr = &saDraft
+		}
+		outBytes, err = reporting.GenerateDCEDeclarationQuotidienneWithDraftDOCX("dm", org, lots, saPtr)
 		filename = fmt.Sprintf("ANPP-DCE-Declaration-Quotidienne-DM_%s.docx", time.Now().Format("2006-01-02"))
 	case "declaration-journaliere-pp":
-		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("pp", org, lots)
+		var saDraft domain.DCESAComplementDraft
+		var saPtr *domain.DCESAComplementDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "dce_sa_complement", user.OrganizationID, &saDraft) {
+			saPtr = &saDraft
+		}
+		outBytes, err = reporting.GenerateDCEDeclarationJournaliereWithDraftXLSX("pp", org, lots, saPtr)
 		filename = fmt.Sprintf("ANPP-DCE-Declaration-Journaliere-PP_%s.xlsx", time.Now().Format("2006-01-02"))
 		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 	case "declaration-journaliere-dm":
-		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("dm", org, lots)
+		var saDraft domain.DCESAComplementDraft
+		var saPtr *domain.DCESAComplementDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "dce_sa_complement", user.OrganizationID, &saDraft) {
+			saPtr = &saDraft
+		}
+		outBytes, err = reporting.GenerateDCEDeclarationJournaliereWithDraftXLSX("dm", org, lots, saPtr)
 		filename = fmt.Sprintf("ANPP-DDM-Declaration-Journaliere-DM_%s.xlsx", time.Now().Format("2006-01-02"))
 		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 	case "declaration-journaliere-pp-dm":
-		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("pp_dm", org, lots)
+		var saDraft domain.DCESAComplementDraft
+		var saPtr *domain.DCESAComplementDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "dce_sa_complement", user.OrganizationID, &saDraft) {
+			saPtr = &saDraft
+		}
+		outBytes, err = reporting.GenerateDCEDeclarationJournaliereWithDraftXLSX("pp_dm", org, lots, saPtr)
 		filename = fmt.Sprintf("ANPP-DCE-Declaration-Journaliere-PP-DM_%s.xlsx", time.Now().Format("2006-01-02"))
 		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 	case "ca-sr-secondaire":
-		outBytes, err = reporting.GenerateDCETemplateCASRSecondaireDOCX(org)
+		var srDraft domain.CASRSecondaireDraft
+		var srPtr *domain.CASRSecondaireDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "ca_sr_secondaire", user.OrganizationID, &srDraft) {
+			srPtr = &srDraft
+		}
+		outBytes, err = reporting.GenerateDCETemplateCASRSecondaireWithDraftDOCX(org, srPtr)
 		filename = "ANPP-DCE-Prototype-CA-SR-Secondaire.docx"
 	default:
 		writeJSONError(w, http.StatusBadRequest, "Type de formulaire DCE inconnu")

@@ -73,6 +73,7 @@ func main() {
 	var corpHandler *api.CorporateHandler
 	var recallHandler *api.RecallHandler
 	var inspectionHandler *api.InspectionHandler
+	var anppDraftHandler *api.ANPPDraftHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -154,6 +155,7 @@ func main() {
 		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
 		recallHandler = api.NewRecallHandler(db.Pool, auditService, gedRepo, storageProvider)
 		inspectionHandler = api.NewInspectionHandler(db.Pool, auditService, gedRepo, storageProvider)
+		anppDraftHandler = api.NewANPPDraftHandler(db.Pool, auditService)
 
 		dmRepo := repository.NewDMRepository(db.Pool)
 		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService).WithGED(gedRepo, storageProvider)
@@ -677,6 +679,12 @@ func main() {
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Post("/api/v1/inspections/findings/{id}/capa", inspectionHandler.SubmitCAPA)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/inspections/findings/{id}/close", inspectionHandler.CloseFinding)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Put("/api/v1/regulatory-status/{kind}/{id}", inspectionHandler.UpdateProductRegulatoryStatus)
+			}
+
+			// Brouillons éditables des formulaires complémentaires ANPP
+			if anppDraftHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/anpp-drafts/{kind}", anppDraftHandler.GetDraft)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocApprovePDT)).Put("/api/v1/anpp-drafts/{kind}", anppDraftHandler.SaveDraft)
 			}
 
 			if dmModHandler != nil {

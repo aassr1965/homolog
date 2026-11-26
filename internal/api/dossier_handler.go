@@ -937,7 +937,17 @@ func (h *DossierHandler) DownloadOfficialDEPPForm(w http.ResponseWriter, r *http
 		}
 	}
 
-	docBytes, err := reporting.GenerateDEPPFormDOCX(formType, dossier, &org)
+	var docBytes []byte
+	if formType == "structure-prix" {
+		var spDraft domain.StructurePrixDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "structure_prix", dossier.ID, &spDraft) {
+			docBytes, err = reporting.GenerateDEPPStructurePrixWithDraftDOCX(&spDraft)
+		} else {
+			docBytes, err = reporting.GenerateDEPPFormDOCX(formType, dossier, &org)
+		}
+	} else {
+		docBytes, err = reporting.GenerateDEPPFormDOCX(formType, dossier, &org)
+	}
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "Erreur génération formulaire officiel DEPP: "+err.Error())
 		return

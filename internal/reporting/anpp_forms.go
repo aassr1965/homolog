@@ -515,6 +515,11 @@ func GenerateDCECertificatLiberationPPDOCX(lot *domain.ImportLotRelease) ([]byte
 
 // GenerateDVTIVBasePDTQPPVDOCX pré-remplit le formulaire DVTIV « FORMULAIRE-DRAFT- Base de données centralisées des PDT et QPPV.docx ».
 func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User, marketedCount int, hasPSMF, hasPSMFNational bool, estTypes ...string) ([]byte, error) {
+	return GenerateDVTIVBasePDTQPPVDOCXWithDraft(org, pdt, assistant, qppv, nil, marketedCount, hasPSMF, hasPSMFNational, estTypes...)
+}
+
+// GenerateDVTIVBasePDTQPPVDOCXWithDraft pré-remplit le formulaire DVTIV en fusionnant un éventuel brouillon QPPV/PSMF.
+func GenerateDVTIVBasePDTQPPVDOCXWithDraft(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User, qppvDraft *domain.DVTIVQPPVDraft, marketedCount int, hasPSMF, hasPSMFNational bool, estTypes ...string) ([]byte, error) {
 	tpl, err := GetANPPTemplate("dvtiv_base_pdt_qppv.docx")
 	if err != nil {
 		return nil, err
@@ -541,10 +546,30 @@ func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, as
 	if assistant != nil {
 		asstName = strings.TrimSpace(assistant.FirstName + " " + assistant.LastName)
 	}
-	qppvName, qppvEmail := "", ""
+	qppvName, qppvEmail, qppvPhone, qppvDeputy := "", "", "", ""
 	if qppv != nil {
 		qppvName = strings.TrimSpace(qppv.FirstName + " " + qppv.LastName)
 		qppvEmail = qppv.Email
+	}
+	if qppvDraft != nil {
+		if strings.TrimSpace(qppvDraft.QPPVName) != "" {
+			qppvName = strings.TrimSpace(qppvDraft.QPPVName)
+		}
+		if strings.TrimSpace(qppvDraft.QPPVEmail) != "" {
+			qppvEmail = strings.TrimSpace(qppvDraft.QPPVEmail)
+		}
+		if strings.TrimSpace(qppvDraft.QPPVPhone) != "" {
+			qppvPhone = strings.TrimSpace(qppvDraft.QPPVPhone)
+		}
+		if strings.TrimSpace(qppvDraft.QPPVDeputy) != "" {
+			qppvDeputy = strings.TrimSpace(qppvDraft.QPPVDeputy)
+		}
+		if qppvDraft.HasPSMF {
+			hasPSMF = true
+		}
+		if qppvDraft.HasPSMFNational {
+			hasPSMFNational = true
+		}
 	}
 
 	cellUpdates := []TableCellCoord{
@@ -555,6 +580,8 @@ func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, as
 		{TableIndex: 0, RowIndex: 5, ColIndex: 1, Value: asstName},
 		{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: qppvName},
 		{TableIndex: 1, RowIndex: 2, ColIndex: 1, Value: qppvEmail},
+		{TableIndex: 1, RowIndex: 3, ColIndex: 1, Value: qppvPhone},
+		{TableIndex: 1, RowIndex: 4, ColIndex: 1, Value: qppvDeputy},
 	}
 
 	textRepl := map[string]string{}
@@ -668,6 +695,11 @@ func GenerateDCECanevasCertificatLiberationDOCX(org *domain.Organization, lot *d
 
 // GenerateDCEDeclarationQuotidienneDOCX pré-remplit les déclarations quotidiennes DCE (.docx) pour PP ou DM.
 func GenerateDCEDeclarationQuotidienneDOCX(kind string, org *domain.Organization, lots []*domain.ImportLotRelease) ([]byte, error) {
+	return GenerateDCEDeclarationQuotidienneWithDraftDOCX(kind, org, lots, nil)
+}
+
+// GenerateDCEDeclarationQuotidienneWithDraftDOCX pré-remplit les déclarations quotidiennes DCE (.docx) avec le complément SA.
+func GenerateDCEDeclarationQuotidienneWithDraftDOCX(kind string, org *domain.Organization, lots []*domain.ImportLotRelease, saDraft *domain.DCESAComplementDraft) ([]byte, error) {
 	isDM := strings.EqualFold(strings.TrimSpace(kind), "dm")
 	tplName := "dce_decl_quotidienne_pp.docx"
 	if isDM {
@@ -722,6 +754,13 @@ func GenerateDCEDeclarationQuotidienneDOCX(kind string, org *domain.Organization
 				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 7, Value: ddpStr},
 				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 8, Value: lot.SalesUnits},
 			)
+			if saDraft != nil {
+				cellUpdates = append(cellUpdates,
+					TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 9, Value: saDraft.SALotNumber},
+					TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 10, Value: strings.TrimSpace(saDraft.SADDF + " / " + saDraft.SADDP)},
+					TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 11, Value: saDraft.SAManufacturer},
+				)
+			}
 		} else {
 			cellUpdates = append(cellUpdates,
 				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 0, Value: relDate},
@@ -734,6 +773,13 @@ func GenerateDCEDeclarationQuotidienneDOCX(kind string, org *domain.Organization
 				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 8, Value: ddpStr},
 				TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 9, Value: lot.SalesUnits},
 			)
+			if saDraft != nil {
+				cellUpdates = append(cellUpdates,
+					TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 10, Value: saDraft.SALotNumber},
+					TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 11, Value: strings.TrimSpace(saDraft.SADDF + " / " + saDraft.SADDP)},
+					TableCellCoord{TableIndex: 2, RowIndex: rowIdx, ColIndex: 12, Value: saDraft.SAManufacturer},
+				)
+			}
 		}
 		rowIdx++
 	}
@@ -743,6 +789,11 @@ func GenerateDCEDeclarationQuotidienneDOCX(kind string, org *domain.Organization
 
 // GenerateDCEDeclarationJournaliereXLSX pré-remplit les canevas Excel de déclaration journalière (« pp », « dm » ou « pp_dm »).
 func GenerateDCEDeclarationJournaliereXLSX(kind string, org *domain.Organization, lots []*domain.ImportLotRelease) ([]byte, error) {
+	return GenerateDCEDeclarationJournaliereWithDraftXLSX(kind, org, lots, nil)
+}
+
+// GenerateDCEDeclarationJournaliereWithDraftXLSX pré-remplit les canevas Excel avec le complément SA.
+func GenerateDCEDeclarationJournaliereWithDraftXLSX(kind string, org *domain.Organization, lots []*domain.ImportLotRelease, saDraft *domain.DCESAComplementDraft) ([]byte, error) {
 	k := strings.ToLower(strings.TrimSpace(kind))
 	isCombined := k == "pp_dm"
 	isDMOnly := k == "dm"
@@ -814,6 +865,15 @@ func GenerateDCEDeclarationJournaliereXLSX(kind string, org *domain.Organization
 				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("J%d", r), Value: ddpStr},
 				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("K%d", r), Value: lot.SalesUnits},
 			)
+			if saDraft != nil {
+				updates = append(updates,
+					XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("L%d", r), Value: saDraft.SAName},
+					XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("M%d", r), Value: saDraft.SALotNumber},
+					XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("N%d", r), Value: saDraft.SADDF},
+					XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("O%d", r), Value: saDraft.SADDP},
+					XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("P%d", r), Value: saDraft.SAManufacturer},
+				)
+			}
 			dmRow++
 		} else if !isDMOnly {
 			r := ppRow
@@ -828,6 +888,20 @@ func GenerateDCEDeclarationJournaliereXLSX(kind string, org *domain.Organization
 				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("J%d", r), Value: ddpStr},
 				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("K%d", r), Value: lot.SalesUnits},
 			)
+			if saDraft != nil {
+				firstLot := "NON"
+				if saDraft.FirstMarketedLot {
+					firstLot = "OUI"
+				}
+				updates = append(updates,
+					XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("G%d", r), Value: saDraft.ChannelAllocation},
+					XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("L%d", r), Value: saDraft.SALotNumber},
+					XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("M%d", r), Value: saDraft.SADDF},
+					XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("N%d", r), Value: saDraft.SADDP},
+					XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("O%d", r), Value: saDraft.SAManufacturer},
+					XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("P%d", r), Value: firstLot},
+				)
+			}
 			ppRow++
 		}
 	}
@@ -837,13 +911,110 @@ func GenerateDCEDeclarationJournaliereXLSX(kind string, org *domain.Organization
 
 // GenerateDCETemplateCASRSecondaireDOCX pré-remplit le prototype Certificat d'analyse SR secondaire.
 func GenerateDCETemplateCASRSecondaireDOCX(org *domain.Organization) ([]byte, error) {
+	return GenerateDCETemplateCASRSecondaireWithDraftDOCX(org, nil)
+}
+
+// GenerateDCETemplateCASRSecondaireWithDraftDOCX pré-remplit le prototype Certificat d'analyse SR secondaire depuis un brouillon.
+func GenerateDCETemplateCASRSecondaireWithDraftDOCX(org *domain.Organization, draft *domain.CASRSecondaireDraft) ([]byte, error) {
 	tpl, err := GetANPPTemplate("dce_template_ca_sr_secondaire.docx")
 	if err != nil {
 		return nil, err
 	}
 	textRepl := map[string]string{}
+	var cellUpdates []TableCellCoord
 	if org != nil && strings.TrimSpace(org.LegalName) != "" {
 		textRepl["Nom du fabricant/fournisseur :"] = "Nom du fabricant/fournisseur : " + strings.TrimSpace(org.LegalName)
 	}
-	return FillDOCXTemplate(tpl, DOCXFillOptions{TextReplacements: textRepl})
+	if draft != nil {
+		if draft.StandardName != "" {
+			textRepl["Nom du standard de référence secondaire :"] = "Nom du standard de référence secondaire : " + draft.StandardName
+		}
+		if draft.LotCode != "" {
+			textRepl["Numéro de lot/code d’identification interne :"] = "Numéro de lot/code d’identification interne : " + draft.LotCode
+		}
+		if draft.ExpiryDate != "" {
+			textRepl["Date d’expiration/de re-test :"] = "Date d’expiration/de re-test : " + draft.ExpiryDate
+		}
+		if draft.Manufacturer != "" {
+			textRepl["Nom du fabricant/fournisseur :"] = "Nom du fabricant/fournisseur : " + draft.Manufacturer
+		}
+		if draft.MethodRef != "" {
+			textRepl["Référence de la méthode de standardisation\u00a0:"] = "Référence de la méthode de standardisation : " + draft.MethodRef
+			textRepl["Référence de la méthode de standardisation :"] = "Référence de la méthode de standardisation : " + draft.MethodRef
+		}
+		if draft.Weighing != "" {
+			textRepl["Pesée :"] = "Pesée : " + draft.Weighing
+		}
+		if draft.StorageConditions != "" {
+			textRepl["Conditions de conservation :"] = "Conditions de conservation : " + draft.StorageConditions
+		}
+		if draft.SafetyInstructions != "" {
+			textRepl["Consignes de sécurité (joindre la fiche des données de sécurités FDS)\u00a0:"] = "Consignes de sécurité (FDS jointe) : " + draft.SafetyInstructions
+			textRepl["Consignes de sécurité (joindre la fiche des données de sécurités FDS) :"] = "Consignes de sécurité (FDS jointe) : " + draft.SafetyInstructions
+		}
+		if draft.PrimaryLotNumber != "" {
+			textRepl["□   Ce standard de référence est traçable au SR primaire, N°lot\u00a0: ........"] = "☑   Ce standard de référence est traçable au SR primaire, N°lot : " + draft.PrimaryLotNumber
+		}
+		if draft.StabilityValidated {
+			textRepl["□   La durée de stabilité du standard est validée\u00a0;"] = "☑   La durée de stabilité du standard est validée ;"
+		}
+		if draft.EquipQualified {
+			textRepl["□   Les équipements utilisés pour la standardisation sont qualifiés"] = "☑   Les équipements utilisés pour la standardisation sont qualifiés"
+		}
+		cellUpdates = append(cellUpdates,
+			TableCellCoord{TableIndex: 0, RowIndex: 1, ColIndex: 1, Value: draft.DescSpec},
+			TableCellCoord{TableIndex: 0, RowIndex: 1, ColIndex: 2, Value: draft.DescResult},
+			TableCellCoord{TableIndex: 0, RowIndex: 2, ColIndex: 1, Value: draft.IdentSpec},
+			TableCellCoord{TableIndex: 0, RowIndex: 2, ColIndex: 2, Value: draft.IdentResult},
+			TableCellCoord{TableIndex: 0, RowIndex: 3, ColIndex: 1, Value: draft.AssaySpec},
+			TableCellCoord{TableIndex: 0, RowIndex: 3, ColIndex: 2, Value: draft.AssayResult},
+			TableCellCoord{TableIndex: 0, RowIndex: 4, ColIndex: 1, Value: draft.PuritySpec},
+			TableCellCoord{TableIndex: 0, RowIndex: 4, ColIndex: 2, Value: draft.PurityResult},
+			TableCellCoord{TableIndex: 0, RowIndex: 5, ColIndex: 1, Value: draft.WaterSpec},
+			TableCellCoord{TableIndex: 0, RowIndex: 5, ColIndex: 2, Value: draft.WaterResult},
+			TableCellCoord{TableIndex: 1, RowIndex: 1, ColIndex: 1, Value: draft.PreparedBy},
+			TableCellCoord{TableIndex: 1, RowIndex: 1, ColIndex: 2, Value: draft.VerifiedBy},
+			TableCellCoord{TableIndex: 1, RowIndex: 1, ColIndex: 3, Value: draft.ApprovedBy},
+		)
+	}
+	return FillDOCXTemplate(tpl, DOCXFillOptions{
+		TextReplacements: textRepl,
+		CellUpdates:      cellUpdates,
+	})
+}
+
+// GenerateDEPPStructurePrixWithDraftDOCX pré-remplit le modèle Structure de prix à la fabrication locale depuis un brouillon.
+func GenerateDEPPStructurePrixWithDraftDOCX(draft *domain.StructurePrixDraft) ([]byte, error) {
+	tpl, err := GetANPPTemplate("depp_modele_structure.docx")
+	if err != nil {
+		return nil, err
+	}
+	var cellUpdates []TableCellCoord
+	textRepl := map[string]string{}
+	if draft != nil {
+		cellUpdates = []TableCellCoord{
+			{TableIndex: 0, RowIndex: 1, ColIndex: 1, Value: draft.SubstanceActive},
+			{TableIndex: 0, RowIndex: 2, ColIndex: 1, Value: draft.MatieresImportees},
+			{TableIndex: 0, RowIndex: 3, ColIndex: 1, Value: draft.MatieresLocales},
+			{TableIndex: 0, RowIndex: 4, ColIndex: 1, Value: draft.ServicesImportes},
+			{TableIndex: 0, RowIndex: 5, ColIndex: 1, Value: draft.ServicesLocaux},
+			{TableIndex: 0, RowIndex: 6, ColIndex: 1, Value: draft.FraisPersonnel},
+			{TableIndex: 0, RowIndex: 7, ColIndex: 1, Value: draft.Taxes},
+			{TableIndex: 0, RowIndex: 8, ColIndex: 1, Value: draft.FraisFinanciers},
+			{TableIndex: 0, RowIndex: 9, ColIndex: 1, Value: draft.Amortissements},
+			{TableIndex: 0, RowIndex: 10, ColIndex: 1, Value: draft.AutresCharges},
+			{TableIndex: 0, RowIndex: 11, ColIndex: 1, Value: draft.PrixRevient},
+			{TableIndex: 0, RowIndex: 12, ColIndex: 1, Value: draft.PCSU},
+			{TableIndex: 0, RowIndex: 13, ColIndex: 1, Value: draft.TauxExportation},
+			{TableIndex: 0, RowIndex: 14, ColIndex: 1, Value: draft.TauxIntegration},
+		}
+		if strings.TrimSpace(draft.TauxChange) != "" {
+			textRepl["NB\u00a0: Mentionnez le taux de change utilisé."] = "NB : Taux de change utilisé : " + strings.TrimSpace(draft.TauxChange)
+			textRepl["NB : Mentionnez le taux de change utilisé."] = "NB : Taux de change utilisé : " + strings.TrimSpace(draft.TauxChange)
+		}
+	}
+	return FillDOCXTemplate(tpl, DOCXFillOptions{
+		CellUpdates:      cellUpdates,
+		TextReplacements: textRepl,
+	})
 }

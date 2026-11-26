@@ -3822,6 +3822,9 @@
                     <button type="button" class="btn-pill" id="btn-dvtiv-pdt-qppv" onclick="downloadDVTIVFormAndArchive()" title="Télécharger la fiche officielle ANPP DVTIV, l'archiver en GED (À signer) et la pré-rattacher aux checklists QPPV" style="font-size:11px; padding:2px 8px; height:26px; background:#0284c7; color:white; border:none; display:flex; align-items:center; gap:4px; cursor:pointer;">
                         <span>📥</span> <span>Fiche DVTIV PDT/QPPV (.docx)</span>
                     </button>
+                    <button type="button" class="btn-pill" id="btn-dvtiv-pdt-qppv-draft" onclick="openANPPDraftModal('dvtiv_qppv')" title="Saisir ou modifier le brouillon QPPV/RLPV et PSMF injecté dans la fiche DVTIV" style="font-size:11px; padding:2px 8px; height:26px; background:var(--bg-sub); color:var(--text-main); border:1px solid var(--border-color); display:flex; align-items:center; gap:4px; cursor:pointer;">
+                        <span>✏️</span> <span>Compléter QPPV/PSMF</span>
+                    </button>
                     <button type="button" class="btn-pill" id="btn-parapheur-delegations" onclick="openDTDelegationsModal()" title="Consulter ou établir un mandat d'intérim / suppléance (Décret 21-82 Art. 24)" style="font-size:11px; padding:2px 8px; height:26px; color:#d97706; border-color:#d97706; display:flex; align-items:center; gap:4px; cursor:pointer;">
                         <span>🛡️</span> <span>Intérim DT (Décret 21-82)</span>
                     </button>
@@ -4292,6 +4295,35 @@
         </div>
     </div>
 
+    <!-- Modal Brouillon Éditable Formulaires ANPP -->
+    <div class="modal-overlay" id="modal-anpp-draft-editor" onclick="if(event.target === this) closeModal('modal-anpp-draft-editor')">
+        <div class="modal" style="width:700px; max-width:calc(100vw - 24px); max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header" style="border-bottom:2px solid #0284c7; background:rgba(2,132,199,0.06); padding:10px 16px;">
+                <div>
+                    <div class="modal-title" id="anpp-draft-modal-title" style="font-weight:800; font-size:13.5px;">✏️ Brouillon Formulaire ANPP</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                        <span class="badge" style="background:rgba(217,119,6,0.12); color:#b45309; padding:1px 6px; border-radius:4px; font-weight:700;">BROUILLON ÉDITABLE</span>
+                        Modifiable à tout moment sans verrouillage — injecté automatiquement lors de la génération Word/Excel.
+                    </div>
+                </div>
+                <button type="button" class="close-btn" onclick="closeModal('modal-anpp-draft-editor')">✕</button>
+            </div>
+            <form id="anpp-draft-form" onsubmit="saveANPPDraft(event, false)" style="padding:14px 16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; font-size:12px;">
+                <input type="hidden" id="anpp-draft-kind">
+                <input type="hidden" id="anpp-draft-entity-id">
+                <div id="anpp-draft-fields" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border-top:1px solid var(--border-color); padding-top:10px; margin-top:4px;">
+                    <span id="anpp-draft-status-note" style="font-size:11px; color:var(--text-muted);">Statut : brouillon persistant</span>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn-pill" onclick="closeModal('modal-anpp-draft-editor')">Fermer</button>
+                        <button type="submit" class="btn-pill" style="background:var(--bg-sub); border:1px solid var(--border-color); font-weight:700;">💾 Enregistrer brouillon</button>
+                        <button type="button" class="btn-pill" onclick="saveANPPDraft(event, true)" style="background:#0284c7; color:white; border:none; font-weight:700;">💾 &amp; 📥 Générer document</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Parcours Reliance Dossier CTD (ANPP Confiance Réglementaire) -->
     <div class="modal-overlay" id="modal-dossier-reliance" onclick="if(event.target === this) closeModal('modal-dossier-reliance')">
         <div class="modal" style="width:480px; max-width:calc(100vw - 24px);">
@@ -4426,6 +4458,8 @@
                         <button type="button" class="btn-pill" style="font-size:10.5px; padding:3px 8px;" onclick="downloadDCEOfficialForm('declaration-journaliere-pp')">📊 Décl. Journalière PP (.xlsx)</button>
                         <button type="button" class="btn-pill" style="font-size:10.5px; padding:3px 8px;" onclick="downloadDCEOfficialForm('declaration-journaliere-pp-dm')">📊 Décl. Journalière PP+DM (.xlsx)</button>
                         <button type="button" class="btn-pill" style="font-size:10.5px; padding:3px 8px;" onclick="downloadDCEOfficialForm('ca-sr-secondaire')">🧪 CA SR Secondaire (.docx)</button>
+                        <button type="button" class="btn-pill" style="font-size:10.5px; padding:3px 8px; background:var(--bg-sub); border:1px dashed #0284c7; color:#0284c7; font-weight:600;" onclick="openANPPDraftModal('dce_sa_complement')">✏️ Compléter SA / Lots</button>
+                        <button type="button" class="btn-pill" style="font-size:10.5px; padding:3px 8px; background:var(--bg-sub); border:1px dashed #0284c7; color:#0284c7; font-weight:600;" onclick="openANPPDraftModal('ca_sr_secondaire')">✏️ Saisir CA SR Secondaire</button>
                     </div>
                 </div>
                 <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid var(--border-color); padding-top:10px;">

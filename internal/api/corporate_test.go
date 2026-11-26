@@ -680,3 +680,100 @@ func TestInspectionCAPAAndProductStatusLotGating(t *testing.T) {
 		t.Fatalf("contournement PDT avec motif attendu 201, reçu %d: %s", wOverride.Code, wOverride.Body.String())
 	}
 }
+
+func TestANPPFormDraftsEditableAndDOCXInjection(t *testing.T) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
+	}
+	ctx := context.Background()
+	db, err := database.Connect(ctx, dbURL)
+	if err != nil {
+		t.Skipf("PostgreSQL non disponible, test ignoré : %v", err)
+		return
+	}
+	defer db.Close()
+
+	testOrgID := uuid.New()
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), "DELETE FROM organizations WHERE id = $1", testOrgID)
+	}()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO organizations (id, slug, legal_name, is_active) VALUES ($1, $2, 'Labo Drafts Test', true)`, testOrgID, "lab-draft-"+testOrgID.String()[:8]); err != nil {
+		t.Fatalf("création org: %v", err)
+	}
+
+	pdtID := uuid.New()
+	hashedPwd, _ := auth.HashPassword("TestDraft2026!", auth.DefaultArgon2Params)
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, is_active) VALUES ($1, $2, 'pdt-draft@test.dz', $3, 'Dr.', 'Draft', 'directeur_technique', true)`, pdtID, testOrgID, hashedPwd); err != nil {
+		t.Fatalf("création user: %v", err)
+	}
+
+	dossierID := uuid.New()
+	_, err = db.Pool.Exec(ctx, `
+		INSERT INTO dossiers (id, organization_id, internal_reference, dossier_code, procedure_code, product_type, status)
+		VALUES ($1, $2, 'REF-DRAFT-01', 'REF-DRAFT-01', 'NF', 'medicament', 'brouillon')
+	`, dossierID, testOrgID)
+	if err != nil {
+		t.Fatalf("création dossier test: %v", err)
+	}
+
+	dossierRepo := repository.NewDossierRepository(db.Pool)
+	pharmaRepo := repository.NewPharmaRepository(db.Pool)
+	gedRepo := repository.NewGEDRepository(db.Pool)
+	auditSvc := audit.NewService(db.Pool)
+	store, _ := storage.NewLocalCASStorage(t.TempDir())
+	dossierHandler := NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditSvc, db.Pool).WithStorage(store)
+	draftHandler := NewANPPDraftHandler(db.Pool, auditSvc)
+
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{UserID: pdtID, OrganizationID: testOrgID, Email: "pdt-draft@test.dz", Role: "directeur_technique"}
+			next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), UserContextKey, su)))
+		})
+	})
+	r.Get("/api/v1/anpp-drafts/{kind}", draftHandler.GetDraft)
+	r.Put("/api/v1/anpp-drafts/{kind}", draftHandler.SaveDraft)
+	r.Get("/api/v1/dossiers/{id}/official-form", dossierHandler.DownloadOfficialDEPPForm)
+
+	// 1. Enregistrer un brouillon Structure de Prix
+	draftPayload := `{"substance_active":"Paracétamol 450 DZD/kg","prix_revient":"285.50 DZD","pcsu":"340.00 DZD","taux_change":"1 EUR = 145.20 DZD"}`
+	reqPut := httptest.NewRequest("PUT", "/api/v1/anpp-drafts/structure_prix?entity_id="+dossierID.String(), bytes.NewBufferString(draftPayload))
+	reqPut.Header.Set("Content-Type", "application/json")
+	wPut := httptest.NewRecorder()
+	r.ServeHTTP(wPut, reqPut)
+	if wPut.Code != http.StatusOK {
+		t.Fatalf("PUT anpp-drafts attendu 200, reçu %d: %s", wPut.Code, wPut.Body.String())
+	}
+
+	// 2. Relire et vérifier que le statut reste 'brouillon' et ré-éditable
+	reqGet := httptest.NewRequest("GET", "/api/v1/anpp-drafts/structure_prix?entity_id="+dossierID.String(), nil)
+	wGet := httptest.NewRecorder()
+	r.ServeHTTP(wGet, reqGet)
+	if wGet.Code != http.StatusOK {
+		t.Fatalf("GET anpp-drafts attendu 200, reçu %d: %s", wGet.Code, wGet.Body.String())
+	}
+	if !bytes.Contains(wGet.Body.Bytes(), []byte(`"status":"brouillon"`)) || !bytes.Contains(wGet.Body.Bytes(), []byte(`"pcsu":"340.00 DZD"`)) {
+		t.Fatalf("brouillon inattendu: %s", wGet.Body.String())
+	}
+
+	// 3. Mettre à jour le brouillon pour prouver qu'il reste éditable
+	reqPut2 := httptest.NewRequest("PUT", "/api/v1/anpp-drafts/structure_prix?entity_id="+dossierID.String(), bytes.NewBufferString(`{"substance_active":"Paracétamol 460 DZD/kg","prix_revient":"290.00 DZD","pcsu":"355.00 DZD"}`))
+	reqPut2.Header.Set("Content-Type", "application/json")
+	wPut2 := httptest.NewRecorder()
+	r.ServeHTTP(wPut2, reqPut2)
+	if wPut2.Code != http.StatusOK {
+		t.Fatalf("2e PUT anpp-drafts attendu 200, reçu %d: %s", wPut2.Code, wPut2.Body.String())
+	}
+
+	// 4. Télécharger le DOCX Structure de Prix et vérifier que le ZIP DOCX est généré (PK...)
+	reqDoc := httptest.NewRequest("GET", "/api/v1/dossiers/"+dossierID.String()+"/official-form?type=structure-prix", nil)
+	wDoc := httptest.NewRecorder()
+	r.ServeHTTP(wDoc, reqDoc)
+	if wDoc.Code != http.StatusOK {
+		t.Fatalf("GET official-form structure-prix attendu 200, reçu %d: %s", wDoc.Code, wDoc.Body.String())
+	}
+	if wDoc.Body.Len() < 100 || wDoc.Body.Bytes()[0] != 'P' || wDoc.Body.Bytes()[1] != 'K' {
+		t.Fatalf("fichier DOCX invalide (taille=%d)", wDoc.Body.Len())
+	}
+}
