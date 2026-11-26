@@ -1107,6 +1107,10 @@ window.escapeHTML = escapeHtml;
             if (el) {
                 el.classList.add("open");
                 el.style.display = "flex";
+                const modal = el.querySelector('.modal');
+                if (modal) {
+                    setTimeout(() => initModalWindowResizer(modal), 10);
+                }
             }
         }
 
@@ -1232,15 +1236,33 @@ window.escapeHTML = escapeHtml;
         }
 
         // Initialiseur générique de modales redimensionnables et déplaçables (Façon Fenêtre OS)
-        function initModalWindowResizer(dialogId, headerId, options) {
-            const dialog = document.getElementById(dialogId);
-            if (!dialog) return;
+        function initModalWindowResizer(dialogOrId, headerId, options) {
+            const dialog = typeof dialogOrId === 'string' ? document.getElementById(dialogOrId) : dialogOrId;
+            if (!dialog || window.innerWidth <= 768) return;
             if (dialog._resizerInitialized) return;
             dialog._resizerInitialized = true;
 
-            const header = headerId ? document.getElementById(headerId) : dialog.querySelector('.modal-header');
-            const minWidth = (options && options.minWidth) || 480;
-            const minHeight = (options && options.minHeight) || 360;
+            if (dialog.querySelectorAll('.modal-resize-edge').length === 0) {
+                const dirs = [
+                    ['n', 'Étirer vers le haut'], ['s', 'Étirer vers le bas'],
+                    ['w', 'Étirer vers la gauche'], ['e', 'Étirer vers la droite'],
+                    ['nw', "Étirer l'angle haut-gauche"], ['ne', "Étirer l'angle haut-droit"],
+                    ['sw', "Étirer l'angle bas-gauche"], ['se', "Étirer l'angle bas-droit"]
+                ];
+                dirs.forEach(([d, title]) => {
+                    const edge = document.createElement('div');
+                    edge.className = `modal-resize-edge edge-${d}`;
+                    edge.dataset.direction = d;
+                    edge.title = title;
+                    dialog.appendChild(edge);
+                });
+            }
+
+            const header = headerId
+                ? document.getElementById(headerId)
+                : (dialog.querySelector('.modal-header') || dialog.firstElementChild);
+            const minWidth = (options && options.minWidth) || 340;
+            const minHeight = (options && options.minHeight) || 220;
 
             const edges = dialog.querySelectorAll('.modal-resize-edge');
             edges.forEach(edge => {
@@ -1368,6 +1390,45 @@ window.escapeHTML = escapeHtml;
             }
         }
         window.initModalWindowResizer = initModalWindowResizer;
+
+        function initAllMovableResizableModals() {
+            document.querySelectorAll('.modal-overlay .modal').forEach((modal) => {
+                initModalWindowResizer(modal);
+            });
+            if (!window._modalResizerObserver && typeof MutationObserver !== 'undefined') {
+                window._modalResizerObserver = new MutationObserver((mutations) => {
+                    for (const m of mutations) {
+                        if (m.type === 'attributes' && m.target.classList && m.target.classList.contains('modal-overlay')) {
+                            if (m.target.classList.contains('open') || m.target.classList.contains('active') || m.target.style.display === 'flex') {
+                                const modal = m.target.querySelector('.modal');
+                                if (modal) initModalWindowResizer(modal);
+                            }
+                        } else if (m.type === 'childList') {
+                            m.addedNodes.forEach((node) => {
+                                if (node.nodeType === 1) {
+                                    if (node.matches && node.matches('.modal-overlay .modal')) {
+                                        initModalWindowResizer(node);
+                                    } else if (node.querySelectorAll) {
+                                        node.querySelectorAll('.modal-overlay .modal').forEach((sub) => initModalWindowResizer(sub));
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+                window._modalResizerObserver.observe(document.body, {
+                    subtree: true,
+                    childList: true,
+                    attributes: true,
+                    attributeFilter: ['class', 'style']
+                });
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAllMovableResizableModals);
+        } else {
+            initAllMovableResizableModals();
+        }
 
         // Visualiseur universel de documents & scans in-app (Agrandissable & Redimensionnable)
         function openDocumentViewerModal(docId, docTitle, versionId) {

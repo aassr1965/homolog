@@ -955,6 +955,7 @@
         }
         .modal-overlay.open, .modal-overlay.active { display: flex !important; }
         .modal {
+            position: relative;
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -993,6 +994,16 @@
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .modal.modal-fullscreen .modal-resize-edge { display: none !important; }
+        .modal-header { cursor: grab; user-select: none; }
+        .modal-resize-edge { position: absolute; z-index: 100005; background: transparent; }
+        .modal-resize-edge.edge-n { top: -3px; left: 8px; right: 8px; height: 7px; cursor: ns-resize; }
+        .modal-resize-edge.edge-s { bottom: -3px; left: 8px; right: 8px; height: 7px; cursor: ns-resize; }
+        .modal-resize-edge.edge-w { left: -3px; top: 8px; bottom: 8px; width: 7px; cursor: ew-resize; }
+        .modal-resize-edge.edge-e { right: -3px; top: 8px; bottom: 8px; width: 7px; cursor: ew-resize; }
+        .modal-resize-edge.edge-nw { top: -3px; left: -3px; width: 12px; height: 12px; cursor: nwse-resize; }
+        .modal-resize-edge.edge-ne { top: -3px; right: -3px; width: 12px; height: 12px; cursor: nesw-resize; }
+        .modal-resize-edge.edge-sw { bottom: -3px; left: -3px; width: 12px; height: 12px; cursor: nesw-resize; }
+        .modal-resize-edge.edge-se { bottom: -3px; right: -3px; width: 12px; height: 12px; cursor: nwse-resize; }
 
         .modal-fullscreen .modal-body {
             flex: 1 !important;

@@ -35,3 +35,13 @@
 > - **Messages d'information riches ou alertes réglementaires bloquantes** : `showNotifyModal(title, contentHtml, icon, btnText)`.
 > - **Demandes de confirmation (Oui/Non)** : `await showConfirmModal(title, message, options)`.
 > - **Saisies courtes de motif ou commentaire** : `await showPromptModal(title, message, defaultValue, options)`.
+
+## 5. Règle Permanente : Ergonomie des Modales — Déplacement & Redimensionnement Obligatoires
+> [!IMPORTANT]
+> **Règle d'interface utilisateur (UX) :**
+> Toutes les boîtes de dialogue modales (`.modal-overlay > .modal`) doivent être **déplaçables** (glisser-déposer par leur en-tête `.modal-header`) et **redimensionnables** (poignées sur les bords et angles `.modal-resize-edge` initialisées par `initModalWindowResizer` dans `web/js/app.js`).
+>
+> **Consigne obligatoire pour toute nouvelle modale :**
+> 1. Utiliser systématiquement la structure standard `.modal-overlay > .modal > .modal-header` afin que l'initialiseur global (`initAllMovableResizableModals` + `openModal`) rende automatiquement la fenêtre déplaçable et redimensionnable.
+> 2. Ne jamais verrouiller `position` ou `overflow` d'une manière qui empêche le déplacement ou le redimensionnement sur ordinateur.
+
