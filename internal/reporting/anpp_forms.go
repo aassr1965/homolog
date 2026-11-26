@@ -455,7 +455,7 @@ func GenerateDCECertificatLiberationPPDOCX(lot *domain.ImportLotRelease) ([]byte
 }
 
 // GenerateDVTIVBasePDTQPPVDOCX pré-remplit le formulaire DVTIV « FORMULAIRE-DRAFT- Base de données centralisées des PDT et QPPV.docx ».
-func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User, marketedCount int, estTypes ...string) ([]byte, error) {
+func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, assistant *domain.User, qppv *domain.User, marketedCount int, hasPSMF, hasPSMFNational bool, estTypes ...string) ([]byte, error) {
 	tpl, err := GetANPPTemplate("dvtiv_base_pdt_qppv.docx")
 	if err != nil {
 		return nil, err
@@ -534,9 +534,21 @@ func GenerateDVTIVBasePDTQPPVDOCX(org *domain.Organization, pdt *domain.User, as
 		}
 	}
 
+	cellStrikeTerms := map[[3]int][]string{
+		{2, 1, 1}: {"Présence"},
+		{2, 2, 1}: {"Présence"},
+	}
+	if hasPSMF {
+		cellStrikeTerms[[3]int{2, 1, 1}] = []string{"Absence"}
+	}
+	if hasPSMFNational {
+		cellStrikeTerms[[3]int{2, 2, 1}] = []string{"Absence"}
+	}
+
 	return FillDOCXTemplate(tpl, DOCXFillOptions{
 		CellUpdates:      cellUpdates,
 		TextReplacements: textRepl,
 		StrikeTerms:      strikeTerms,
+		CellStrikeTerms:  cellStrikeTerms,
 	})
 }

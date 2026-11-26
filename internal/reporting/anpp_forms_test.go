@@ -239,7 +239,7 @@ func TestGenerateDCELotAndDVTIVDOCX(t *testing.T) {
 
 	pdt := &domain.User{FirstName: "Dr. Yacine", LastName: "Benkhalid", Email: "pdt@pharma.dz"}
 	asst := &domain.User{FirstName: "Dr. Lynda", LastName: "Amrani"}
-	dvtivOut, err := GenerateDVTIVBasePDTQPPVDOCX(org, pdt, asst, nil, 4, "fabricant_local", "importateur")
+	dvtivOut, err := GenerateDVTIVBasePDTQPPVDOCX(org, pdt, asst, nil, 4, true, false, "fabricant_local", "importateur")
 	if err != nil {
 		t.Fatalf("GenerateDVTIVBasePDTQPPVDOCX erreur: %v", err)
 	}

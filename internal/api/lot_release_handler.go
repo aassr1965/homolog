@@ -370,7 +370,14 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 	var marketedCount int
 	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM medicines WHERE organization_id = $1`, user.OrganizationID).Scan(&marketedCount)
 
-	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCX(&org, pdt, assistant, qppv, marketedCount, estTypes...)
+	var hasPSMF, hasPSMFNational bool
+	_ = h.pool.QueryRow(r.Context(), `
+		SELECT
+			EXISTS(SELECT 1 FROM ged_documents WHERE organization_id = $1 AND (LOWER(title_fr) LIKE '%psmf%' OR LOWER(document_code) LIKE '%psmf%' OR 'PSMF' = ANY(tags))),
+			EXISTS(SELECT 1 FROM ged_documents WHERE organization_id = $1 AND (LOWER(title_fr) LIKE '%psmf national%' OR LOWER(title_fr) LIKE '%psmf_national%' OR LOWER(document_code) LIKE '%psmf-nat%' OR 'PSMF_NATIONAL' = ANY(tags)))
+	`, user.OrganizationID).Scan(&hasPSMF, &hasPSMFNational)
+
+	docBytes, err := reporting.GenerateDVTIVBasePDTQPPVDOCX(&org, pdt, assistant, qppv, marketedCount, hasPSMF, hasPSMFNational, estTypes...)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur génération formulaire DVTIV: "+err.Error())
 		return

@@ -26,6 +26,8 @@ type DOCXFillOptions struct {
 	TextReplacements map[string]string
 	// StrikeTerms barre (w:strike) les mentions exactes inutiles dans les paragraphes (ex: statuts non applicables).
 	StrikeTerms []string
+	// CellStrikeTerms barre (w:strike) des mentions ciblées dans une cellule spécifique (TableIndex, RowIndex, ColIndex).
+	CellStrikeTerms map[[3]int][]string
 	// CellUpdates écrit des valeurs dans des coordonnées exactes (TableIndex, RowIndex, ColIndex).
 	CellUpdates []TableCellCoord
 }
@@ -213,7 +215,7 @@ func FillDOCXTemplate(templateBytes []byte, opts DOCXFillOptions) ([]byte, error
 		}
 
 		if f.Name == "word/document.xml" {
-			content = []byte(transformDocumentXML(string(content), normLabels, opts.TextReplacements, opts.StrikeTerms, coordMap))
+			content = []byte(transformDocumentXML(string(content), normLabels, opts.TextReplacements, opts.StrikeTerms, opts.CellStrikeTerms, coordMap))
 		}
 
 		hdr := f.FileHeader
@@ -236,7 +238,7 @@ func FillDOCXTemplate(templateBytes []byte, opts DOCXFillOptions) ([]byte, error
 	return outBuf.Bytes(), nil
 }
 
-func transformDocumentXML(docXML string, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, coordMap map[[3]int]string) string {
+func transformDocumentXML(docXML string, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, cellStrikeTerms map[[3]int][]string, coordMap map[[3]int]string) string {
 	tblRanges := findTagRanges(docXML, "w:tbl")
 	var out strings.Builder
 	last := 0
@@ -247,7 +249,7 @@ func transformDocumentXML(docXML string, normLabels map[string]string, textRepl 
 		segment = transformParagraphsInSegment(segment, textRepl, strikeTerms, true)
 		out.WriteString(segment)
 
-		tblXML := transformTableXML(docXML[tr[0]:tr[1]], ti, normLabels, textRepl, strikeTerms, coordMap)
+		tblXML := transformTableXML(docXML[tr[0]:tr[1]], ti, normLabels, textRepl, strikeTerms, cellStrikeTerms, coordMap)
 		out.WriteString(tblXML)
 		last = tr[1]
 	}
@@ -406,7 +408,7 @@ func ensureKeepNext(pXML string) string {
 	return pXML[:idx+1] + "<w:pPr><w:keepNext/><w:keepLines/></w:pPr>" + pXML[idx+1:]
 }
 
-func transformTableXML(tblXML string, tblIdx int, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, coordMap map[[3]int]string) string {
+func transformTableXML(tblXML string, tblIdx int, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, cellStrikeTerms map[[3]int][]string, coordMap map[[3]int]string) string {
 	rowRanges := findTagRanges(tblXML, "w:tr")
 	if len(rowRanges) == 0 {
 		return tblXML
@@ -415,14 +417,14 @@ func transformTableXML(tblXML string, tblIdx int, normLabels map[string]string, 
 	last := 0
 	for ri, rr := range rowRanges {
 		out.WriteString(tblXML[last:rr[0]])
-		out.WriteString(transformRowXML(tblXML[rr[0]:rr[1]], tblIdx, ri, normLabels, textRepl, strikeTerms, coordMap))
+		out.WriteString(transformRowXML(tblXML[rr[0]:rr[1]], tblIdx, ri, normLabels, textRepl, strikeTerms, cellStrikeTerms, coordMap))
 		last = rr[1]
 	}
 	out.WriteString(tblXML[last:])
 	return out.String()
 }
 
-func transformRowXML(rowXML string, tblIdx, rowIdx int, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, coordMap map[[3]int]string) string {
+func transformRowXML(rowXML string, tblIdx, rowIdx int, normLabels map[string]string, textRepl map[string]string, strikeTerms []string, cellStrikeTerms map[[3]int][]string, coordMap map[[3]int]string) string {
 	cellRanges := findTagRanges(rowXML, "w:tc")
 	if len(cellRanges) == 0 {
 		return rowXML
@@ -434,9 +436,13 @@ func transformRowXML(rowXML string, tblIdx, rowIdx int, normLabels map[string]st
 	}
 
 	// 1. Remplacements textuels et mentions barrées dans chaque cellule
-	if len(textRepl) > 0 || len(strikeTerms) > 0 {
-		for ci := range cells {
-			cells[ci] = transformParagraphsInSegment(cells[ci], textRepl, strikeTerms, false)
+	for ci := range cells {
+		cellStrikes := strikeTerms
+		if specific, ok := cellStrikeTerms[[3]int{tblIdx, rowIdx, ci}]; ok && len(specific) > 0 {
+			cellStrikes = append(append([]string(nil), strikeTerms...), specific...)
+		}
+		if len(textRepl) > 0 || len(cellStrikes) > 0 {
+			cells[ci] = transformParagraphsInSegment(cells[ci], textRepl, cellStrikes, false)
 		}
 	}
 
