@@ -1,9 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,19 +15,31 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"homolog/internal/audit"
+	"homolog/internal/auth"
 	"homolog/internal/domain"
 	"homolog/internal/reporting"
+	"homolog/internal/repository"
+	"homolog/internal/storage"
 )
 
 // LotReleaseHandler gère les bordereaux de libération de lots importés (DCE) et la fiche DVTIV PDT/QPPV.
 type LotReleaseHandler struct {
-	pool     *pgxpool.Pool
-	auditSvc *audit.Service
+	pool            *pgxpool.Pool
+	auditSvc        *audit.Service
+	gedRepo         *repository.GEDRepository
+	corpRepo        *repository.CorporateRepository
+	storageProvider storage.StorageProvider
 }
 
 // NewLotReleaseHandler initialise le handler DCE / DVTIV.
-func NewLotReleaseHandler(pool *pgxpool.Pool, auditSvc *audit.Service) *LotReleaseHandler {
-	return &LotReleaseHandler{pool: pool, auditSvc: auditSvc}
+func NewLotReleaseHandler(pool *pgxpool.Pool, auditSvc *audit.Service, gedRepo *repository.GEDRepository, corpRepo *repository.CorporateRepository, storageProvider storage.StorageProvider) *LotReleaseHandler {
+	return &LotReleaseHandler{
+		pool:            pool,
+		auditSvc:        auditSvc,
+		gedRepo:         gedRepo,
+		corpRepo:        corpRepo,
+		storageProvider: storageProvider,
+	}
 }
 
 // ListLotReleases liste les dossiers de libération de lots importés de l'organisation.
@@ -276,8 +291,9 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 
 	// Enrichir depuis establishments si adresse/téléphone manquants sur organizations + récupérer types d'établissement
 	var estTypes []string
+	var primaryEstID *uuid.UUID
 	estRows, estErr := h.pool.Query(r.Context(), `
-		SELECT COALESCE(establishment_type, ''), COALESCE(address_fr, ''), COALESCE(phone, '')
+		SELECT id, COALESCE(establishment_type, ''), COALESCE(address_fr, ''), COALESCE(phone, '')
 		FROM establishments
 		WHERE organization_id = $1 AND is_active = TRUE
 		ORDER BY created_at ASC
@@ -285,8 +301,13 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 	if estErr == nil {
 		defer estRows.Close()
 		for estRows.Next() {
+			var eid uuid.UUID
 			var et, ea, ep string
-			if estRows.Scan(&et, &ea, &ep) == nil {
+			if estRows.Scan(&eid, &et, &ea, &ep) == nil {
+				if primaryEstID == nil {
+					cp := eid
+					primaryEstID = &cp
+				}
 				if et != "" {
 					estTypes = append(estTypes, et)
 				}
@@ -310,7 +331,144 @@ func (h *LotReleaseHandler) DownloadDVTIVPDTQPPVForm(w http.ResponseWriter, r *h
 	}
 
 	filename := fmt.Sprintf("ANPP-DVTIV-Base-PDT-QPPV_%s.docx", time.Now().Format("2006-01-02"))
+	if gedDocID, gedDocCode, linkedCount := h.archiveDVTIVInGEDAndLinkChecklists(r, user, &org, primaryEstID, filename, docBytes); gedDocID != "" {
+		w.Header().Set("X-GED-Document-Id", gedDocID)
+		w.Header().Set("X-GED-Document-Code", gedDocCode)
+		w.Header().Set("X-Checklists-Linked", strconv.Itoa(linkedCount))
+	}
+
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	_, _ = w.Write(docBytes)
+}
+
+// archiveDVTIVInGEDAndLinkChecklists archive la fiche DVTIV générée en GED (statut BROUILLON)
+// et la pré-rattache aux items de checklist concernés (ex: EXP.PV.01) sans les valider automatiquement.
+func (h *LotReleaseHandler) archiveDVTIVInGEDAndLinkChecklists(
+	r *http.Request,
+	user *auth.SessionUser,
+	org *domain.Organization,
+	estID *uuid.UUID,
+	filename string,
+	docBytes []byte,
+) (string, string, int) {
+	if h.gedRepo == nil || h.storageProvider == nil || len(docBytes) == 0 {
+		return "", "", 0
+	}
+
+	ctx := r.Context()
+	fileSHA256, sizeBytes, storagePath, err := h.storageProvider.Save(ctx, bytes.NewReader(docBytes))
+	if err != nil {
+		return "", "", 0
+	}
+
+	docCode := fmt.Sprintf("DVTIV-%s-%s", time.Now().Format("20060102-150405"), uuid.NewString()[:4])
+	titleFR := "Fiche Officielle ANPP DVTIV — Base PDT & QPPV"
+	if org != nil && strings.TrimSpace(org.LegalName) != "" {
+		titleFR = fmt.Sprintf("%s (%s)", titleFR, strings.TrimSpace(org.LegalName))
+	}
+
+	doc := &domain.GEDDocumentDetailed{
+		ID:              uuid.New(),
+		OrganizationID:  user.OrganizationID,
+		TaxonomyPath:    "04_Vigilance_Post_Market/04_01_Pharmacovigilance",
+		TitleFR:         titleFR,
+		DocumentCode:    docCode,
+		DocumentType:    "FORMULAIRE_ANPP",
+		Department:      "pharmacovigilance",
+		Tags:            []string{"ANPP", "DVTIV", "PDT", "QPPV", "Pharmacovigilance"},
+		Status:          domain.GEDStatusBrouillon,
+		CurrentVersion:  "v0.1",
+		EstablishmentID: estID,
+		CreatedBy:       &user.UserID,
+	}
+	initialVersion := &domain.GEDVersionDetail{
+		ID:               uuid.New(),
+		VersionLabel:     "v0.1",
+		IsMajorVersion:   false,
+		RevisionSummary:  "Génération automatique depuis le Parapheur DT — En attente de signature (PDT/QPPV) et validation qualité",
+		FileSHA256:       fileSHA256,
+		FileSizeBytes:    sizeBytes,
+		MimeType:         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		OriginalFilename: filename,
+		StoragePath:      storagePath,
+		AuthorID:         &user.UserID,
+	}
+
+	createdDoc, err := h.gedRepo.CreateDocument(ctx, doc, initialVersion)
+	if err != nil {
+		return "", "", 0
+	}
+
+	if h.auditSvc != nil {
+		_, _ = h.auditSvc.Log(ctx, &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         audit.ActionDocUpload,
+			EntityType:     "ged_document",
+			EntityID:       createdDoc.DocumentCode,
+			Details: map[string]any{
+				"document_id":   createdDoc.ID.String(),
+				"title_fr":      createdDoc.TitleFR,
+				"taxonomy_path": createdDoc.TaxonomyPath,
+				"version_label": initialVersion.VersionLabel,
+				"file_sha256":   initialVersion.FileSHA256,
+				"file_size":     initialVersion.FileSizeBytes,
+				"original_file": initialVersion.OriginalFilename,
+				"source":        "dvtiv_auto_archive",
+			},
+			IPAddress: getClientIP(r),
+			UserAgent: r.UserAgent(),
+		})
+	}
+
+	linkedCount := h.linkDVTIVToChecklists(ctx, user.OrganizationID, createdDoc.ID)
+	return createdDoc.ID.String(), createdDoc.DocumentCode, linkedCount
+}
+
+func (h *LotReleaseHandler) linkDVTIVToChecklists(ctx context.Context, orgID, gedDocID uuid.UUID) int {
+	if h.corpRepo == nil || h.pool == nil {
+		return 0
+	}
+
+	rows, err := h.pool.Query(ctx, `
+		SELECT ci.application_id, ci.id
+		FROM corporate_checklist_items ci
+		JOIN corporate_applications ca ON ca.id = ci.application_id
+		WHERE ca.organization_id = $1
+		  AND ca.status NOT IN ('rejete', 'agrement_octroye')
+		  AND ci.item_code IN ('EXP.PV.01')
+		  AND ci.status IN ('manquant', 'rattache', 'rejete')
+	`, orgID)
+	if err != nil {
+		return 0
+	}
+	defer rows.Close()
+
+	type target struct {
+		appID  uuid.UUID
+		itemID uuid.UUID
+	}
+	var targets []target
+	for rows.Next() {
+		var t target
+		if rows.Scan(&t.appID, &t.itemID) == nil {
+			targets = append(targets, t)
+		}
+	}
+
+	linkedCount := 0
+	for _, t := range targets {
+		if err := h.corpRepo.AttachDocumentToItem(ctx, orgID, t.appID, t.itemID, gedDocID); err == nil {
+			_, _ = h.pool.Exec(ctx, `
+				UPDATE corporate_checklist_items
+				SET notes = $1, updated_at = NOW()
+				WHERE id = $2 AND application_id = $3
+			`, "Fiche DVTIV PDT/QPPV générée automatiquement — En attente de signature PDT/QPPV et validation qualité.", t.itemID, t.appID)
+			linkedCount++
+		}
+	}
+	return linkedCount
 }

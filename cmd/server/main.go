@@ -148,15 +148,15 @@ func main() {
 		varRepo := repository.NewVariationRepository(db.Pool)
 		variationHandler = api.NewVariationHandler(varRepo, dossierRepo, auditService)
 
+		corpRepo := repository.NewCorporateRepository(db.Pool)
+		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
+
 		dmRepo := repository.NewDMRepository(db.Pool)
 		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService)
-		lotReleaseHandler = api.NewLotReleaseHandler(db.Pool, auditService)
+		lotReleaseHandler = api.NewLotReleaseHandler(db.Pool, auditService, gedRepo, corpRepo, storageProvider)
 
 		dmModRepo := repository.NewDMModificationRepository(db.Pool)
 		dmModHandler = api.NewDMModificationHandler(dmModRepo, dmRepo, auditService)
-
-		corpRepo := repository.NewCorporateRepository(db.Pool)
-		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
 
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées

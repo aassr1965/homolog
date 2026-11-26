@@ -19,6 +19,7 @@ import (
 	"homolog/internal/database"
 	"homolog/internal/domain"
 	"homolog/internal/repository"
+	"homolog/internal/storage"
 )
 
 func TestCorporateAPI_FullWorkflow(t *testing.T) {
@@ -274,4 +275,132 @@ func TestCorporateAPI_FullWorkflow(t *testing.T) {
 		t.Fatalf("contenu du bordereau invalide: %s", w.Body.String()[:200])
 	}
 	t.Logf("✅ Bordereau officiel d'accompagnement Bureau d'Ordre MIPH généré avec succès (%d octets HTML)", w.Body.Len())
+}
+
+func TestDownloadDVTIVArchivesGEDAndLinksChecklist(t *testing.T) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
+	}
+
+	ctx := context.Background()
+	db, err := database.Connect(ctx, dbURL)
+	if err != nil {
+		t.Skipf("PostgreSQL non disponible, test ignoré : %v", err)
+		return
+	}
+	defer db.Close()
+
+	testOrgID := uuid.New()
+	orgSlug := "lab-dvtiv-" + testOrgID.String()[:8]
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), "DELETE FROM organizations WHERE id = $1", testOrgID)
+	}()
+
+	_, err = db.Pool.Exec(ctx, `
+		INSERT INTO organizations (id, slug, legal_name, is_active)
+		VALUES ($1, $2, 'SARL DVTIV Vigilance Pharma', true)
+	`, testOrgID, orgSlug)
+	if err != nil {
+		t.Fatalf("échec création organisation : %v", err)
+	}
+
+	pdtUserID := uuid.New()
+	hashedPwd, _ := auth.HashPassword("TestPdtPassword2026!", auth.DefaultArgon2Params)
+	_, err = db.Pool.Exec(ctx, `
+		INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, is_active)
+		VALUES ($1, $2, 'pdt-dvtiv@test.dz', $3, 'Dr.', 'Samir Khelifi', 'directeur_technique', true)
+	`, pdtUserID, testOrgID, hashedPwd)
+	if err != nil {
+		t.Fatalf("échec création utilisateur : %v", err)
+	}
+
+	corpRepo := repository.NewCorporateRepository(db.Pool)
+	gedRepo := repository.NewGEDRepository(db.Pool)
+	auditSvc := audit.NewService(db.Pool)
+	store, err := storage.NewLocalCASStorage(t.TempDir())
+	if err != nil {
+		t.Fatalf("échec init storage : %v", err)
+	}
+
+	app := &domain.CorporateApplication{
+		OrganizationID:    testOrgID,
+		Category:          domain.CategoryExploitation,
+		Nature:            domain.NatureAgrementInitial,
+		ApplicationNumber: "MIPH-EXP-DVTIV-001",
+		Title:             "Agrément Exploitation Test DVTIV",
+		Status:            domain.StatusCorporateDraft,
+		FormType:          "eForm-MIPH-EXPLOITATION",
+		FormData:          map[string]interface{}{"raison_sociale": "SARL DVTIV Vigilance Pharma"},
+		CreatedBy:         &pdtUserID,
+	}
+	if err := corpRepo.CreateApplication(ctx, app); err != nil {
+		t.Fatalf("échec CreateApplication: %v", err)
+	}
+
+	lotHandler := NewLotReleaseHandler(db.Pool, auditSvc, gedRepo, corpRepo, store)
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{
+				UserID:         pdtUserID,
+				OrganizationID: testOrgID,
+				Email:          "pdt-dvtiv@test.dz",
+				Role:           "directeur_technique",
+			}
+			ctxWithUser := context.WithValue(req.Context(), UserContextKey, su)
+			next.ServeHTTP(w, req.WithContext(ctxWithUser))
+		})
+	})
+	r.Get("/api/v1/dvtiv/pdt-qppv-form", lotHandler.DownloadDVTIVPDTQPPVForm)
+
+	req := httptest.NewRequest("GET", "/api/v1/dvtiv/pdt-qppv-form", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("statut attendu 200, reçu %d: %s", w.Code, w.Body.String())
+	}
+	gedDocIDStr := w.Header().Get("X-GED-Document-Id")
+	if gedDocIDStr == "" {
+		t.Fatalf("header X-GED-Document-Id manquant")
+	}
+	if w.Header().Get("X-Checklists-Linked") != "1" {
+		t.Fatalf("X-Checklists-Linked attendu '1', reçu %q", w.Header().Get("X-Checklists-Linked"))
+	}
+
+	gedDocID, err := uuid.Parse(gedDocIDStr)
+	if err != nil {
+		t.Fatalf("UUID GED invalide %q: %v", gedDocIDStr, err)
+	}
+	doc, err := gedRepo.GetDocumentByID(ctx, testOrgID, gedDocID)
+	if err != nil {
+		t.Fatalf("document GED introuvable en base: %v", err)
+	}
+	if doc.Status != domain.GEDStatusBrouillon {
+		t.Fatalf("statut GED attendu %q, reçu %q", domain.GEDStatusBrouillon, doc.Status)
+	}
+	if doc.TaxonomyPath != "04_Vigilance_Post_Market/04_01_Pharmacovigilance" {
+		t.Fatalf("taxonomy_path inattendu: %q", doc.TaxonomyPath)
+	}
+
+	updatedApp, err := corpRepo.GetApplication(ctx, testOrgID, app.ID)
+	if err != nil {
+		t.Fatalf("GetApplication erreur: %v", err)
+	}
+	var foundExpPV01 bool
+	for _, it := range updatedApp.ChecklistItems {
+		if it.ItemCode == "EXP.PV.01" {
+			foundExpPV01 = true
+			if it.Status != "rattache" {
+				t.Fatalf("EXP.PV.01 statut attendu 'rattache' (en attente de signature), reçu %q", it.Status)
+			}
+			if it.GEDDocumentID == nil || *it.GEDDocumentID != gedDocID {
+				t.Fatalf("EXP.PV.01 ged_document_id attendu %s, reçu %v", gedDocID, it.GEDDocumentID)
+			}
+		}
+	}
+	if !foundExpPV01 {
+		t.Fatalf("item EXP.PV.01 introuvable sur la demande Exploitation")
+	}
 }
