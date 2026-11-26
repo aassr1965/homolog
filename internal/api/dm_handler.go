@@ -538,7 +538,7 @@ func (h *DMHandler) DownloadOfficialDMForm(w http.ResponseWriter, r *http.Reques
 		}
 		docBytes, err = reporting.GenerateDDMRecepisseDOCX(org, dm, eval)
 		filePrefix = "ANPP-DDM-Recepisse-Depot"
-	case "bv-modification", "bv-renouvellement", "bv-transfert":
+	case "bv-homologation", "bv-modification", "bv-renouvellement", "bv-transfert":
 		kind := strings.TrimPrefix(formType, "bv-")
 		slipRef := r.URL.Query().Get("ref")
 		if slipRef == "" {

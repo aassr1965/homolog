@@ -163,10 +163,12 @@ func GenerateDMCanevasNonHomologuesXLSX(org *domain.Organization, regs []domain.
 	return FillXLSXTemplate(tpl, updates)
 }
 
-// GenerateDDMBordereauDOCX pré-remplit les bordereaux officiels DM (modification, renouvellement, transfert).
+// GenerateDDMBordereauDOCX pré-remplit les bordereaux officiels DM (homologation, modification, renouvellement, transfert).
 func GenerateDDMBordereauDOCX(kind string, org *domain.Organization, dm *domain.MedicalDevice, slipRef, desc string) ([]byte, error) {
 	tplName := "ddm_bv_modification.docx"
 	switch strings.ToLower(kind) {
+	case "homologation":
+		tplName = "ddm_bv_homologation.docx"
 	case "renouvellement":
 		tplName = "ddm_bv_renouvellement.docx"
 	case "transfert":
@@ -192,6 +194,8 @@ func GenerateDDMBordereauDOCX(kind string, org *domain.Organization, dm *domain.
 		"N°.…":                              "N° " + slipRef,
 		"Dénomination commercial :":         "Dénomination commerciale : " + dmName,
 		"Dénomination commercial\u00a0:":    "Dénomination commerciale : " + dmName,
+		"Dénomination commerciale :":        "Dénomination commerciale : " + dmName,
+		"Dénomination commerciale\u00a0:":   "Dénomination commerciale : " + dmName,
 		"Désignation :":                     "Désignation : " + dmUse,
 		"Désignation\u00a0:":                "Désignation : " + dmUse,
 		"Classification :":                  "Classification : " + dmClass,
@@ -682,14 +686,19 @@ func GenerateDCEDeclarationQuotidienneDOCX(kind string, org *domain.Organization
 	return FillDOCXTemplate(tpl, DOCXFillOptions{CellUpdates: cellUpdates})
 }
 
-// GenerateDCEDeclarationJournaliereXLSX pré-remplit les canevas Excel de déclaration journalière DCE (« pp » ou « pp_dm »).
+// GenerateDCEDeclarationJournaliereXLSX pré-remplit les canevas Excel de déclaration journalière (« pp », « dm » ou « pp_dm »).
 func GenerateDCEDeclarationJournaliereXLSX(kind string, org *domain.Organization, lots []*domain.ImportLotRelease) ([]byte, error) {
-	isCombined := strings.EqualFold(strings.TrimSpace(kind), "pp_dm")
+	k := strings.ToLower(strings.TrimSpace(kind))
+	isCombined := k == "pp_dm"
+	isDMOnly := k == "dm"
 	tplName := "dce_decl_journaliere_pp.xlsx"
 	startRow := 14
 	if isCombined {
 		tplName = "dce_decl_journaliere_pp_dm.xlsx"
 		startRow = 15
+	} else if isDMOnly {
+		tplName = "ddm_decl_journaliere_dm.xlsx"
+		startRow = 14
 	}
 	tpl, err := GetANPPTemplate(tplName)
 	if err != nil {
@@ -730,24 +739,28 @@ func GenerateDCEDeclarationJournaliereXLSX(kind string, org *domain.Organization
 		relDate := lot.CreatedAt.Format("2006-01-02")
 
 		if lot.ProductKind == "dm" {
-			if !isCombined {
+			if !isCombined && !isDMOnly {
 				continue
+			}
+			sheet := "xl/worksheets/sheet2.xml"
+			if isDMOnly {
+				sheet = "xl/worksheets/sheet1.xml"
 			}
 			r := dmRow
 			updates = append(updates,
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("A%d", r), Value: relDate},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("B%d", r), Value: lot.CommercialName},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("C%d", r), Value: lot.Designation},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("D%d", r), Value: lot.FormAspect},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("F%d", r), Value: lot.HomologationOrDERef},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("G%d", r), Value: lot.DMClass},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("H%d", r), Value: lot.LotNumber},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("I%d", r), Value: ddfStr},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("J%d", r), Value: ddpStr},
-				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet2.xml", CellRef: fmt.Sprintf("K%d", r), Value: lot.SalesUnits},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("A%d", r), Value: relDate},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("B%d", r), Value: lot.CommercialName},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("C%d", r), Value: lot.Designation},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("D%d", r), Value: lot.FormAspect},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("F%d", r), Value: lot.HomologationOrDERef},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("G%d", r), Value: lot.DMClass},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("H%d", r), Value: lot.LotNumber},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("I%d", r), Value: ddfStr},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("J%d", r), Value: ddpStr},
+				XLSXCellUpdate{SheetPath: sheet, CellRef: fmt.Sprintf("K%d", r), Value: lot.SalesUnits},
 			)
 			dmRow++
-		} else {
+		} else if !isDMOnly {
 			r := ppRow
 			updates = append(updates,
 				XLSXCellUpdate{SheetPath: "xl/worksheets/sheet1.xml", CellRef: fmt.Sprintf("A%d", r), Value: relDate},

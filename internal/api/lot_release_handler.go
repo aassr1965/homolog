@@ -575,6 +575,10 @@ func (h *LotReleaseHandler) DownloadDCEForm(w http.ResponseWriter, r *http.Reque
 		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("pp", org, lots)
 		filename = fmt.Sprintf("ANPP-DCE-Declaration-Journaliere-PP_%s.xlsx", time.Now().Format("2006-01-02"))
 		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case "declaration-journaliere-dm":
+		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("dm", org, lots)
+		filename = fmt.Sprintf("ANPP-DDM-Declaration-Journaliere-DM_%s.xlsx", time.Now().Format("2006-01-02"))
+		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 	case "declaration-journaliere-pp-dm":
 		outBytes, err = reporting.GenerateDCEDeclarationJournaliereXLSX("pp_dm", org, lots)
 		filename = fmt.Sprintf("ANPP-DCE-Declaration-Journaliere-PP-DM_%s.xlsx", time.Now().Format("2006-01-02"))

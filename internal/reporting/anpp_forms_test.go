@@ -335,6 +335,20 @@ func TestGenerateAllAdditionalDCEForms(t *testing.T) {
 		t.Fatalf("GenerateDCEDeclarationJournaliereXLSX(pp) invalide: err=%v", err)
 	}
 
+	xlsxDM, err := GenerateDCEDeclarationJournaliereXLSX("dm", org, lots)
+	if err != nil || !strings.Contains(readZipEntry(t, xlsxDM, "xl/worksheets/sheet1.xml"), "LOT-DM-02") {
+		t.Fatalf("GenerateDCEDeclarationJournaliereXLSX(dm) invalide: err=%v", err)
+	}
+
+	bvHom, err := GenerateDDMBordereauDOCX("homologation", org, &domain.MedicalDevice{
+		CommercialNameFR: "StentBio",
+		IntendedUseFR:    "Stent coronaire",
+		DMClass:          "III",
+	}, "BV-2026-HOM", "Homologation DM")
+	if err != nil || !strings.Contains(extractXMLText(readZipEntry(t, bvHom, "word/document.xml")), "StentBio") {
+		t.Fatalf("GenerateDDMBordereauDOCX(homologation) invalide: err=%v", err)
+	}
+
 	xlsxBoth, err := GenerateDCEDeclarationJournaliereXLSX("pp_dm", org, lots)
 	if err != nil {
 		t.Fatalf("GenerateDCEDeclarationJournaliereXLSX(pp_dm) erreur: %v", err)

@@ -196,6 +196,7 @@ function renderDMDevicesTable() {
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-right:4px;" onclick="openDMRecevabiliteModal('${d.id}')" title="Grille des 13 points de recevabilité et signature PDT">📑 Recevabilité (13 pts)</button>
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px;" onclick="previewDMReport('ES-REG-02-DM', '${d.id}')" title="Générer et prévisualiser ES-REG-02-DM">👁️ ES-02</button>
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-left:4px; background:#0ea5e9; color:white; border:none;" onclick="downloadOfficialDMForm('${d.id}', 'homologation')" title="Télécharger le formulaire officiel ANPP (.docx)">📥 ANPP (.docx)</button>
+                        <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-left:4px;" onclick="downloadOfficialDMForm('${d.id}', 'bv-homologation')" title="Bordereau de versement homologation DM (300 000 DA .docx)">💶 BV (.docx)</button>
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-left:4px; background:#0f766e; color:white; border:none;" onclick="openDMLotReleaseModal('${d.id}')" title="Bordereau officiel DCE de libération de lot importé (.docx)">📦 Lot DCE</button>
                     </td>
                 </tr>
