@@ -427,3 +427,121 @@ async function closeLotRecall(id) {
     }
 }
 window.closeLotRecall = closeLotRecall;
+
+// ============================================================================
+// MODULE INSPECTIONS RÉGLEMENTAIRES (LD-DVIV04/V01) & CAPA
+// ============================================================================
+
+function openInspectionsCAPAModal() {
+    const m = document.getElementById('modal-inspections-capa');
+    if (m) m.classList.add('open');
+    loadInspectionFindings();
+}
+window.openInspectionsCAPAModal = openInspectionsCAPAModal;
+
+async function loadInspectionFindings() {
+    const tbody = document.getElementById('inspections-capa-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; text-align:center;">Chargement...</td></tr>';
+    try {
+        const res = await fetch('/api/v1/inspections/findings');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const list = data.findings || [];
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:16px; text-align:center; color:var(--text-dim);">Aucune observation d\'inspection enregistrée.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(it => {
+            const sevColor = it.severity === 'CRITIQUE' ? '#fee2e2; color:#b91c1c' : (it.severity === 'MAJEUR' ? '#fef3c7; color:#b45309' : '#e0f2fe; color:#0369a1');
+            const actions = [];
+            if (it.status === 'ouvert') {
+                actions.push(`<button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:#0284c7; color:white; border:none;" onclick="submitInspectionCAPA('${it.id}')">📝 Plan CAPA</button>`);
+            }
+            if (it.status !== 'cloture') {
+                actions.push(`<button type="button" class="btn-pill" style="font-size:10.5px; padding:2px 8px; background:#059669; color:white; border:none;" onclick="closeInspectionFinding('${it.id}')">🔒 Clôturer &amp; GED</button>`);
+            } else {
+                actions.push('<span style="color:#059669; font-weight:700;">✅ Clôturé (GED 02.04)</span>');
+            }
+            return `
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:8px; font-family:monospace;"><strong>${escapeHTML(it.inspection_reference)}</strong><div style="font-size:10px; color:var(--text-dim);">${(it.inspection_date || '').slice(0, 10)} • ${escapeHTML(it.inspector_authority)}</div></td>
+                    <td style="padding:8px;"><span style="background:${sevColor}; padding:2px 7px; border-radius:8px; font-weight:700; font-size:10px;">${escapeHTML(it.severity)}</span></td>
+                    <td style="padding:8px;"><div>${escapeHTML(it.description)}</div>${it.capa_plan ? `<div style="font-size:10.5px; color:#059669; margin-top:3px;"><strong>CAPA :</strong> ${escapeHTML(it.capa_plan)} (${escapeHTML(it.responsible_name || 'QA')})</div>` : ''}</td>
+                    <td style="padding:8px;">${escapeHTML(it.status)}</td>
+                    <td style="padding:8px; text-align:right; display:flex; gap:6px; justify-content:flex-end;">${actions.join('')}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:14px; text-align:center; color:#dc2626;">Erreur : ${escapeHTML(err.message)}</td></tr>`;
+    }
+}
+
+async function createInspectionFinding(e) {
+    e.preventDefault();
+    const payload = {
+        inspection_reference: document.getElementById('insp-ref').value.trim(),
+        inspector_authority: document.getElementById('insp-auth').value.trim(),
+        severity: document.getElementById('insp-sev').value,
+        inspection_date: document.getElementById('insp-date').value,
+        description: document.getElementById('insp-desc').value.trim()
+    };
+    try {
+        const res = await fetch('/api/v1/inspections/findings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Erreur création observation', 'error');
+            return;
+        }
+        showToast(`🔍 Écart ${data.inspection_reference} (${data.severity}) enregistré.`, 'success');
+        e.target.reset();
+        loadInspectionFindings();
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.createInspectionFinding = createInspectionFinding;
+
+async function submitInspectionCAPA(id) {
+    const plan = typeof showPromptModal === 'function'
+        ? await showPromptModal('Plan d\'Action CAPA', 'Décrivez l\'action corrective et préventive :', 'Révision SOP et formation équipe QA sous 15 jours.')
+        : 'Plan CAPA enregistré.';
+    if (!plan) return;
+    try {
+        const res = await fetch(`/api/v1/inspections/findings/${encodeURIComponent(id)}/capa`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ capa_plan: plan, responsible_name: 'Assurance Qualité' })
+        });
+        if (!res.ok) {
+            showToast('Erreur soumission CAPA', 'error');
+            return;
+        }
+        showToast('📝 Plan CAPA enregistré.', 'success');
+        loadInspectionFindings();
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.submitInspectionCAPA = submitInspectionCAPA;
+
+async function closeInspectionFinding(id) {
+    try {
+        const res = await fetch(`/api/v1/inspections/findings/${encodeURIComponent(id)}/close`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || 'Erreur clôture observation', 'error');
+            return;
+        }
+        showToast(`✅ Écart clôturé — Fiche CAPA archivée en GED (${data.ged_report_code || '02.04'}).`, 'success');
+        loadInspectionFindings();
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.closeInspectionFinding = closeInspectionFinding;

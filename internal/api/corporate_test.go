@@ -575,3 +575,108 @@ func TestLotRecall24hWorkflowAndGEDClose(t *testing.T) {
 		t.Fatalf("close recall échoué: code=%d body=%s", wC.Code, wC.Body.String())
 	}
 }
+
+func TestInspectionCAPAAndProductStatusLotGating(t *testing.T) {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://homolog:homolog_secret_2026@127.0.0.1:5434/homolog?sslmode=disable"
+	}
+	ctx := context.Background()
+	db, err := database.Connect(ctx, dbURL)
+	if err != nil {
+		t.Skipf("PostgreSQL non disponible, test ignoré : %v", err)
+		return
+	}
+	defer db.Close()
+
+	testOrgID := uuid.New()
+	defer func() {
+		_, _ = db.Pool.Exec(context.Background(), "DELETE FROM organizations WHERE id = $1", testOrgID)
+	}()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO organizations (id, slug, legal_name, is_active) VALUES ($1, $2, 'Labo Insp Status Test', true)`, testOrgID, "lab-insp-"+testOrgID.String()[:8]); err != nil {
+		t.Fatalf("création org: %v", err)
+	}
+
+	pdtID := uuid.New()
+	hashedPwd, _ := auth.HashPassword("TestInsp2026!", auth.DefaultArgon2Params)
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, is_active) VALUES ($1, $2, 'pdt-insp@test.dz', $3, 'Dr.', 'Insp', 'directeur_technique', true)`, pdtID, testOrgID, hashedPwd); err != nil {
+		t.Fatalf("création user: %v", err)
+	}
+
+	dmID := uuid.New()
+	if _, err := db.Pool.Exec(ctx, `INSERT INTO medical_devices (id, organization_id, commercial_name_fr, intended_use_fr, dm_class, manufacturer_reference) VALUES ($1, $2, 'Cathéter Test', 'Cardio', 'III', 'REF-CATH-001')`, dmID, testOrgID); err != nil {
+		t.Fatalf("création DM: %v", err)
+	}
+
+	gedRepo := repository.NewGEDRepository(db.Pool)
+	corpRepo := repository.NewCorporateRepository(db.Pool)
+	auditSvc := audit.NewService(db.Pool)
+	store, _ := storage.NewLocalCASStorage(t.TempDir())
+	inspHandler := NewInspectionHandler(db.Pool, auditSvc, gedRepo, store)
+	lotHandler := NewLotReleaseHandler(db.Pool, auditSvc, gedRepo, corpRepo, store)
+
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			su := &auth.SessionUser{UserID: pdtID, OrganizationID: testOrgID, Email: "pdt-insp@test.dz", Role: "directeur_technique"}
+			next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), UserContextKey, su)))
+		})
+	})
+	r.Post("/api/v1/inspections/findings", inspHandler.CreateFinding)
+	r.Post("/api/v1/inspections/findings/{id}/capa", inspHandler.SubmitCAPA)
+	r.Post("/api/v1/inspections/findings/{id}/close", inspHandler.CloseFinding)
+	r.Put("/api/v1/regulatory-status/{kind}/{id}", inspHandler.UpdateProductRegulatoryStatus)
+	r.Post("/api/v1/lot-releases", lotHandler.CreateLotRelease)
+
+	// 1. Phase 4 : Observation CRITIQUE -> CAPA -> Clôture GED 02.04
+	reqF := httptest.NewRequest("POST", "/api/v1/inspections/findings", bytes.NewBufferString(`{"inspection_reference":"INSP-2026-01","severity":"CRITIQUE","description":"Ecart traçabilité lot"}`))
+	reqF.Header.Set("Content-Type", "application/json")
+	wF := httptest.NewRecorder()
+	r.ServeHTTP(wF, reqF)
+	if wF.Code != http.StatusCreated {
+		t.Fatalf("POST finding attendu 201, reçu %d: %s", wF.Code, wF.Body.String())
+	}
+	var fRes map[string]any
+	_ = json.Unmarshal(wF.Body.Bytes(), &fRes)
+	fid, _ := fRes["id"].(string)
+
+	reqCAPA := httptest.NewRequest("POST", "/api/v1/inspections/findings/"+fid+"/capa", bytes.NewBufferString(`{"capa_plan":"SOP révisée","responsible_name":"QA Lead"}`))
+	reqCAPA.Header.Set("Content-Type", "application/json")
+	wCAPA := httptest.NewRecorder()
+	r.ServeHTTP(wCAPA, reqCAPA)
+	if wCAPA.Code != http.StatusOK {
+		t.Fatalf("POST capa attendu 200, reçu %d", wCAPA.Code)
+	}
+
+	reqCl := httptest.NewRequest("POST", "/api/v1/inspections/findings/"+fid+"/close", nil)
+	wCl := httptest.NewRecorder()
+	r.ServeHTTP(wCl, reqCl)
+	if wCl.Code != http.StatusOK || !strings.Contains(wCl.Body.String(), `"ged_report_code":"CAPA-INSP-`) {
+		t.Fatalf("close finding échoué: code=%d body=%s", wCl.Code, wCl.Body.String())
+	}
+
+	// 2. Phase 5 : Passer le DM à 'suspendu' -> blocage 409 sans motif -> succès 201 avec motif PDT
+	reqSt := httptest.NewRequest("PUT", "/api/v1/regulatory-status/dm/"+dmID.String(), bytes.NewBufferString(`{"regulatory_status":"suspendu","status_decision_ref":"DEC-SUSP-2026","status_reason":"Suspension temporaire"}`))
+	reqSt.Header.Set("Content-Type", "application/json")
+	wSt := httptest.NewRecorder()
+	r.ServeHTTP(wSt, reqSt)
+	if wSt.Code != http.StatusOK {
+		t.Fatalf("PUT regulatory-status attendu 200, reçu %d: %s", wSt.Code, wSt.Body.String())
+	}
+
+	reqBlocked := httptest.NewRequest("POST", "/api/v1/lot-releases", bytes.NewBufferString(`{"product_kind":"dm","medical_device_id":"`+dmID.String()+`","commercial_name":"Cathéter Test","lot_number":"LOT-SUSP-1"}`))
+	reqBlocked.Header.Set("Content-Type", "application/json")
+	wBlocked := httptest.NewRecorder()
+	r.ServeHTTP(wBlocked, reqBlocked)
+	if wBlocked.Code != http.StatusConflict {
+		t.Fatalf("lot sur DM suspendu sans motif attendu 409, reçu %d: %s", wBlocked.Code, wBlocked.Body.String())
+	}
+
+	reqOverride := httptest.NewRequest("POST", "/api/v1/lot-releases", bytes.NewBufferString(`{"product_kind":"dm","medical_device_id":"`+dmID.String()+`","commercial_name":"Cathéter Test","lot_number":"LOT-SUSP-1","pdt_override_reason":"Lot importé avant suspension"}`))
+	reqOverride.Header.Set("Content-Type", "application/json")
+	wOverride := httptest.NewRecorder()
+	r.ServeHTTP(wOverride, reqOverride)
+	if wOverride.Code != http.StatusCreated {
+		t.Fatalf("contournement PDT avec motif attendu 201, reçu %d: %s", wOverride.Code, wOverride.Body.String())
+	}
+}

@@ -831,12 +831,27 @@ async function submitDMLotRelease(e) {
         reliance_lab_reference: (document.getElementById('lot-rel-reliance-ref')?.value || '').trim()
     };
     try {
-        const res = await fetch('/api/v1/lot-releases', {
+        let res = await fetch('/api/v1/lot-releases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        const data = await res.json();
+        let data = await res.json();
+        if (res.status === 409 && data.pdt_override_only && typeof showPromptModal === 'function') {
+            const reason = await showPromptModal(
+                'Contournement PDT — Produit Suspendu / Retiré',
+                data.error + ' Saisissez le motif réglementaire de dérogation :',
+                'Lot importé antérieurement à la décision de suspension.'
+            );
+            if (!reason) return;
+            payload.pdt_override_reason = reason;
+            res = await fetch('/api/v1/lot-releases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            data = await res.json();
+        }
         if (!res.ok) {
             showToast(data.error || data.message || 'Erreur enregistrement lot', 'error');
             return;

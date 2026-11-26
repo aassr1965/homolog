@@ -72,4 +72,5 @@ type CreateImportLotReleaseRequest struct {
 	IsRelianceLab         bool       `json:"is_reliance_lab"`
 	RelianceLabAuthority  string     `json:"reliance_lab_authority,omitempty"`
 	RelianceLabReference  string     `json:"reliance_lab_reference,omitempty"`
+	PDTOverrideReason     string     `json:"pdt_override_reason,omitempty"`
 }

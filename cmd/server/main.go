@@ -72,6 +72,7 @@ func main() {
 	var dmModHandler *api.DMModificationHandler
 	var corpHandler *api.CorporateHandler
 	var recallHandler *api.RecallHandler
+	var inspectionHandler *api.InspectionHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -152,6 +153,7 @@ func main() {
 		corpRepo := repository.NewCorporateRepository(db.Pool)
 		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
 		recallHandler = api.NewRecallHandler(db.Pool, auditService, gedRepo, storageProvider)
+		inspectionHandler = api.NewInspectionHandler(db.Pool, auditService, gedRepo, storageProvider)
 
 		dmRepo := repository.NewDMRepository(db.Pool)
 		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService).WithGED(gedRepo, storageProvider)
@@ -666,6 +668,15 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/recalls", recallHandler.CreateRecall)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/recalls/{id}/notify-anpp", recallHandler.NotifyANPP)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/recalls/{id}/close", recallHandler.CloseRecall)
+			}
+
+			// Inspections Réglementaires (LD-DVIV04/V01), CAPA & Statuts DE/DH
+			if inspectionHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/inspections/findings", inspectionHandler.ListFindings)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/inspections/findings", inspectionHandler.CreateFinding)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Post("/api/v1/inspections/findings/{id}/capa", inspectionHandler.SubmitCAPA)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/inspections/findings/{id}/close", inspectionHandler.CloseFinding)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Put("/api/v1/regulatory-status/{kind}/{id}", inspectionHandler.UpdateProductRegulatoryStatus)
 			}
 
 			if dmModHandler != nil {

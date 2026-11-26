@@ -120,6 +120,27 @@ func (h *LotReleaseHandler) CreateLotRelease(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Phase 5 : Gating contournable par le PDT si le produit est suspendu, retiré ou refusé
+	var regStatus string
+	if req.MedicalDeviceID != nil {
+		_ = h.pool.QueryRow(r.Context(), `SELECT COALESCE(regulatory_status, 'actif') FROM medical_devices WHERE id = $1 AND organization_id = $2`, *req.MedicalDeviceID, user.OrganizationID).Scan(&regStatus)
+	} else if req.MedicineID != nil {
+		_ = h.pool.QueryRow(r.Context(), `SELECT COALESCE(regulatory_status, 'actif') FROM medicines WHERE id = $1 AND organization_id = $2`, *req.MedicineID, user.OrganizationID).Scan(&regStatus)
+	}
+	var overrideBy *uuid.UUID
+	overrideReason := strings.TrimSpace(req.PDTOverrideReason)
+	if regStatus != "" && regStatus != "actif" {
+		if user.Role != "directeur_technique" || overrideReason == "" {
+			writeJSON(w, http.StatusConflict, map[string]any{
+				"error":             fmt.Sprintf("Libération bloquée : produit au statut réglementaire '%s'. Seul le Pharmacien Directeur Technique peut contourner ce blocage avec un motif justifié.", regStatus),
+				"regulatory_status": regStatus,
+				"pdt_override_only": true,
+			})
+			return
+		}
+		overrideBy = &user.UserID
+	}
+
 	var ddf, ddp *time.Time
 	if strings.TrimSpace(req.DDF) != "" {
 		if t, err := time.Parse("2006-01-02", strings.TrimSpace(req.DDF)); err == nil {
@@ -141,11 +162,11 @@ func (h *LotReleaseHandler) CreateLotRelease(w http.ResponseWriter, r *http.Requ
 			import_program_attached, production_site, qc_site, release_site,
 			customs_decl_number, invoice_number, origin_cert_attached, tech_form_attached,
 			sampling_plan_attached, is_reliance_lab, reliance_lab_authority, reliance_lab_reference,
-			status, created_by
+			pdt_override_reason, pdt_override_by, status, created_by
 		) VALUES (
 			$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
 			$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-			$21,$22,$23,$24,$25,$26,$27,$28,'brouillon',$29
+			$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,'brouillon',$31
 		)
 	`, id, user.OrganizationID, kind, req.MedicalDeviceID, req.MedicineID,
 		strings.TrimSpace(req.CommercialName), strings.TrimSpace(req.Designation), strings.TrimSpace(req.FormAspect),
@@ -156,7 +177,7 @@ func (h *LotReleaseHandler) CreateLotRelease(w http.ResponseWriter, r *http.Requ
 		strings.TrimSpace(req.ReleaseSite), strings.TrimSpace(req.CustomsDeclNumber), strings.TrimSpace(req.InvoiceNumber),
 		req.OriginCertAttached, req.TechFormAttached, req.SamplingPlanAttached,
 		req.IsRelianceLab, strings.TrimSpace(req.RelianceLabAuthority), strings.TrimSpace(req.RelianceLabReference),
-		user.UserID,
+		overrideReason, overrideBy, user.UserID,
 	)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur enregistrement libération de lot: "+err.Error())
