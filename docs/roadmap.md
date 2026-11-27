@@ -480,10 +480,15 @@ gantt
 - [ ] Moteur de recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant les requêtes en français et en arabe.
 - [ ] Surlignage dynamique des termes trouvés directement dans la vue tableau et le volet de prévisualisation.
 
-### Jalon 2.9 : Console Super-Admin Éditeur (Mode Cloud SaaS)
-- [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances.
-- [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.sanad.dz`).
-- [ ] Gestion des quotas de stockage par laboratoire et suivi de consommation.
+### Jalon 2.9 : Console Super-Admin Éditeur & Abonnements Multi-Unités (Mode Cloud SaaS)
+- [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances (`super_admin_editeur`).
+- [ ] **Modèle Compte Groupe & Abonnements (`saas_accounts` / `subscriptions`) :**
+  - Création d'un Compte Groupe unique portant le contrat, le plan tarifaire (socle Groupe + tarif dégressif par unité supplémentaire), la facturation et les quotas consolidés (unités, utilisateurs, stockage CAS).
+  - Rattachement de N **unités de production (`organizations`)** par groupe, chacune conservant son Agrément MIPH, son DT d'unité, son équipe, sa GED et son Audit Trail cloisonnés par `organization_id`.
+- [ ] **Accès Transverse « DT Groupe » sur toutes les bases des unités :**
+  - Habilitation multi-unités permettant au **DT Groupe** de basculer entre toutes les unités de son Groupe et de consulter/piloter de manière consolidée l'ensemble des bases (dossiers CTD/DM, GED, lots DCE, rappels 24h, CAPA, Audit Trail), avec scellement nominatif 21 CFR Part 11 sur l'unité cible.
+- [ ] Provisioning d'une unité/laboratoire en un clic avec sous-domaine isolé (`<labo>.sanad.dz`) et respect des quotas d'abonnement (sans jamais bloquer la lecture de l'Audit Trail).
+- [ ] Gestion des quotas de stockage par groupe/unité et suivi de consommation.
 
 ### Jalon 2.10 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
 - [ ] Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).

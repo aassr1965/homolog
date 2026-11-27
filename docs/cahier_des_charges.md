@@ -903,6 +903,18 @@ flowchart TD
 - **Isolation Hermétique Inter-Laboratoires :** Mathématiquement, un laboratoire A ne peut en aucun cas déchiffrer les documents déposés par un laboratoire B, même s'ils partagent la même instance de stockage physique.
 - **Hébergement Souverain :** Déploiement exclusif en datacenter certifié sur le territoire national algérien (conformité Loi 18-07 sur la protection des données et directives MIPH).
 
+#### 2bis. Architecture SaaS Multi-Unités de Production, Abonnements & Rôle « DT Groupe » :
+Pour répondre aux groupes pharmaceutiques exploitant **plusieurs unités de production** (chacune disposant de son propre Agrément MIPH, de son propre Pharmacien Directeur Technique d'unité et de son équipe dédiée), le modèle SaaS adopte une hiérarchie à **deux niveaux** :
+- **Niveau 1 — Compte Abonnement / Groupe (`saas_accounts` & `subscriptions`) :**
+  - Porte le contrat commercial unique, le plan tarifaire (socle Groupe + forfait dégressif par unité de production supplémentaire ou palier multi-sites), la facturation consolidée et les quotas globaux (nombre d'unités, utilisateurs nommés, stockage CAS en Go).
+  - En cas d'expiration ou de suspension d'abonnement, les écritures non critiques peuvent être restreintes tout en préservant l'accès en lecture aux dossiers et à l'Audit Trail ALCOA+ (exigence réglementaire).
+- **Niveau 2 — Unités de Production / Établissements (`organizations` rattachées à `account_id`) :**
+  - Chaque unité conserve son **cloisonnement réglementaire strict** (`organization_id`) : son Agrément MIPH, son PDT d'unité, son équipe locale, sa GED, ses dossiers CTD/DM et son Audit Trail SHA-256 dédié.
+  - Un DT d'unité et son équipe n'ont accès qu'aux données de leur propre unité (zéro risque d'erreur inter-sites).
+- **Accès Transverse du Directeur Technique Groupe (`directeur_technique_groupe` / habilitation multi-unités) :**
+  - Le **DT Groupe** dispose d'un **accès transversal complet à toutes les bases des unités** rattachées à son Compte Groupe (`account_id`), via un sélecteur d'unité instantané et une vue consolidée multi-sites (dossiers, GED, lots, rappels 24h, inspections/CAPA, Audit Trail).
+  - *Traçabilité & Signature 21 CFR Part 11 :* Chaque action ou visa posé par le DT Groupe reste scellé avec l'`organization_id` de l'unité concernée, l'identité nominative du signataire et sa qualité (`DT Groupe`), garantissant une traçabilité irréprochable auprès des inspecteurs ANPP / MIPH.
+
 #### 3. Spécifications du Mode On-Premise (Sur Site - Architecture Zero-Trust) :
 - **Souveraineté Totale du Laboratoire Client :** La clé maîtresse AES-256 est générée localement lors du premier démarrage (*Setup Wizard 1.A.7*) et remise exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire.
 - **Étanchéité Vis-à-Vis de l'Éditeur et des Équipes Informatiques :** Ni l'éditeur du logiciel en télémaintenance, ni les techniciens informatiques internes (DSI/infogérance) ne peuvent lire le contenu des dossiers CTD ou des prix de revient sans la clé détenue par la Direction Technique.
