@@ -15,16 +15,25 @@ import (
 	"homolog/internal/audit"
 	"homolog/internal/auth"
 	"homolog/internal/domain"
+	"homolog/internal/reporting"
 	"homolog/internal/repository"
+	"homolog/internal/storage"
 )
 
 // DossierHandler gère les endpoints REST du moteur de dossiers ANPP et checklists CTD
 type DossierHandler struct {
-	repo         *repository.DossierRepository
-	pharmaRepo   *repository.PharmaRepository
-	gedRepo      *repository.GEDRepository
-	auditService *audit.Service
-	pool         *pgxpool.Pool
+	repo            *repository.DossierRepository
+	pharmaRepo      *repository.PharmaRepository
+	gedRepo         *repository.GEDRepository
+	auditService    *audit.Service
+	pool            *pgxpool.Pool
+	storageProvider storage.StorageProvider
+}
+
+// WithStorage rattache le fournisseur de stockage CAS au DossierHandler pour l'archivage GED automatique.
+func (h *DossierHandler) WithStorage(storageProvider storage.StorageProvider) *DossierHandler {
+	h.storageProvider = storageProvider
+	return h
 }
 
 // NewDossierHandler initialise le gestionnaire d'API des dossiers
@@ -887,4 +896,156 @@ func (h *DossierHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 		"status":  "ok",
 		"message": "Affectation révoquée avec succès",
 	})
+}
+
+// DownloadOfficialDEPPForm génère et télécharge le formulaire officiel .docx ANPP (DEPP02-A/B/C/D/E/F-V02) pré-rempli.
+func (h *DossierHandler) DownloadOfficialDEPPForm(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	dossier, err := h.repo.GetDossierByID(r.Context(), user.OrganizationID, dossierID)
+	if err != nil {
+		writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+		return
+	}
+
+	var org domain.Organization
+	_ = h.pool.QueryRow(r.Context(), `
+		SELECT id, slug, legal_name, COALESCE(miph_license_number, ''), COALESCE(technical_director_name, ''),
+		       COALESCE(address, ''), COALESCE(phone, ''), COALESCE(email, '')
+		FROM organizations WHERE id = $1
+	`, user.OrganizationID).Scan(&org.ID, &org.Slug, &org.LegalName, &org.MIPHLicenseNumber, &org.TechnicalDirectorName, &org.Address, &org.Phone, &org.Email)
+
+	formType := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("type")))
+	if formType == "" {
+		switch strings.ToUpper(string(dossier.ProcedureCode)) {
+		case "RI", "RF":
+			formType = "renouvellement"
+		case "MI", "MF":
+			formType = "modification"
+		default:
+			formType = "enregistrement"
+		}
+	}
+
+	var docBytes []byte
+	if formType == "structure-prix" {
+		var spDraft domain.StructurePrixDraft
+		if loadANPPDraft(r.Context(), h.pool, user.OrganizationID, "structure_prix", dossier.ID, &spDraft) {
+			docBytes, err = reporting.GenerateDEPPStructurePrixWithDraftDOCX(&org, &spDraft)
+		} else {
+			docBytes, err = reporting.GenerateDEPPFormDOCX(formType, dossier, &org)
+		}
+	} else {
+		docBytes, err = reporting.GenerateDEPPFormDOCX(formType, dossier, &org)
+	}
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Erreur génération formulaire officiel DEPP: "+err.Error())
+		return
+	}
+
+	prefix := "ANPP-DEPP02-" + strings.ToUpper(formType)
+	if formType == "pre-soumission" || formType == "structure-prix" || formType == "recepisse-pp" {
+		prefix = "ANPP-DEPP-" + strings.ToUpper(formType)
+	}
+	filename := fmt.Sprintf("%s-%s.docx", prefix, dossier.DossierCode)
+
+	if formType != "structure-prix" {
+		if gedDocID, gedDocCode := archiveGeneratedDocInGED(r, user, h.gedRepo, h.storageProvider, h.auditService, gedArchiveSpec{
+			CodePrefix:      "DEPP",
+			TitleFR:         fmt.Sprintf("Formulaire Officiel ANPP (%s) — %s", strings.ToUpper(formType), dossier.DossierCode),
+			TaxonomyPath:    "01_Affaires_Reglementaires/01_06_Correspondances_ANPP",
+			DocumentType:    "FORMULAIRE_ANPP",
+			Department:      "affaires_reglementaires",
+			Tags:            []string{"ANPP", "DEPP", formType, dossier.DossierCode},
+			RevisionSummary: "Formulaire officiel DEPP généré — En attente de signature PDT / dépôt ANPP",
+			MimeType:        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			Filename:        filename,
+			SourceTag:       "depp_form_auto_archive",
+		}, docBytes); gedDocID != "" {
+			w.Header().Set("X-GED-Document-Id", gedDocID)
+			w.Header().Set("X-GED-Document-Code", gedDocCode)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	_, _ = w.Write(docBytes)
+}
+
+// UpdateDossierReliance active ou met à jour le parcours Confiance Réglementaire (Reliance) sur un dossier CTD.
+func (h *DossierHandler) UpdateDossierReliance(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	dossierID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant de dossier invalide")
+		return
+	}
+
+	var req struct {
+		IsReliance        bool   `json:"is_reliance"`
+		RelianceAuthority string `json:"reliance_authority"`
+		RelianceType      string `json:"reliance_type"`
+		RelianceReference string `json:"reliance_reference"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Corps JSON invalide")
+		return
+	}
+
+	if err := h.repo.UpdateDossierReliance(
+		r.Context(), user.OrganizationID, dossierID,
+		req.IsReliance,
+		strings.TrimSpace(req.RelianceAuthority),
+		strings.TrimSpace(req.RelianceType),
+		strings.TrimSpace(req.RelianceReference),
+	); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "Dossier introuvable")
+			return
+		}
+		writeJSONError(w, http.StatusInternalServerError, "Erreur mise à jour parcours Reliance")
+		return
+	}
+
+	if h.auditService != nil {
+		_, _ = h.auditService.Log(r.Context(), &audit.Entry{
+			OrganizationID: user.OrganizationID,
+			UserID:         &user.UserID,
+			UserEmail:      user.Email,
+			UserRole:       user.Role,
+			Action:         "DOSSIER_RELIANCE_UPDATED",
+			EntityType:     "dossier",
+			EntityID:       dossierID.String(),
+			Details: map[string]any{
+				"is_reliance":        req.IsReliance,
+				"reliance_authority": req.RelianceAuthority,
+				"reliance_type":      req.RelianceType,
+				"reliance_reference": req.RelianceReference,
+			},
+			IPAddress: getClientIP(r),
+			UserAgent: r.UserAgent(),
+		})
+	}
+
+	updated, err := h.repo.GetDossierByID(r.Context(), user.OrganizationID, dossierID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
 }

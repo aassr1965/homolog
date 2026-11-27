@@ -7,10 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"homolog/internal/database"
 )
 
 // SeedInitialRegulatoryWatchAndAppointments injecte le corpus juridique algérien officiel et des créneaux ANPP
 func SeedInitialRegulatoryWatchAndAppointments(ctx context.Context, pool *pgxpool.Pool, orgSlug string) {
+	database.SyncGuidelinePDFsToDB(ctx, pool)
 	var orgID uuid.UUID
 	err := pool.QueryRow(ctx, "SELECT id FROM organizations WHERE slug = $1", orgSlug).Scan(&orgID)
 	if err != nil {

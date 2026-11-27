@@ -1,10 +1,10 @@
 package api
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -12,14 +12,18 @@ import (
 
 	"homolog/internal/audit"
 	"homolog/internal/domain"
+	"homolog/internal/reporting"
 	"homolog/internal/repository"
+	"homolog/internal/storage"
 )
 
 // DMHandler gère les endpoints REST pour l'homologation 6 sections, la recevabilité et la régularisation des DM
 type DMHandler struct {
-	dmRepo      *repository.DMRepository
-	dossierRepo *repository.DossierRepository
-	auditSvc    *audit.Service
+	dmRepo          *repository.DMRepository
+	dossierRepo     *repository.DossierRepository
+	auditSvc        *audit.Service
+	gedRepo         *repository.GEDRepository
+	storageProvider storage.StorageProvider
 }
 
 // NewDMHandler initialise une nouvelle instance de DMHandler
@@ -29,6 +33,13 @@ func NewDMHandler(dmRepo *repository.DMRepository, dossierRepo *repository.Dossi
 		dossierRepo: dossierRepo,
 		auditSvc:    auditSvc,
 	}
+}
+
+// WithGED rattache la GED et le stockage CAS au DMHandler pour l'archivage automatique des bordereaux officiels.
+func (h *DMHandler) WithGED(gedRepo *repository.GEDRepository, storageProvider storage.StorageProvider) *DMHandler {
+	h.gedRepo = gedRepo
+	h.storageProvider = storageProvider
+	return h
 }
 
 // GetMedicalDeviceHomologation renvoie les données complètes des 6 sections techniques d'un DM
@@ -469,7 +480,7 @@ func (h *DMHandler) UpdateDMRegularization(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-// ExportDMCanevas génère le classeur officiel CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx (format CSV/XLSX conforme)
+// ExportDMCanevas génère le classeur officiel ANPP CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx
 func (h *DMHandler) ExportDMCanevas(w http.ResponseWriter, r *http.Request) {
 	user := GetSessionUser(r.Context())
 	if user == nil {
@@ -477,22 +488,106 @@ func (h *DMHandler) ExportDMCanevas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := h.dmRepo.GetDMCanevasExportRows(r.Context(), user.OrganizationID)
+	org, _ := h.dmRepo.GetOrganizationByID(r.Context(), user.OrganizationID)
+	regs, err := h.dmRepo.ListDMRegularizations(r.Context(), user.OrganizationID, "")
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "Erreur génération canevas: "+err.Error())
 		return
 	}
 
-	filename := fmt.Sprintf("CANEVAS-DECLARATION-DM-NON-HOMOLOGUES_%s.csv", time.Now().Format("2006-01-02"))
-	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
-
-	// BOM UTF-8 indispensable pour qu'Excel s'ouvre proprement
-	_, _ = w.Write([]byte("\xef\xbb\xbf"))
-	writer := csv.NewWriter(w)
-	writer.Comma = ';'
-	for _, row := range rows {
-		_ = writer.Write(row)
+	xlsxBytes, err := reporting.GenerateDMCanevasNonHomologuesXLSX(org, regs)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Erreur génération canevas officiel ANPP (.xlsx): "+err.Error())
+		return
 	}
-	writer.Flush()
+
+	filename := fmt.Sprintf("CANEVAS-DECLARATION-DM-NON-HOMOLOGUES_%s.xlsx", time.Now().Format("2006-01-02"))
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	_, _ = w.Write(xlsxBytes)
+}
+
+// DownloadOfficialDMForm génère et télécharge le gabarit officiel .docx ANPP pré-rempli pour un DM.
+func (h *DMHandler) DownloadOfficialDMForm(w http.ResponseWriter, r *http.Request) {
+	user := GetSessionUser(r.Context())
+	if user == nil {
+		writeJSONError(w, http.StatusUnauthorized, "Authentification requise")
+		return
+	}
+
+	deviceID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Identifiant DM invalide")
+		return
+	}
+
+	dm, err := h.dmRepo.GetMedicalDeviceHomologation(r.Context(), user.OrganizationID, deviceID)
+	if err != nil {
+		writeJSONError(w, http.StatusNotFound, "Dispositif médical introuvable")
+		return
+	}
+	org, _ := h.dmRepo.GetOrganizationByID(r.Context(), user.OrganizationID)
+
+	formType := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("type")))
+	if formType == "" {
+		formType = "homologation"
+	}
+
+	var docBytes []byte
+	var filePrefix string
+	switch formType {
+	case "homologation":
+		docBytes, err = reporting.GenerateDDMHomologationDOCX(org, dm)
+		filePrefix = "ANPP-DDM-Demande-Homologation"
+	case "recepisse":
+		var eval *domain.DMRecevabiliteEvaluation
+		if dIDStr := r.URL.Query().Get("dossier_id"); dIDStr != "" {
+			if dID, pErr := uuid.Parse(dIDStr); pErr == nil {
+				eval, _ = h.dmRepo.GetRecevabiliteEvaluation(r.Context(), user.OrganizationID, dID)
+			}
+		}
+		docBytes, err = reporting.GenerateDDMRecepisseDOCX(org, dm, eval)
+		filePrefix = "ANPP-DDM-Recepisse-Depot"
+	case "bv-homologation", "bv-modification", "bv-renouvellement", "bv-transfert":
+		kind := strings.TrimPrefix(formType, "bv-")
+		slipRef := r.URL.Query().Get("ref")
+		if slipRef == "" {
+			slipRef = "BV-" + time.Now().Format("20060102")
+		}
+		desc := r.URL.Query().Get("desc")
+		docBytes, err = reporting.GenerateDDMBordereauDOCX(kind, org, dm, slipRef, desc)
+		filePrefix = "ANPP-DDM-BV-" + strings.Title(kind)
+	default:
+		writeJSONError(w, http.StatusBadRequest, "Type de formulaire DM non supporté")
+		return
+	}
+
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "Erreur génération formulaire officiel ANPP: "+err.Error())
+		return
+	}
+
+	filename := fmt.Sprintf("%s_%s.docx", filePrefix, time.Now().Format("2006-01-02"))
+	if strings.HasPrefix(formType, "bv-") {
+		if gedDocID, gedDocCode := archiveGeneratedDocInGED(r, user, h.gedRepo, h.storageProvider, h.auditSvc, gedArchiveSpec{
+			CodePrefix:      "DM-BV",
+			TitleFR:         fmt.Sprintf("Bordereau de Versement ANPP (%s) — %s", strings.TrimPrefix(formType, "bv-"), dm.CommercialNameFR),
+			TaxonomyPath:    "01_Affaires_Reglementaires/01_06_Correspondances_ANPP",
+			DocumentType:    "BORDEREAU_VERSEMENT",
+			Department:      "affaires_reglementaires",
+			Tags:            []string{"ANPP", "DDM", "Redevance", formType},
+			RevisionSummary: "Bordereau de versement DM généré — En attente de paiement / quittance",
+			MimeType:        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			Filename:        filename,
+			SourceTag:       "dm_bv_auto_archive",
+			EstablishmentID: dm.EstablishmentID,
+			MedicalDeviceID: &dm.ID,
+		}, docBytes); gedDocID != "" {
+			w.Header().Set("X-GED-Document-Id", gedDocID)
+			w.Header().Set("X-GED-Document-Code", gedDocCode)
+		}
+	}
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	_, _ = w.Write(docBytes)
 }

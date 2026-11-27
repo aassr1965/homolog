@@ -1288,6 +1288,55 @@
         openRevokeDelegationModal(id, 'permanent');
     };
 
+    /**
+     * Télécharge la fiche DVTIV PDT/QPPV (.docx), l'archive en GED (BROUILLON) et informe l'utilisateur des checklists liées
+     */
+    window.downloadDVTIVFormAndArchive = async function () {
+        const btn = document.getElementById('btn-dvtiv-pdt-qppv');
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/api/v1/dvtiv/pdt-qppv-form');
+            if (!res.ok) {
+                if (typeof showToast === 'function') {
+                    showToast("Erreur lors de la génération de la fiche DVTIV PDT/QPPV.", "error");
+                }
+                return;
+            }
+            const gedCode = res.headers.get('X-GED-Document-Code') || '';
+            const linkedCount = parseInt(res.headers.get('X-Checklists-Linked') || '0', 10);
+            const disp = res.headers.get('Content-Disposition') || '';
+            const match = disp.match(/filename="?([^"]+)"?/i);
+            const filename = match ? match[1] : `ANPP-DVTIV-Base-PDT-QPPV_${new Date().toISOString().slice(0, 10)}.docx`;
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+
+            if (typeof showToast === 'function') {
+                if (gedCode && linkedCount > 0) {
+                    showToast(`Fiche DVTIV archivée en GED (${gedCode}, À signer) et pré-rattachée à ${linkedCount} item(s) de checklist (EXP.PV.01).`, "success");
+                } else if (gedCode) {
+                    showToast(`Fiche DVTIV téléchargée et archivée en GED (${gedCode}, statut Brouillon — À signer).`, "success");
+                } else {
+                    showToast("Fiche DVTIV PDT/QPPV téléchargée.", "success");
+                }
+            }
+        } catch (err) {
+            console.error('Erreur téléchargement fiche DVTIV:', err);
+            if (typeof showToast === 'function') {
+                showToast("Erreur réseau lors de la génération de la fiche DVTIV.", "error");
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    };
+
     function escapeHtml(str) {
         if (!str) return '';
         return String(str)

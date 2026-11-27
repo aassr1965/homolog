@@ -59,12 +59,17 @@ func (r *RegulatoryWatchRepository) CreateRegulatoryWatchItem(ctx context.Contex
 func (r *RegulatoryWatchRepository) GetRegulatoryWatchItem(ctx context.Context, orgID, itemID uuid.UUID) (*domain.RegulatoryWatchItem, error) {
 	query := `
 		SELECT 
-			id, organization_id, title_fr, COALESCE(title_ar, ''), legal_reference, COALESCE(joradp_number, ''),
-			published_date, effective_date, category, impact_level, summary_fr,
-			COALESCE(impact_analysis, ''), compliance_status, COALESCE(source_url, ''),
-			created_by, created_at, updated_at
-		FROM regulatory_watch_items
-		WHERE organization_id = $1 AND id = $2
+			r.id, r.organization_id, r.title_fr, COALESCE(r.title_ar, ''), r.legal_reference, COALESCE(r.joradp_number, ''),
+			r.published_date, r.effective_date, r.category, r.impact_level, r.summary_fr,
+			COALESCE(r.impact_analysis, ''), r.compliance_status, COALESCE(r.source_url, ''),
+			COALESCE(r.document_filename, ''),
+			COALESCE(NULLIF(r.document_sha256, ''), d.document_sha256, ''),
+			CASE WHEN r.document_size_bytes > 0 THEN r.document_size_bytes ELSE COALESCE(d.document_size_bytes, 0) END,
+			(r.document_pdf IS NOT NULL OR d.document_pdf IS NOT NULL),
+			r.created_by, r.created_at, r.updated_at
+		FROM regulatory_watch_items r
+		LEFT JOIN regulatory_watch_documents d ON d.document_filename = r.document_filename
+		WHERE r.organization_id = $1 AND r.id = $2
 	`
 
 	var item domain.RegulatoryWatchItem
@@ -74,6 +79,7 @@ func (r *RegulatoryWatchRepository) GetRegulatoryWatchItem(ctx context.Context, 
 		&item.ID, &item.OrganizationID, &item.TitleFR, &item.TitleAR, &item.LegalReference, &item.JORADPNumber,
 		&item.PublishedDate, &item.EffectiveDate, &catStr, &impactStr, &item.SummaryFR,
 		&item.ImpactAnalysis, &statusStr, &item.SourceURL,
+		&item.DocumentFilename, &item.DocumentSHA256, &item.DocumentSizeBytes, &item.HasEmbeddedPDF,
 		&item.CreatedBy, &item.CreatedAt, &item.UpdatedAt,
 	)
 	if err != nil {
@@ -93,12 +99,17 @@ func (r *RegulatoryWatchRepository) GetRegulatoryWatchItem(ctx context.Context, 
 func (r *RegulatoryWatchRepository) ListRegulatoryWatchItems(ctx context.Context, orgID uuid.UUID, category, impact, status string) ([]domain.RegulatoryWatchItem, error) {
 	query := `
 		SELECT 
-			id, organization_id, title_fr, COALESCE(title_ar, ''), legal_reference, COALESCE(joradp_number, ''),
-			published_date, effective_date, category, impact_level, summary_fr,
-			COALESCE(impact_analysis, ''), compliance_status, COALESCE(source_url, ''),
-			created_by, created_at, updated_at
-		FROM regulatory_watch_items
-		WHERE organization_id = $1
+			r.id, r.organization_id, r.title_fr, COALESCE(r.title_ar, ''), r.legal_reference, COALESCE(r.joradp_number, ''),
+			r.published_date, r.effective_date, r.category, r.impact_level, r.summary_fr,
+			COALESCE(r.impact_analysis, ''), r.compliance_status, COALESCE(r.source_url, ''),
+			COALESCE(r.document_filename, ''),
+			COALESCE(NULLIF(r.document_sha256, ''), d.document_sha256, ''),
+			CASE WHEN r.document_size_bytes > 0 THEN r.document_size_bytes ELSE COALESCE(d.document_size_bytes, 0) END,
+			(r.document_pdf IS NOT NULL OR d.document_pdf IS NOT NULL),
+			r.created_by, r.created_at, r.updated_at
+		FROM regulatory_watch_items r
+		LEFT JOIN regulatory_watch_documents d ON d.document_filename = r.document_filename
+		WHERE r.organization_id = $1
 	`
 	args := []any{orgID}
 	argIdx := 2
@@ -138,6 +149,7 @@ func (r *RegulatoryWatchRepository) ListRegulatoryWatchItems(ctx context.Context
 			&item.ID, &item.OrganizationID, &item.TitleFR, &item.TitleAR, &item.LegalReference, &item.JORADPNumber,
 			&item.PublishedDate, &item.EffectiveDate, &catStr, &impactStr, &item.SummaryFR,
 			&item.ImpactAnalysis, &statusStr, &item.SourceURL,
+			&item.DocumentFilename, &item.DocumentSHA256, &item.DocumentSizeBytes, &item.HasEmbeddedPDF,
 			&item.CreatedBy, &item.CreatedAt, &item.UpdatedAt,
 		)
 		if err != nil {
@@ -175,4 +187,26 @@ func (r *RegulatoryWatchRepository) UpdateRegulatoryWatchAnalysis(ctx context.Co
 	}
 
 	return r.GetRegulatoryWatchItem(ctx, orgID, itemID)
+}
+
+// GetRegulatoryWatchItemPDF retourne le fichier PDF complet (BYTEA) stocké en base de données.
+func (r *RegulatoryWatchRepository) GetRegulatoryWatchItemPDF(ctx context.Context, orgID, itemID uuid.UUID) ([]byte, string, error) {
+	var pdfBytes []byte
+	var filename string
+	err := r.pool.QueryRow(ctx, `
+		SELECT COALESCE(r.document_pdf, d.document_pdf), COALESCE(NULLIF(r.document_filename, ''), 'guideline-anpp.pdf')
+		FROM regulatory_watch_items r
+		LEFT JOIN regulatory_watch_documents d ON d.document_filename = r.document_filename
+		WHERE r.organization_id = $1 AND r.id = $2
+	`, orgID, itemID).Scan(&pdfBytes, &filename)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, "", ErrNotFound
+		}
+		return nil, "", fmt.Errorf("échec lecture PDF veille réglementaire: %w", err)
+	}
+	if len(pdfBytes) == 0 {
+		return nil, "", ErrNotFound
+	}
+	return pdfBytes, filename, nil
 }

@@ -1130,8 +1130,26 @@
                             <button class="btn-pill" style="background:#7e22ce; color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openDossierReportsModal('${dossier.id}')">
                                 📄 États Réglementaires Officiels
                             </button>
+                            <button class="btn-pill" style="background:#0284c7; color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="downloadOfficialDEPPForm('${dossier.id}')" title="Télécharger le formulaire officiel DEPP02 (.docx) pré-rempli ANPP">
+                                📥 DEPP02 (.docx)
+                            </button>
+                            <button class="btn-pill" style="background:#0369a1; color:white; font-weight:700; border:none; font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'pre-soumission')" title="Formulaire officiel de pré-soumission PP (.docx)">
+                                📥 Pré-soumission (.docx)
+                            </button>
+                            <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'structure-prix')" title="Modèle structure de prix fabrication locale (.docx)">
+                                🧾 Structure Prix (.docx)
+                            </button>
+                            <button class="btn-pill" style="font-size:11px; padding:4px 10px; border:1px dashed #0284c7; color:#0284c7; font-weight:600;" onclick="openANPPDraftModal('structure_prix', '${dossier.id}')" title="Saisir ou modifier les 14 lignes économiques du brouillon Structure de Prix">
+                                ✏️ Saisir Structure Prix
+                            </button>
+                            <button class="btn-pill" style="font-size:11px; padding:4px 10px;" onclick="downloadOfficialDEPPForm('${dossier.id}', 'recepisse-pp')" title="Récépissé de dépôt dossier produit pharmaceutique (.docx)">
+                                📋 Récépissé PP (.docx)
+                            </button>
                             <button class="btn-pill" style="background:var(--accent-emerald); color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openMasterTemplatesModal()">
                                 📚 Templates Maîtres BPF
+                            </button>
+                            <button class="btn-pill" style="background:${dossier.is_reliance ? '#059669' : 'var(--bg-sub)'}; color:${dossier.is_reliance ? 'white' : 'var(--text-main)'}; font-weight:700; border:1px solid var(--border-color); font-size:11px; padding:4px 10px;" onclick="openDossierRelianceModal('${dossier.id}', ${!!dossier.is_reliance}, '${escapeHTML(dossier.reliance_authority || '')}', '${escapeHTML(dossier.reliance_type || 'enregistrement')}', '${escapeHTML(dossier.reliance_reference || '')}')" title="Configurer le parcours Confiance Réglementaire (Reliance ANPP)">
+                                🤝 ${dossier.is_reliance ? `Reliance (${escapeHTML(dossier.reliance_authority || 'SRA')})` : 'Reliance'}
                             </button>
                             <button class="btn-pill" style="background:var(--accent-blue); color:white; font-weight:700; border:none; font-size:11px; padding:4px 12px;" onclick="openPreSubmissionAuditModal('${dossier.id}')">
                                 🔍 Audit Pré-Dépôt
@@ -3265,6 +3283,58 @@
                 showNotifyModal("Erreur", e.message, "⚠️");
             }
         }
+
+function downloadOfficialDEPPForm(dossierId, type) {
+    if (!dossierId) return;
+    const qs = type ? `?type=${encodeURIComponent(type)}` : '';
+    const url = `/api/v1/dossiers/${encodeURIComponent(dossierId)}/official-form${qs}`;
+    if (typeof downloadFormWithGEDFeedback === 'function') {
+        downloadFormWithGEDFeedback(url, `ANPP-DEPP-${type || 'DEPP02'}.docx`);
+    } else {
+        window.location.href = url;
+    }
+}
+window.downloadOfficialDEPPForm = downloadOfficialDEPPForm;
+
+function openDossierRelianceModal(dossierId, isReliance, authority, relType, relRef) {
+    document.getElementById('rel-dossier-id').value = dossierId || '';
+    document.getElementById('rel-is-reliance').checked = !!isReliance;
+    document.getElementById('rel-authority').value = authority || '';
+    document.getElementById('rel-type').value = relType || 'enregistrement';
+    document.getElementById('rel-reference').value = relRef || '';
+    document.getElementById('modal-dossier-reliance').classList.add('open');
+}
+window.openDossierRelianceModal = openDossierRelianceModal;
+
+async function saveDossierReliance(e) {
+    e.preventDefault();
+    const dossierId = document.getElementById('rel-dossier-id').value;
+    if (!dossierId) return;
+    const payload = {
+        is_reliance: document.getElementById('rel-is-reliance').checked,
+        reliance_authority: document.getElementById('rel-authority').value,
+        reliance_type: document.getElementById('rel-type').value,
+        reliance_reference: document.getElementById('rel-reference').value.trim()
+    };
+    try {
+        const res = await fetch(`/api/v1/dossiers/${encodeURIComponent(dossierId)}/reliance`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.error || data.message || 'Erreur mise à jour Reliance', 'error');
+            return;
+        }
+        closeModal('modal-dossier-reliance');
+        showToast(payload.is_reliance ? `🤝 Parcours Reliance (${payload.reliance_authority || 'SRA'}) activé.` : 'Parcours Reliance désactivé.', 'success');
+        if (typeof selectDossier === 'function') selectDossier(dossierId);
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
+}
+window.saveDossierReliance = saveDossierReliance;
 
         async function syncSmartPlanningDueDates() {
             if (!selectedDossierId) return;

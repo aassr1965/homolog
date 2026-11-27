@@ -903,6 +903,18 @@ flowchart TD
 - **Isolation Hermétique Inter-Laboratoires :** Mathématiquement, un laboratoire A ne peut en aucun cas déchiffrer les documents déposés par un laboratoire B, même s'ils partagent la même instance de stockage physique.
 - **Hébergement Souverain :** Déploiement exclusif en datacenter certifié sur le territoire national algérien (conformité Loi 18-07 sur la protection des données et directives MIPH).
 
+#### 2bis. Architecture SaaS Multi-Unités de Production, Abonnements & Rôle « DT Groupe » :
+Pour répondre aux groupes pharmaceutiques exploitant **plusieurs unités de production** (chacune disposant de son propre Agrément MIPH, de son propre Pharmacien Directeur Technique d'unité et de son équipe dédiée), le modèle SaaS adopte une hiérarchie à **deux niveaux** :
+- **Niveau 1 — Compte Abonnement / Groupe (`saas_accounts` & `subscriptions`) :**
+  - Porte le contrat commercial unique, le plan tarifaire (socle Groupe + forfait dégressif par unité de production supplémentaire ou palier multi-sites), la facturation consolidée et les quotas globaux (nombre d'unités, utilisateurs nommés, stockage CAS en Go).
+  - En cas d'expiration ou de suspension d'abonnement, les écritures non critiques peuvent être restreintes tout en préservant l'accès en lecture aux dossiers et à l'Audit Trail ALCOA+ (exigence réglementaire).
+- **Niveau 2 — Unités de Production / Établissements (`organizations` rattachées à `account_id`) :**
+  - Chaque unité conserve son **cloisonnement réglementaire strict** (`organization_id`) : son Agrément MIPH, son PDT d'unité, son équipe locale, sa GED, ses dossiers CTD/DM et son Audit Trail SHA-256 dédié.
+  - Un DT d'unité et son équipe n'ont accès qu'aux données de leur propre unité (zéro risque d'erreur inter-sites).
+- **Accès Transverse du Directeur Technique Groupe (`directeur_technique_groupe` / habilitation multi-unités) :**
+  - Le **DT Groupe** dispose d'un **accès transversal complet à toutes les bases des unités** rattachées à son Compte Groupe (`account_id`), via un sélecteur d'unité instantané et une vue consolidée multi-sites (dossiers, GED, lots, rappels 24h, inspections/CAPA, Audit Trail).
+  - *Traçabilité & Signature 21 CFR Part 11 :* Chaque action ou visa posé par le DT Groupe reste scellé avec l'`organization_id` de l'unité concernée, l'identité nominative du signataire et sa qualité (`DT Groupe`), garantissant une traçabilité irréprochable auprès des inspecteurs ANPP / MIPH.
+
 #### 3. Spécifications du Mode On-Premise (Sur Site - Architecture Zero-Trust) :
 - **Souveraineté Totale du Laboratoire Client :** La clé maîtresse AES-256 est générée localement lors du premier démarrage (*Setup Wizard 1.A.7*) et remise exclusivement au Pharmacien Directeur Technique et au RSSI du laboratoire.
 - **Étanchéité Vis-à-Vis de l'Éditeur et des Équipes Informatiques :** Ni l'éditeur du logiciel en télémaintenance, ni les techniciens informatiques internes (DSI/infogérance) ne peuvent lire le contenu des dossiers CTD ou des prix de revient sans la clé détenue par la Direction Technique.
@@ -1612,6 +1624,30 @@ Afin de permettre aux laboratoires de déployer **Sanad Pharma** soit uniquement
 
 ---
 
-## 14. Conclusion et Validation
+## 14. Couverture Exhaustive des Formulaires Officiels ANPP & des 19 Lignes Directrices
+
+### 14.1 Moteur Natif de Gabarits Officiels ANPP (`.docx` & `.xlsx`)
+**Sanad Pharma** embarque et pré-remplit côté serveur les **25 formulaires et canevas officiels** publiés par l'ANPP (`internal/reporting/templates/anpp/`) via `FillDOCXTemplate` (avec protection anti-titres orphelins `<w:keepNext/><w:keepLines/>` et barré natif `<w:strike/>` des mentions inutiles) et `FillXLSXTemplate` (support multi-onglets) :
+- **DEPP (9 formulaires `.docx`) :** `DEPP02-A` à `DEPP02-F-V02`, `Formulaire de Pré-soumission PP`, `Structure de prix à la fabrication locale`, `Récépissé de dépôt PP` (archivage GED automatique dans `01_06_Correspondances_ANPP`, hors modèle structure de prix).
+- **DDM (8 formulaires `.docx`/`.xlsx`) :** `Demande d'homologation`, `Récépissé de dépôt (13 points)`, 4 `Bordereaux de Versement` (`bv-homologation` 300 000 DA, `bv-modification`, `bv-renouvellement`, `bv-transfert` archivés en GED), `Déclaration journalière DM (.xlsx)` et `Canevas DM non homologués (.xlsx)`.
+- **DCE (7+ formulaires `.docx`/`.xlsx`) :** `Réception PP & DM importés`, `Certificat de libération PP`, `Canevas certificat de lot`, `Déclarations quotidiennes PP & DM (.docx)`, `Déclarations journalières PP & PP+DM (.xlsx)`, `Composition du dossier de libération` et `Prototype CA SR secondaire`.
+- **DVTIV (`dvtiv_base_pdt_qppv.docx`) :** pré-remplissage établissement (nom, adresse, wilaya), barrage automatique des statuts inutiles et de l'état **PSMF / PSMF national** détecté depuis la GED, **archivage automatique en GED (`BROUILLON`)** et **pré-rattachement à l'item `EXP.PV.01`** (`rattache`, en attente de signature/validation qualité).
+
+### 14.2 Plan de Conformité aux 19 Guidelines Officielles ANPP (Phases 1 à 5)
+1. **Phase 1 — Corpus Complet des 19 Guidelines en Base de Données (`038`) :**
+   - Stockage intégral des **19 PDF officiels ANPP** dans PostgreSQL (`regulatory_watch_documents` en `BYTEA` avec empreinte SHA-256 et taille) et consultation hors-ligne via `GET /api/v1/regulatory-watch/{itemId}/pdf` et bouton `📄 PDF` dans la Veille Juridique.
+2. **Phase 2 — Parcours Confiance Réglementaire (*Reliance* & Reconnaissance, `039`) :**
+   - Modélisation sur les dossiers CTD (`is_reliance`, `reliance_authority` EMA/FDA/PMDA/Swissmedic/MHRA/OMS, `reliance_type`, `reliance_reference` via `PUT /api/v1/dossiers/{id}/reliance`) et sur les lots DCE (`is_reliance_lab`, `reliance_lab_authority` EDQM/OMCL/EMA/FDA/OMS, `reliance_lab_reference`).
+3. **Phase 3 — Workflow Rappel de Lots & Retraits PP/DM 24h (`040`) :**
+   - Registre `lot_recalls` (`CLASSE_I`/`II`/`III`, exercice à blanc annuel `is_mock_drill`), suivi du **SLA 24h ANPP** (`POST /api/v1/recalls/{id}/notify-anpp`) et clôture avec génération/archivage automatique du PV de retrait/destruction dans la GED `04_03_Rappels_Lots`.
+4. **Phase 4 — Inspections Réglementaires (`LD-DVIV04/V01`) & Écarts BPF / CAPA (`041`) :**
+   - Registre `inspection_findings` avec cotation officielle ANPP (**`CRITIQUE`**, **`MAJEUR`**, **`AUTRE`**), soumission du plan **CAPA** et clôture avec archivage automatique dans la GED `02_04_CAPA_Deviations`.
+5. **Phase 5 — Statuts Post-Décision DE/DH & Gating Contournable par le PDT (`041`) :**
+   - Suivi des statuts réglementaires (`actif`, `suspendu`, `retire_temporaire`, `retire_definitif`, `refuse`) sur `medicines` et `medical_devices` (`PUT /api/v1/regulatory-status/{kind}/{id}`).
+   - **Blocage HTTP `409 Conflict`** lors de toute tentative de libération de lot DCE sur un produit non `actif`, **contournable exclusivement par le Pharmacien Directeur Technique (`directeur_technique`)** avec saisie obligatoire d'un motif justifié (`pdt_override_reason`) tracé dans l'Audit Trail.
+
+---
+
+## 15. Conclusion et Validation
 
 Le présent cahier des charges constitue le socle fonctionnel et technique exhaustif de la plateforme **Sanad Pharma**. Il intègre l'état de l'art du droit pharmaceutique algérien, assure une traçabilité rigoureuse tout au long du cycle de vie du médicament (enregistrement, renouvellement, variations 1 à 34), et garantit l'alignement strict entre la gestion documentaire BPF, l'option **Sanad eQMS** et les impératifs réglementaires de l'ANPP.

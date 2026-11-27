@@ -480,10 +480,15 @@ gantt
 - [ ] Moteur de recherche plein texte PostgreSQL (`tsvector`/`tsquery`) supportant les requêtes en français et en arabe.
 - [ ] Surlignage dynamique des termes trouvés directement dans la vue tableau et le volet de prévisualisation.
 
-### Jalon 2.9 : Console Super-Admin Éditeur (Mode Cloud SaaS)
-- [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances.
-- [ ] Provisioning d'un laboratoire en un clic avec schéma PostgreSQL dédié et sous-domaine isolé (`<labo>.sanad.dz`).
-- [ ] Gestion des quotas de stockage par laboratoire et suivi de consommation.
+### Jalon 2.9 : Console Super-Admin Éditeur & Abonnements Multi-Unités (Mode Cloud SaaS)
+- [ ] Interface d'administration multi-laboratoires et suivi du parc d'instances (`super_admin_editeur`).
+- [ ] **Modèle Compte Groupe & Abonnements (`saas_accounts` / `subscriptions`) :**
+  - Création d'un Compte Groupe unique portant le contrat, le plan tarifaire (socle Groupe + tarif dégressif par unité supplémentaire), la facturation et les quotas consolidés (unités, utilisateurs, stockage CAS).
+  - Rattachement de N **unités de production (`organizations`)** par groupe, chacune conservant son Agrément MIPH, son DT d'unité, son équipe, sa GED et son Audit Trail cloisonnés par `organization_id`.
+- [ ] **Accès Transverse « DT Groupe » sur toutes les bases des unités :**
+  - Habilitation multi-unités permettant au **DT Groupe** de basculer entre toutes les unités de son Groupe et de consulter/piloter de manière consolidée l'ensemble des bases (dossiers CTD/DM, GED, lots DCE, rappels 24h, CAPA, Audit Trail), avec scellement nominatif 21 CFR Part 11 sur l'unité cible.
+- [ ] Provisioning d'une unité/laboratoire en un clic avec sous-domaine isolé (`<labo>.sanad.dz`) et respect des quotas d'abonnement (sans jamais bloquer la lecture de l'Audit Trail).
+- [ ] Gestion des quotas de stockage par groupe/unité et suivi de consommation.
 
 ### Jalon 2.10 : Mises à Jour Réglementaires Hors-Ligne (.pkg Signés)
 - [ ] Format de paquets de mise à jour réglementaire signés cryptographiquement (`.pkg`).
@@ -497,21 +502,21 @@ gantt
   - Gestion et scellement des numéros uniques de scellés inviolables apposés sur chaque colis d'échantillons.
   - Intégration et scellement des relevés de température issus des dataloggers de transport pour produits thermosensibles (+2°C à +8°C et température dirigée +15°C à +25°C).
   - Enregistrement et rapprochement de l'émargement physique du bureau d'ordre du Laboratoire National de Contrôle (LNCPP / DCE).
-- [ ] **Générateur du Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique :**
-  - Attestation légale conforme BPF et à l'Arrêté du 10 mai 2021 avec traçabilité et filiation stricte : **N° lot Produit Fini (PF) ↔ N° lot Substance Active (SA) ↔ N° lot Semi-fini**.
+- [x] **Générateur du Certificat Officiel de Libération de Lot du Pharmacien Directeur Technique :**
+  - Attestation légale conforme BPF et à l'Arrêté du 10 mai 2021 avec traçabilité et filiation stricte : **N° lot Produit Fini (PF) ↔ N° lot Substance Active (SA) ↔ N° lot Semi-fini** (`dce_certificat_liberation_pp.docx`, `dce_canevas_certificat_liberation.docx`).
   - Intégration obligatoire du N° d'agrément d'ouverture MIPH et de la **Décision de validation du Laboratoire de Contrôle Qualité (LCQ) octroyée par l'ANPP**.
-- [ ] **Dossier Électronique de Libération de Lot (Contrôle des 8 pièces PDF) :**
-  - Contrôle d'exhaustivité et agrégation : Certificat de libération, bulletin PF, bulletins SA fabricant + recontrôle, bulletin semi-fini, tableau de correspondance des lots, copie DE/DH, agrément MIPH, validation LCQ ANPP et déclaration formelle du premier lot commercialisé.
-- [ ] **Module de Réception des Produits Importés sous Contrôle Libératoire :**
-  - Fiches d'importation conformes aux arrêtés du 14/02/2021 (PP) et 20/02/2025 (DM), contrôle des déclarations douanières, factures, bulletins d'analyse et programmes d'importation.
-- [ ] **Générateur Natif des Canevas Officiels de Déclaration Journalière (.xlsx) :**
-  - Production en un clic des classeurs Excel institutionnels de l'ANPP :
-    - `CANEVAS-Declaration-journaliere-PP-DM-Revision.xlsx` (Double onglet PP et DM, ventilation Hôpital / Officine).
-    - `CANEVAS-Declaration-journaliere-PP.xlsx` (Traçabilité SA et routine PP).
-    - `CANEVAS-DECLARATION-DM-NON-HOMOLOGUES.xlsx` (Régularisation DM).
-- [ ] **Template Maître BPF pour Standard de Référence Secondaire (MT-LCQ-01) :**
-  - Trame normalisée pour les LCQ conforme à `TEMPLATE-CA-SR-secondaire.docx` (Traçabilité ISO 17034 / pharmacopée primaire, confirmation FTIR, 3 essais comparatifs HPLC/UV avec incertitudes ± U, teneur en eau).
-  - Suivi automatisé du cycle de vie des étalons secondaires : alerte BPF automatisée de péremption et de re-test analytique à 12 mois (J-60 / J-30) contre l'étalon primaire officiel.
+- [x] **Dossier Électronique de Libération de Lot (`dce_composition_dossier_liberation.docx`) :**
+  - Gabarit officiel ANPP embarqué listant les 8 pièces PDF indispensables avec mention du premier lot commercialisé.
+- [x] **Module de Réception des Produits Importés sous Contrôle Libératoire :**
+  - Fiches d'importation conformes aux arrêtés du 14/02/2021 (PP) et 20/02/2025 (DM) (`dce_reception_pp_importes.docx`, `dce_reception_dm_importes.docx`), archivées automatiquement en GED (`02_02_Certificats_BPF_ISO`).
+- [x] **Générateur Natif des Canevas Officiels de Déclaration Journalière (.xlsx & .docx) :**
+  - Production en un clic des classeurs Excel et Word institutionnels de l'ANPP pré-remplis et archivés en GED (`01_06_Correspondances_ANPP`) :
+    - `dce_decl_journaliere_pp_dm.xlsx` (Double onglet PP et DM, ventilation Hôpital / Officine).
+    - `dce_decl_journaliere_pp.xlsx` & `ddm_decl_journaliere_dm.xlsx`.
+    - `dce_decl_quotidienne_pp.docx` & `dce_decl_quotidienne_dm.docx`.
+    - `ddm_canevas_non_homologues.xlsx` (Régularisation DM).
+- [x] **Template Maître BPF pour Standard de Référence Secondaire (`dce_template_ca_sr_secondaire.docx`) :**
+  - Trame normalisée pour les LCQ embarquée et pré-remplie avec le nom du fabricant/fournisseur.
 
 ### Jalon 2.12 : Chiffrement Applicatif AES-256-GCM du Coffre-Fort GED au Repos (Modes Cloud & On-Premise)
 - [ ] **Moteur de Chiffrement Symétrique AES-256-GCM dans le Pilote CAS (`internal/storage/`) :**
@@ -659,6 +664,20 @@ gantt
   - Suite de tests Go d'intégration (`eqms_test.go`) couvrant le gating multi-tenant, la SoD, la passerelle Change Control → Variations et la piste d'audit ALCOA+.
   - Ajout du module eQMS dans `docs/validation/PROTOCOLE_QUALIFICATION_OQ_PQ_SANAD.md`.
 
+### Jalon 2.14 : Couverture Complète des 19 Guidelines ANPP & Gabarits Officiels (Phases 1 à 5) ✅
+- [x] **25 Gabarits Officiels ANPP (`.docx` & `.xlsx`) Embarqués & Pré-remplis :**
+  - Couverture 100 % des téléchargements DEPP (9 `.docx` incluant `Pré-soumission`, `Structure Prix`, `Récépissé PP`), DDM (8 fichiers incluant `BV Homologation 300 000 DA` et `Décl. Journalière DM`), DCE (10 fichiers) et DVTIV (`Base PDT/QPPV` avec barré `<w:strike/>`, PSMF depuis GED, anti-orphelins `<w:keepNext/>` et pré-rattachement automatique `EXP.PV.01`).
+- [x] **Phase 1 — Stockage Complet des 19 PDF Guidelines ANPP en Base (`Migration 038`) :**
+  - Table normalisée `regulatory_watch_documents` (`BYTEA` + SHA-256), consultation hors-ligne `GET /api/v1/regulatory-watch/{itemId}/pdf` et bouton `📄 PDF` dans la Veille Juridique.
+- [x] **Phase 2 — Parcours Confiance Réglementaire *Reliance* (`Migration 039`) :**
+  - Support *Reliance* sur Dossiers CTD (`PUT /api/v1/dossiers/{id}/reliance`) et Lots DCE (`is_reliance_lab`, `EDQM`/`EMA`/`FDA`/`OMS`).
+- [x] **Phase 3 — Module Rappel de Lots & Retraits 24h (`Migration 040`) :**
+  - Registre `lot_recalls`, contrôle SLA 24h (`notify-anpp`), exercice à blanc annuel et clôture avec PV archivé automatiquement en GED (`04_03_Rappels_Lots`).
+- [x] **Phase 4 — Inspections Réglementaires `LD-DVIV04/V01` & Écarts BPF / CAPA (`Migration 041`) :**
+  - Registre `inspection_findings` (`CRITIQUE`, `MAJEUR`, `AUTRE`), plan CAPA et clôture archivée en GED (`02_04_CAPA_Deviations`).
+- [x] **Phase 5 — Statuts DE/DH (`suspendu`/`retire_*`/`refuse`) & Blocage Contournable PDT (`Migration 041`) :**
+  - Blocage `HTTP 409` sur libération de lot DCE pour produit non `actif`, contournable exclusivement par le PDT avec motif tracé (`pdt_override_reason`).
+
 ---
 
 ## Guide d'avancement et métriques de suivi
@@ -667,7 +686,7 @@ gantt
 |---|---|---|---|
 | **Spécifications fonctionnelles validées** | 100 % | 100 % ([`cahier_des_charges.md`](file:///c:/dev/homolog/docs/cahier_des_charges.md) v1.0 - 13 Domaines) | Aligné Guide CTD ANPP 2025, LD Modifications 2026, Agréments MIPH 2025, États de Sortie & Copilote IA ✅ |
 | **Jalons Phase 1 complétés** | 8 / 8 jalons | 8 / 8 jalons complétés (100 %) (Jalons 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7 & 1.8 ✅) | Phase 1 validée à 100% : socle souverain, GED BPF, compléments ANPP, BV1/BV2 et réversibilité .sanad ✅ |
-| **Jalons Phase 2 complétés** | 14 jalons | 5 / 14 jalons complétés (Jalons 2.1, 2.2, 2.3, 2.4 & 2.7 ✅) | Atelier BPF, Moteur Édition, Paramétrage Tenant, Variations LD-DEPP07/V01 & Sanad Corporate ✅ |
+| **Jalons Phase 2 complétés** | 15 jalons | 7 / 15 jalons complétés (Jalons 2.1, 2.2, 2.3, 2.4, 2.7, 2.11 & 2.14 ✅) | Atelier BPF, Moteur Édition, Paramétrage Tenant, Variations, Corporate, DCE/DDM/DEPP & 19 Guidelines ANPP ✅ |
 | **Couverture des tests automatisés** | > 80 % sur le domaine métier & audit | Tests unitaires stockage CAS, Auth, Produits, Variations & Corporate validés (100%) | Argon2id, TOTP, Sessions, CAS, RBAC, Variations & Agréments conformes BPF ✅ |
 | **Conformité BPF / ALCOA+** | Validée sur audit trail, GED et signatures | Implémentée (Triggers immuabilité + CAS SHA-256 + Sceau d'archive + Timeout 15 min) | Scellement cryptographique, rôles et déconnexion réglementaire validés ✅ |
 | **Agréments Établissements MIPH** | Conforme Décret 21-82 & Arrêtés sept/oct 2025 | Implémenté & Validé (Jalon 2.7) : 4 catégories, Smart e-Forms, Checklists [E]/[C]/[F]/[S], Volets granulaires, Upload direct, Package Tabadol, Bordereau MIPH & RBAC Dédié | Terminé & Validé (Jalon 2.7) ✅ |
@@ -685,11 +704,12 @@ gantt
 | Pilier | Textes de Référence (Intitulé complet au survol) | Statut Applicatif | Jalon / Module Associé |
 |---|---|---|---|
 | **1. Gouvernance** | <abbr title="Loi n° 18-11 du 2 juillet 2018 relative à la santé (JORADP n° 46)">Loi n° 18-11</abbr>, <abbr title="Ordonnance n° 20-02 du 30 août 2020 modifiant et complétant la loi n° 18-11 relative à la santé">Ord. 20-02</abbr>, <abbr title="Décret exécutif n° 19-190 du 3 juillet 2019 fixant les missions, l'organisation et le fonctionnement de l'Agence nationale des produits pharmaceutiques">Décret 19-190</abbr>, <abbr title="Décret exécutif n° 20-271 du 29 septembre 2020 fixant les attributions du ministre de l'industrie pharmaceutique">Décret 20-271</abbr> | Intégré ✅ | Socle & Référentiel (`Jalon 1.3`) |
-| **2. Établissements** | <abbr title="Décret exécutif n° 21-82 du 23 février 2021 relatif aux établissements pharmaceutiques et aux conditions de leur agrément">Décret exécutif n° 21-82</abbr> + <abbr title="Arrêtés des 22/06/2021 (PDT Fabrication), 05/10/2021 (Distribution BPDG), 14 & 30/11/2021 (Exploitation & PDT), 20/12/2021 & 17/09/2022 (Importation)">Arrêtés 2021-2022</abbr> + <abbr title="Arrêté du 22/09/2025 (Fabrication en 2 étapes), Arrêté du 30/09/2025 (Distribution), Arrêtés du 01/10/2025 (Exploitation & Importation)">Refonte 2025/2026</abbr> | Implémenté (4 cat.) — Exportation & Baux généralisés planifiés (`2.7bis`) 🔄 | Sanad Corporate & Tabadol (`Jalon 2.7 / 2.7bis`) |
-| **3. Médicaments** | <abbr title="Décret exécutif n° 20-325 du 22 novembre 2020 relatif aux modalités d'enregistrement des produits pharmaceutiques">Décret n° 20-325</abbr>, <abbr title="Arrêté du 27 décembre 2020 fixant la composition du dossier d'enregistrement des médicaments à usage de la médecine humaine (format CTD)">Arrêté CTD 27/12/2020</abbr>, <abbr title="Guide pour la soumission du Dossier Technique Commun (CTD) DEPP/ANPP (juillet 2025)">Guide CTD 2025</abbr>, <abbr title="Ligne directrice relative aux modifications des décisions d'enregistrement des produits pharmaceutiques (LD-DEPP07/V01 - avril 2026)">LD-DEPP07/V01</abbr> | Intégré ✅ | CTD Studio & Variations (`Jalon 1.5 / 2.4`) |
-| **4. Dispositifs Médicaux** | <abbr title="Décret exécutif n° 20-324 du 22 novembre 2020 relatif aux modalités d'homologation des dispositifs médicaux à usage de la médecine humaine">Décret n° 20-324</abbr>, <abbr title="Arrêté du 10 mai 2021 fixant la composition du dossier technique d'homologation des dispositifs médicaux à usage de la médecine humaine">Arrêté 10/05/2021</abbr>, <abbr title="Arrêté du 23 juin 2021 fixant les modalités de modification de la décision d'homologation des dispositifs médicaux">Arrêté 23/06/2021</abbr> | Intégré ✅ | Régularisation & Homologation DM (`Jalon 2.6`) |
-| **5. Bonnes Pratiques** | <abbr title="Décret exécutif n° 22-247 du 26 juin 2022 fixant les règles de bonnes pratiques de fabrication des produits pharmaceutiques à usage de la médecine humaine">Décret n° 22-247 (BPF)</abbr>, <abbr title="Cahier des charges des Bonnes Pratiques de Distribution en Gros annexé à l'arrêté du 5 octobre 2021">BPDG (05/10/2021)</abbr>, BPL, BPC | Intégré ✅ | GED Coffre-Fort & Checklists (`Jalon 1.4 / 2.1`) |
-| **6. Prix & Économie** | <abbr title="Décret exécutif n° 20-326 du 22 novembre 2020 et Décret exécutif n° 23-105 du 7 mars 2023 relatifs au Comité économique intersectoriel des médicaments">Décrets 20-326 / 23-105</abbr>, <abbr title="Décret exécutif n° 98-44 du 1er février 1998 fixant les marges plafonds applicables à la production, au conditionnement et à la distribution des médicaments">Décret n° 98-44</abbr> | Intégré (Module Finance & Redevances) ✅ | Redevances & Pricing (`Jalon 2.3`) |
-| **7. Vigilance & Stocks** | <abbr title="Décret exécutif n° 98-43 du 1er février 1998 portant création du centre national de pharmacovigilance et de matériovigilance">Décret n° 98-43</abbr>, <abbr title="Loi n° 04-18 du 25 décembre 2004, Décret exécutif n° 19-379 du 31 décembre 2019 et Décret exécutif n° 24-112 du 13 mars 2024 relatifs aux stupéfiants et psychotropes">Loi 04-18 / Décret 24-112</abbr>, Stocks stratégiques | Veille intégrée (`1.7`) — Extension Vigilance Phase 3 (`3.1`) ⏳ | Veille Juridique & Phase 3 (`Jalon 1.7 / 3.1`) |
-| **8. Redevances ANPP** | <abbr title="Décret exécutif n° 21-551 du 30 décembre 2021 fixant les modalités de recouvrement et d'affectation du produit de la redevance des produits pharmaceutiques et des dispositifs médicaux">Décret n° 21-551</abbr> & <abbr title="Arrêté interministériel Finances / MIPH fixant le barème des redevances d'expertise, d'enregistrement, d'homologation et d'agrément">Barème Finances/MIPH</abbr> | Intégré ✅ | Redevances & Bordereaux BV1/BV2 (`Jalon 1.7 / 2.3`) |
+| **2. Établissements** | <abbr title="Décret exécutif n° 21-82 du 23 février 2021 relatif aux établissements pharmaceutiques et aux conditions de leur agrément">Décret exécutif n° 21-82</abbr> + <abbr title="Arrêtés des 22/06/2021 (PDT Fabrication), 05/10/2021 (Distribution BPDG), 14 & 30/11/2021 (Exploitation & PDT), 20/12/2021 & 17/09/2022 (Importation)">Arrêtés 2021-2022</abbr> + <abbr title="Arrêté du 22/09/2025 (Fabrication en 2 étapes), Arrêté du 30/09/2025 (Distribution), Arrêtés du 01/10/2025 (Exploitation & Importation)">Refonte 2025/2026</abbr> | Intégré (5 catégories dont Exportation & Fiche DVTIV PDT/QPPV liée à `EXP.PV.01`) ✅ | Sanad Corporate & DVTIV (`Jalon 2.7 / 2.7bis / 2.14`) |
+| **3. Médicaments** | <abbr title="Décret exécutif n° 20-325 du 22 novembre 2020 relatif aux modalités d'enregistrement des produits pharmaceutiques">Décret n° 20-325</abbr>, <abbr title="Arrêté du 27 décembre 2020 fixant la composition du dossier d'enregistrement des médicaments à usage de la médecine humaine (format CTD)">Arrêté CTD 27/12/2020</abbr>, <abbr title="Guide pour la soumission du Dossier Technique Commun (CTD) DEPP/ANPP (juillet 2025)">Guide CTD 2025</abbr>, <abbr title="Ligne directrice relative aux modifications des décisions d'enregistrement des produits pharmaceutiques (LD-DEPP07/V01 - avril 2026)">LD-DEPP07/V01</abbr> | Intégré (9 formulaires DEPP `.docx`, Parcours *Reliance* & Statuts DE) ✅ | CTD Studio, Variations & Reliance (`Jalon 1.5 / 2.4 / 2.14`) |
+| **4. Dispositifs Médicaux** | <abbr title="Décret exécutif n° 20-324 du 22 novembre 2020 relatif aux modalités d'homologation des dispositifs médicaux à usage de la médecine humaine">Décret n° 20-324</abbr>, <abbr title="Arrêté du 10 mai 2021 fixant la composition du dossier technique d'homologation des dispositifs médicaux à usage de la médecine humaine">Arrêté 10/05/2021</abbr>, <abbr title="Arrêté du 23 juin 2021 fixant les modalités de modification de la décision d'homologation des dispositifs médicaux">Arrêté 23/06/2021</abbr> | Intégré (8 gabarits DDM `.docx`/`.xlsx`, Lots DCE & Gating DH suspendue) ✅ | Régularisation, Homologation DM & DCE (`Jalon 2.6 / 2.11 / 2.14`) |
+| **5. Bonnes Pratiques** | <abbr title="Décret exécutif n° 22-247 du 26 juin 2022 fixant les règles de bonnes pratiques de fabrication des produits pharmaceutiques à usage de la médecine humaine">Décret n° 22-247 (BPF)</abbr>, <abbr title="Cahier des charges des Bonnes Pratiques de Distribution en Gros annexé à l'arrêté du 5 octobre 2021">BPDG (05/10/2021)</abbr>, <abbr title="Ligne Directrice ANPP LD-DVIV04/V01 relative aux inspections réglementaires et classification des écarts BPF">LD-DVIV04/V01</abbr>, BPL, BPC | Intégré (GED, Inspections & CAPA `Critique/Majeur/Autre` archivés `02_04`) ✅ | GED Coffre-Fort & Inspections CAPA (`Jalon 1.4 / 2.1 / 2.14`) |
+| **6. Prix & Économie** | <abbr title="Décret exécutif n° 20-326 du 22 novembre 2020 et Décret exécutif n° 23-105 du 7 mars 2023 relatifs au Comité économique intersectoriel des médicaments">Décrets 20-326 / 23-105</abbr>, <abbr title="Décret exécutif n° 98-44 du 1er février 1998 fixant les marges plafonds applicables à la production, au conditionnement et à la distribution des médicaments">Décret n° 98-44</abbr> | Intégré (Module Finance, Redevances & Structure de prix DEPP) ✅ | Redevances & Pricing (`Jalon 2.3 / 2.14`) |
+| **7. Vigilance & Stocks** | <abbr title="Décret exécutif n° 98-43 du 1er février 1998 portant création du centre national de pharmacovigilance et de matériovigilance">Décret n° 98-43</abbr>, <abbr title="Loi n° 04-18 du 25 décembre 2004, Décret exécutif n° 19-379 du 31 décembre 2019 et Décret exécutif n° 24-112 du 13 mars 2024 relatifs aux stupéfiants et psychotropes">Loi 04-18 / Décret 24-112</abbr>, <abbr title="Guides ANPP Rappel de lots & Retrait PP/DM non conformes (délai 24h)">Rappel 24h</abbr> | Intégré (DVTIV PDT/QPPV + PSMF, Rappels 24h & PV GED `04_03`) ✅ | Veille, DVTIV & Rappels 24h (`Jalon 1.7 / 2.14`) |
+| **8. Redevances ANPP** | <abbr title="Décret exécutif n° 21-551 du 30 décembre 2021 fixant les modalités de recouvrement et d'affectation du produit de la redevance des produits pharmaceutiques et des dispositifs médicaux">Décret n° 21-551</abbr> & <abbr title="Arrêté interministériel Finances / MIPH fixant le barème des redevances d'expertise, d'enregistrement, d'homologation et d'agrément">Barème Finances/MIPH</abbr> | Intégré (BV1/BV2 + BV Homologation/Modif/Renouv/Transfert DM en GED) ✅ | Redevances & Bordereaux (`Jalon 1.7 / 2.3 / 2.14`) |
 | **9. Data Integrity & CSV** | <abbr title="Loi n° 15-04 du 1er février 2015 fixant les règles générales relatives à la signature et à la certification électroniques">Loi 15-04</abbr>, <abbr title="Loi n° 18-07 du 10 juin 2018 relative à la protection des personnes physiques dans le traitement des données à caractère personnel">Loi 18-07</abbr>, 21 CFR Part 11, EU Annexe 11, GAMP 5, ALCOA+ | Intégré ✅ | Audit Trail SHA-256, 2FA & OQ/PQ (`Jalon 1.2 / 2.13`) |
+| **10. Guidelines ANPP (19/19)** | <abbr title="Ensemble des 19 Lignes Directrices publiées sur anpp.dz/fr/guidelines/ : BPPV v2, BPDG, LD-DVIV04/V01, Écarts BPF, Rappel 24h, Reliance (Enreg/Labo/BPF/PV), Bioéquivalence, RCP/Notice, Refus/Retrait DE">19 Guidelines ANPP (`anpp.dz`)</abbr> | Intégré (19 PDF stockés en base `BYTEA` + SHA-256 & 5 phases workflows) ✅ | Veille PDF Hors-ligne & Jalon `2.14` (`Migrations 038-041`) |

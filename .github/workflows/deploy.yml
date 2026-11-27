@@ -34,6 +34,14 @@ jobs:
             docker image prune -f
 
             echo "==> Contrôle de santé..."
-            sleep 6
-            curl -f http://localhost:8090/health || exit 1
-            echo "==> Déploiement réussi avec succès !"
+            for i in $(seq 1 15); do
+              if curl -fsS http://localhost:8090/health; then
+                echo ""
+                echo "==> Déploiement réussi avec succès !"
+                exit 0
+              fi
+              echo "Attente démarrage serveur ($i/15)..."
+              sleep 2
+            done
+            echo "Échec contrôle de santé après 30s"
+            exit 1

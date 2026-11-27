@@ -195,6 +195,9 @@ function renderDMDevicesTable() {
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-right:4px;" onclick="openDMHomologationModal('${d.id}')" title="Éditer et vérifier les 6 sections techniques">📋 6 Sections</button>
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-right:4px;" onclick="openDMRecevabiliteModal('${d.id}')" title="Grille des 13 points de recevabilité et signature PDT">📑 Recevabilité (13 pts)</button>
                         <button class="btn-pill" style="font-size:11px; padding:4px 8px;" onclick="previewDMReport('ES-REG-02-DM', '${d.id}')" title="Générer et prévisualiser ES-REG-02-DM">👁️ ES-02</button>
+                        <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-left:4px; background:#0ea5e9; color:white; border:none;" onclick="downloadOfficialDMForm('${d.id}', 'homologation')" title="Télécharger le formulaire officiel ANPP (.docx)">📥 ANPP (.docx)</button>
+                        <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-left:4px;" onclick="downloadOfficialDMForm('${d.id}', 'bv-homologation')" title="Bordereau de versement homologation DM (300 000 DA .docx)">💶 BV (.docx)</button>
+                        <button class="btn-pill" style="font-size:11px; padding:4px 8px; margin-left:4px; background:#0f766e; color:white; border:none;" onclick="openDMLotReleaseModal('${d.id}')" title="Bordereau officiel DCE de libération de lot importé (.docx)">📦 Lot DCE</button>
                     </td>
                 </tr>
             `;
@@ -735,6 +738,130 @@ function filterDMRegStatus(st) {
 
 function exportDMCanevasXLSX() {
     window.location.href = '/api/v1/dm-regularizations/export/canevas';
+}
+
+async function downloadFormWithGEDFeedback(url, fallbackFilename) {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) {
+            showToast("Erreur lors de la génération du document officiel.", "error");
+            return;
+        }
+        const gedCode = res.headers.get('X-GED-Document-Code') || '';
+        const disp = res.headers.get('Content-Disposition') || '';
+        const match = disp.match(/filename="?([^"]+)"?/i);
+        const filename = match ? match[1] : fallbackFilename;
+
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+
+        if (gedCode) {
+            showToast(`✅ Document téléchargé et archivé en GED (${gedCode}, statut Brouillon).`, "success");
+        } else {
+            showToast("✅ Document officiel téléchargé.", "success");
+        }
+    } catch (err) {
+        showToast("Erreur réseau lors du téléchargement : " + err.message, "error");
+    }
+}
+
+function downloadOfficialDMForm(deviceId, type) {
+    if (!deviceId) return;
+    const t = type || 'homologation';
+    downloadFormWithGEDFeedback(
+        `/api/v1/medical-devices/${encodeURIComponent(deviceId)}/official-form?type=${encodeURIComponent(t)}`,
+        `ANPP-DDM-${t}.docx`
+    );
+}
+
+function downloadDCEOfficialForm(formType) {
+    if (!formType) return;
+    const ext = formType.startsWith('declaration-journaliere') ? 'xlsx' : 'docx';
+    downloadFormWithGEDFeedback(
+        `/api/v1/lot-releases/dce-forms/${encodeURIComponent(formType)}`,
+        `ANPP-DCE-${formType}.${ext}`
+    );
+}
+
+function openDMLotReleaseModal(deviceId) {
+    const dm = (typeof dmDevicesList !== 'undefined' && Array.isArray(dmDevicesList))
+        ? dmDevicesList.find(x => x.id === deviceId)
+        : null;
+    document.getElementById('lot-rel-dm-id').value = deviceId || '';
+    document.getElementById('lot-rel-name').value = dm ? (dm.commercial_name_fr || '') : '';
+    document.getElementById('lot-rel-class').value = dm ? (dm.dm_class || '') : '';
+    document.getElementById('lot-rel-designation').value = dm ? (dm.intended_use_fr || '') : '';
+    document.getElementById('lot-rel-prod-site').value = dm ? (dm.legal_manufacturer_name || '') : '';
+    document.getElementById('lot-rel-number').value = '';
+    document.getElementById('modal-dm-lot-release').classList.add('open');
+}
+
+async function submitDMLotRelease(e) {
+    e.preventDefault();
+    const dmId = document.getElementById('lot-rel-dm-id').value || null;
+    const payload = {
+        product_kind: 'dm',
+        medical_device_id: dmId,
+        commercial_name: document.getElementById('lot-rel-name').value.trim(),
+        dm_class: document.getElementById('lot-rel-class').value.trim(),
+        designation: document.getElementById('lot-rel-designation').value.trim(),
+        form_aspect: document.getElementById('lot-rel-aspect').value.trim(),
+        lot_number: document.getElementById('lot-rel-number').value.trim(),
+        ddf: document.getElementById('lot-rel-ddf').value,
+        ddp: document.getElementById('lot-rel-ddp').value,
+        sales_units: document.getElementById('lot-rel-units').value.trim(),
+        homologation_or_de_ref: document.getElementById('lot-rel-homolog-ref').value.trim(),
+        production_site: document.getElementById('lot-rel-prod-site').value.trim(),
+        qc_site: document.getElementById('lot-rel-qc-site').value.trim(),
+        release_site: document.getElementById('lot-rel-release-site').value.trim(),
+        customs_decl_number: document.getElementById('lot-rel-customs').value.trim(),
+        import_program_attached: document.getElementById('lot-rel-prog').checked,
+        origin_cert_attached: document.getElementById('lot-rel-cert').checked,
+        tech_form_attached: document.getElementById('lot-rel-tech').checked,
+        sampling_plan_attached: document.getElementById('lot-rel-samp').checked,
+        is_reliance_lab: !!document.getElementById('lot-rel-reliance')?.checked,
+        reliance_lab_authority: document.getElementById('lot-rel-reliance-auth')?.value || '',
+        reliance_lab_reference: (document.getElementById('lot-rel-reliance-ref')?.value || '').trim()
+    };
+    try {
+        let res = await fetch('/api/v1/lot-releases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        let data = await res.json();
+        if (res.status === 409 && data.pdt_override_only && typeof showPromptModal === 'function') {
+            const reason = await showPromptModal(
+                'Contournement PDT — Produit Suspendu / Retiré',
+                data.error + ' Saisissez le motif réglementaire de dérogation :',
+                'Lot importé antérieurement à la décision de suspension.'
+            );
+            if (!reason) return;
+            payload.pdt_override_reason = reason;
+            res = await fetch('/api/v1/lot-releases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            data = await res.json();
+        }
+        if (!res.ok) {
+            showToast(data.error || data.message || 'Erreur enregistrement lot', 'error');
+            return;
+        }
+        closeModal('modal-dm-lot-release');
+        showToast('✅ Bordereau de libération de lot enregistré — téléchargement .docx en cours...', 'success');
+        window.location.href = `/api/v1/lot-releases/${encodeURIComponent(data.id)}/official-form`;
+    } catch (err) {
+        showToast('Erreur réseau : ' + err.message, 'error');
+    }
 }
 
 // ============================================================================

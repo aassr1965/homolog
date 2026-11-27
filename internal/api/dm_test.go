@@ -1,9 +1,11 @@
 package api
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -312,12 +314,21 @@ func TestDMAPI_FullWorkflow(t *testing.T) {
 		if expRec.Code != http.StatusOK {
 			t.Fatalf("Export attendu 200, reçu: %d", expRec.Code)
 		}
-		csvContent := expRec.Body.String()
-		if !strings.Contains(csvContent, "Code Suivi Régularisation") {
-			t.Errorf("En-tête manquant dans l'export: %s", csvContent)
+		zr, err := zip.NewReader(bytes.NewReader(expRec.Body.Bytes()), int64(expRec.Body.Len()))
+		if err != nil {
+			t.Fatalf("Export XLSX attendu comme archive ZIP valide: %v", err)
 		}
-		if !strings.Contains(csvContent, regCode) {
-			t.Errorf("Donnée %s manquante dans le CSV: %s", regCode, csvContent)
+		var sheetXML string
+		for _, f := range zr.File {
+			if f.Name == "xl/worksheets/sheet1.xml" {
+				rc, _ := f.Open()
+				b, _ := io.ReadAll(rc)
+				_ = rc.Close()
+				sheetXML = string(b)
+			}
+		}
+		if !strings.Contains(sheetXML, regCode) {
+			t.Errorf("Donnée %s manquante dans le classeur XLSX officiel ANPP", regCode)
 		}
 	})
 }

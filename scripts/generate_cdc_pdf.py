@@ -11,9 +11,7 @@ DOCS_DIR = os.path.join(WORKSPACE_DIR, "docs")
 MD_PATH = os.path.join(DOCS_DIR, "cahier_des_charges.md")
 HTML_PATH = os.path.join(DOCS_DIR, "cahier_des_charges.html")
 TEMP_PDF_PATH = os.path.join(DOCS_DIR, "temp_cdc.pdf")
-FINAL_PDF_PATH = os.path.join(DOCS_DIR, "Cahier_des_charges_Sanad_Pharma_v1.0.pdf")
-ROOT_PDF_PATH = os.path.join(WORKSPACE_DIR, "SANAD_PHARMA_Cahier_des_Charges_v1.0.pdf")
-LEGACY_PDF_PATH = os.path.join(DOCS_DIR, "cahier_des_charges.pdf")
+FINAL_PDF_PATH = os.path.join(DOCS_DIR, "cahier_des_charges.pdf")
 
 EDGE_PATH = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 if not os.path.exists(EDGE_PATH):
@@ -1583,10 +1581,6 @@ doc.set_metadata({
 print(f"Saving finalized PDF to: {FINAL_PDF_PATH}")
 doc.save(FINAL_PDF_PATH, garbage=4, deflate=True)
 doc.close()
-
-# Also copy to root and legacy paths
-shutil.copyfile(FINAL_PDF_PATH, ROOT_PDF_PATH)
-shutil.copyfile(FINAL_PDF_PATH, LEGACY_PDF_PATH)
 
 # Clean up temp PDF
 if os.path.exists(TEMP_PDF_PATH):

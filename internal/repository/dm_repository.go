@@ -23,6 +23,20 @@ func NewDMRepository(pool *pgxpool.Pool) *DMRepository {
 	return &DMRepository{pool: pool}
 }
 
+// GetOrganizationByID récupère les informations de l'établissement / organisation pour le pré-remplissage ANPP
+func (r *DMRepository) GetOrganizationByID(ctx context.Context, orgID uuid.UUID) (*domain.Organization, error) {
+	var o domain.Organization
+	err := r.pool.QueryRow(ctx, `
+		SELECT id, slug, legal_name, COALESCE(miph_license_number, ''), COALESCE(technical_director_name, ''),
+		       COALESCE(address, ''), COALESCE(phone, ''), COALESCE(email, '')
+		FROM organizations WHERE id = $1
+	`, orgID).Scan(&o.ID, &o.Slug, &o.LegalName, &o.MIPHLicenseNumber, &o.TechnicalDirectorName, &o.Address, &o.Phone, &o.Email)
+	if err != nil {
+		return nil, err
+	}
+	return &o, nil
+}
+
 // UpdateMedicalDeviceHomologation met à jour les 6 sections techniques d'un DM
 func (r *DMRepository) UpdateMedicalDeviceHomologation(ctx context.Context, dm *domain.MedicalDevice) error {
 	query := `

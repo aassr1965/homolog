@@ -68,8 +68,13 @@ func main() {
 	var reportHandler *api.ReportHandler
 	var variationHandler *api.VariationHandler
 	var dmHandler *api.DMHandler
+	var lotReleaseHandler *api.LotReleaseHandler
 	var dmModHandler *api.DMModificationHandler
 	var corpHandler *api.CorporateHandler
+	var recallHandler *api.RecallHandler
+	var inspectionHandler *api.InspectionHandler
+	var anppDraftHandler *api.ANPPDraftHandler
+	var anppTemplateHandler *api.ANPPTemplateHandler
 
 	db, err = database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -119,7 +124,7 @@ func main() {
 		gedHandler = api.NewGEDHandler(gedRepo, storageProvider, auditService, db.Pool)
 
 		dossierRepo := repository.NewDossierRepository(db.Pool)
-		dossierHandler = api.NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditService, db.Pool)
+		dossierHandler = api.NewDossierHandler(dossierRepo, pharmaRepo, gedRepo, auditService, db.Pool).WithStorage(storageProvider)
 
 		deficiencyRepo := repository.NewDeficiencyRepository(db.Pool)
 		deficiencyHandler = api.NewDeficiencyHandler(deficiencyRepo, dossierRepo, auditService, db.Pool)
@@ -147,14 +152,19 @@ func main() {
 		varRepo := repository.NewVariationRepository(db.Pool)
 		variationHandler = api.NewVariationHandler(varRepo, dossierRepo, auditService)
 
+		corpRepo := repository.NewCorporateRepository(db.Pool)
+		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
+		recallHandler = api.NewRecallHandler(db.Pool, auditService, gedRepo, storageProvider)
+		inspectionHandler = api.NewInspectionHandler(db.Pool, auditService, gedRepo, storageProvider)
+		anppDraftHandler = api.NewANPPDraftHandler(db.Pool, auditService)
+		anppTemplateHandler = api.NewANPPTemplateHandler(db.Pool, auditService)
+
 		dmRepo := repository.NewDMRepository(db.Pool)
-		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService)
+		dmHandler = api.NewDMHandler(dmRepo, dossierRepo, auditService).WithGED(gedRepo, storageProvider)
+		lotReleaseHandler = api.NewLotReleaseHandler(db.Pool, auditService, gedRepo, corpRepo, storageProvider)
 
 		dmModRepo := repository.NewDMModificationRepository(db.Pool)
 		dmModHandler = api.NewDMModificationHandler(dmModRepo, dmRepo, auditService)
-
-		corpRepo := repository.NewCorporateRepository(db.Pool)
-		corpHandler = api.NewCorporateHandler(corpRepo, auditService)
 
 		// Job de fond BPF : auto-libération des verrous de Check-out expirés (ALCOA+ "Timely")
 		// Toutes les 5 minutes, les sections verrouillées depuis plus de 30 min sont libérées
@@ -476,6 +486,8 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers", dossierHandler.ListDossiers)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierCreate)).Post("/api/v1/dossiers", dossierHandler.CreateDossier)
 				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}", dossierHandler.GetDossier)
+				protected.With(api.RequirePermission(auditService, domain.PermDossierView)).Get("/api/v1/dossiers/{id}/official-form", dossierHandler.DownloadOfficialDEPPForm)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocApprovePDT)).Put("/api/v1/dossiers/{id}/reliance", dossierHandler.UpdateDossierReliance)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/attach", dossierHandler.AttachDocument)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocApprovePDT, domain.PermDossierCreate)).Post("/api/v1/dossiers/{id}/items/{itemId}/detach", dossierHandler.DetachDocument)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermDocDraftMaker, domain.PermDocCheckReview)).Post("/api/v1/dossiers/{id}/items/{itemId}/status", dossierHandler.UpdateItemStatus)
@@ -548,6 +560,7 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch", regulatoryWatchHandler.ListRegulatoryWatch)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermUserManage)).Post("/api/v1/regulatory-watch", regulatoryWatchHandler.CreateRegulatoryWatchItem)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}", regulatoryWatchHandler.GetRegulatoryWatchItem)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/regulatory-watch/{itemId}/pdf", regulatoryWatchHandler.DownloadRegulatoryWatchPDF)
 				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Put("/api/v1/regulatory-watch/{itemId}/analysis", regulatoryWatchHandler.UpdateRegulatoryWatchAnalysis)
 			}
 
@@ -641,6 +654,48 @@ func main() {
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/dm-regularizations", dmHandler.CreateDMRegularization)
 				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Put("/api/v1/dm-regularizations/{id}", dmHandler.UpdateDMRegularization)
 				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dm-regularizations/export/canevas", dmHandler.ExportDMCanevas)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/medical-devices/{id}/official-form", dmHandler.DownloadOfficialDMForm)
+			}
+
+			// Libération de Lots Importés (DCE) & Base PDT/QPPV (DVTIV)
+			if lotReleaseHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases", lotReleaseHandler.ListLotReleases)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/lot-releases", lotReleaseHandler.CreateLotRelease)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases/{id}/official-form", lotReleaseHandler.DownloadOfficialLotReleaseDOCX)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/lot-releases/dce-forms/{formType}", lotReleaseHandler.DownloadDCEForm)
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/dvtiv/pdt-qppv-form", lotReleaseHandler.DownloadDVTIVPDTQPPVForm)
+			}
+
+			// Rappels de Lots & Retraits PP/DM Non Conformes (24h ANPP)
+			if recallHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/recalls", recallHandler.ListRecalls)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/recalls", recallHandler.CreateRecall)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/recalls/{id}/notify-anpp", recallHandler.NotifyANPP)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/recalls/{id}/close", recallHandler.CloseRecall)
+			}
+
+			// Inspections Réglementaires (LD-DVIV04/V01), CAPA & Statuts DE/DH
+			if inspectionHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/inspections/findings", inspectionHandler.ListFindings)
+				protected.With(api.RequirePermission(auditService, domain.PermRefEdit)).Post("/api/v1/inspections/findings", inspectionHandler.CreateFinding)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocCheckReview)).Post("/api/v1/inspections/findings/{id}/capa", inspectionHandler.SubmitCAPA)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Post("/api/v1/inspections/findings/{id}/close", inspectionHandler.CloseFinding)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT)).Put("/api/v1/regulatory-status/{kind}/{id}", inspectionHandler.UpdateProductRegulatoryStatus)
+			}
+
+			// Brouillons éditables des formulaires complémentaires ANPP
+			if anppDraftHandler != nil {
+				protected.With(api.RequirePermission(auditService, domain.PermRefView)).Get("/api/v1/anpp-drafts/{kind}", anppDraftHandler.GetDraft)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDossierCreate, domain.PermDocDraftMaker, domain.PermDocApprovePDT)).Put("/api/v1/anpp-drafts/{kind}", anppDraftHandler.SaveDraft)
+			}
+
+			// Gestion dynamique & surcharge des gabarits officiels ANPP (.docx / .xlsx) sans recompilation
+			if anppTemplateHandler != nil {
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates", anppTemplateHandler.ListTemplates)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates/{name}/download", anppTemplateHandler.DownloadTemplate)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefView, domain.PermSysMaint)).Get("/api/v1/anpp-templates/{name}/preview", anppTemplateHandler.PreviewTemplate)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Post("/api/v1/anpp-templates/{name}", anppTemplateHandler.UploadTemplate)
+				protected.With(api.RequireAnyPermission(auditService, domain.PermRefEdit, domain.PermDocApprovePDT, domain.PermSysMaint)).Delete("/api/v1/anpp-templates/{name}", anppTemplateHandler.DeleteOverride)
 			}
 
 			if dmModHandler != nil {

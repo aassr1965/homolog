@@ -93,6 +93,13 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/034_granular_all_corporate_checklists.sql",
 		"migrations/035_restrict_assistant_audit_view_to_interim.sql",
 		"migrations/036_dt_permanent_delegations.sql",
+		"migrations/037_import_lot_releases.sql",
+		"migrations/038_regulatory_watch_embedded_pdfs.sql",
+		"migrations/039_reliance_pathway.sql",
+		"migrations/040_lot_recalls.sql",
+		"migrations/041_inspections_capa_and_de_status.sql",
+		"migrations/042_anpp_form_drafts.sql",
+		"migrations/043_anpp_template_overrides.sql",
 	}
 
 	for _, file := range migrationFiles {
