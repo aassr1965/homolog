@@ -31,6 +31,16 @@
             'home.role3Desc': 'Relecture indépendante des pièces, coffre-fort documentaire structuré, suivi des écarts, actions correctives et audits.',
             'home.role4Title': 'Direction Générale & Informatique',
             'home.role4Desc': 'Installation locale sans internet ou Cloud souverain multi-sites, récupération complète des données à tout moment et traçabilité totale.',
+            'home.photoBadge': 'Traçabilité & Signature Électronique',
+            'home.galleryBadge': 'En Pratique',
+            'home.galleryTitle': 'Un environnement pensé pour vos équipes',
+            'home.gallerySub': "De la paillasse de contrôle qualité jusqu'au visa final du Pharmacien Directeur Technique et à l'hébergement sécurisé.",
+            'home.gal1t': 'Contrôle Qualité & Lots',
+            'home.gal1d': 'Suivi des analyses, des stabilités et libération documentée des lots fabriqués ou importés.',
+            'home.gal2t': 'Direction Technique & Réglementaire',
+            'home.gal2d': 'Revue collaborative des dossiers, vérification bilingue et signature électronique sécurisée.',
+            'home.gal3t': 'Souveraineté & Sécurité',
+            'home.gal3d': 'Déploiement sur votre réseau interne ou en Cloud souverain avec coffre-fort chiffré.',
             'plat.badge': 'Architecture Unifiée',
             'plat.title': 'Les principes partagés',
             'plat.intro': "Activez uniquement les modules dont vous avez besoin aujourd'hui. Tous reposent sur le même socle de fiabilité et de sécurité.",
@@ -153,6 +163,16 @@
             'home.role3Desc': 'مراجعة مستقلة للوثائق، خزينة منظمة، متابعة الانحرافات والإجراءات التصحيحية والتدقيق.',
             'home.role4Title': 'الإدارة العامة وتقنية المعلومات',
             'home.role4Desc': 'تثبيت محلي بدون إنترنت أو سحابة سيادية متعددة المواقع مع إمكانية استرجاع كامل البيانات.',
+            'home.photoBadge': 'التتبع والتوقيع الإلكتروني',
+            'home.galleryBadge': 'في الميدان',
+            'home.galleryTitle': 'بيئة عمل مصممة لفرقكم',
+            'home.gallerySub': 'من مخبر مراقبة الجودة إلى التأشيرة النهائية للصيدلي المدير التقني والاستضافة الآمنة.',
+            'home.gal1t': 'مراقبة الجودة والدفعات',
+            'home.gal1d': 'متابعة التحاليل ودراسات الثبات وتحرير الدفعات المصنعة أو المستوردة.',
+            'home.gal2t': 'المديرية التقنية والشؤون التنظيمية',
+            'home.gal2d': 'مراجعة تعاونية للملفات، مطابقة ثنائية اللغة وتوقيع إلكتروني مؤمّن.',
+            'home.gal3t': 'السيادة والأمان',
+            'home.gal3d': 'نشر داخل شبكتكم المحلية أو في سحابة سيادية مع خزينة وثائق مشفرة.',
             'plat.badge': 'بنية موحدة',
             'plat.title': 'المبادئ المشتركة',
             'plat.intro': 'فعّلوا الوحدات التي تحتاجونها اليوم فقط. جميعها تعمل على نفس قاعدة الأمان وسلامة البيانات.',
@@ -275,6 +295,16 @@
             'home.role3Desc': 'Independent document review, structured 5-branch document vault, deviations, corrective actions, and audits.',
             'home.role4Title': 'Executive & IT Governance',
             'home.role4Desc': 'Offline on-premises installation or multi-site sovereign cloud, full data portability anytime, and immutable audit logs.',
+            'home.photoBadge': 'Traceability & E-Signature',
+            'home.galleryBadge': 'In Practice',
+            'home.galleryTitle': 'Built for your day-to-day teams',
+            'home.gallerySub': 'From quality control laboratories to final Technical Director sign-off and sovereign hosting.',
+            'home.gal1t': 'Quality Control & Batches',
+            'home.gal1d': 'Track lab analyses, stability studies, and documented batch release for local or imported products.',
+            'home.gal2t': 'Technical & Regulatory Affairs',
+            'home.gal2d': 'Collaborative dossier review, bilingual verification, and secure electronic sign-off.',
+            'home.gal3t': 'Sovereignty & Security',
+            'home.gal3d': 'Deploy on your internal network or in a sovereign cloud with an encrypted document vault.',
             'plat.badge': 'Unified Architecture',
             'plat.title': 'Shared principles',
             'plat.intro': 'Activate only the modules you need today. Every module runs on the same reliability and security foundation.',
@@ -464,8 +494,46 @@
             link.classList.toggle('active', link.getAttribute('data-route') === target);
         });
         updateSEO(currentRoute, currentLang);
+        triggerReveal();
+        animateCounters();
         closeDrawer();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function triggerReveal() {
+        const els = document.querySelectorAll('.sp-view:not([hidden]) .sp-reveal');
+        if (!('IntersectionObserver' in window)) {
+            els.forEach((el) => el.classList.add('is-visible'));
+            return;
+        }
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
+        els.forEach((el) => {
+            el.classList.remove('is-visible');
+            obs.observe(el);
+        });
+    }
+
+    function animateCounters() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        document.querySelectorAll('.sp-view:not([hidden]) [data-count]').forEach((el) => {
+            const target = parseInt(el.getAttribute('data-count'), 10);
+            if (!target || el.dataset.animated === '1') return;
+            el.dataset.animated = '1';
+            let current = 0;
+            const step = Math.max(1, Math.ceil(target / 18));
+            const timer = setInterval(() => {
+                current = Math.min(target, current + step);
+                el.textContent = String(current);
+                if (current >= target) clearInterval(timer);
+            }, 28);
+        });
     }
 
     function routeFromHash() {
