@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANAD PHARMA — Plateforme Réglementaire Pharmaceutique</title>
+    <meta name="description" content="Enregistrement des médicaments, dispositifs médicaux, agréments d'établissement et gestion documentaire pharmaceutique conforme.">
+    <link rel="preload" as="image" href="/img/portal-hero-lab.jpg">
+    <link rel="canonical" href="https://sanad-pharma.dz/">
+    <link rel="alternate" hreflang="fr" href="https://sanad-pharma.dz/">
+    <link rel="alternate" hreflang="ar" href="https://sanad-pharma.dz/">
+    <link rel="alternate" hreflang="en" href="https://sanad-pharma.dz/">
+    <link rel="alternate" hreflang="x-default" href="https://sanad-pharma.dz/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SANAD PHARMA">
+    <meta property="og:title" content="SANAD PHARMA — Plateforme Réglementaire Pharmaceutique">
+    <meta property="og:description" content="Enregistrement des médicaments, dispositifs médicaux, agréments d'établissement et gestion documentaire pharmaceutique conforme.">
+    <meta property="og:url" content="https://sanad-pharma.dz/">
+    <meta property="og:image" content="https://sanad-pharma.dz/img/portal-hero-lab.jpg">
+    <meta property="og:image:alt" content="Laboratoire pharmaceutique moderne utilisant la plateforme SANAD PHARMA">
+    <meta property="og:locale" content="fr_DZ">
+    <meta property="og:locale:alternate" content="ar_DZ">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SANAD PHARMA — Plateforme Réglementaire Pharmaceutique">
+    <meta name="twitter:description" content="Enregistrement des médicaments, dispositifs médicaux, agréments d'établissement et gestion documentaire pharmaceutique conforme.">
+    <meta name="twitter:image" content="https://sanad-pharma.dz/img/portal-hero-lab.jpg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "SANAD PHARMA",
+      "url": "https://sanad-pharma.dz/",
+      "inLanguage": ["fr", "ar", "en"],
+      "description": "Enregistrement des médicaments, dispositifs médicaux, agréments d'établissement et gestion documentaire pharmaceutique conforme.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "SANAD PHARMA",
+        "url": "https://sanad-pharma.dz/",
+        "logo": "https://sanad-pharma.dz/img/caducee-algerie.png"
+      }
+    }
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/img/favicon-caducee.svg">
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <link rel="stylesheet" href="/portal/portal.css?v=2026.11.28.1">
+</head>
+<body>
+    <!-- Barre de navigation SPA Mobile-First -->
+    <header class="sp-header" id="sp-header">
+        <div class="sp-nav-shell">
+            <a href="#/accueil" class="sp-brand" data-route="accueil" aria-label="SANAD PHARMA">
+                <img src="/img/caducee-algerie.svg" alt="" role="presentation" class="sp-brand-logo" width="32" height="32">
+                <span class="sp-brand-text">
+                    <strong>SANAD</strong>
+                    <small>PHARMA</small>
+                </span>
+            </a>
+
+            <nav class="sp-nav-desktop" aria-label="Navigation principale">
+                <a href="#/accueil" class="sp-nav-link" data-route="accueil" data-i18n="nav.home">Accueil</a>
+                <a href="#/plateforme" class="sp-nav-link" data-route="plateforme" data-i18n="nav.platform">Plateforme</a>
+                <a href="#/conformite" class="sp-nav-link" data-route="conformite" data-i18n="nav.compliance">Conformité</a>
+                <a href="#/offres" class="sp-nav-link" data-route="offres" data-i18n="nav.offers">Offres</a>
+                <a href="#/contact" class="sp-nav-link" data-route="contact" data-i18n="nav.contact">Contact</a>
+            </nav>
+
+            <div class="sp-nav-actions">
+                <div class="sp-lang-switch" role="group" aria-label="Langue">
+                    <button type="button" class="sp-lang-btn active" data-lang="fr">FR</button>
+                    <button type="button" class="sp-lang-btn" data-lang="ar">عربي</button>
+                    <button type="button" class="sp-lang-btn" data-lang="en">EN</button>
+                </div>
+
+                <button type="button" class="sp-theme-btn" id="sp-theme-toggle" aria-label="Basculer le thème" title="Mode jour / nuit">
+                    <span class="sp-theme-icon" id="sp-theme-icon">🌙</span>
+                </button>
+
+                <a href="#/demo" class="sp-btn sp-btn-outline sp-hide-mobile" data-route="demo" data-i18n="nav.demo">Démo / Onboarding</a>
+                <a href="/app" class="sp-btn sp-btn-primary" id="sp-btn-login" data-i18n="nav.login">Connexion</a>
+
+                <button type="button" class="sp-burger" id="sp-burger-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="sp-mobile-drawer">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tiroir de navigation Mobile -->
+    <div class="sp-drawer-backdrop" id="sp-drawer-backdrop" hidden></div>
+    <aside class="sp-mobile-drawer" id="sp-mobile-drawer" aria-hidden="true">
+        <div class="sp-drawer-head">
+            <span class="sp-brand-text"><strong>SANAD</strong> <small>PHARMA</small></span>
+            <button type="button" class="sp-drawer-close" id="sp-drawer-close" aria-label="Fermer le menu">✕</button>
+        </div>
+        <nav class="sp-drawer-links" aria-label="Navigation mobile">
+            <a href="#/accueil" class="sp-drawer-link" data-route="accueil" data-i18n="nav.home">Accueil</a>
+            <a href="#/plateforme" class="sp-drawer-link" data-route="plateforme" data-i18n="nav.platform">Plateforme</a>
+            <a href="#/conformite" class="sp-drawer-link" data-route="conformite" data-i18n="nav.compliance">Conformité</a>
+            <a href="#/offres" class="sp-drawer-link" data-route="offres" data-i18n="nav.offers">Offres</a>
+            <a href="#/demo" class="sp-drawer-link" data-route="demo" data-i18n="nav.demo">Démo / Onboarding</a>
+            <a href="#/contact" class="sp-drawer-link" data-route="contact" data-i18n="nav.contact">Contact</a>
+        </nav>
+        <div class="sp-drawer-controls">
+            <div class="sp-lang-switch" role="group" aria-label="Langue mobile">
+                <button type="button" class="sp-lang-btn active" data-lang="fr">FR</button>
+                <button type="button" class="sp-lang-btn" data-lang="ar">عربي</button>
+                <button type="button" class="sp-lang-btn" data-lang="en">EN</button>
+            </div>
+            <button type="button" class="sp-btn sp-btn-outline sp-btn-block" id="sp-theme-toggle-mobile" data-i18n="nav.theme">Mode jour / nuit</button>
+            <a href="/app" class="sp-btn sp-btn-primary sp-btn-block" data-i18n="nav.login">Connexion</a>
+        </div>
+    </aside>
+
+    <!-- Zone Toast In-App (remplace alert/confirm natifs) -->
+    <div id="sp-toast" class="sp-toast" role="status" aria-live="polite" hidden></div>
+
+    <!-- Conteneur principal des vues SPA -->
+    <main id="sp-main" class="sp-main" tabindex="-1">
+        <!-- VUE 1 : ACCUEIL -->
+        <section class="sp-view" data-view="accueil">
+            <div class="sp-section sp-section-hero">
+                <div class="sp-container sp-split-hero">
+                    <div class="sp-hero-copy">
+                        <span class="sp-badge" data-i18n="home.badge">ANPP • MIPH • 21 CFR Part 11 • ALCOA+</span>
+                        <h1 data-i18n="home.title">Huit modules interconnectés, un seul socle d'intégrité réglementaire.</h1>
+                        <p class="sp-lead" data-i18n="home.subtitle">Pilotez l'enregistrement CTD des médicaments, l'homologation des dispositifs médicaux, les agréments MIPH Tabadol et votre GED BPF sur une plateforme souveraine, bilingue FR/AR et déployable sur site ou en Cloud.</p>
+                        <div class="sp-cta-group">
+                            <a href="/app" class="sp-btn sp-btn-primary sp-btn-lg" data-i18n="home.ctaLogin">Accéder à SANAD Pharma</a>
+                            <a href="#/plateforme" class="sp-btn sp-btn-outline sp-btn-lg" data-route="plateforme" data-i18n="home.ctaPlatform">Découvrir la plateforme</a>
+                        </div>
+                        <div class="sp-kpi-strip">
+                            <div class="sp-kpi sp-reveal"><strong data-count="6">6</strong><span data-i18n="home.kpi1">Parcours officiels d’enregistrement et de renouvellement</span></div>
+                            <div class="sp-kpi sp-reveal"><strong data-count="34">34</strong><span data-i18n="home.kpi2">Catégories de modifications post-autorisation gérées</span></div>
+                            <div class="sp-kpi sp-reveal"><strong data-count="28">28</strong><span data-i18n="home.kpi3">Modèles de documents officiels prêts pour les autorités</span></div>
+                        </div>
+                    </div>
+                    <div class="sp-hero-visual sp-reveal" aria-hidden="true">
+                        <div class="sp-hero-photo-card">
+                            <img src="/img/portal-hero-lab.jpg" alt="Laboratoire pharmaceutique moderne" width="1280" height="720" class="sp-hero-photo" loading="eager">
+                            <div class="sp-hero-photo-badge">
+                                <span class="sp-pulse-dot"></span>
+                                <span data-i18n="home.photoBadge">Traçabilité &amp; Signature Électronique</span>
+                            </div>
+                        </div>
+                        <!-- Illustration vectorielle pure du campus modulaire SANAD Pharma -->
+                        <svg viewBox="0 0 520 400" class="sp-svg-campus" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="spGradNavy" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#0f3b60"/>
+                                    <stop offset="100%" stop-color="#091e36"/>
+                                </linearGradient>
+                                <linearGradient id="spGradGreen" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#10b981"/>
+                                    <stop offset="100%" stop-color="#047857"/>
+                                </linearGradient>
+                            </defs>
+                            <rect x="20" y="20" width="480" height="360" rx="28" fill="var(--sp-surface-card)" stroke="var(--sp-border)"/>
+                            <!-- Connexions -->
+                            <g stroke="#047857" stroke-width="2" stroke-dasharray="5 4" opacity="0.55">
+                                <line x1="260" y1="200" x2="120" y2="105"/>
+                                <line x1="260" y1="200" x2="400" y2="105"/>
+                                <line x1="260" y1="200" x2="100" y2="210"/>
+                                <line x1="260" y1="200" x2="420" y2="210"/>
+                                <line x1="260" y1="200" x2="135" y2="310"/>
+                                <line x1="260" y1="200" x2="385" y2="310"/>
+                            </g>
+                            <!-- Tour centrale -->
+                            <g transform="translate(200,145)">
+                                <rect width="120" height="110" rx="18" fill="url(#spGradNavy)"/>
+                                <circle cx="60" cy="40" r="20" fill="url(#spGradGreen)"/>
+                                <text x="60" y="46" text-anchor="middle" fill="#fff" font-size="16" font-weight="800">S</text>
+                                <text x="60" y="78" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">SOCLE SANAD</text>
+                                <text x="60" y="95" text-anchor="middle" fill="#94a3b8" font-size="10">Traçabilité • 2FA</text>
+                            </g>
+                            <!-- Modules satellites -->
+                            <g transform="translate(55,65)">
+                                <rect width="125" height="58" rx="12" fill="var(--sp-surface-alt)" stroke="#0f3b60" stroke-width="1.5"/>
+                                <text x="62" y="26" text-anchor="middle" fill="var(--sp-text)" font-size="12" font-weight="700">Enregistrement</text>
+                                <text x="62" y="43" text-anchor="middle" fill="var(--sp-muted)" font-size="10">Médicaments &amp; DM</text>
+                            </g>
+                            <g transform="translate(340,65)">
+                                <rect width="125" height="58" rx="12" fill="var(--sp-surface-alt)" stroke="#047857" stroke-width="1.5"/>
+                                <text x="62" y="26" text-anchor="middle" fill="var(--sp-text)" font-size="12" font-weight="700">Modifications</text>
+                                <text x="62" y="43" text-anchor="middle" fill="var(--sp-muted)" font-size="10">Suivi post-AMM</text>
+                            </g>
+                            <g transform="translate(35,180)">
+                                <rect width="120" height="58" rx="12" fill="var(--sp-surface-alt)" stroke="#0284c7" stroke-width="1.5"/>
+                                <text x="60" y="26" text-anchor="middle" fill="var(--sp-text)" font-size="12" font-weight="700">Agréments</text>
+                                <text x="60" y="43" text-anchor="middle" fill="var(--sp-muted)" font-size="10">Établissements</text>
+                            </g>
+                            <g transform="translate(365,180)">
+                                <rect width="120" height="58" rx="12" fill="var(--sp-surface-alt)" stroke="#047857" stroke-width="1.5"/>
+                                <text x="60" y="26" text-anchor="middle" fill="var(--sp-text)" font-size="12" font-weight="700">Coffre-Fort</text>
+                                <text x="60" y="43" text-anchor="middle" fill="var(--sp-muted)" font-size="10">Documents &amp; Lots</text>
+                            </g>
+                            <g transform="translate(75,285)">
+                                <rect width="125" height="58" rx="12" fill="var(--sp-surface-alt)" stroke="#0f3b60" stroke-width="1.5"/>
+                                <text x="62" y="26" text-anchor="middle" fill="var(--sp-text)" font-size="12" font-weight="700">Télé-services</text>
+                                <text x="62" y="43" text-anchor="middle" fill="var(--sp-muted)" font-size="10">Dépôts &amp; Paiements</text>
+                            </g>
+                            <g transform="translate(320,285)">
+                                <rect width="125" height="58" rx="12" fill="var(--sp-surface-alt)" stroke="#7c3aed" stroke-width="1.5"/>
+                                <text x="62" y="26" text-anchor="middle" fill="var(--sp-text)" font-size="12" font-weight="700">Qualité &amp; IA</text>
+                                <text x="62" y="43" text-anchor="middle" fill="var(--sp-muted)" font-size="10">Audits • Rédaction</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aperçu Rôles Métiers -->
+            <div class="sp-section sp-section-dark">
+                <div class="sp-container">
+                    <div class="sp-section-head">
+                        <h2 id="equipes" data-i18n="home.rolesTitle">Conçu pour chaque responsabilité de votre établissement</h2>
+                        <p data-i18n="home.rolesSub">Séparation stricte des fonctions (SoD Maker-Checker-Approver) et accès cloisonnés Zero-Trust.</p>
+                    </div>
+                    <div class="sp-grid-4">
+                        <article class="sp-card sp-card-dark">
+                            <h3 data-i18n="home.role1Title">Pharmacien Directeur Technique</h3>
+                            <p data-i18n="home.role1Desc">Parapheur électronique centralisé, visa légal 2FA TOTP, libération de lot DCE et contrôle de parité FR/AR.</p>
+                        </article>
+                        <article class="sp-card sp-card-dark">
+                            <h3 data-i18n="home.role2Title">Affaires Réglementaires</h3>
+                            <p data-i18n="home.role2Desc">Montage CTD Modules 1–5, Smart Planning en jours ouvrables algériens, carences ANPP et export E-TASJIL.</p>
+                        </article>
+                        <article class="sp-card sp-card-dark">
+                            <h3 data-i18n="home.role3Title">Assurance &amp; Contrôle Qualité</h3>
+                            <p data-i18n="home.role3Desc">Revue indépendante Checker, gestion documentaire BPF en 5 branches, déviations, CAPA et audits fournisseurs.</p>
+                        </article>
+                        <article class="sp-card sp-card-dark sp-reveal">
+                            <h3 data-i18n="home.role4Title">Direction Générale &amp; Informatique</h3>
+                            <p data-i18n="home.role4Desc">Installation locale sans internet ou Cloud souverain multi-sites, récupération complète des données à tout moment et traçabilité totale.</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Galerie Vitrine en Images -->
+            <div class="sp-section sp-section-light">
+                <div class="sp-container">
+                    <div class="sp-section-head sp-reveal">
+                        <span class="sp-badge" data-i18n="home.galleryBadge">En Pratique</span>
+                        <h2 id="environnement" data-i18n="home.galleryTitle">Un environnement pensé pour vos équipes</h2>
+                        <p class="sp-lead" data-i18n="home.gallerySub">De la paillasse de contrôle qualité jusqu'au visa final du Pharmacien Directeur Technique et à l'hébergement sécurisé.</p>
+                    </div>
+                    <div class="sp-grid-3">
+                        <article class="sp-photo-card sp-reveal">
+                            <div class="sp-photo-wrap"><img src="/img/portal-hero-lab.jpg" alt="Contrôle qualité et analyse des lots pharmaceutiques" width="1280" height="720" loading="lazy"></div>
+                            <div class="sp-photo-body">
+                                <h3 data-i18n="home.gal1t">Contrôle Qualité &amp; Lots</h3>
+                                <p data-i18n="home.gal1d">Suivi des analyses, des stabilités et libération documentée des lots fabriqués ou importés.</p>
+                            </div>
+                        </article>
+                        <article class="sp-photo-card sp-reveal">
+                            <div class="sp-photo-wrap"><img src="/img/portal-workspace.jpg" alt="Pharmacien Directeur Technique et équipe réglementaire" width="1280" height="720" loading="lazy"></div>
+                            <div class="sp-photo-body">
+                                <h3 data-i18n="home.gal2t">Direction Technique &amp; Réglementaire</h3>
+                                <p data-i18n="home.gal2d">Revue collaborative des dossiers, vérification bilingue et signature électronique sécurisée.</p>
+                            </div>
+                        </article>
+                        <article class="sp-photo-card sp-reveal">
+                            <div class="sp-photo-wrap"><img src="/img/portal-datacenter.jpg" alt="Infrastructure serveur souveraine et sécurisée" width="1280" height="720" loading="lazy"></div>
+                            <div class="sp-photo-body">
+                                <h3 data-i18n="home.gal3t">Souveraineté &amp; Sécurité</h3>
+                                <p data-i18n="home.gal3d">Déploiement sur votre réseau interne ou en Cloud souverain avec coffre-fort chiffré.</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE 2 : PLATEFORME (Inspirée de QaLyZa) -->
+        <section class="sp-view" data-view="plateforme" hidden>
+            <div class="sp-section sp-section-light">
+                <div class="sp-container sp-split-2">
+                    <div>
+                        <span class="sp-badge" data-i18n="plat.badge">Architecture Unifiée</span>
+                        <h2 class="sp-page-title" data-i18n="plat.title">Les principes partagés</h2>
+                        <p class="sp-lead" data-i18n="plat.intro">Chaque module peut être activé progressivement. Tous reposent sur le même moteur de conformité et d'intégrité des données.</p>
+                    </div>
+                    <div class="sp-grid-2">
+                        <article class="sp-principle">
+                            <h3 data-i18n="plat.p1Title">Tout est tracé</h3>
+                            <p data-i18n="plat.p1Desc">Chaque lecture, téléchargement, refus ou visa laisse une trace horodatée et géolocalisée dans l'Audit Trail.</p>
+                        </article>
+                        <article class="sp-principle">
+                            <h3 data-i18n="plat.p2Title">Rien ne s'efface</h3>
+                            <p data-i18n="plat.p2Desc">Table d'audit append-only inviolable, versionnage mineur/majeur avec motif de révision et archivage scellé.</p>
+                        </article>
+                        <article class="sp-principle">
+                            <h3 data-i18n="plat.p3Title">Chaque signature engage</h3>
+                            <p data-i18n="plat.p3Desc">Re-authentification 2FA TOTP et déclaration solennelle du Pharmacien DT conformes au 21 CFR Part 11.</p>
+                        </article>
+                        <article class="sp-principle">
+                            <h3 data-i18n="plat.p4Title">Une interface commune</h3>
+                            <p data-i18n="plat.p4Desc">Un espace de travail clair en 3 volets, identique de jour comme de nuit.</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diagramme en anneau des échanges -->
+            <div class="sp-section sp-section-dark">
+                <div class="sp-container sp-split-2 sp-align-center">
+                    <div>
+                        <h2 data-i18n="plat.ringTitle">Ce qui circule entre les modules</h2>
+                        <p class="sp-lead-dark" data-i18n="plat.ringDesc">Aucune ressaisie entre l'agrément de votre établissement au MIPH, le montage de vos dossiers CTD/DM, la gestion des variations et la libération de lots.</p>
+                        <ul class="sp-flow-list">
+                            <li data-i18n="plat.flow1"><strong>Agréments ➔ Dossiers produits :</strong> Vos autorisations d'établissement et décisions du Directeur Technique sont reprises sans ressaisie.</li>
+                            <li data-i18n="plat.flow2"><strong>Documents ➔ Dossiers d'enregistrement :</strong> Certificats de bonnes pratiques, analyses et notices bilingues sont reliés automatiquement.</li>
+                            <li data-i18n="plat.flow3"><strong>Qualité ➔ Modifications :</strong> Tout changement usine qualifié génère le dossier de modification réglementaire adapté.</li>
+                            <li data-i18n="plat.flow4"><strong>Signature ➔ Dépôt officiel :</strong> Une fois visé par le Pharmacien Directeur Technique, le dossier prêt au dépôt est généré en un clic.</li>
+                        </ul>
+                    </div>
+                    <div class="sp-ring-wrap sp-reveal">
+                        <svg viewBox="0 0 380 380" class="sp-svg-ring" role="img" aria-label="Cycle interconnecté SANAD Pharma">
+                            <circle cx="190" cy="190" r="132" fill="none" stroke="rgba(16,185,129,0.35)" stroke-width="3" stroke-dasharray="8 6" class="sp-ring-orbit"/>
+                            <g stroke="rgba(255,255,255,0.22)" stroke-width="1.5">
+                                <line x1="190" y1="190" x2="190" y2="58"/>
+                                <line x1="190" y1="190" x2="304" y2="124"/>
+                                <line x1="190" y1="190" x2="304" y2="256"/>
+                                <line x1="190" y1="190" x2="190" y2="322"/>
+                                <line x1="190" y1="190" x2="76" y2="256"/>
+                                <line x1="190" y1="190" x2="76" y2="124"/>
+                            </g>
+                            <circle cx="190" cy="190" r="48" fill="#047857" stroke="#10b981" stroke-width="3"/>
+                            <text x="190" y="186" text-anchor="middle" fill="#fff" font-size="14" font-weight="800">SANAD</text>
+                            <text x="190" y="204" text-anchor="middle" fill="#d1fae5" font-size="10">Intégrité</text>
+
+                            <g transform="translate(190,58)">
+                                <circle r="34" fill="#0f3b60" stroke="#38bdf8" stroke-width="2"/>
+                                <text y="4" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Agréments</text>
+                            </g>
+                            <g transform="translate(304,124)">
+                                <circle r="34" fill="#0f3b60" stroke="#10b981" stroke-width="2"/>
+                                <text y="4" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Dossiers</text>
+                            </g>
+                            <g transform="translate(304,256)">
+                                <circle r="34" fill="#0f3b60" stroke="#f59e0b" stroke-width="2"/>
+                                <text y="4" text-anchor="middle" fill="#fff" font-size="9.5" font-weight="700">Modifications</text>
+                            </g>
+                            <g transform="translate(190,322)">
+                                <circle r="34" fill="#0f3b60" stroke="#10b981" stroke-width="2"/>
+                                <text y="4" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Dépôt</text>
+                            </g>
+                            <g transform="translate(76,256)">
+                                <circle r="34" fill="#0f3b60" stroke="#a78bfa" stroke-width="2"/>
+                                <text y="4" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Qualité</text>
+                            </g>
+                            <g transform="translate(76,124)">
+                                <circle r="34" fill="#0f3b60" stroke="#34d399" stroke-width="2"/>
+                                <text y="4" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">Documents</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Déploiement -->
+            <div class="sp-section sp-section-light">
+                <div class="sp-container sp-split-2">
+                    <div>
+                        <h2 data-i18n="plat.depTitle">Sur vos serveurs ou en Cloud souverain</h2>
+                        <p class="sp-lead" data-i18n="plat.depSub">Binaire unique Go sans dépendance CDN externe, conçu pour fonctionner aussi bien en intranet isolé (Air-Gapped) qu'en architecture SaaS multi-unités.</p>
+                    </div>
+                    <div class="sp-grid-2">
+                        <article class="sp-card">
+                            <h3 data-i18n="plat.dep1Title">On-Premise (Air-Gapped)</h3>
+                            <p data-i18n="plat.dep1Desc">Installation 100 % hors-ligne sur votre infrastructure laboratoire. Clés et secrets maîtrisés exclusivement par le Pharmacien DT et votre RSSI.</p>
+                        </article>
+                        <article class="sp-card">
+                            <h3 data-i18n="plat.dep2Title">Cloud SaaS Souverain</h3>
+                            <p data-i18n="plat.dep2Desc">Cloisonnement strict par établissement, gouvernance Groupe multi-sites (DT Groupe) et réversibilité absolue via l'archive portative .sanad.</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grille des 8 modules -->
+            <div class="sp-section sp-section-dark">
+                <div class="sp-container">
+                    <div class="sp-section-head">
+                        <h2 data-i18n="plat.suiteTitle">Chaque module, en détail</h2>
+                        <p data-i18n="plat.suiteSub">Une suite modulaire complète couvrant tout le cycle réglementaire et qualité.</p>
+                    </div>
+                    <div class="sp-grid-4">
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">01</span><h3 data-i18n="mod.m1t">Sanad Registry</h3><p data-i18n="mod.m1d">Référentiel des établissements MIPH, sites 1.H.8 (SA, PF, contrôle) et catalogue Médicaments &amp; DM.</p></article>
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">02</span><h3 data-i18n="mod.m2t">Sanad Corporate</h3><p data-i18n="mod.m2d">Agréments des 5 catégories d'établissements (Décret 21-82), Smart e-Forms et export Tabadol.</p></article>
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">03</span><h3 data-i18n="mod.m3t">Sanad CTD Studio</h3><p data-i18n="mod.m3d">Checklists dynamiques NI/RI/MI/NF/RF/MF, gating DAG 5 phases, parité FR/AR et Smart Planning.</p></article>
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">04</span><h3 data-i18n="mod.m4t">Sanad Variations</h3><p data-i18n="mod.m4d">34 rubriques LD-DEPP07/V01, reclassement automatique, Grouping Art. 09 et Change Impact Tree.</p></article>
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">05</span><h3 data-i18n="mod.m5t">Sanad Vault</h3><p data-i18n="mod.m5d">Coffre-fort GED BPF en 5 branches, baux d'édition 30 min, libération de lot DCE et CAS SHA-256.</p></article>
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">06</span><h3 data-i18n="mod.m6t">Sanad Gateway</h3><p data-i18n="mod.m6d">Bordereaux BV1/BV2, redevances 1.A.4/1.A.5, fiche E-TASJIL et veille créneaux RDV PP/DM.</p></article>
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">07</span><h3 data-i18n="mod.m7t">Sanad eQMS</h3><p data-i18n="mod.m7d">Option qualité BPF : déviations, CAPA, Change Control connecté aux variations, audits et formations SOP.</p></article>
+                        <article class="sp-card sp-card-dark"><span class="sp-tag">08</span><h3 data-i18n="mod.m8t">Sanad Copilot</h3><p data-i18n="mod.m8d">Assistant IA souverain Human-in-the-Loop pour rédaction scientifique v0.1 et audit de cohérence.</p></article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE 3 : CONFORMITÉ -->
+        <section class="sp-view" data-view="conformite" hidden>
+            <div class="sp-section sp-section-light">
+                <div class="sp-container">
+                    <div class="sp-section-head">
+                        <span class="sp-badge" data-i18n="conf.badge">Référentiels &amp; Textes Opposables</span>
+                        <h2 class="sp-page-title" data-i18n="conf.title">La conformité, référentiel par référentiel</h2>
+                        <p class="sp-lead" data-i18n="conf.sub">Chaque contrôle bloquant et chaque état de sortie de SANAD Pharma est rattaché à un texte réglementaire algérien ou standard international GxP.</p>
+                    </div>
+                    <div class="sp-grid-3">
+                        <article class="sp-card">
+                            <h3 data-i18n="conf.c1t">Enregistrement ANPP (CTD 2025)</h3>
+                            <p data-i18n="conf.c1d">Décret exécutif n° 20-325, Guide CTD Juillet 2025 (Modules 1 à 5), distinction Princeps / Générique importé / Générique local et engagements 1.P.8 / 1.P.9.</p>
+                        </article>
+                        <article class="sp-card">
+                            <h3 data-i18n="conf.c2t">Modifications LD-DEPP07/V01</h3>
+                            <p data-i18n="conf.c2d">Nomenclature algérienne Mmin, Mmod, Mmaj sur 34 rubriques, reclassement dynamique et Grouping selon l'arrêté du 7 novembre 2021.</p>
+                        </article>
+                        <article class="sp-card">
+                            <h3 data-i18n="conf.c3t">Dispositifs Médicaux (DDM)</h3>
+                            <p data-i18n="conf.c3d">Décret exécutif n° 20-324 et arrêté du 10 mai 2021 : formulaire 6 sections, grille de recevabilité en 13 points et redevances BNA.</p>
+                        </article>
+                        <article class="sp-card">
+                            <h3 data-i18n="conf.c4t">Établissements MIPH &amp; Tabadol</h3>
+                            <p data-i18n="conf.c4d">Décret exécutif n° 21-82 et arrêtés 2025 : 5 catégories, caducité 2 ans, intérim PDT 92 jours et paquets Tabadol-J / Intaj.</p>
+                        </article>
+                        <article class="sp-card">
+                            <h3 data-i18n="conf.c5t">21 CFR Part 11 &amp; Annexe 11 BPF</h3>
+                            <p data-i18n="conf.c5d">Argon2id, TOTP RFC 6238, signature électronique légale PDT, séparation stricte SoD et Audit Trail append-only.</p>
+                        </article>
+                        <article class="sp-card">
+                            <h3 data-i18n="conf.c6t">GAMP 5 &amp; Qualification OQ/PQ</h3>
+                            <p data-i18n="conf.c6d">Protocole de qualification opérationnelle et de performance maintenu à jour à chaque évolution pour vos audits et inspections.</p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE 4 : OFFRES & DÉPLOIEMENT -->
+        <section class="sp-view" data-view="offres" hidden>
+            <div class="sp-section sp-section-light">
+                <div class="sp-container">
+                    <div class="sp-section-head">
+                        <span class="sp-badge" data-i18n="off.badge">Modèle Modulaire</span>
+                        <h2 class="sp-page-title" data-i18n="off.title">Des offres adaptées à la taille de votre laboratoire</h2>
+                        <p class="sp-lead" data-i18n="off.sub">Démarrez sur le socle réglementaire ANPP/MIPH et activez les extensions Qualité ou Multi-Sites selon votre feuille de route.</p>
+                    </div>
+                    <div class="sp-grid-3">
+                        <article class="sp-card sp-offer">
+                            <h3 data-i18n="off.o1t">Sanad Core RIM</h3>
+                            <p class="sp-offer-tag" data-i18n="off.o1tag">Enregistrement &amp; GED BPF</p>
+                            <p data-i18n="off.o1d">CTD Studio, Variations LD-DEPP07, Homologation DM, Sanad Vault GED, Parapheur PDT, Gateway E-TASJIL/RDV et 28 États de sortie.</p>
+                            <a href="#/demo" class="sp-btn sp-btn-outline sp-btn-block" data-route="demo" data-i18n="off.cta">Demander une étude</a>
+                        </article>
+                        <article class="sp-card sp-offer sp-offer-featured">
+                            <h3 data-i18n="off.o2t">Sanad Suite + eQMS</h3>
+                            <p class="sp-offer-tag" data-i18n="off.o2tag">RIM + Assurance Qualité BPF</p>
+                            <p data-i18n="off.o2d">Tout Sanad Core RIM + Déviations, CAPA, Change Control connecté au moteur de variations, Audits fournisseurs, Réclamations et Formations SOP.</p>
+                            <a href="#/demo" class="sp-btn sp-btn-primary sp-btn-block" data-route="demo" data-i18n="off.cta">Demander une étude</a>
+                        </article>
+                        <article class="sp-card sp-offer">
+                            <h3 data-i18n="off.o3t">Sanad Groupe Multi-Unités</h3>
+                            <p class="sp-offer-tag" data-i18n="off.o3tag">Holdings &amp; Multi-Sites</p>
+                            <p data-i18n="off.o3d">Supervision transverse DT Groupe sur plusieurs unités de production cloisonnées, gouvernance centralisée et archive de réversibilité .sanad.</p>
+                            <a href="#/demo" class="sp-btn sp-btn-outline sp-btn-block" data-route="demo" data-i18n="off.cta">Demander une étude</a>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE 5 : DÉMO / ONBOARDING -->
+        <section class="sp-view" data-view="demo" hidden>
+            <div class="sp-section sp-section-light">
+                <div class="sp-container sp-split-2">
+                    <div>
+                        <span class="sp-badge" data-i18n="demo.badge">Démonstration &amp; Onboarding</span>
+                        <h2 class="sp-page-title" data-i18n="demo.title">Planifier une démonstration ou préparer votre onboarding</h2>
+                        <p class="sp-lead" data-i18n="demo.sub">Nos ingénieurs réglementaires vous présentent l'environnement complet (CTD, Variations, Corporate Tabadol, Parapheur DT) et préparent l'ouverture de votre espace.</p>
+                        <div class="sp-card" style="margin-top: 20px;">
+                            <h3 data-i18n="demo.alreadyTitle">Déjà client ou partenaire autorisé ?</h3>
+                            <p data-i18n="demo.alreadyDesc">Accédez directement à l'écran d'authentification sécurisé de l'application.</p>
+                            <a href="/app" class="sp-btn sp-btn-primary" data-i18n="nav.login">Connexion</a>
+                        </div>
+                    </div>
+                    <form class="sp-form-card" id="sp-form-demo" novalidate>
+                        <input type="hidden" name="lead_type" value="demo">
+                        <div class="sp-field">
+                            <label for="demo-name" data-i18n="form.name">Nom et prénom *</label>
+                            <input id="demo-name" name="full_name" type="text" required autocomplete="name">
+                        </div>
+                        <div class="sp-field">
+                            <label for="demo-email" data-i18n="form.email">Email professionnel *</label>
+                            <input id="demo-email" name="email" type="email" required autocomplete="email">
+                        </div>
+                        <div class="sp-field-row">
+                            <div class="sp-field">
+                                <label for="demo-org" data-i18n="form.org">Laboratoire / Établissement</label>
+                                <input id="demo-org" name="organization_name" type="text">
+                            </div>
+                            <div class="sp-field">
+                                <label for="demo-role" data-i18n="form.role">Fonction</label>
+                                <input id="demo-role" name="role_title" type="text" placeholder="PDT, Resp. Réglementaire, AQ...">
+                            </div>
+                        </div>
+                        <div class="sp-field-row">
+                            <div class="sp-field">
+                                <label for="demo-phone" data-i18n="form.phone">Téléphone</label>
+                                <input id="demo-phone" name="phone" type="tel" autocomplete="tel">
+                            </div>
+                            <div class="sp-field">
+                                <label for="demo-mode" data-i18n="form.mode">Mode souhaité</label>
+                                <select id="demo-mode" name="deployment_interest">
+                                    <option value="saas">Cloud SaaS Souverain</option>
+                                    <option value="on-premise">On-Premise (Air-Gapped)</option>
+                                    <option value="hybrid">Hybride / Multi-Unités</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="sp-field">
+                            <label for="demo-msg" data-i18n="form.msg">Vos objectifs (CTD, DM, MIPH, eQMS)</label>
+                            <textarea id="demo-msg" name="message" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="sp-btn sp-btn-primary sp-btn-block sp-btn-lg" data-i18n="demo.submit">Envoyer la demande</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE 6 : CONTACT -->
+        <section class="sp-view" data-view="contact" hidden>
+            <div class="sp-section sp-section-light">
+                <div class="sp-container sp-split-2">
+                    <div>
+                        <span class="sp-badge" data-i18n="contact.badge">Contact Direct</span>
+                        <h2 class="sp-page-title" data-i18n="contact.title">Échanger avec l'équipe SANAD Pharma</h2>
+                        <p class="sp-lead" data-i18n="contact.sub">Une question sur la qualification OQ/PQ, l'hébergement souverain ou le déploiement multi-sites ? Écrivez-nous directement.</p>
+                        <div class="sp-contact-info">
+                            <p><strong>Email :</strong> contact@sanad-pharma.dz</p>
+                            <p><strong data-i18n="contact.supportLabel">Accompagnement :</strong> Alger — Déploiements Nationaux &amp; MENA</p>
+                        </div>
+                    </div>
+                    <form class="sp-form-card" id="sp-form-contact" novalidate>
+                        <input type="hidden" name="lead_type" value="contact">
+                        <div class="sp-field">
+                            <label for="contact-name" data-i18n="form.name">Nom et prénom *</label>
+                            <input id="contact-name" name="full_name" type="text" required autocomplete="name">
+                        </div>
+                        <div class="sp-field">
+                            <label for="contact-email" data-i18n="form.email">Email professionnel *</label>
+                            <input id="contact-email" name="email" type="email" required autocomplete="email">
+                        </div>
+                        <div class="sp-field">
+                            <label for="contact-org" data-i18n="form.org">Laboratoire / Établissement</label>
+                            <input id="contact-org" name="organization_name" type="text">
+                        </div>
+                        <div class="sp-field">
+                            <label for="contact-msg" data-i18n="form.message">Message *</label>
+                            <textarea id="contact-msg" name="message" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="sp-btn sp-btn-primary sp-btn-block sp-btn-lg" data-i18n="contact.submit">Envoyer le message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Pied de page institutionnel -->
+    <footer class="sp-footer">
+        <div class="sp-container sp-footer-grid">
+            <div>
+                <div class="sp-brand-text sp-brand-footer"><strong>SANAD</strong> <small>PHARMA</small></div>
+                <p class="sp-footer-desc" data-i18n="footer.desc">Plateforme souveraine d'enregistrement ANPP, d'homologation DM, d'agréments MIPH et de GED pharmaceutique BPF.</p>
+            </div>
+            <div>
+                <p class="sp-footer-title" data-i18n="footer.col1">Plateforme</p>
+                <a href="#/accueil" data-route="accueil" data-i18n="nav.home">Accueil</a>
+                <a href="#/plateforme" data-route="plateforme" data-i18n="nav.platform">Plateforme</a>
+                <a href="#/conformite" data-route="conformite" data-i18n="nav.compliance">Conformité</a>
+                <a href="#/offres" data-route="offres" data-i18n="nav.offers">Offres</a>
+            </div>
+            <div>
+                <p class="sp-footer-title" data-i18n="footer.col2">Accès &amp; Contact</p>
+                <a href="/app" data-i18n="nav.login">Connexion</a>
+                <a href="#/demo" data-route="demo" data-i18n="nav.demo">Démo / Onboarding</a>
+                <a href="#/contact" data-route="contact" data-i18n="nav.contact">Contact</a>
+            </div>
+        </div>
+        <div class="sp-container sp-footer-legal">
+            <p data-i18n="footer.disclaimer">Un logiciel ne rend pas, à lui seul, une organisation conforme : la validation du système (OQ/PQ), vos procédures opératoires et votre infrastructure y concourent. SANAD Pharma fournit les mécanismes techniques et la documentation de qualification pour l'étayer.</p>
+            <small>© 2026 SANAD PHARMA</small>
+        </div>
+    </footer>
+
+    <script src="/portal/portal.js?v=2026.11.28.1"></script>
+</body>
+</html>
