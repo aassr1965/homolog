@@ -748,9 +748,11 @@ h3 {
     margin-bottom: 24px;
 }
 
-.sp-footer h4 {
+.sp-footer h4, .sp-footer-title {
     color: #fff;
     margin: 0 0 10px;
+    font-weight: 700;
+    font-size: 1rem;
 }
 
 .sp-footer a {

@@ -408,7 +408,7 @@
 
     const SEO = {
         fr: {
-            accueil: ['SANAD PHARMA — Plateforme Souveraine pour l’Industrie Pharmaceutique', 'Enregistrement des médicaments, dispositifs médicaux, agréments d’établissement et gestion documentaire pharmaceutique.'],
+            accueil: ['SANAD PHARMA — Plateforme Réglementaire Pharmaceutique', 'Enregistrement des médicaments, dispositifs médicaux, agréments d’établissement et gestion documentaire pharmaceutique conforme.'],
             plateforme: ['Plateforme & Modules — SANAD PHARMA', 'Découvrez les 8 modules interconnectés de SANAD PHARMA : traçabilité totale, signature électronique et déploiement sur site ou Cloud.'],
             conformite: ['Conformité Réglementaire — SANAD PHARMA', 'Conformité native ANPP, MIPH, 21 CFR Part 11, Bonnes Pratiques de Fabrication et validation GAMP 5.'],
             offres: ['Offres & Déploiement — SANAD PHARMA', 'Formules modulaires pour laboratoires pharmaceutiques : Socle Réglementaire, Suite Qualité et Groupe Multi-Sites.'],
