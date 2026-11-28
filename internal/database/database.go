@@ -100,6 +100,7 @@ func (db *DB) RunMigrations(ctx context.Context) error {
 		"migrations/041_inspections_capa_and_de_status.sql",
 		"migrations/042_anpp_form_drafts.sql",
 		"migrations/043_anpp_template_overrides.sql",
+		"migrations/044_public_leads.sql",
 	}
 
 	for _, file := range migrationFiles {
