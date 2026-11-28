@@ -131,8 +131,9 @@
                 return;
             }
 
-            // Succès : Redirection immédiate avec purge de cache
-            window.location.replace('/?auth=' + Date.now());
+            // Succès : Redirection immédiate avec purge de cache vers la route demandée (/ ou /app)
+            const targetPath = (window.location.pathname && window.location.pathname !== '') ? window.location.pathname : '/';
+            window.location.replace(targetPath + '?auth=' + Date.now());
         } catch (err) {
             alertBox.style.display = 'block';
             alertBox.style.background = 'rgba(239, 68, 68, 0.12)';

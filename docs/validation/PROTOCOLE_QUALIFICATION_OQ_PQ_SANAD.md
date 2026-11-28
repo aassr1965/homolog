@@ -604,6 +604,21 @@ Sur la mire de connexion, une boîte interactive intitulée **« ⚡ Comptes de 
 
 ---
 
+### OQ-PORTAL-01 — Portail d'Accès SPA Mobile-First, Sas Confidentiel & Redirection `/app`
+* **Référence CDC :** Sections 6.1, 7.1 §6, Charte Graphique SANAD PHARMA & Support Trilingue FR/AR/EN.
+* **Objectif :** Vérifier que le portail vitrine SPA servi à la racine `/` est protégé par le sas confidentiel (`GATE_PASSCODE`), fonctionne en mode Mobile-First responsive (FR/AR RTL/EN + Mode Nuit), redirige l'utilisateur vers `/app` via le bouton « Connexion », neutralise l'accès commercial à `/` en `APP_ENV=production` + `DEPLOYMENT_MODE=on-premise` (redirection 302 vers `/app`), et enregistre les demandes Démo/Contact via `POST /api/v1/public/lead`.
+* **Données d'entrée :** Code sas `Homolog2006!VIP`, bascule `FR` / `عربي` (`dir="rtl"`) / `EN`, viewport mobile `375px` et desktop `1280px`, soumission d'une demande Démo (`full_name`, `email`, `lead_type=demo`).
+* **Étapes de test pas-à-pas (« Click-by-Click ») :**
+  1. Accéder à `GET /` et `GET /app` sans cookie de sas lorsque `GATE_PASSCODE` est configuré ➔ Vérifier l'affichage exclusif de `gate.html` (aucun HTML métier ni `/portal/*` exposé).
+  2. Saisir le code sas `Homolog2006!VIP` et valider ➔ Vérifier le déverrouillage et le chargement de la SPA portail sur `/` (ou de l'application sur `/app`).
+  3. Tester la barre de navigation SPA sur mobile (`375px`, menu hamburger) et desktop (`1280px`) à travers les 6 vues (`#/accueil`, `#/plateforme`, `#/conformite`, `#/offres`, `#/demo`, `#/contact`), la bascule `FR` / `عربي` (`dir="rtl"`) / `EN` et le `Mode Nuit`.
+  4. Cliquer sur **« Connexion »** ➔ Vérifier la redirection vers `/app` (écran d'authentification `#screen-login`).
+  5. Remplir et soumettre le formulaire **Démo / Onboarding** (`#/demo`) ➔ Vérifier la réponse HTTP `201 Created` de `POST /api/v1/public/lead`, la persistance dans `public_leads` et le toast de confirmation in-app.
+  6. Vérifier le comportement en `APP_ENV=production` + `DEPLOYMENT_MODE=on-premise` ➔ `GET /` retourne une redirection `302 Found` vers `/app`.
+* **Critères d'acceptation ALCOA+ :** Aucune fuite de code applicatif avant déverrouillage du sas ; zéro alerte native navigateur ; accessibilité tactile mobile (≥ 44px) et parité trilingue FR/AR/EN vérifiées.
+
+---
+
 ## 5. GESTION DES ANOMALIES, DÉVIATIONS & FICHES D'INCIDENT
 
 Tout écart constaté lors de l'exécution d'un test doit être consigné dans la fiche de déviation ci-dessous :

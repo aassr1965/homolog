@@ -233,42 +233,10 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	// Interface Web Haute Densité 'Pharma Explorer' (embarquée dans le binaire)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		// Contrôle hermétique du Sas Partenaire (Option B) :
-		// Si le sas est actif et non déverrouillé, renvoyer EXCLUSIVEMENT gate.html
-		// (Aucun compte, aucun mot de passe, aucun JS métier n'est transmis au client)
-		if cfg != nil && cfg.GateEnabled() && !gateHandler.IsUnlocked(r) {
-			gateContent, err := web.Files.ReadFile("gate.html")
-			if err != nil {
-				http.Error(w, "Page du sas confidentiel introuvable", http.StatusNotFound)
-				return
-			}
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Write(gateContent)
-			return
-		}
-
-		// Utilisateur autorisé par le sas -> Servir l'application index.html
-		content, err := web.Files.ReadFile("index.html")
-		if err != nil {
-			http.Error(w, "Interface web non trouvée", http.StatusNotFound)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-		w.Header().Set("Pragma", "no-cache")
-		w.Header().Set("Expires", "0")
-		if !cfg.PitchDeckEnabled() {
-			htmlStr := string(content)
-			// En production, masquer immédiatement le bouton du pitch commercial (Défense en profondeur)
-			htmlStr = strings.ReplaceAll(htmlStr, `id="btn-pitch-commercial"`, `id="btn-pitch-commercial" style="display:none !important;"`)
-			w.Write([]byte(htmlStr))
-			return
-		}
-		w.Write(content)
-	})
+	// Portail SPA SANAD Pharma à la racine "/" et Application GxP 'Pharma Explorer' sous "/app"
+	r.Get("/", api.ServePortalOrRedirect(cfg, gateHandler))
+	r.Get("/app", api.ServeApp(cfg, gateHandler))
+	r.Get("/app/", api.ServeApp(cfg, gateHandler))
 
 	// Présentation Commerciale Haute Fidélité (Pitch Deck 10 Diapositives)
 	// Accessible publiquement depuis le sas confidentiel pour permettre aux prospects et partenaires de découvrir le progiciel
@@ -326,6 +294,7 @@ func main() {
 	}
 	r.Handle("/css/*", noCacheWrapper(staticFS))
 	r.Handle("/js/*", gateAssetGuard(noCacheWrapper(staticFS)))
+	r.Handle("/portal/*", gateAssetGuard(noCacheWrapper(staticFS)))
 	r.Handle("/img/*", staticFS)
 	r.Handle("/reports/*", gateAssetGuard(noCacheWrapper(staticFS)))
 
@@ -363,6 +332,15 @@ func main() {
 	r.Get("/api/v1/gate/status", gateHandler.GetStatus)
 	r.Post("/api/v1/gate/unlock", gateHandler.Unlock)
 	r.Post("/api/v1/gate/lock", gateHandler.Lock)
+
+	// Endpoint public de capture Démo / Contact / Pré-Onboarding (protégé par GateHandler si actif)
+	var publicLeadHandler *api.PublicLeadHandler
+	if db != nil {
+		publicLeadHandler = api.NewPublicLeadHandler(db.Pool)
+	} else {
+		publicLeadHandler = api.NewPublicLeadHandler(nil)
+	}
+	r.Post("/api/v1/public/lead", publicLeadHandler.SubmitLead)
 
 	// Routes API Authentification, 2FA, Signature DT et Audit Trail
 	if setupHandler != nil {
