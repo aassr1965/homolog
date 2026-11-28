@@ -374,6 +374,48 @@
 
     let currentLang = localStorage.getItem('sp_portal_lang') || 'fr';
     if (!I18N[currentLang]) currentLang = 'fr';
+    let currentRoute = 'accueil';
+
+    const SEO = {
+        fr: {
+            accueil: ['SANAD PHARMA — Plateforme Souveraine pour l’Industrie Pharmaceutique', 'Enregistrement des médicaments, dispositifs médicaux, agréments d’établissement et gestion documentaire pharmaceutique.'],
+            plateforme: ['Plateforme & Modules — SANAD PHARMA', 'Découvrez les 8 modules interconnectés de SANAD PHARMA : traçabilité totale, signature électronique et déploiement sur site ou Cloud.'],
+            conformite: ['Conformité Réglementaire — SANAD PHARMA', 'Conformité native ANPP, MIPH, 21 CFR Part 11, Bonnes Pratiques de Fabrication et validation GAMP 5.'],
+            offres: ['Offres & Déploiement — SANAD PHARMA', 'Formules modulaires pour laboratoires pharmaceutiques : Socle Réglementaire, Suite Qualité et Groupe Multi-Sites.'],
+            demo: ['Demander une Démonstration — SANAD PHARMA', 'Planifiez une démonstration personnalisée ou préparez l’ouverture de votre espace SANAD PHARMA.'],
+            contact: ['Contact — SANAD PHARMA', 'Échangez avec l’équipe SANAD PHARMA sur la validation, l’installation locale ou l’hébergement souverain.']
+        },
+        ar: {
+            accueil: ['SANAD PHARMA — المنصة السيادية للصناعة الصيدلانية', 'تسجيل الأدوية، اعتماد المستلزمات الطبية، تراخيص المؤسسات وإدارة الوثائق الصيدلانية.'],
+            plateforme: ['المنصة والوحدات — SANAD PHARMA', 'اكتشفوا الوحدات الثماني المترابطة في SANAD PHARMA: تتبع كامل، توقيع إلكتروني ونشر محلي أو سحابي.'],
+            conformite: ['المطابقة التنظيمية — SANAD PHARMA', 'مطابقة أصلية للوائح الوطنية والمعايير الدولية 21 CFR Part 11 وتأهيل GAMP 5.'],
+            offres: ['العروض والنشر — SANAD PHARMA', 'باقات مرنة للمخابر الصيدلانية: الأساس التنظيمي، منظومة الجودة وإدارة المجمعات.'],
+            demo: ['طلب عرض تجريبي — SANAD PHARMA', 'احجزوا عرضاً توضيحياً أو حضّروا لإطلاق حسابكم في SANAD PHARMA.'],
+            contact: ['اتصل بنا — SANAD PHARMA', 'تواصلوا مع فريق SANAD PHARMA حول التأهيل أو التثبيت المحلي أو السحابة السيادية.']
+        },
+        en: {
+            accueil: ['SANAD PHARMA — Sovereign Pharmaceutical Regulatory Platform', 'Medicine registration, medical device approval, facility licensing, and pharmaceutical document control.'],
+            plateforme: ['Platform & Modules — SANAD PHARMA', 'Explore the 8 interconnected modules of SANAD PHARMA: full traceability, e-signatures, and on-prem or cloud deployment.'],
+            conformite: ['Regulatory Compliance — SANAD PHARMA', 'Native compliance with Algerian ANPP/MIPH regulations, 21 CFR Part 11, GMP, and GAMP 5 validation.'],
+            offres: ['Plans & Deployment — SANAD PHARMA', 'Modular plans for pharmaceutical companies: Regulatory Core, Full Quality Suite, and Multi-Site Group.'],
+            demo: ['Request a Demo — SANAD PHARMA', 'Schedule a live walkthrough or prepare your SANAD PHARMA workspace onboarding.'],
+            contact: ['Contact — SANAD PHARMA', 'Talk with the SANAD PHARMA team about validation, offline installation, or sovereign hosting.']
+        }
+    };
+
+    function updateSEO(route, lang) {
+        const entry = (SEO[lang] && SEO[lang][route]) || SEO.fr.accueil;
+        document.title = entry[0];
+        const setMeta = (sel, val) => {
+            const el = document.querySelector(sel);
+            if (el) el.setAttribute('content', val);
+        };
+        setMeta('meta[name="description"]', entry[1]);
+        setMeta('meta[property="og:title"]', entry[0]);
+        setMeta('meta[property="og:description"]', entry[1]);
+        setMeta('meta[name="twitter:title"]', entry[0]);
+        setMeta('meta[name="twitter:description"]', entry[1]);
+    }
 
     function showToast(message, isError = false) {
         const el = document.getElementById('sp-toast');
@@ -402,6 +444,7 @@
         document.querySelectorAll('.sp-lang-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
         });
+        updateSEO(currentRoute, currentLang);
     }
 
     function applyTheme(theme) {
@@ -413,12 +456,14 @@
 
     function navigateTo(route) {
         const target = ROUTES.includes(route) ? route : 'accueil';
+        currentRoute = target;
         document.querySelectorAll('.sp-view').forEach((sec) => {
             sec.hidden = sec.getAttribute('data-view') !== target;
         });
         document.querySelectorAll('[data-route]').forEach((link) => {
             link.classList.toggle('active', link.getAttribute('data-route') === target);
         });
+        updateSEO(currentRoute, currentLang);
         closeDrawer();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }

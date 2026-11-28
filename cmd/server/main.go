@@ -213,7 +213,11 @@ func main() {
 			w.Header().Set("X-XSS-Protection", "0")
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 			w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self), payment=()")
-			w.Header().Set("X-Robots-Tag", "noindex, nofollow, noarchive")
+			if (cfg != nil && cfg.GateEnabled()) || !api.PortalEnabled(cfg) || strings.HasPrefix(r.URL.Path, "/app") || strings.HasPrefix(r.URL.Path, "/api/") || strings.HasPrefix(r.URL.Path, "/verify/") {
+				w.Header().Set("X-Robots-Tag", "noindex, nofollow, noarchive")
+			} else {
+				w.Header().Set("X-Robots-Tag", "index, follow")
+			}
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.bigdatacloud.net https://api.ipify.org http://ip-api.com; frame-src 'self'; object-src 'none'; base-uri 'self';")
 			next.ServeHTTP(w, r)
 		})
@@ -237,6 +241,8 @@ func main() {
 	r.Get("/", api.ServePortalOrRedirect(cfg, gateHandler))
 	r.Get("/app", api.ServeApp(cfg, gateHandler))
 	r.Get("/app/", api.ServeApp(cfg, gateHandler))
+	r.Get("/robots.txt", api.ServeRobotsTxt(cfg))
+	r.Get("/sitemap.xml", api.ServeSitemapXML(cfg))
 
 	// Présentation Commerciale Haute Fidélité (Pitch Deck 10 Diapositives)
 	// Accessible publiquement depuis le sas confidentiel pour permettre aux prospects et partenaires de découvrir le progiciel

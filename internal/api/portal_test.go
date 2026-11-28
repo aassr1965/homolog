@@ -135,3 +135,36 @@ func TestPublicLeadHandler_ValidationAndSuccess(t *testing.T) {
 		t.Fatalf("unexpected lead response: %s", okRec.Body.String())
 	}
 }
+
+func TestPortal_SEO_RobotsAndSitemap(t *testing.T) {
+	// Sas actif : robots.txt doit bloquer et sitemap.xml doit retourner 404
+	lockedCfg := &config.Config{Environment: "production", DeploymentMode: config.ModeSaaS, GatePasscode: "Homolog2006!VIP"}
+	recRobotsLocked := httptest.NewRecorder()
+	ServeRobotsTxt(lockedCfg)(recRobotsLocked, httptest.NewRequest(http.MethodGet, "/robots.txt", nil))
+	if !strings.Contains(recRobotsLocked.Body.String(), "Disallow: /") {
+		t.Fatalf("locked robots.txt = %q", recRobotsLocked.Body.String())
+	}
+	recMapLocked := httptest.NewRecorder()
+	ServeSitemapXML(lockedCfg)(recMapLocked, httptest.NewRequest(http.MethodGet, "/sitemap.xml", nil))
+	if recMapLocked.Code != http.StatusNotFound {
+		t.Fatalf("locked sitemap status = %d, want 404", recMapLocked.Code)
+	}
+
+	// Public (sas désactivé en SaaS) : robots.txt autorise / et bloque /app, sitemap.xml retourne 200
+	pubCfg := &config.Config{Environment: "production", DeploymentMode: config.ModeSaaS}
+	recRobotsPub := httptest.NewRecorder()
+	reqRobots := httptest.NewRequest(http.MethodGet, "/robots.txt", nil)
+	reqRobots.Host = "sanad-pharma.dz"
+	ServeRobotsTxt(pubCfg)(recRobotsPub, reqRobots)
+	if !strings.Contains(recRobotsPub.Body.String(), "Disallow: /app") {
+		t.Fatalf("public robots.txt = %q", recRobotsPub.Body.String())
+	}
+	recMapPub := httptest.NewRecorder()
+	reqMap := httptest.NewRequest(http.MethodGet, "/sitemap.xml", nil)
+	reqMap.Host = "sanad-pharma.dz"
+	reqMap.Header.Set("X-Forwarded-Proto", "https")
+	ServeSitemapXML(pubCfg)(recMapPub, reqMap)
+	if recMapPub.Code != http.StatusOK || !strings.Contains(recMapPub.Body.String(), "https://sanad-pharma.dz/") {
+		t.Fatalf("public sitemap status=%d body=%q", recMapPub.Code, recMapPub.Body.String())
+	}
+}

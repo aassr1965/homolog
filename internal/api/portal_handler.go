@@ -87,3 +87,48 @@ func ServeApp(cfg *config.Config, gateHandler *GateHandler) http.HandlerFunc {
 		_, _ = w.Write(content)
 	}
 }
+
+// ServeRobotsTxt génère dynamiquement /robots.txt selon l'état du sas confidentiel et du portail.
+func ServeRobotsTxt(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		if cfg != nil && (cfg.GateEnabled() || !PortalEnabled(cfg)) {
+			_, _ = w.Write([]byte("User-agent: *\nDisallow: /\n"))
+			return
+		}
+		scheme := "https"
+		if r.TLS == nil && r.Header.Get("X-Forwarded-Proto") != "https" {
+			scheme = "http"
+		}
+		host := r.Host
+		if host == "" {
+			host = "sanad-pharma.dz"
+		}
+		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nDisallow: /app\nDisallow: /api/\nDisallow: /verify/\n\nSitemap: " + scheme + "://" + host + "/sitemap.xml\n"))
+	}
+}
+
+// ServeSitemapXML génère le sitemap XML du portail public SANAD PHARMA.
+func ServeSitemapXML(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if cfg != nil && (cfg.GateEnabled() || !PortalEnabled(cfg)) {
+			http.NotFound(w, r)
+			return
+		}
+		scheme := "https"
+		if r.TLS == nil && r.Header.Get("X-Forwarded-Proto") != "https" {
+			scheme = "http"
+		}
+		host := r.Host
+		if host == "" {
+			host = "sanad-pharma.dz"
+		}
+		base := scheme + "://" + host
+		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+		_, _ = w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>` + base + `/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+</urlset>
+`))
+	}
+}
